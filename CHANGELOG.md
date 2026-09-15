@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.92.0](https://github.com/EOCOnline/rangertrak/compare/v0.91.4...v0.92.0) (2026-09-15)
+
+
+### Features
+
+* **map:** bundle a world+Vashon basemap, warm it stall-safely ([0ecbff8](https://github.com/EOCOnline/rangertrak/commit/0ecbff8764bc743c2e02d46a0273748cc3406cd4))
+* **sample-data:** offer four demo scenarios instead of one fixed mission ([41f351e](https://github.com/EOCOnline/rangertrak/commit/41f351e30f32588f2ab2673d9debee91bf315db2))
+* **worker:** rate limit, hotlink-protect, and cache the map/feedback Worker ([d0b85a6](https://github.com/EOCOnline/rangertrak/commit/d0b85a6edb6a2082d342b7ab7a8f547989e563bb))
+
+
+### Bug Fixes
+
+* **map:** harden the custom .pmtiles loader ([7f8d53c](https://github.com/EOCOnline/rangertrak/commit/7f8d53c8ee0cc31e548a8601ede14f314484ee1e))
+* **map:** let the offline-save estimate wrap so /map fits a phone ([0961640](https://github.com/EOCOnline/rangertrak/commit/09616404a9405881990296c934e5699d33643fbe))
+* **map:** multi-zoom Leaflet save, tile cap, and disable on OSM ([bebeb11](https://github.com/EOCOnline/rangertrak/commit/bebeb11e3fba7b5386df1cd8086ba7c0090037ca))
+* **perf:** stop MapLibre/RadioLog from bundling Leaflet, fix low-res GitHub icon ([3745ac6](https://github.com/EOCOnline/rangertrak/commit/3745ac655f7039825914c3294b65fe4ec9104050))
+
 ### [0.91.4](https://github.com/EOCOnline/rangertrak/compare/v0.91.3...v0.91.4) (2026-09-02)
 
 
