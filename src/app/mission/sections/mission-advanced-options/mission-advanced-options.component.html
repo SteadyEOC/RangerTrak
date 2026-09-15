@@ -111,17 +111,33 @@
       <input #importMissionFile id="importMissionFile" type="file" accept="application/json,.json"
         (change)="onImportFileSelected($event)" class="mission__file-input" />
 
+      <!-- 2026-09-14: scenario picker added alongside the existing action - four ready-made
+           demo missions (Vashon Island, Grand Canyon, a state fair, and one generated around
+           this device's own location) instead of one fixed one. Vashon stays the default. -->
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mission__sample-scenario">
+        <mat-label>Demo scenario</mat-label>
+        <mat-select [value]="selectedScenario()" (selectionChange)="selectedScenario.set($event.value)">
+          @for (s of sampleScenarios; track s.id) {
+          <mat-option [value]="s.id">{{ s.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
       <button matButton="outlined" type="button" class="mission__danger-button"
         (click)="onBtnLoadSampleData()"
-        title="Replace rangers and field reports with a demonstration mission">
+        title="Replace rangers, field reports and locations with a demonstration mission">
         Load sample mission &mdash; replaces rangers and reports
       </button>
     </div>
 
     <p class="mission__note mission__sample-note">
-      The sample mission is a roster of 12 units and about 30 field reports spread across
-      Vashon Island over the last several hours &mdash; useful for demonstrating RangerTrak, or
-      for seeing how a screen looks with realistic data on a brand-new install.
+      Each demo scenario loads a roster of 12 units, four field teams walking their own
+      trails, two mission objectives (Locations), and a few dozen field reports and messages
+      spanning the last several hours &mdash; useful for demonstrating RangerTrak, or for
+      seeing how a screen looks with realistic data on a brand-new install.
+    </p>
+    <p class="mission__note">
+      {{ selectedScenarioHint() }}
     </p>
   </div>
 </rangertrak-expandable-section>

@@ -25,6 +25,9 @@ import {
 // shared/services/index.ts leaves it unresolvable to the compiler ("no suitable injection
 // token"), the same way the barrel broke `imports:` arrays during Sprint B.
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
+// Direct path too - plain type/const exports, but kept alongside the barrel import above
+// would mean splitting SampleDataService out of it for no real benefit.
+import { SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
 import { extractMissionZip, MissionZipManifest, MissionZipPhoto } from '../shared/export/mission-zip'
 import { mergeRangers } from '../shared/services/ranger-migration'
 import { CustomTooltip } from './customTooltip'
@@ -377,6 +380,10 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     this.reloadPage()
   }
 
+  /** Scenario picker for "Load sample mission" below - see SAMPLE_SCENARIOS' own comment. */
+  readonly sampleScenarios = SAMPLE_SCENARIOS
+  selectedScenario = signal<SampleScenarioId>('vashon')
+
   /**
    * "Load sample mission" from the empty-state block (see rangers.component.html) - the
    * same destructive action Mission > Advanced options offers
@@ -385,17 +392,20 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
    * lives in SampleDataService; this only owns the confirm/reload wrapper, matching that
    * component's own copy so the same action reads the same way from either entry point.
    */
-  onBtnLoadSampleMission() {
-    if (!confirm(`Load the sample mission?\n\n`
-      + `This REPLACES all rangers and field reports currently on this device with `
+  async onBtnLoadSampleMission(): Promise<void> {
+    const scenario = this.selectedScenario()
+    const label = this.sampleScenarios.find(s => s.id === scenario)?.label ?? scenario
+
+    if (!confirm(`Load the "${label}" sample mission?\n\n`
+      + `This REPLACES all rangers, field reports and locations currently on this device with `
       + `demonstration data, and renames the mission to make that obvious.\n\n`
       + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
       this.log.verbose('onBtnLoadSampleMission: user cancelled.', this.id)
       return
     }
 
-    this.sampleDataService.loadSampleMission()
-    this.log.warn('Loaded the sample mission (demo data).', this.id)
+    await this.sampleDataService.loadSampleMission(scenario)
+    this.log.warn(`Loaded the sample mission (demo data): ${scenario}.`, this.id)
     alert('Sample mission loaded. Reloading to refresh every screen with the new data...')
     this.reloadPage()
   }

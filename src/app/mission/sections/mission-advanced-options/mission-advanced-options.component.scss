@@ -125,3 +125,10 @@ label.mission__danger-button {
   margin-top: 1rem;
   margin-bottom: 0;
 }
+
+// 2026-09-14: sits inline with the "Load sample mission" button inside
+// .rt-danger-zone__actions (a wrapping flex row) - a fixed width keeps it from stretching to
+// fill the row the way an unconstrained mat-form-field otherwise would.
+.mission__sample-scenario {
+  width: 14em;
+}

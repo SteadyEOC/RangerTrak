@@ -75,6 +75,26 @@ $filledColor: var(--rt-surface-2);
   }
 }
 
+// 2026-09-14: the demo-scenario picker sitting inline before .entry-welcome__demo - a plain
+// native <select>, matching this banner's own plain-HTML style rather than pulling in
+// Material for one control (see the template's own comment on why).
+.entry-welcome__scenario-label {
+  display    : inline-flex;
+  align-items: center;
+  gap        : 0.35em;
+  margin-inline-start: 0.5em;
+  font-weight: 600;
+}
+
+.entry-welcome__scenario {
+  font        : inherit;
+  padding     : 0.15em 0.4em;
+  border      : 1px solid var(--rt-line);
+  border-radius: var(--rt-radius);
+  background  : var(--rt-surface);
+  color       : inherit;
+}
+
 // Wraps the field-mode question so it starts on its own line from the paragraph above it
 // (the demo-data button stays inline, mid-sentence, but this is a second, separate question -
 // see the template comment) without a fixed height fighting the panel's own flex-wrap.

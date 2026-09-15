@@ -138,6 +138,12 @@ label {
   gap        : 0.6em;
 }
 
+// 2026-09-14: sits inline with the action buttons above in the wrapping flex row - a fixed
+// width keeps it from stretching the way an unconstrained mat-form-field otherwise would.
+.rangers__sample-scenario {
+  width: 14em;
+}
+
 // Confidentiality bar above the roster grid. This was a multi-paragraph block that pushed
 // the grid down the page on every visit; it is now one dismissable line, with the full
 // text in the "Privacy & data handling" details below.

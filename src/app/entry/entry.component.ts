@@ -30,6 +30,11 @@ import {
   RangerService, RangerType, MissionService, MissionType, SampleDataService, statusColorValue,
   undefinedAddressFlag, undefinedLocation, WelcomePanelService, FieldModeService
 } from '../shared/services/'
+// Direct path, not the barrel above - see the note in rangers.component.ts for why a
+// service used as a DI token needs this; these are plain type/const exports with no such
+// constraint, but keeping the sample-scenario picker's imports together in one line is
+// clearer than splitting SampleDataService itself out of the barrel import too.
+import { SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
 //import { LocationComponent } from './location.component'
 
 import { MATERIAL_IMPORTS } from '../material-imports'
@@ -432,13 +437,18 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       && !this.settings?.mission?.trim()
   }
 
+  /** Scenario picker for the "Load Demo Data" button below - see SAMPLE_SCENARIOS' own
+   *  comment for what each option means. Defaults to Vashon, the original demo. */
+  readonly sampleScenarios = SAMPLE_SCENARIOS
+  selectedScenario = signal<SampleScenarioId>('vashon')
+
   /**
    * No confirm() dialog, unlike every other place this same action is offered
    * (mission-advanced-options.component.ts) - those guard a REPLACE of existing data;
    * canLoadDemoData() above already guarantees there is nothing to replace here.
    */
-  onLoadDemoData(): void {
-    this.sampleDataService.loadSampleMission()
+  async onLoadDemoData(): Promise<void> {
+    await this.sampleDataService.loadSampleMission(this.selectedScenario())
     this.log.warn('Loaded the sample mission (demo data) from the Entry welcome panel.', this.id)
     window.location.reload()
   }

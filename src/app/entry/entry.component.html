@@ -16,8 +16,24 @@
            three conditions), so it never appears once there is anything real to lose. No
            confirm() dialog, unlike every other place this same action is offered
            (mission-advanced-options.component.ts) - those all guard a REPLACE of existing
-           data; this one is only ever offered when there is nothing to replace. -->
+           data; this one is only ever offered when there is nothing to replace.
+
+           2026-09-14: a plain native <select>, not a mat-select, to match this whole banner's
+           own existing plain-HTML style (the two other places this same action is offered are
+           full Material pages and get a mat-select instead - see mission-advanced-options and
+           rangers.component). Defaults to Vashon (SampleDataService.SAMPLE_SCENARIOS' own
+           order). -->
       @if (canLoadDemoData()) {
+      <label class="entry-welcome__scenario-label">
+        Scenario:
+        <select class="entry-welcome__scenario" [value]="selectedScenario()"
+          (change)="selectedScenario.set($any($event.target).value)"
+          title="Choose which demonstration mission to load">
+          @for (s of sampleScenarios; track s.id) {
+          <option [value]="s.id">{{ s.label }}</option>
+          }
+        </select>
+      </label>
       <button type="button" class="entry-welcome__demo" (click)="onLoadDemoData()">
         Load Demo Data
       </button>

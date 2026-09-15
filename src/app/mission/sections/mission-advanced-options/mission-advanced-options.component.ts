@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core'
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, signal } from '@angular/core'
 
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import {
   BackupService, LogService, SampleDataService, StoragePersistenceService
 } from '../../../shared/services/'
+// Direct path, not the barrel above - see the note in rangers.component.ts.
+import { SAMPLE_SCENARIOS, SampleScenarioId } from '../../../shared/services/sample-data.service'
 
 /**
  * Data safety (Storage Protection, Mission Backup) and the page's Danger Zone (reset
@@ -109,21 +111,33 @@ export class MissionAdvancedOptionsComponent {
       })
   }
 
+  /** Scenario picker for "Load sample mission" below - see SAMPLE_SCENARIOS' own comment. */
+  readonly sampleScenarios = SAMPLE_SCENARIOS
+  selectedScenario = signal<SampleScenarioId>('vashon')
+
+  /** One-line description of whichever scenario is currently selected in the picker above. */
+  selectedScenarioHint(): string {
+    return this.sampleScenarios.find(s => s.id === this.selectedScenario())?.hint ?? ''
+  }
+
   /**
-   * Loads the built-in demonstration mission. Destructive - replaces rangers and
-   * field reports - so it confirms first, matching onImportFileSelected().
+   * Loads the built-in demonstration mission. Destructive - replaces rangers, field reports,
+   * and Locations - so it confirms first, matching onImportFileSelected().
    */
-  onBtnLoadSampleData() {
-    if (!confirm(`Load the sample mission?\n\n`
-      + `This REPLACES all rangers and field reports currently on this device with `
+  async onBtnLoadSampleData(): Promise<void> {
+    const scenario = this.selectedScenario()
+    const label = this.sampleScenarios.find(s => s.id === scenario)?.label ?? scenario
+
+    if (!confirm(`Load the "${label}" sample mission?\n\n`
+      + `This REPLACES all rangers, field reports and locations currently on this device with `
       + `demonstration data, and renames the mission to make that obvious.\n\n`
       + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
       this.log.verbose('onBtnLoadSampleData: user cancelled.', this.id)
       return
     }
 
-    this.sampleDataService.loadSampleMission()
-    this.log.warn('Loaded the sample mission (demo data).', this.id)
+    await this.sampleDataService.loadSampleMission(scenario)
+    this.log.warn(`Loaded the sample mission (demo data): ${scenario}.`, this.id)
     alert('Sample mission loaded. Reloading to refresh every screen with the new data...')
     window.location.reload()
   }

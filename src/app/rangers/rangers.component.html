@@ -77,6 +77,17 @@
           <mat-icon>science</mat-icon>
           Load sample mission
         </button>
+
+        <!-- 2026-09-14: four ready-made scenarios instead of one fixed one - Vashon Island
+             stays the default. See SampleDataService.SAMPLE_SCENARIOS' own comment. -->
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rangers__sample-scenario">
+          <mat-label>Demo scenario</mat-label>
+          <mat-select [value]="selectedScenario()" (selectionChange)="selectedScenario.set($event.value)">
+            @for (s of sampleScenarios; track s.id) {
+            <mat-option [value]="s.id">{{ s.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
     </div>
     }
