@@ -1,5 +1,10 @@
 import { GeoJSONSource, Map as MaplibreMap, MapLayerMouseEvent, MapMouseEvent, Marker, Popup } from 'maplibre-gl'
 import type { FeatureCollection, Point } from 'geojson'
+// P1-5 (offline map coverage scoping, 2026-09-14): validating a scribe-picked .pmtiles file
+// needs the SAME 'pmtiles' package map-style.ts already imports for the bundled/custom
+// sources - no new dependency, and this file is already the lazy MapLibre-only chunk (E-64/
+// E-115 bundle discipline), so importing it here doesn't put it anywhere it wasn't already.
+import { FileSource, PMTiles, type Header } from 'pmtiles'
 import { Subscription } from 'rxjs'
 
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common'
@@ -33,7 +38,7 @@ import { rangerColorFor, evidenceMarkerSvg } from '../shared/mapping/ranger-mark
 import { locationMarkerSvg } from '../shared/mapping/location-marker'
 import {
   RadioLogType, RadioLogService, RadioLogEntryType, LogService, MissionLocationService,
-  MissionLocationType, MissionService, MissionType, CustomPmtilesService
+  MissionLocationType, MissionService, MissionType, CustomPmtilesService, OfflineBasemapService
 } from '../shared/services'
 // 2026-09-02: imported directly, not via the '../shared' barrel - that barrel also
 // re-exports ranger-icon.ts's Leaflet-typed functions (rangerIconFor/evidenceIconFor), and
@@ -45,6 +50,15 @@ import { formatReportTime } from '../shared/mapping/report-time'
 import { LocationDialogComponent } from './location-dialog/location-dialog.component'
 
 const REPORTS_SOURCE_ID = 'field-reports'
+
+// Small local helper, deliberately not imported from mapLeaflet.component.ts's own copy -
+// that file eagerly imports 'leaflet', and this component is its own separate lazy chunk
+// (E-64/E-115 bundle discipline) that must never pull Leaflet in just to format a byte count.
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 /**
  * MapLibre + PMTiles full-page map. A sibling to LmapComponent (Leaflet), not a
@@ -153,6 +167,13 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly retryDebounceTimersByMap = new Map<MaplibreMap, ReturnType<typeof setTimeout>>()
   private static readonly retryDebounceMs = 300
 
+  // P1-5: the active custom file's own header bbox, read once in initMaps() - lets the
+  // 'load' handler fly there if the map's initial center (the mission's own default lat/lng)
+  // falls outside it, instead of silently sitting on the bundled archive's own gray
+  // background the way it did before (a tester loading e.g. Manchester used to land on
+  // Vashon with nothing rendered until they manually panned/zoomed away).
+  private customArchiveBounds?: [minLon: number, minLat: number, maxLon: number, maxLat: number]
+
   constructor(
     private missionService: MissionService,
     private radioLogService: RadioLogService,
@@ -160,6 +181,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     private dialog: MatDialog,
     private log: LogService,
     public customPmtiles: CustomPmtilesService,
+    private offlineBasemap: OfflineBasemapService,
     @Inject(DOCUMENT) private document: Document
   ) {
     registerPmtilesProtocol()
@@ -210,6 +232,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async initMaps(): Promise<void> {
     await this.customPmtiles.whenReady()
+    await this.loadCustomArchiveBounds()
 
     this.map = new MaplibreMap({
       container: this.mapContainer.nativeElement,
@@ -256,6 +279,11 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       this.refreshLocationMarkers()
       this.refreshEvidenceMarkers()
       this.fitToBounds()
+      // P1-5: only takes over when fitToBounds() above left the camera where it started (no
+      // reports yet to fit to) AND that starting point isn't even inside the custom
+      // archive's own coverage - a scribe with existing reports inside their own loaded
+      // area already gets a sensible view from fitToBounds() alone.
+      this.flyToCustomArchiveIfOutsideView()
       // Not called here directly - see warmBundledPmtilesCache()'s own doc comment for why
       // firing it inside this same handler reopens exactly the race it was written to close.
       this.map.once('idle', () => this.warmBundledPmtilesCache())
@@ -348,6 +376,14 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
    * reports source, cluster state, hillshade layer and every marker would all need
    * re-adding in the right order; starting fresh from ngAfterViewInit() is far less
    * error-prone than reproducing that sequence a second time in a live-swap path).
+   *
+   * P1-5 (2026-09-14): used to store whatever was picked with no validation at all - a file
+   * that wasn't really a PMTiles archive stored fine and only failed later, silently, as a
+   * blank map. `PMTiles.getHeader()` already validates the real spec magic number (a 2-byte
+   * "PM" signature at offset 0 - `bytesToHeader()`'s own source, not the 7-byte ASCII string
+   * the initial scoping guess assumed) and throws a real error for anything else, so
+   * validation is "try to read the header, reject on failure" rather than a second,
+   * hand-rolled check that could disagree with the library's own parser.
    */
   async onCustomPmtilesFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement
@@ -358,17 +394,55 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       return
     }
 
+    let header: Header
+    try {
+      header = await new PMTiles(new FileSource(file)).getHeader()
+    } catch (err) {
+      this.log.warn(`onCustomPmtilesFileSelected(): rejected "${file.name}": ${err}`, 'MapLibreComponent')
+      alert(
+        `"${file.name}" doesn't look like a real PMTiles archive`
+        + `${err instanceof Error ? ` (${err.message})` : ''}.\n\n`
+        + `Nothing was loaded - the map still shows what it showed before.`
+      )
+      return
+    }
+
+    const boundsText = `${header.minLat.toFixed(2)}, ${header.minLon.toFixed(2)} to `
+      + `${header.maxLat.toFixed(2)}, ${header.maxLon.toFixed(2)}`
+    const storageWarning = await this.storageHeadroomWarning(file.size)
+
     if (!confirm(
-      `Use "${file.name}" as the offline map instead of the bundled Vashon extract?\n\n`
-      + `This replaces the map on this device until you clear it. The file itself is not `
-      + `validated here - if it isn't a real PMTiles archive, the map will fail to render `
-      + `and you'll need to clear it to get the bundled map back.\n\n`
+      `Use "${file.name}" (${formatBytes(file.size)}, zoom ${header.minZoom}–${header.maxZoom}, `
+      + `covers ${boundsText}) as the offline map instead of the current one?\n\n`
+      + `This replaces the map on this device until you clear it.${storageWarning}\n\n`
       + `Reloading so every map view picks it up...`)) {
       return
     }
 
     await this.customPmtiles.setFile(file)
     window.location.reload()
+  }
+
+  /** P1-5(iii): a cheap guard `navigator.storage.estimate()` makes possible - warns rather
+   *  than blocks, since the estimate is only ever approximate and a scribe with a real need
+   *  should still be able to proceed. Returns an empty string (no warning) when the API is
+   *  unavailable or the file comfortably fits. */
+  private async storageHeadroomWarning(fileBytes: number): Promise<string> {
+    if (!navigator.storage?.estimate) {
+      return ''
+    }
+    try {
+      const { usage = 0, quota = 0 } = await navigator.storage.estimate()
+      const remaining = quota - usage
+      if (quota > 0 && fileBytes > remaining * 0.8) {
+        return `\n\nWarning: this file is ${formatBytes(fileBytes)}, and this device has only `
+          + `about ${formatBytes(Math.max(remaining, 0))} of storage headroom left. Loading it `
+          + `may fail, or push other data out.`
+      }
+    } catch (err) {
+      this.log.warn(`storageHeadroomWarning(): navigator.storage.estimate() failed: ${err}`, 'MapLibreComponent')
+    }
+    return ''
   }
 
   async onBtnClearCustomPmtiles(): Promise<void> {
@@ -421,10 +495,18 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
    * `/map` and back, or flip engines twice): without it, this fetch's own response could sit
    * in the browser's ambient HTTP cache and interfere with a later instance's pmtiles-js Range
    * fetch - now a network-level, not ngsw-level, concern, but a real one either way.
+   *
+   * 2026-09-14 (offline map coverage scoping, Q6 YES addendum): the actual fetch-and-cache
+   * work moved to `OfflineBasemapService.warm()` - the bundled archive nearly 10x'd in size
+   * (Vashon-only 1.7 MB -> merged world+Vashon ~16 MB), so "one plain fetch, no retry, no
+   * stall handling, re-downloads every visit" stopped being good enough. Everything on THIS
+   * call site is unchanged: still fired from 'idle' for the exact race-avoidance reasons
+   * above, and `userInitiated: true` because reaching this line already IS "the scribe opened
+   * the alternative map" - see that service's own `warm()` doc comment for why that matters
+   * (it's the documented exception to skipping automatic warming on a Data Saver connection).
    */
   private warmBundledPmtilesCache(): void {
-    fetch(DEFAULT_PMTILES_URL, { cache: 'no-store' })
-      .then(res => res.ok ? caches.open('rangertrak-pmtiles-warm').then(c => c.put(DEFAULT_PMTILES_URL, res)) : undefined)
+    this.offlineBasemap.warm({ userInitiated: true })
       .catch(err => this.log.warn(`Failed to warm bundled PMTiles cache entry: ${err}`, 'MapLibreComponent'))
   }
 
@@ -612,6 +694,42 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     const b = this.radioLog.bounds
     // MapLibre wants [[west, south], [east, north]] as [lng, lat] pairs
     this.map.fitBounds([[b.west, b.south], [b.east, b.north]], { padding: 40 })
+  }
+
+  /** P1-5: reads the currently-active custom file's own header once at map-init time, purely
+   *  to know its bbox for flyToCustomArchiveIfOutsideView() below - onCustomPmtilesFileSelected()
+   *  already validated the archive before it was ever stored, so a failure here (a device
+   *  that had a file stored before this hardening landed, say) just means no fly-to, not a
+   *  broken map. */
+  private async loadCustomArchiveBounds(): Promise<void> {
+    const file = this.customPmtiles.activeFile()
+    if (!file) {
+      this.customArchiveBounds = undefined
+      return
+    }
+    try {
+      const header = await new PMTiles(new FileSource(file)).getHeader()
+      this.customArchiveBounds = [header.minLon, header.minLat, header.maxLon, header.maxLat]
+    } catch (err) {
+      this.log.warn(`loadCustomArchiveBounds(): could not read stored custom file's header: ${err}`, 'MapLibreComponent')
+      this.customArchiveBounds = undefined
+    }
+  }
+
+  /** P1-5(iv): if a custom file is active and the map's current center sits outside its own
+   *  bbox, fly there. Only reachable via the 'load' handler right after fitToBounds() already
+   *  had first claim on the camera - see that call site's own comment. */
+  private flyToCustomArchiveIfOutsideView(): void {
+    if (!this.customArchiveBounds) {
+      return
+    }
+    const [minLon, minLat, maxLon, maxLat] = this.customArchiveBounds
+    const center = this.map.getCenter()
+    const inside = center.lng >= minLon && center.lng <= maxLon && center.lat >= minLat && center.lat <= maxLat
+    if (inside) {
+      return
+    }
+    this.map.fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding: 40 })
   }
 
   onSwitchSelectedRadioLog(): void {
