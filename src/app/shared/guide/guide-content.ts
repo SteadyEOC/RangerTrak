@@ -251,7 +251,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Printing',
-            text: 'Print as ICS-213 fills FEMA’s own real ICS-213 form and downloads it as a PDF, ready to hand off or file. Subject and Approved by are left blank on the printed form - Entry does not collect either today.'
+            text: 'Print as ICS-213 fills FEMA’s own real ICS-213 form and downloads it as a PDF, ready to hand off or file. Subject comes from the report\'s own Subject field, and Approved by is the operator who filed the report. The Reply section is left blank for the recipient to fill in.'
           }
         ]
       },

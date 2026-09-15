@@ -110,6 +110,9 @@ from it.
 - **Pull requests** — including small edits made entirely in GitHub's browser editor; no
   local setup needed for a documentation fix.
 - **Email** — <RangerTeam@eoc.online>.
+- **Support** — RangerTrak is free and stays free. If it helps your team, you can
+  [buy the developer a coffee](https://buymeacoffee.com/JohnCornelison). That goes to John
+  Cornelison personally, not a charity, so it isn't tax-deductible.
 
 ## 📜 License
 
