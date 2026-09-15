@@ -212,6 +212,22 @@ mat-slide-toggle {
   a:hover {
     background: var(--rt-surface-2);
   }
+
+  // 2026-09-15, e2e "/map does not widen the page past the device" (390px phone): the
+  // estimate span appended inside the save button (refreshEstimatedAreaInfo()) became a ~90-
+  // character sentence when OpenStreetMap is the active base ("switch to OpenTopoMap to save
+  // for offline use - ..."). With the button's `white-space: nowrap` and `width: fit-content`,
+  // that one unbreakable line dragged the whole page wider than the phone. The button label
+  // stays on one line; the info text wraps, and the button can never outgrow its column.
+  a {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  a .offline-area-info {
+    white-space: normal;
+    min-width  : 0;
+  }
 }
 
 // Maintainer, 2026-08-24: the whole control (buttons + these info lines) was re-parented
