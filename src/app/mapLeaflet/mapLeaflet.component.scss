@@ -244,6 +244,16 @@ mat-slide-toggle {
   color      : var(--rt-ink-2);
 }
 
+// P1-4 (offline map coverage scoping, 2026-09-14): OSM's tile usage policy forbids bulk
+// offline saving, so the save button is disabled outright (not just refused on click) while
+// OSM is the active base layer - see refreshEstimatedAreaInfo()'s own comment. pointer-events
+// stops a real click reaching leaflet.offline's own handler at all; confirmSaveTiles() is the
+// defense-in-depth backstop for anything that isn't a plain pointer click (e.g. keyboard).
+:host ::ng-deep a.savetiles.rt-savetiles-disabled {
+  pointer-events: none;
+  opacity       : 0.55;
+}
+
 // https://www.w3.org/TR/CSS21/ui.html#propdef-cursor
 
 #Lmap-status {

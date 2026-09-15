@@ -12,6 +12,7 @@ import 'leaflet.markercluster'
 import {
   getStorageInfo, getStoredTilesAsJson, getTilePoints, savetiles, tileLayerOffline
 } from 'leaflet.offline' // https://github.com/allartk/leaflet.offline
+import type { SaveStatus } from 'leaflet.offline'
 //import { markerClusterGroup } from 'leaflet'
 import * as L from 'leaflet'
 import { removeLeafletMap } from '../shared/mapping/leaflet-teardown'
@@ -67,6 +68,35 @@ L.Marker.prototype.options.icon = iconDefault;
 // number falls back to this - a typical 256px OSM PNG raster tile - until at least one real
 // tile has been saved, at which point the average of what's actually stored is used instead.
 const FALLBACK_TILE_BYTES = 15 * 1024
+
+// Offline map coverage scoping (2026-09-14, §7 Q7 - no answer from John, so this ships the
+// doc's own recommended default as one named constant, easy to change later without hunting
+// through _saveTiles()'s call site): a scribe who saves "the current zoom" alone gets blank
+// tiles the moment they zoom in one level offline (leaflet.offline's savetiles control saves
+// ONLY `[map.getZoom()]` when neither `zoomlevels` nor `saveWhatYouSee` is passed - confirmed
+// reading ControlSaveTiles.ts's own `_calculateTiles()`). Saving a couple of deeper levels
+// too costs roughly 4x/8x the tiles (each level ~4x the last) but survives a scribe zooming
+// in to check an address once offline.
+const LEAFLET_SAVE_EXTRA_ZOOM_LEVELS = 2
+
+// Same decision: refuse a save above this many tiles rather than silently hammering
+// OpenTopoMap's volunteer-run tile servers (whose own usage policy asks that mass downloads
+// not overload it) - see the confirm() callback passed to savetiles() below. A scribe who
+// hits this is told to zoom in and save a smaller area instead.
+const LEAFLET_SAVE_TILE_CAP = 5000
+
+/** The zoom levels a "Save this area" press should cover: the level the scribe is looking
+ *  at now, plus up to LEAFLET_SAVE_EXTRA_ZOOM_LEVELS deeper ones, never past the active base
+ *  layer's own maxZoom (OpenTopoMap tops out at 17; asking past a layer's real tile-
+ *  generation limit just returns blank tiles, so there is nothing to gain saving them). */
+function zoomLevelsForSave(currentZoom: number, layerMaxZoom: number): number[] {
+  const top = Math.min(currentZoom + LEAFLET_SAVE_EXTRA_ZOOM_LEVELS, layerMaxZoom)
+  const levels: number[] = []
+  for (let zoom = currentZoom; zoom <= top; zoom++) {
+    levels.push(zoom)
+  }
+  return levels
+}
 
 // E-item, raised 2026-08-27 comparing against a real IMT wildfire ops map: a mile grid
 // overlay, same as that map's own township/range-style reference lines. A UTM-based grid,
@@ -278,6 +308,16 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private refreshEstimatedAreaInfo?: () => void
   private refreshSavedTilesOverlay?: () => void
   private rebindOfflineAreaInfo?: (newTiles: ReturnType<typeof tileLayerOffline>) => void
+
+  // P1-2/P1-3/P1-4 (offline map coverage scoping, 2026-09-14): the human-readable "(~N
+  // tiles, ~M MB)" text refreshEstimatedAreaInfo() keeps current, reused by the confirm()
+  // dialog below rather than recomputed there (the button's own visible text and the
+  // confirm dialog's text should never be able to say two different things). Whether OSM is
+  // the currently active base layer - the confirm() callback checks this too, as defense in
+  // depth against the CSS-only disable in case a keyboard Enter ever reaches a
+  // pointer-events:none control.
+  private saveEstimateText = ''
+  private osmBaseActive = false
 
   ngAfterViewInit() {
     this.afterViewInitTimer = setTimeout(() => {
@@ -509,14 +549,27 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // layer actually loads by default (see openTopoTiles.addTo() above). Switching base
     // layers later rebinds this automatically via the 'baselayerchange' listener below
     // (F29-6) - that fix only fires on an actual switch, not on this initial construction.
+    // maxZoom/zoomlevels below are placeholders, immediately overwritten by
+    // wireOfflineAreaInfo()'s first refreshEstimatedAreaInfo() run before any click is
+    // possible - real values always come from the CURRENTLY active layer (P1-2: a
+    // hard-coded 19 was wrong for OpenTopoMap, whose own tile generation stops at 17).
+    const openTopoMaxZoom = openTopoTiles.options.maxZoom ?? 17
     const saveTilesControl = savetiles(openTopoTiles, {
       saveText: '💾 Save this area for offline use',
       rmText: '🗑️ Remove saved tiles',
-      maxZoom: 19,
-      parallel: 3
+      maxZoom: openTopoMaxZoom,
+      zoomlevels: zoomLevelsForSave(this.lMap.getZoom(), openTopoMaxZoom),
+      parallel: 3,
+      // P1-3: refuse an oversized save outright, and otherwise ask before hammering
+      // OpenTopoMap's servers with however many tiles the current view/zoom-depth needs.
+      confirm: (status: SaveStatus, successCallback: Function) => this.confirmSaveTiles(status, successCallback),
     }).addTo(this.lMap)
     this.offlineTileLayers = [tiles, openTopoTiles]
-    this.wireOfflineAreaInfo(tiles, saveTilesControl, savedTilesOverlay)
+    // openTopoTiles (not tiles/OSM) - it's the layer actually .addTo()'d above and the one
+    // saveTilesControl is actually bound to at construction; wireOfflineAreaInfo's info panel
+    // needs to start tracking the SAME layer or its zoomlevels/maxZoom (and the OSM-disabled
+    // check) would be wrong until the first baselayerchange event.
+    this.wireOfflineAreaInfo(openTopoTiles, tiles, saveTilesControl, savedTilesOverlay)
 
     // F29-6 (2026-08-29): "Save this area for offline use" used to be permanently bound to
     // OSM (`tiles`), regardless of which base layer the switcher above actually had active -
@@ -645,9 +698,44 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * `activeTiles`/`urlTemplate` are now `let`s, and `rebindOfflineAreaInfo()` (stored as a
    * component field so the `baselayerchange` handler above can reach it) reassigns them and
    * re-runs every refresh when the base layer switcher picks a different tileLayerOffline.
+   *
+   * P1-2/P1-4 (2026-09-14): also the single place that keeps `control.options.zoomlevels`/
+   * `maxZoom` matched to whichever layer is now active, and that disables the save button
+   * outright while `osmLayer` (OSM's own tile policy forbids bulk offline saving; OpenTopoMap
+   * has no such restriction) is the active one - see refreshEstimatedAreaInfo() below.
    */
+  /**
+   * P1-3/P1-4: the `confirm` option passed to `savetiles()` in initMainMap() - leaflet.offline
+   * calls this with the status it already computed from whatever `options.zoomlevels`/
+   * `maxZoom` refreshEstimatedAreaInfo() last set, instead of downloading immediately.
+   */
+  private confirmSaveTiles(status: SaveStatus, successCallback: Function): void {
+    if (this.osmBaseActive) {
+      // Defense in depth - the button is already CSS-disabled (rt-savetiles-disabled) and
+      // its text already explains why for this case; this only matters if a click somehow
+      // still reaches here (e.g. a keyboard Enter on a focused-but-disabled control).
+      alert('Switch to OpenTopoMap to save for offline use - OpenStreetMap\'s servers don\'t allow it.')
+      return
+    }
+    if (status.lengthToBeSaved > LEAFLET_SAVE_TILE_CAP) {
+      alert(
+        `That area would need ${status.lengthToBeSaved.toLocaleString()} tiles - above the `
+        + `${LEAFLET_SAVE_TILE_CAP.toLocaleString()}-tile limit per save. Zoom in to a `
+        + `smaller area, or save it in a few smaller pieces, and try again.`
+      )
+      return
+    }
+    const estimate = this.saveEstimateText || `${status.lengthToBeSaved.toLocaleString()} tiles`
+    if (confirm(`Save this area for offline use (${estimate})?`)) {
+      successCallback()
+    }
+  }
+
   private wireOfflineAreaInfo(
-    tiles: ReturnType<typeof tileLayerOffline>, control: L.Control, savedTilesOverlay: L.GeoJSON
+    initialLayer: ReturnType<typeof tileLayerOffline>,
+    osmLayer: ReturnType<typeof tileLayerOffline>,
+    control: ReturnType<typeof savetiles>,
+    savedTilesOverlay: L.GeoJSON
   ) {
     const container = control.getContainer()
     if (!container) {
@@ -660,7 +748,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       this.log.error('wireOfflineAreaInfo(): savetiles/rmtiles buttons not found in container', this.id)
       return
     }
-    let activeTiles = tiles
+    let activeTiles = initialLayer
     let urlTemplate = (activeTiles as any)._url as string
 
     const savedInfo = this.document.createElement('span')
@@ -705,23 +793,49 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     }
 
     this.refreshEstimatedAreaInfo = () => {
-      // Mirrors ControlSaveTiles' own _calculateTiles() for the options actually passed
-      // above (no saveWhatYouSee, no custom zoomlevels): a single zoom level, the current
-      // one, over the current visible bounds - not a private API, just not exported, so
-      // replicated here from its public building blocks (getTilePoints, map.project()).
+      // P1-4: OSM's tile usage policy explicitly forbids bulk/offline downloading
+      // ("Download city/country for offline use" and "Save area for later" are its own
+      // named examples of what's prohibited) - OpenTopoMap's policy has no such rule (just
+      // "don't overly burden the server", which the tile cap in confirmSaveTiles() below
+      // covers). Disabling here, not just at click time, means a scribe never gets as far as
+      // pressing a button that was always going to refuse.
+      this.osmBaseActive = activeTiles === osmLayer
+      saveButton.classList.toggle('rt-savetiles-disabled', this.osmBaseActive)
+      saveButton.setAttribute('aria-disabled', String(this.osmBaseActive))
+      if (this.osmBaseActive) {
+        estimateInfo.textContent =
+          '(switch to OpenTopoMap to save for offline use - OpenStreetMap\'s servers don\'t allow it)'
+        this.saveEstimateText = ''
+        return
+      }
+
+      // P1-2: the active layer's own maxZoom (OpenTopoMap 17, OSM 19) - a hard-coded 19 used
+      // to ask OpenTopoMap for levels past its own tile-generation limit and get nothing.
+      const layerMaxZoom = activeTiles.options.maxZoom ?? this.lMap.getZoom()
       const zoom = this.lMap.getZoom()
+      const zoomLevels = zoomLevelsForSave(zoom, layerMaxZoom)
+      control.options.zoomlevels = zoomLevels
+      control.options.maxZoom = layerMaxZoom
+
+      // Mirrors ControlSaveTiles' own _calculateTiles() for the SAME options now set above
+      // (not a private API, just not exported, so replicated here from its public building
+      // blocks) - summed across every level Save will actually fetch, not just the current
+      // one, so the number on the button matches what pressing it really does (P1-2).
       const bounds = this.lMap.getBounds()
-      const area = L.bounds(
-        this.lMap.project(bounds.getNorthWest(), zoom),
-        this.lMap.project(bounds.getSouthEast(), zoom)
-      )
-      const tileCount = getTilePoints(area, activeTiles.getTileSize()).length
+      const tileCount = zoomLevels.reduce((sum, levelZoom) => {
+        const area = L.bounds(
+          this.lMap.project(bounds.getNorthWest(), levelZoom),
+          this.lMap.project(bounds.getSouthEast(), levelZoom)
+        )
+        return sum + getTilePoints(area, activeTiles.getTileSize()).length
+      }, 0)
 
       getStorageInfo(urlTemplate).then((stored) => {
         const avgBytes = stored.length > 0
           ? stored.reduce((sum, t) => sum + (t.blob?.size ?? 0), 0) / stored.length
           : FALLBACK_TILE_BYTES
-        estimateInfo.textContent = `(~${tileCount} tiles, ~${formatBytes(tileCount * avgBytes)})`
+        this.saveEstimateText = `~${tileCount} tiles (zoom ${zoomLevels[0]}–${zoomLevels[zoomLevels.length - 1]}), ~${formatBytes(tileCount * avgBytes)}`
+        estimateInfo.textContent = `(${this.saveEstimateText})`
       }).catch((err) => this.log.error(`refreshEstimatedAreaInfo(): ${err}`, this.id))
     }
 
