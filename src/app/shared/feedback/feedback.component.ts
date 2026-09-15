@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs'
 import { LogService } from '../services'
 import { MATERIAL_IMPORTS } from '../../material-imports'
 
-const GITHUB_ISSUE_URL = 'https://github.com/EOCOnline/rangertrak/issues/new'
+const GITHUB_ISSUE_URL = 'https://github.com/SteadyEOC/RangerTrak/issues/new'
 
 /**
  * ADR D-15: in-app feedback. Submits to the Worker's `POST /api/feedback` (worker/
@@ -18,9 +18,8 @@ const GITHUB_ISSUE_URL = 'https://github.com/EOCOnline/rangertrak/issues/new'
  * On failure (network error, or the Worker's own 503/502 - e.g. the GITHUB_FEEDBACK_TOKEN
  * secret missing) this falls back to a direct link into GitHub's own "new issue" form,
  * pre-filled with whatever was typed via query params, so nothing the user wrote is lost.
- * No mailto fallback: D-15 mentions one, but there is no real support address recorded
- * anywhere in this app to route it to, and the direct GitHub link already covers "reach us
- * on GitHub two ways."
+ * No mailto fallback here: RangerTrak@steadyeoc.com is offered elsewhere (Help > About/
+ * Feedback), and the direct GitHub link already covers "reach us on GitHub two ways."
  *
  * Deliberately never reads mission data (settings, rangers, field reports) - the message
  * and optional contact field are the only things sent, both typed by hand.

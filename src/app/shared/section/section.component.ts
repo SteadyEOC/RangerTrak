@@ -16,7 +16,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, Input, ViewChild } from
  *
  * Usage - rich heading (links, interpolation), projected instead:
  *    <rangertrak-section>
- *      <span rtSummary>&copy;{{today | date: 'y'}} <a href="...">eoc.online</a></span>
+ *      <span rtSummary>&copy;{{today | date: 'y'}} <a href="...">SteadyEOC</a></span>
  *      ...content...
  *    </rangertrak-section>
  *

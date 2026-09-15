@@ -50,11 +50,11 @@ describe('FeedbackComponent', () => {
     // Explicit E-15/D-15 privacy check: only these two hand-typed fields are ever sent.
     expect(Object.keys(req.request.body)).toEqual(['message', 'contact']);
 
-    req.flush({ url: 'https://github.com/EOCOnline/rangertrak/issues/7' });
+    req.flush({ url: 'https://github.com/SteadyEOC/RangerTrak/issues/7' });
     await submitPromise;
 
     expect(component.status()).toBe('success');
-    expect(component.successUrl()).toBe('https://github.com/EOCOnline/rangertrak/issues/7');
+    expect(component.successUrl()).toBe('https://github.com/SteadyEOC/RangerTrak/issues/7');
   });
 
   it('falls back to a direct GitHub link on failure, carrying the typed message over', async () => {
@@ -67,7 +67,7 @@ describe('FeedbackComponent', () => {
 
     expect(component.status()).toBe('error');
     const [base, query] = component.fallbackUrl.split('?');
-    expect(base).toBe('https://github.com/EOCOnline/rangertrak/issues/new');
+    expect(base).toBe('https://github.com/SteadyEOC/RangerTrak/issues/new');
     expect(new URLSearchParams(query).get('body')).toBe('Reset button is too small');
   });
 
@@ -76,7 +76,7 @@ describe('FeedbackComponent', () => {
     component.contact = 'me@example.com';
 
     const submitPromise = component.onSubmit();
-    httpMock.expectOne('/api/feedback').flush({ url: 'https://github.com/EOCOnline/rangertrak/issues/1' });
+    httpMock.expectOne('/api/feedback').flush({ url: 'https://github.com/SteadyEOC/RangerTrak/issues/1' });
     await submitPromise;
 
     component.reset();
