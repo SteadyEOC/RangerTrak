@@ -148,7 +148,7 @@ function forbidden() {
  * fails closed (503), which the frontend treats the same as "unreachable" and falls back
  * to a direct GitHub issue link - see feedback.component.ts.
  */
-const GITHUB_REPO = 'EOCOnline/rangertrak'
+const GITHUB_REPO = 'SteadyEOC/RangerTrak'
 const FEEDBACK_MESSAGE_MAX = 4000
 const FEEDBACK_CONTACT_MAX = 200
 // Comfortably above the max valid payload (message + contact, worst-case 4-byte UTF-8

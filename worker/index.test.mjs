@@ -55,7 +55,7 @@ test('creates a labeled GitHub issue and returns its URL on success', async (t) 
   let capturedInit
   globalThis.fetch = async (url, init) => {
     capturedInit = { url, ...init }
-    return new Response(JSON.stringify({ html_url: 'https://github.com/EOCOnline/rangertrak/issues/42' }), { status: 201 })
+    return new Response(JSON.stringify({ html_url: 'https://github.com/SteadyEOC/RangerTrak/issues/42' }), { status: 201 })
   }
   t.after(() => { globalThis.fetch = originalFetch })
 
@@ -65,9 +65,9 @@ test('creates a labeled GitHub issue and returns its URL on success', async (t) 
   )
   assert.equal(res.status, 201)
   const json = await res.json()
-  assert.equal(json.url, 'https://github.com/EOCOnline/rangertrak/issues/42')
+  assert.equal(json.url, 'https://github.com/SteadyEOC/RangerTrak/issues/42')
 
-  assert.equal(capturedInit.url, 'https://api.github.com/repos/EOCOnline/rangertrak/issues')
+  assert.equal(capturedInit.url, 'https://api.github.com/repos/SteadyEOC/RangerTrak/issues')
   assert.equal(capturedInit.headers['Authorization'], 'Bearer secret-token')
   const sentBody = JSON.parse(capturedInit.body)
   assert.equal(sentBody.title, 'Feedback: The map is upside down')
@@ -223,7 +223,7 @@ test('an allowed rate-limit check keys on CF-Connecting-IP and proceeds normally
 
 test('a missing/misconfigured rate limiter degrades to "no limit", not a broken request', async (t) => {
   const originalFetch = globalThis.fetch
-  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/EOCOnline/rangertrak/issues/1' }), { status: 201 })
+  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/SteadyEOC/RangerTrak/issues/1' }), { status: 201 })
   t.after(() => { globalThis.fetch = originalFetch })
 
   const res = await worker.fetch(req({ message: 'hello' }), { GITHUB_FEEDBACK_TOKEN: 'x', FEEDBACK_LIMITER: {} })
@@ -232,7 +232,7 @@ test('a missing/misconfigured rate limiter degrades to "no limit", not a broken 
 
 test('a rate limiter that throws degrades to "no limit" rather than 500ing', async (t) => {
   const originalFetch = globalThis.fetch
-  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/EOCOnline/rangertrak/issues/1' }), { status: 201 })
+  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/SteadyEOC/RangerTrak/issues/1' }), { status: 201 })
   t.after(() => { globalThis.fetch = originalFetch })
 
   const throwing = { limit: async () => { throw new Error('rate limiting service unreachable') } }
@@ -276,13 +276,13 @@ test('a filled honeypot field returns a normal-looking success without calling G
   )
   assert.equal(res.status, 201)
   const json = await res.json()
-  assert.match(json.url, /github\.com\/EOCOnline\/rangertrak/)
+  assert.match(json.url, /github\.com\/SteadyEOC\/RangerTrak/)
   assert.equal(called, false)
 })
 
 test('an empty/absent honeypot field does not change existing behaviour', async (t) => {
   const originalFetch = globalThis.fetch
-  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/EOCOnline/rangertrak/issues/1' }), { status: 201 })
+  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/SteadyEOC/RangerTrak/issues/1' }), { status: 201 })
   t.after(() => { globalThis.fetch = originalFetch })
 
   const res = await worker.fetch(req({ message: 'hello', website: '   ' }), { GITHUB_FEEDBACK_TOKEN: 'x' })
