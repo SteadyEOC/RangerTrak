@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnInit, Output, ChangeDetectionStrategy } from '@angular/core'
 import { RouterLink } from '@angular/router'
 
-import { MissionReadinessService } from '../services'
+import { MissionReadinessService, OfflineBasemapService } from '../services'
 
 /**
  * ADR D-32: the persistent readiness indicator, rendered once inside HeaderComponent so it
@@ -25,7 +25,7 @@ import { MissionReadinessService } from '../services'
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class MissionReadinessComponent implements OnInit {
-  constructor(public readiness: MissionReadinessService) { }
+  constructor(public readiness: MissionReadinessService, private offlineBasemap: OfflineBasemapService) { }
 
   ngOnInit(): void {
     // Re-checks the async signals (tiles saved, bundled map warmed, storage persisted) on
@@ -76,7 +76,9 @@ export class MissionReadinessComponent implements OnInit {
       line(r.rosterLoaded(), 'Real roster loaded'),
       line(r.opPeriodCurrent(), 'Operating period current'),
       line(r.offlineTilesSaved(), 'Offline map tiles saved (Leaflet)'),
-      line(r.bundledMapWarmed(), 'Alternative map warmed (MapLibre)'),
+      line(r.bundledMapWarmed(), this.offlineBasemap.downloadProgress() === null
+        ? 'Alternative map warmed (MapLibre)'
+        : `Downloading offline world map… ${this.offlineBasemap.downloadProgress()}%`),
       line(r.storagePersisted(), 'Storage protected from eviction'),
     ].join('\n')
   }

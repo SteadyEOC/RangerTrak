@@ -6,7 +6,8 @@ import { MatButtonModule } from '@angular/material/button'
 import { MatIconModule } from '@angular/material/icon'
 
 import {
-  ClockService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService
+  ClockService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService,
+  OfflineBasemapService
 } from '../services'
 import { Utility } from '../'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
@@ -42,6 +43,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   readonly guide = inject(GuideService)
   readonly readiness = inject(MissionReadinessService)
+  readonly offlineBasemap = inject(OfflineBasemapService)
 
   private id = 'Header component'
 
@@ -252,9 +254,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
       { ok: r.rosterLoaded(), label: 'Real roster loaded', route: '/rangers', fragment: 'rangersgrid' },
       { ok: r.opPeriodCurrent(), label: 'Operating period current', route: '/mission', fragment: 'readiness-mission-details' },
       { ok: r.offlineTilesSaved(), label: 'Offline map tiles saved (Leaflet)', route: '/map', fragment: 'readiness-offline-tiles' },
-      { ok: r.bundledMapWarmed(), label: 'Alternative map warmed (MapLibre)', route: '/map', fragment: 'readiness-map-engine-switch' },
+      { ok: r.bundledMapWarmed(), label: this.mapWarmedLabel(), route: '/map', fragment: 'readiness-map-engine-switch' },
       { ok: r.storagePersisted(), label: 'Storage protected from eviction', route: '/mission', fragment: 'readiness-storage-protection' },
     ]
+  }
+
+  /** 2026-09-14 (offline map coverage scoping, Q6 YES addendum): the merged world+Vashon
+   *  archive this row's "warmed" check now waits on is ~16 MB, not 1.7 MB - worth surfacing
+   *  progress rather than leaving the row reading "not ready yet" with no indication
+   *  anything is happening. `downloadProgress()` is null outside an active download, so this
+   *  falls back to the plain label everywhere except the moments a fetch is actually in
+   *  flight (see OfflineBasemapService.warm()). */
+  private mapWarmedLabel(): string {
+    const pct = this.offlineBasemap.downloadProgress()
+    return pct === null ? 'Alternative map warmed (MapLibre)' : `Downloading offline world map… ${pct}%`
   }
 
   // Raised live 2026-08-30: "do phone users need unique directions for navigation and

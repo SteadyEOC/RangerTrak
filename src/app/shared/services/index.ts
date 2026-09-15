@@ -18,6 +18,7 @@ export { ThemeService, ThemeMode } from "./theme.service"
 export { SkinService, Skin, SKINS } from "./skin.service"
 export { WelcomePanelService } from "./welcome-panel.service"
 export { FieldModeService } from "./field-mode.service"
+export { OfflineBasemapService } from "./offline-basemap.service"
 
 export {
   RadioLogEntryType, RadioLogType, RadioLogStatusType, RadioLogEntrySource,
