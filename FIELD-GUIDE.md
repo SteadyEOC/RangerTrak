@@ -20,7 +20,7 @@ server, no account, and no login — nothing you type is sent anywhere.
 | **Reports** | Every report so far, in a sortable, filterable table. Select rows here to focus the maps on just those reports. |
 | **Rangers** | Your roster — call signs, names, contact details, teams. |
 | **Map (Leaflet)** | Full-page map using standard online road maps. Best detail, anywhere in the world, but needs Internet. |
-| **Map (MapLibre+PMTiles)** | Full-page map using map data built into the app. Works with no Internet at all, but currently only covers Vashon Island in detail. |
+| **Map (MapLibre+PMTiles)** | Full-page map using map data built into the app. Works with no Internet at all: a low-detail world map everywhere, plus real street-level detail in the Vashon Island demo area (or wherever you load your own map file — see step 6 below). |
 | **Settings** | Mission name, operating period, default location, status labels and colours, backup and restore. |
 | **Log** | A running record of what the app did, including warnings and crashes. Export it when reporting a problem. |
 
@@ -138,13 +138,46 @@ not mid-mission.
 
 Both engines live on the one **Map** page now, switched with the toggle above the map.
 
-- With the default **Leaflet** map showing, navigate to your operating area at the zoom
-  levels you expect to use, and press **💾 Save this area for offline use**. This stores
-  those road map tiles on the device. Only the areas and zoom levels you actually save will
-  be available later.
-- Flip the switch to try the **Alternative map (MapLibre + PMTiles)** at least once. The bundled
-  map data is only stored on your device the first time you open it, so visiting it once
-  while connected is what makes it available later with no Internet.
+- With the default **Leaflet** map showing, switch its base layer to **OpenTopoMap**
+  (the contour map), navigate to your operating area at the zoom level you expect to use,
+  and press **💾 Save this area for offline use**. This stores those tiles — the level you
+  saved at, plus a couple of levels deeper — on the device. Only the areas and zoom levels
+  you actually save will be available later. (Saving is only offered on OpenTopoMap;
+  OpenStreetMap's own rules don't allow bulk offline downloads from its servers.)
+- Flip the switch to try the **Alternative map (MapLibre + PMTiles)** at least once. A
+  low-detail world map is built in and works everywhere with no setup; visiting this map
+  once while connected is what makes its own offline copy available later with no Internet.
+
+> ### For coordinators: make your own offline map file
+>
+> The Alternative map's built-in world view is low detail. If your operating area needs
+> real street-level detail beyond the Vashon Island demo, you can cut a small map file for
+> it yourself ahead of time, using a free tool — no account, no payment:
+>
+> 1. Download the free `pmtiles` command-line tool for your computer (Windows, Mac, or
+>    Linux) from its project page: `github.com/protomaps/go-pmtiles/releases`
+> 2. Pick the area you need as a bounding box — four numbers: west, south, east, north.
+>    RangerTrak's own map shows coordinates as you click around, or use a free site like
+>    `bboxfinder.com`.
+> 3. Run one command to cut that area out of a current worldwide map file, refreshed daily
+>    and free to use for this:
+>
+>    ```sh
+>    pmtiles extract https://build.protomaps.com/YYYYMMDD.pmtiles my-area.pmtiles --bbox=WEST,SOUTH,EAST,NORTH --maxzoom=14
+>    ```
+>
+>    Use a date from the last week, and your own bounding box. A typical county comes out
+>    to 10–100 MB and takes a few seconds. Try `--maxzoom=15` instead for a smaller, denser
+>    area if you want the sharpest possible detail.
+> 4. Get the resulting file onto the phone or tablet that will run RangerTrak — AirDrop, a
+>    cable, a cloud drive, whatever moves a file onto that device — then in RangerTrak go
+>    to the Map page, switch to the Alternative map, and press **Load a custom .pmtiles
+>    file…**.
+> 5. **On an iPhone or iPad, add RangerTrak to the Home Screen before loading the file.**
+>    Otherwise, iOS can quietly delete an app's stored data after about a week of the app
+>    not being opened — a real risk if you prepare a device days ahead of a mission.
+>
+> Map data from this tool carries the same OpenStreetMap attribution the app already shows.
 
 **7. Take a backup.**
 On **Settings**, press **Back up mission**. This writes a single file containing your
@@ -283,7 +316,7 @@ complete enough — addresses can be filled in afterwards.
 | Exporting and importing missions | ✅ Works |
 | Coordinate entry and conversion | ✅ Works |
 | **Map — Leaflet (the default engine)** | ⚠️ Only the areas you saved in advance |
-| **Map — Backup switch (MapLibre + PMTiles)** | ✅ Works — *if you opened it once while connected* |
+| **Map — Backup switch (MapLibre + PMTiles)** | ✅ Works everywhere at low detail; street-level detail *only where you loaded a map file, or the Vashon Island demo area* |
 | Address lookup (typing an address to get coordinates) | ❌ Needs Internet |
 | Reverse lookup (coordinates to a street address) | ❌ Needs Internet |
 
@@ -345,9 +378,10 @@ seeing what a busy mission looks like.
 
 - **Roster edits are not saved automatically.** Press **Save Rangers** on the Rangers page,
   or your changes are lost on reload.
-- **The Alternative map covers Vashon Island only.** Outside that area you get a plain
-  background with your report markers on it — correct positions, no streets. Broader
-  coverage is planned.
+- **The Alternative map's built-in detail covers Vashon Island only.** Everywhere else you
+  get a low-detail world map with your report markers on it — correct positions, no
+  streets — unless you load your own map file for that area (see "For coordinators: make
+  your own offline map file" above). Broader built-in coverage is planned.
 - **Report selection resets** when you reload the page or move between pages.
 
 If something looks wrong, check the **Log** page — it records what the app did and any

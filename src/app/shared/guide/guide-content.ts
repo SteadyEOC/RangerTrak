@@ -390,15 +390,27 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             heading: 'Working offline',
             bullets: [
               'Map areas you have never viewed or saved are blank when the network goes — save the area while you still have a signal, not when you need it.',
-              'Leaflet caches the tiles you have already viewed as you pan around, and its "Save this area" control can bulk-download a region ahead of time — use this if your mission is outside the pilot region below.',
-              'The MapLibre + PMTiles engine needs no network at all, but only for the pilot region its bundled file already covers — there is currently no in-app way to download additional MapLibre coverage before a mission. If you need offline maps outside that pilot region, use Leaflet\'s "Save this area" instead.'
+              // Fixed 2026-09-14 (P1-2): used to save only the exact zoom level on screen -
+              // zooming in one level once offline showed blank tiles. Now saves that level
+              // plus two deeper ones in the same press (mapLeaflet.component.ts's own
+              // zoomLevelsForSave() - a named constant, easy to change later).
+              'Leaflet keeps the map tiles you have already looked at. Its "Save this area" button stores the area on screen at the current zoom level plus two levels deeper, so a bit of extra zooming in still works offline. It refuses a save that would be too large and asks you to zoom in first.',
+              // Added 2026-09-14 (P1-4): OpenStreetMap's own tile-server rules forbid bulk/
+              // offline downloading ("Save area for later" is one of its own named examples
+              // of what is not allowed) - OpenTopoMap has no such rule.
+              'Saving only works while OpenTopoMap (the contour map) is showing. Switch away from OpenStreetMap first if the Save button is grayed out — OpenStreetMap\'s own rules do not allow bulk offline saving from its servers.',
+              // Corrected 2026-09-14: this used to say there was "no in-app way" to add MapLibre
+              // coverage, but "Load a custom .pmtiles file…" (CustomPmtilesService) has existed
+              // since 2026-08-27.
+              'The MapLibre + PMTiles engine needs no network at all. A low-detail world map is built into the app everywhere, with real street-level detail in the Vashon Island demo area today. If you have a .pmtiles map file for your own area, press "Load a custom .pmtiles file…" below that map to add real detail there too — it then works offline the same way.',
+              'A coordinator can build that map file ahead of time with a free command-line tool — see "Make an offline map file for your area" in the printed Field Guide for the steps.'
             ]
           },
           {
             heading: 'Choosing an engine',
             bullets: [
               'Leaflet (shown by default) — best detail, anywhere in the world. Needs Internet for areas you have not saved.',
-              'MapLibre + PMTiles (the switch below the map) — map data ships inside the app, so it works with no connection at all, but detailed coverage is currently limited to the pilot region.'
+              'MapLibre + PMTiles (the switch below the map) — map data ships inside the app, so it works with no connection at all: a low-detail world map everywhere, plus real detail in the Vashon Island demo area or wherever you load a map file for your own area.'
             ]
           },
           {

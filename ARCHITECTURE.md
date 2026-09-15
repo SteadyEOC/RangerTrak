@@ -12,16 +12,19 @@ RangerTrak ships **two independent map engines**. This is deliberate, not a migr
 half-finished: they have genuinely different offline behaviour, and which one is the right
 default is still an open question for the Entry page.
 
-|                      | Leaflet (`/mapLeaflet`)                                      | MapLibre + PMTiles (`/map`)                                        |
-| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------ |
-| Full-page component  | `LmapComponent`                                              | `MapComponent`                                                     |
-| Mini-map component   | `MiniMapLeafletComponent`                                    | `MiniMapComponent`                                                 |
-| Basemap source       | OpenStreetMap tile servers, over the network                 | `src/assets/maps/vashon.pmtiles`, bundled in the app               |
-| Works offline        | Only for areas already viewed or explicitly saved            | **Yes, for the whole extract** — but see the caching caveat below  |
-| Coverage             | Anywhere in the world                                        | Vashon Island pilot extract only; panning outside shows background |
-| Bundle cost          | ~150 kB                                                      | ~950 kB (lazy chunk, loaded with `/map`)                           |
-| Clustering           | `leaflet.markercluster`                                      | Native GeoJSON clustering                                          |
-| Offline tile caching | `leaflet.offline` — "Save this area for offline use" control | Not needed; the whole extract is bundled                           |
+Both engines live under the same `/map` route today (`MapPageComponent`, unified since
+E-64) with a toggle between them — the table below used to show them as separate
+`/mapLeaflet`/`/map` routes, which stopped being true at that point.
+
+|                      | Leaflet (`LmapComponent`)                                     | MapLibre + PMTiles (`MapLibreComponent`)                              |
+| -------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Mini-map component   | `MiniMapLeafletComponent`                                       | `MiniMapComponent`                                                      |
+| Basemap source       | OpenStreetMap/OpenTopoMap tile servers, over the network        | `src/assets/maps/world-vashon.pmtiles`, bundled in the app, or a scribe-loaded custom `.pmtiles` file |
+| Works offline        | Only for areas already viewed or explicitly saved               | **Yes, everywhere** — but only the bundled/loaded archive's own zoom range renders real detail; see the caching caveat below |
+| Coverage             | Anywhere in the world                                           | Low-detail (z0–5) worldwide background always; street-level detail in the bundled Vashon pilot area, or wherever a scribe loads their own `.pmtiles` file (2026-09-14, offline map coverage scoping) |
+| Bundle cost          | ~150 kB                                                         | ~950 kB (lazy chunk, loaded with `/map`)                                |
+| Clustering           | `leaflet.markercluster`                                         | Native GeoJSON clustering                                               |
+| Offline tile caching | `leaflet.offline` — "Save this area for offline use" control (OpenTopoMap only; OSM's own policy forbids bulk saving) | Not needed for the bundled/background layer; a scribe-loaded custom file (`CustomPmtilesService`, Map page's "Load a custom .pmtiles file…") replaces coverage outright instead |
 
 ### Open decision: which engine powers the Entry page mini-map
 
@@ -31,8 +34,9 @@ Entry's template — swapping them is a small change.
 
 The trade-off is **offline capability, not speed**:
 
-- The **MapLibre** mini-map works fully offline from the bundled PMTiles extract, from a
-  cold start, with no network and no prior visit to that area.
+- The **MapLibre** mini-map works fully offline from the bundled PMTiles archive, from a
+  cold start, with no network and no prior visit to that area — worldwide, at least at
+  low (background) detail; see the coverage row above.
 - The **Leaflet** mini-map needs OSM tiles from the network. It caches what it has already
   shown (via `leaflet.offline`), so it degrades to blank tiles for any area the operator
   has not previously viewed online.
@@ -46,10 +50,13 @@ than Leaflet, so switching would make the page heavier, not lighter — but sinc
 mini-map is wrapped in `@defer (on idle)` (see `entry.component.html`), neither engine is
 in the initial download, and neither blocks the form from painting.
 
-The cost of switching is coverage: the bundled extract is Vashon Island only, so an
-operator working outside that region would get a background-only map where Leaflet would
-have shown real streets given a network. Widening coverage is tracked as the planned
-low-res world background plus a region-download manager.
+The cost of switching is street-level detail: the bundled archive only has that for Vashon
+Island (plus a low-res world background everywhere else, added 2026-09-14), so an operator
+working outside Vashon would get a background-only map where Leaflet would have shown real
+streets given a network — unless a scribe-loaded custom `.pmtiles` file already covers that
+area (Map page's "Load a custom .pmtiles file…"). Widening the BUNDLED default further is
+tracked as the planned in-app region-download manager (Phase 2 of the offline map coverage
+scoping doc).
 
 **Not yet decided.** Recorded here so the trade-off is on the record rather than
 rediscovered later.
@@ -68,9 +75,10 @@ wired up for real) specifically so the comparison is fair.
 
 ### Planned: downloadable map regions
 
-The bundled Vashon extract is a pilot. Broader coverage means letting users download
-regions for their own area, and the approach is already settled from prior art rather than
-open for invention:
+The bundled default (`world-vashon.pmtiles`, since 2026-09-14) is a low-res world
+background plus one high-detail pilot area (Vashon). Broader detailed coverage means
+letting users download regions for their own area, and the approach is already settled
+from prior art rather than open for invention:
 
 - **Store tiles in OPFS (Origin Private File System), not the Cache API.** The Cache API
   has a hard ~50 MB per-partition cap, which disqualifies it for map data outright — an
