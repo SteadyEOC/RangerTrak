@@ -2,15 +2,13 @@
 
 > **DRAFT — not yet in force.** This text needs the maintainer's review before it's wired up
 > to gate pull requests (see `.github/workflows/cla.yml`, added alongside this file but not
-> yet enabled). Two `[PLACEHOLDER]` fields below need real values first: the legal name/entity
-> that receives the license grant, and a contact address for CLA questions. See ADR D-01 and
-> D-23 in the private roadmap for why this exists — a CLA is required before the first
-> outside contribution lands, or dual-licensing a future commercial tier becomes impossible
-> once contributions carry mixed copyright.
+> yet enabled). See ADR D-01 and D-23 in the private roadmap for why this exists — a CLA is
+> required before the first outside contribution lands, or dual-licensing a future commercial
+> tier becomes impossible once contributions carry mixed copyright.
 
 Thank you for your interest in contributing to RangerTrak ("the Project"), maintained by
-**[PLACEHOLDER: legal name or entity, e.g. "Jane Doe" or "VashonDesign LLC"]** ("the
-Maintainer"). This Contributor License Agreement ("Agreement") clarifies the intellectual
+**John Cornelison** ("the Maintainer"). This Contributor License Agreement ("Agreement")
+clarifies the intellectual
 property license granted with contributions from any person or entity ("You"). This license
 protects You and the Project; it does not change your rights to use your own contributions
 for any other purpose.
@@ -71,7 +69,7 @@ to the maximum extent permitted by applicable law.
 
 ---
 
-Questions about this Agreement: **[PLACEHOLDER: contact address, e.g. legal@eoc.online]**.
+Questions about this Agreement: <RangerTrak@steadyeoc.com>.
 
 *Adapted from the common individual-CLA pattern used by projects that keep contributions
 copyleft-licensed publicly while reserving the right to offer a separately licensed

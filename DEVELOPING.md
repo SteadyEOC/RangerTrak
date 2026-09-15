@@ -9,7 +9,7 @@ Day-to-day developer workflow: running, testing, releasing, and updating depende
 
 ## Quick start
 
-1. Fork `github.com/EOCOnline/rangertrak` to your own account.
+1. Fork `github.com/SteadyEOC/RangerTrak` to your own account.
 2. Install [Node.js](https://nodejs.org/). Angular 22's own `package.json` pins
    `"node": "^22.22.3 || ^24.15.0 || >=26.0.0"` — an older major (v18, v20, or most of v21)
    will not install it. CI builds and deploys on Node 24; that's the version to match if in

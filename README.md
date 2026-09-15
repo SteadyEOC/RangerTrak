@@ -70,8 +70,8 @@ the difference between a working tool and a blank screen.
 ## 🗺️ Roadmap
 
 Current work is tracked in
-[milestones](https://github.com/EOCOnline/rangertrak/milestones) and the
-[issues page](https://github.com/EOCOnline/rangertrak/issues) — comments and feature
+[milestones](https://github.com/SteadyEOC/RangerTrak/milestones) and the
+[issues page](https://github.com/SteadyEOC/RangerTrak/issues) — comments and feature
 suggestions are welcome on either. A consolidated public `ROADMAP.md` will follow once the
 next release's scope is firm.
 
@@ -96,27 +96,26 @@ npm start
 
 Details, testing and release process in [DEVELOPING.md](DEVELOPING.md).
 
-## 🌐 eoc.online
+## 🌐 SteadyEOC
 
-<https://eoc.online> provides free tools for Emergency Operations Centers and local
-CERT/VOAD/Citizen Corps groups. We'd love to hear how you use RangerTrak and what you need
-from it.
+RangerTrak is a free, open-source project from [SteadyEOC](https://steadyeoc.com). We'd
+love to hear how you use RangerTrak and what you need from it.
 
 ## 🗣️ Feedback & contribution
 
-- **[GitHub issues](https://github.com/EOCOnline/rangertrak/issues)** — bugs and specific
+- **[GitHub issues](https://github.com/SteadyEOC/RangerTrak/issues)** — bugs and specific
   pieces of work.
 - **GitHub discussions** — open-ended conversation about the project.
 - **Pull requests** — including small edits made entirely in GitHub's browser editor; no
   local setup needed for a documentation fix.
-- **Email** — <RangerTeam@eoc.online>.
+- **Email** — <RangerTrak@steadyeoc.com>.
 - **Support** — RangerTrak is free and stays free. If it helps your team, you can
   [buy the developer a coffee](https://buymeacoffee.com/JohnCornelison). That goes to John
   Cornelison personally, not a charity, so it isn't tax-deductible.
 
 ## 📜 License
 
-Copyright © 2019–2026 eoc.online
+Copyright © 2019–2026 John Cornelison
 
 RangerTrak is free software: you can redistribute it and/or modify it under the terms of
 the **GNU Affero General Public License** as published by the Free Software Foundation,

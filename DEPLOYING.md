@@ -32,7 +32,7 @@ Create a token at **My Profile → API Tokens → Create Token**, using the
 
 ### 2. GitHub repository secrets
 
-In `github.com/EOCOnline/rangertrak` → **Settings → Secrets and variables → Actions**:
+In `github.com/SteadyEOC/RangerTrak` → **Settings → Secrets and variables → Actions**:
 
 | Secret                  | Value                                               |
 | ----------------------- | --------------------------------------------------- |
@@ -51,7 +51,7 @@ npx wrangler whoami     # confirm the right account
 `POST /api/feedback` (`worker/index.js`) needs a GitHub Personal Access Token to file
 issues on its own, separate from the `CLOUDFLARE_API_TOKEN` above (that one authenticates
 *deploying* the Worker; this one authenticates the *deployed* Worker calling GitHub's API
-at request time). Create a fine-grained PAT scoped to **only** `EOCOnline/rangertrak`,
+at request time). Create a fine-grained PAT scoped to **only** `SteadyEOC/RangerTrak`,
 with **Issues: Read and write** and nothing else, then set it as a **Worker secret** (not
 a GitHub repo secret — it never touches GitHub Actions):
 
@@ -427,7 +427,7 @@ app to merge the two stores after the fact.
 
 > **SUPERSEDED 2026-08-31, but still live in production.** `.com` has been decided (E-101 /
 > ADR D-41) to host the static front-door site, which lives in its own private repo,
-> `EOCOnline/RangerTrak.com`, and deploys to its own `rangertrak-site` Worker. Everything
+> `SteadyEOC/RangerTrak.com`, and deploys to its own `rangertrak-site` Worker. Everything
 > described below is still exactly what is serving today and is documented here so the
 > cutover is reversible — but **the apex Page Rule must be deleted, not left in place**, when
 > that site goes live. A Worker Custom Domain binds ahead of Page Rules, so a forgotten rule

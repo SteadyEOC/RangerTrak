@@ -236,7 +236,7 @@ Defaults** only picks which format Home opens on by default for this mission - a
 for a team that mostly works in one format, not a restriction on what you can enter. Don't
 see a coordinate system your team actually uses (e.g. PLSS Township/Range/Section, or
 another country's national grid)? Open an issue on
-[GitHub](https://github.com/EOCOnline/RangerTrak/issues) — genuine field use is exactly
+[GitHub](https://github.com/SteadyEOC/RangerTrak/issues) — genuine field use is exactly
 what decides what gets added next.
 
 > Address lookup needs Internet. Without it, you'll see a message saying so. Coordinates
