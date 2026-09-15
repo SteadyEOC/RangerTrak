@@ -94,12 +94,32 @@ test('.pmtiles requests still pass through the existing Range shim, unaffected b
       fetch: async () => new Response(assetBody, { status: 200 }),
     },
   }
-  const rangeReq = new Request('https://rangertrak.org/assets/maps/vashon.pmtiles', {
+  const rangeReq = new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles', {
     headers: { Range: 'bytes=1-3' },
   })
   const res = await worker.fetch(rangeReq, env)
   assert.equal(res.status, 206)
   assert.equal(res.headers.get('Content-Range'), 'bytes 1-3/5')
+})
+
+test('a 206 partial response is never cacheable, even though the full-file 200 is', async () => {
+  // Belt-and-braces on top of Cloudflare's own documented behaviour (Workers Caching
+  // never stores a Worker-returned 206) - see the comment above the Range-handling code
+  // in worker/index.js and "Abuse and cost hardening" item 5 in DEPLOYING.md.
+  const env = { ASSETS: { fetch: async () => new Response(new Uint8Array([1, 2, 3, 4, 5]), { status: 200 }) } }
+  const rangeReq = new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles', {
+    headers: { Range: 'bytes=1-3' },
+  })
+  const res = await worker.fetch(rangeReq, env)
+  assert.equal(res.status, 206)
+  assert.equal(res.headers.get('Cache-Control'), 'no-store')
+})
+
+test('the full-file (no Range) response stays long-cacheable, for Cloudflare to slice from', async () => {
+  const env = { ASSETS: { fetch: async () => new Response(new Uint8Array([1, 2, 3, 4, 5]), { status: 200 }) } }
+  const res = await worker.fetch(new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles'), env)
+  assert.equal(res.status, 200)
+  assert.match(res.headers.get('Cache-Control'), /immutable/)
 })
 
 // --- CORS for the rangertrak.com front-door site (E-101 / ADR D-41) -------------------
@@ -155,4 +175,231 @@ test('the in-app same-origin POST is unchanged - no Origin, no CORS headers', as
   const res = await worker.fetch(req({ message: '   ' }), { GITHUB_FEEDBACK_TOKEN: 'x' })
   assert.equal(res.status, 400)
   assert.equal(res.headers.get('Access-Control-Allow-Origin'), null)
+})
+
+// --- Abuse and cost hardening, 2026-09-14 (ahead of a public blog series) --------------
+
+// --- /api/feedback: per-IP rate limit (Q5 mitigation 4) --------------------------------
+
+/** A stub Rate Limiting binding, the same shape as env.<BINDING>.limit({key}). */
+function stubLimiter(allow) {
+  const calls = []
+  return {
+    calls,
+    async limit({ key }) {
+      calls.push(key)
+      return { success: allow }
+    }
+  }
+}
+
+test('a denied rate-limit check returns 429 and never calls GitHub', async (t) => {
+  const originalFetch = globalThis.fetch
+  let called = false
+  globalThis.fetch = async () => { called = true; throw new Error('should not be called') }
+  t.after(() => { globalThis.fetch = originalFetch })
+
+  const limiter = stubLimiter(false)
+  const res = await worker.fetch(
+    req({ message: 'hello' }, {}),
+    { GITHUB_FEEDBACK_TOKEN: 'x', FEEDBACK_LIMITER: limiter }
+  )
+  assert.equal(res.status, 429)
+  assert.equal(called, false)
+  assert.deepEqual(limiter.calls, ['unknown']) // no CF-Connecting-IP in this synthetic Request
+})
+
+test('an allowed rate-limit check keys on CF-Connecting-IP and proceeds normally', async () => {
+  const limiter = stubLimiter(true)
+  const withIp = new Request('https://rangertrak.org/api/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.5' },
+    body: JSON.stringify({ message: '' }),
+  })
+  const res = await worker.fetch(withIp, { GITHUB_FEEDBACK_TOKEN: 'x', FEEDBACK_LIMITER: limiter })
+  assert.equal(res.status, 400) // empty message - proves the request reached normal validation
+  assert.deepEqual(limiter.calls, ['203.0.113.5'])
+})
+
+test('a missing/misconfigured rate limiter degrades to "no limit", not a broken request', async (t) => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/EOCOnline/rangertrak/issues/1' }), { status: 201 })
+  t.after(() => { globalThis.fetch = originalFetch })
+
+  const res = await worker.fetch(req({ message: 'hello' }), { GITHUB_FEEDBACK_TOKEN: 'x', FEEDBACK_LIMITER: {} })
+  assert.notEqual(res.status, 429)
+})
+
+test('a rate limiter that throws degrades to "no limit" rather than 500ing', async (t) => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/EOCOnline/rangertrak/issues/1' }), { status: 201 })
+  t.after(() => { globalThis.fetch = originalFetch })
+
+  const throwing = { limit: async () => { throw new Error('rate limiting service unreachable') } }
+  const res = await worker.fetch(req({ message: 'hello' }), { GITHUB_FEEDBACK_TOKEN: 'x', FEEDBACK_LIMITER: throwing })
+  assert.notEqual(res.status, 429)
+  assert.notEqual(res.status, 500)
+})
+
+// --- /api/feedback: body size cap -------------------------------------------------------
+
+test('a Content-Length over the cap is rejected before the body is read', async (t) => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => { throw new Error('should not be called') }
+  t.after(() => { globalThis.fetch = originalFetch })
+
+  const big = new Request('https://rangertrak.org/api/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': String(100 * 1024) },
+    body: JSON.stringify({ message: 'hi' }),
+  })
+  const res = await worker.fetch(big, { GITHUB_FEEDBACK_TOKEN: 'x' })
+  assert.equal(res.status, 413)
+})
+
+test('an oversized body with no Content-Length is still rejected (backstop)', async () => {
+  const res = await worker.fetch(req({ message: 'x'.repeat(50000) }), { GITHUB_FEEDBACK_TOKEN: 'x' })
+  assert.equal(res.status, 413)
+})
+
+// --- /api/feedback: honeypot ------------------------------------------------------------
+
+test('a filled honeypot field returns a normal-looking success without calling GitHub', async (t) => {
+  const originalFetch = globalThis.fetch
+  let called = false
+  globalThis.fetch = async () => { called = true; throw new Error('should not be called') }
+  t.after(() => { globalThis.fetch = originalFetch })
+
+  const res = await worker.fetch(
+    req({ message: 'hello', website: 'http://spam.example' }),
+    { GITHUB_FEEDBACK_TOKEN: 'x' }
+  )
+  assert.equal(res.status, 201)
+  const json = await res.json()
+  assert.match(json.url, /github\.com\/EOCOnline\/rangertrak/)
+  assert.equal(called, false)
+})
+
+test('an empty/absent honeypot field does not change existing behaviour', async (t) => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => new Response(JSON.stringify({ html_url: 'https://github.com/EOCOnline/rangertrak/issues/1' }), { status: 201 })
+  t.after(() => { globalThis.fetch = originalFetch })
+
+  const res = await worker.fetch(req({ message: 'hello', website: '   ' }), { GITHUB_FEEDBACK_TOKEN: 'x' })
+  assert.equal(res.status, 201)
+})
+
+test('null JSON body does not crash the honeypot/message extraction', async () => {
+  const nullBody = new Request('https://rangertrak.org/api/feedback', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: 'null',
+  })
+  const res = await worker.fetch(nullBody, { GITHUB_FEEDBACK_TOKEN: 'x' })
+  assert.equal(res.status, 400) // "message is required" - not a 500
+})
+
+// --- /assets/maps/*.pmtiles: hotlink protection -----------------------------------------
+
+function pmtilesReq(headers = {}) {
+  return new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles', { headers })
+}
+
+function assetsEnv() {
+  return { ASSETS: { fetch: async () => new Response(new Uint8Array([1, 2, 3, 4, 5]), { status: 200 }) } }
+}
+
+test('a request with no Origin and no Referer is allowed (same-origin PWA/service worker)', async () => {
+  const res = await worker.fetch(pmtilesReq(), assetsEnv())
+  assert.equal(res.status, 200)
+})
+
+test('a Referer on rangertrak.org is allowed', async () => {
+  const res = await worker.fetch(pmtilesReq({ Referer: 'https://rangertrak.org/map' }), assetsEnv())
+  assert.equal(res.status, 200)
+})
+
+test('a Referer on rangertrak.com is allowed (front-door site)', async () => {
+  const res = await worker.fetch(pmtilesReq({ Referer: 'https://rangertrak.com/' }), assetsEnv())
+  assert.equal(res.status, 200)
+})
+
+test('a Referer on localhost is allowed (local dev)', async () => {
+  const res = await worker.fetch(pmtilesReq({ Referer: 'http://localhost:4200/map' }), assetsEnv())
+  assert.equal(res.status, 200)
+})
+
+test('a Referer on an unrelated site is refused with 403, uncached', async () => {
+  const res = await worker.fetch(pmtilesReq({ Referer: 'https://someone-elses-map.example/' }), assetsEnv())
+  assert.equal(res.status, 403)
+  assert.equal(res.headers.get('Cache-Control'), 'no-store')
+})
+
+test('an Origin on an unrelated site is refused even with no Referer', async () => {
+  const res = await worker.fetch(pmtilesReq({ Origin: 'https://someone-elses-map.example' }), assetsEnv())
+  assert.equal(res.status, 403)
+})
+
+// --- /regions/: prepared-but-inert R2 path ----------------------------------------------
+
+test('regions path 404s cleanly when env.MAPS is not bound (today, in production)', async () => {
+  const res = await worker.fetch(
+    new Request('https://rangertrak.org/regions/king-county.pmtiles'), {}
+  )
+  assert.equal(res.status, 404)
+})
+
+function stubBucket(objects) {
+  return { async get(key) { return objects[key] ?? null } }
+}
+
+test('serves a whole-file download when env.MAPS is bound and the referrer is allowed', async () => {
+  const bytes = new Uint8Array([9, 8, 7, 6])
+  const env = { MAPS: stubBucket({ 'king-county.pmtiles': { body: bytes, size: bytes.byteLength } }) }
+  const res = await worker.fetch(
+    new Request('https://rangertrak.org/regions/king-county.pmtiles', { headers: { Referer: 'https://rangertrak.org/map' } }),
+    env
+  )
+  assert.equal(res.status, 200)
+  assert.equal(res.headers.get('Content-Disposition'), 'attachment; filename="king-county.pmtiles"')
+  assert.match(res.headers.get('X-Attribution'), /OpenStreetMap/)
+  assert.equal(res.headers.get('Cache-Control'), 'public, max-age=604800')
+  const body = new Uint8Array(await res.arrayBuffer())
+  assert.deepEqual([...body], [9, 8, 7, 6])
+})
+
+test('regions path still enforces hotlink protection', async () => {
+  const env = { MAPS: stubBucket({}) }
+  const res = await worker.fetch(
+    new Request('https://rangertrak.org/regions/king-county.pmtiles', { headers: { Referer: 'https://someone-elses-map.example/' } }),
+    env
+  )
+  assert.equal(res.status, 403)
+})
+
+test('regions path still enforces the per-IP rate limit', async () => {
+  const limiter = stubLimiter(false)
+  const env = { MAPS: stubBucket({ 'x.pmtiles': { body: new Uint8Array([1]), size: 1 } }), MAPS_LIMITER: limiter }
+  const res = await worker.fetch(new Request('https://rangertrak.org/regions/x.pmtiles'), env)
+  assert.equal(res.status, 429)
+})
+
+test('an unknown region key 404s', async () => {
+  const env = { MAPS: stubBucket({}) }
+  const res = await worker.fetch(new Request('https://rangertrak.org/regions/nope.pmtiles'), env)
+  assert.equal(res.status, 404)
+})
+
+test('a path-traversal-shaped region key is refused as not found, never reaching R2', async () => {
+  let getCalled = false
+  const env = { MAPS: { async get() { getCalled = true; return null } } }
+  const res = await worker.fetch(new Request('https://rangertrak.org/regions/..%2Fsecrets.pmtiles'), env)
+  assert.equal(res.status, 404)
+  assert.equal(getCalled, false)
+})
+
+test('a non-GET method on the regions path is rejected', async () => {
+  const env = { MAPS: stubBucket({}) }
+  const res = await worker.fetch(
+    new Request('https://rangertrak.org/regions/x.pmtiles', { method: 'POST' }), env
+  )
+  assert.equal(res.status, 405)
 })

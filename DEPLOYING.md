@@ -71,8 +71,181 @@ and a browser's `Origin` is therefore only ever the apex. It is an allowlist and
 deliberately: a wildcard would let any site on the Internet file issues under this PAT, and
 would be invisible from the browser. `worker/index.test.mjs` pins the behaviour in both
 directions, including that a same-origin in-app POST gets no CORS headers at all. Note that
-CORS constrains browsers, not clients — the real limits here are the length caps and the
-fail-closed token check, not the origin.
+CORS constrains browsers, not clients — the real limits here are the length caps, the
+per-IP rate limit, the honeypot and the fail-closed token check, not the origin. See
+"Abuse and cost hardening" below.
+
+## Abuse and cost hardening (2026-09-14)
+
+Added ahead of a public blog series that will send unfamiliar traffic to `rangertrak.org`
+for the first time. Full findings and mitigations are written up in the
+(private, not-in-repo) "Offline Map Coverage Beyond Vashon" scoping doc, §7 "Q5 risk
+notes" and its dated addendum; this section is the durable, in-repo record of what
+actually shipped.
+
+### What was exposed before this
+
+- **`/api/feedback` had no rate limit.** Length caps (4000/200 chars) and the fail-closed
+  token check were the only guards. GitHub's own API rate limits a PAT globally, but
+  nothing stopped one caller from burning that shared budget, or from filing many small
+  issues quickly.
+- **Every request under `/assets/maps/*` and `/api/*` is a billed Worker invocation**,
+  confirmed against Cloudflare's own docs (`run_worker_first` unconditionally runs the
+  Worker for a matching path, regardless of what the code then does — even a non-`.pmtiles`
+  file under `/assets/maps/*` still invokes the Worker before falling through to
+  `env.ASSETS.fetch()`). Everything else — the SPA shell, hashed JS/CSS bundles — is true
+  static-asset serving and is free and unbilled, confirmed against
+  <https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/>
+  ("Requests to static assets are free and unlimited").
+- **The `.pmtiles` Range shim set a long `Cache-Control` header, but that alone did
+  nothing.** Cloudflare's edge only caches responses in front of a Worker (skipping the
+  Worker entirely on a hit) when [Workers Caching](https://developers.cloudflare.com/workers/cache/)
+  is explicitly turned on (`cache.enabled` in `wrangler.jsonc`) — that was never set, so
+  in production **every single basemap byte-range request re-ran the Worker**, re-fetched
+  the whole 1.7 MB file from the asset store, and re-sliced it, every time. This is
+  distinct from the *static-asset* store's own automatic edge caching, and distinct from
+  the programmatic Cache API (`caches.default`), which still requires the Worker to run to
+  consult it.
+- **No hotlink protection.** Any site, or any script, could point at
+  `rangertrak.org/assets/maps/world-vashon.pmtiles` directly.
+- Nothing was implemented for a hosted regional-map path (it didn't exist), so there was
+  no R2 exposure to audit yet.
+
+### What shipped (`worker/index.js`, `worker/index.test.mjs`, `wrangler.jsonc`)
+
+1. **Per-IP rate limit on `/api/feedback`** — the Workers Rate Limiting binding
+   (`FEEDBACK_LIMITER` in `wrangler.jsonc`, GA since 2025-09-19), 5 requests per 60
+   seconds, keyed on `CF-Connecting-IP`. This binding needs **no dashboard step** —
+   `namespace_id` is just a developer-chosen number, created implicitly on deploy (unlike
+   R2, below). If the binding is ever missing (an older wrangler, `wrangler dev` without it
+   configured), `worker/index.js` degrades to "no limit" rather than failing the request —
+   confirmed by `npx wrangler deploy --dry-run`, which lists `env.FEEDBACK_LIMITER (5
+   requests/60s)` as a live binding today.
+2. **Feedback abuse checks:** a body-size cap (32 KB, checked against `Content-Length`
+   before the body is even read, with a backstop check on the actual bytes read for
+   chunked requests with no `Content-Length`), and a dormant honeypot field (`website`).
+   **The honeypot is not wired into either shipped form.** Both the in-app form
+   (`feedback.component.ts`) and the rangertrak.com form POST exactly `{ message, contact
+   }`; `feedback.component.spec.ts` has an explicit privacy-invariant test locking that to
+   exactly those two keys ("only these two hand-typed fields are ever sent"). Adding a
+   third field to either form would fight that test and its intent, so the worker-side
+   support exists for a future form to opt into (any non-empty `website` value in the POST
+   body gets a normal-looking success with no GitHub issue filed) but today it's inert —
+   the real defenses on this endpoint are the rate limit, the size cap and the length
+   caps.
+3. **Hotlink protection** (`isAllowedMapReferrer`) on both the existing `.pmtiles` Range
+   shim and the new regional-download path: allows `rangertrak.org`, `rangertrak.com`,
+   `localhost`/`127.0.0.1`, and — deliberately — requests with **no** `Origin` and **no**
+   `Referer` at all. That last case is not a loophole so much as the acknowledged limit of
+   this mitigation: a non-browser client can omit both headers and pass through, same as
+   the scoping doc's own "weak, stops casual hotlinking" framing. It's allowed rather than
+   blocked because that shape also covers same-origin PWA fetches and installed/offline
+   use, and breaking those would cost more than the abuse this stops.
+4. **`cache.enabled: true`** (Workers Caching) in `wrangler.jsonc`. Once a map response is
+   cached at a Cloudflare edge location, a repeat request for that exact URL is served
+   **without running the Worker at all** — no CPU billed, and once R2 is in the picture
+   (below), no R2 read either.
+
+   **Known limitation, accepted deliberately:** this is unconditional on the Referer
+   check. The check only runs when the Worker is invoked, which on a cache **hit** it is
+   not — Cloudflare answers straight from the edge, before any of this Worker's code
+   runs. So the Referer/Origin allowlist only ever gates the request that *populates* the
+   cache at a given edge location; after that, anyone hitting the warm entry — including a
+   hotlinker — gets served for free. That is intentional, not a gap to close: a cache hit
+   costs no Worker CPU and (once R2 is live) no R2 read, so letting anyone ride a warm
+   cache is exactly what "repeats hit Cloudflare's cache" (mitigation 3) means. The
+   Referer check's real job is bounding the cost of *cache misses*, not policing every
+   viewer of an already-cheap cache hit. See the matching code comment above
+   `isAllowedMapReferrer` in `worker/index.js`.
+
+   Every response that must never be cached (rate-limit 429s, the 403 hotlink block, every
+   `/api/feedback` response, the 416 unsatisfiable-range case, and this Worker's own 206
+   partial responses — see the next point) sets `Cache-Control: no-store` explicitly,
+   rather than relying on Cloudflare's default non-GET/error heuristics — a cached 403 or
+   429 served to the next, legitimate caller would be a self-inflicted outage.
+5. **Range requests and `cache.enabled` — confirmed against Cloudflare's docs, not
+   guessed.** Workers Caching does its own Range handling and it does **not** trust a
+   Worker-generated `206`: "Cloudflare strips the `Range` header before invoking your
+   Worker and asks your Worker for the full body... [and] stores that full response, and
+   then slices out the requested byte range" itself. "If your Worker returns a `206`
+   response of its own... Cloudflare treats it as an uncacheable response and it is not
+   stored." (<https://developers.cloudflare.com/workers/cache/configuration/>, "Range
+   requests"). Two consequences for the PMTiles shim in `worker/index.js`:
+   - In production, with caching enabled, this Worker will typically never even *see* a
+     `Range` header for `/assets/maps/*.pmtiles` — Cloudflare strips it, the Worker always
+     returns the full file as a plain `200`, and Cloudflare's edge does the slicing (and,
+     on a hit, skips the Worker entirely, satisfying mitigation 3 for the very requests
+     pmtiles-js makes most - byte-range reads of the header, directory and tiles).
+   - The Worker's own hand-rolled 206-slicing branch is **not deleted** — it stays as a
+     correctness fallback for anywhere that behaves differently (`wrangler dev`, a future
+     change to `cache.enabled`, or `run_worker_first` routing that bypasses caching). It is
+     safe by Cloudflare's own design even if it does run: a Worker-returned `206` is never
+     stored, so there is no scenario where a cached response for one byte range gets
+     served back for a different one. Belt-and-braces on top of that platform guarantee,
+     `worker/index.test.mjs` asserts this Worker's own 206 responses also carry an explicit
+     `Cache-Control: no-store` - so the safety doesn't depend solely on trusting
+     Cloudflare's behavior to stay as documented.
+6. **A prepared-but-inert R2 path**, `GET /regions/<file>.pmtiles`, for whole-file
+   downloads of pre-cut regional maps (mitigation 1: one download is one read, not dozens
+   of Range reads). It 404s cleanly today with "regional map downloads are not available
+   yet" because `env.MAPS` is not bound — see "R2 bucket for regional maps" below for how
+   to turn it on. Once live, it applies the same hotlink check and `cache.enabled`
+   behaviour as the basemap shim, plus its own rate-limit binding (`MAPS_LIMITER`, also
+   prepared but commented out — see `wrangler.jsonc`), and sends an `X-Attribution` header
+   ("Map data © OpenStreetMap contributors, ODbL. Basemap by Protomaps.") on every
+   download, matching the scoping doc's ODbL requirement. Region keys are restricted to a
+   plain-filename pattern (`^[A-Za-z0-9][A-Za-z0-9_-]*\.pmtiles$`) so a path-traversal-shaped
+   request 404s before ever calling `env.MAPS.get()`.
+
+### R2 bucket for regional maps (not yet enabled — needs John, one-time)
+
+This environment has no Cloudflare credentials, so none of this could be done from here.
+`worker/index.js` already has the full handler (`handleRegionDownload`); `wrangler.jsonc`
+has the exact block to uncomment, commented out on purpose so this deploy cannot fail by
+naming a bucket that doesn't exist yet. To turn it on:
+
+1. **Create the bucket.** Dashboard: **R2 object storage → Create bucket**, name it
+   `rangertrak-maps` (or update the name consistently below and in `wrangler.jsonc`). Or,
+   with `wrangler` logged in: `npx wrangler r2 bucket create rangertrak-maps`.
+2. **Uncomment the `r2_buckets` block** at the bottom of `wrangler.jsonc` (binding
+   `MAPS`, matching the bucket name from step 1), add the trailing comma the comment
+   there calls out, and deploy.
+3. **(Recommended) uncomment/add the `MAPS_LIMITER` rate-limit entry** in the same file —
+   no dashboard step needed for that one, same as `FEEDBACK_LIMITER`.
+4. **Upload a region file:**
+
+   ```bash
+   npx wrangler r2 object put rangertrak-maps/king-county.pmtiles --file ./king-county.pmtiles
+   ```
+
+   The uploaded key becomes the download URL: `https://rangertrak.org/regions/king-county.pmtiles`.
+   Named testers first (unlisted links only) — there is deliberately no in-app UI or public
+   listing yet; that's Phase 2 in the scoping doc.
+5. **Billing/usage alert** (dashboard-only — cannot be scripted or committed): Cloudflare
+   dashboard → **Notifications → Add** → a Billing or R2-usage alert with a low threshold
+   (a few dollars). R2 storage and egress are cheap and not the actual risk (egress is
+   free); the alert exists as a tripwire for the read-request-volume scenario the scoping
+   doc's Q5 describes, in case the hotlink check and rate limit are ever bypassed at scale.
+
+### Deliberately not done
+
+- **No content-based spam filtering** (keyword/URL-count heuristics on the feedback
+  message). RangerTrak's own "capability, not policy" stance argues against guessing at
+  what a legitimate emergency-response bug report looks like; a false positive silently
+  eating real feedback is worse than the spam it would prevent. The rate limit and size
+  cap are structural, not content-based, on purpose.
+- **No Vary-based cache fragmentation by Origin/Referer.** It would defeat the purpose of
+  `cache.enabled` (mitigation 3) for a marginal gain over the plain Referer check, since a
+  determined non-browser hotlinker omits both headers anyway.
+- **No public listing or in-app UI for regional downloads.** Named testers via unlisted
+  links only, per the scoping doc's Q5 answer, until public hosting's ODbL/attribution
+  question gets the "one read by John" it calls for.
+- **Plan availability for the Rate Limiting binding** (Free vs. Paid Workers plan) is not
+  documented on Cloudflare's own binding page as of this writing; `npx wrangler deploy
+  --dry-run` accepted the config without error against this account's existing Worker, but
+  that dry run does not call the Cloudflare API, so it cannot confirm the account's plan
+  actually supports it. If the real deploy ever rejects the `ratelimits` block, that is
+  the first thing to check.
 
 ## How a deploy happens
 
@@ -338,11 +511,24 @@ Run in a **real browser**, not headless — see the service worker note below.
 - [ ] `curl -sI https://<host>/index.html` returns **200, not 307** — see
       `html_handling` above. A 307 here means no offline support and no update
       detection, silently.
-- [ ] `curl -sI -H 'Range: bytes=0-99' https://<host>/assets/maps/vashon.pmtiles`
+- [ ] `curl -sI -H 'Range: bytes=0-99' https://<host>/assets/maps/world-vashon.pmtiles`
       returns **206** with a `Content-Range` header.
 
 If any of these is missing, [src/\_headers](src/_headers) is not being honored — stop and
 fix that before trusting the update flow, because its failure is silent.
+
+**A replaced map file needs a new filename, not just new bytes.** `PMTILES_HEADERS` in
+`worker/index.js` sends `Cache-Control: public, max-age=31536000, immutable` — a signal to
+every intermediate cache (browsers, Cloudflare's edge once `cache.enabled` is warm) that
+the bytes at this exact URL will never change for a year, so don't even bother
+revalidating. That is only true because the filename is content-addressed by convention
+(`vashon.pmtiles` → `world-vashon.pmtiles` when the maps agent swapped in the merged
+world+Vashon extract, 2026-09-14). Overwriting `world-vashon.pmtiles` in place with
+different bytes on a future deploy would leave every browser and edge cache that already
+fetched it serving stale map data for up to a year, with no error and nothing failing —
+the same silent-staleness shape as the `www`/`index.html` traps elsewhere in this
+document. Ship a new basemap under a new filename (and update the reference in
+`pmtiles-config.ts`) rather than replacing one in place.
 
 ### The update path — the item that affects every existing user
 

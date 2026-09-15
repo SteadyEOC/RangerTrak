@@ -48,13 +48,78 @@
     // The Worker reaches the asset store through this binding.
     "binding": "ASSETS",
 
-    // Everything except the basemap and the feedback API is served straight from the
-    // asset store, untouched by the Worker. /api/feedback has no matching static file
-    // (it would 404 from the asset store) - it needs to reach worker/index.js instead.
-    "run_worker_first": ["/assets/maps/*", "/api/*"]
+    // Everything except the basemap, the feedback API and (once R2 is bound, see below)
+    // regional map downloads is served straight from the asset store, untouched by the
+    // Worker. Each of these has no matching static file (it would 404 from the asset
+    // store) - they need to reach worker/index.js instead. Note this means every request
+    // under these three prefixes IS a billed Worker invocation, even ones that don't end
+    // up doing much (e.g. a non-.pmtiles path under /assets/maps/*) - see the "Abuse and
+    // cost hardening" audit note in DEPLOYING.md.
+    "run_worker_first": ["/assets/maps/*", "/api/*", "/regions/*"]
   },
 
   "observability": {
     "enabled": true
-  }
+  },
+
+  // Workers Caching (RFC 9111 semantics), added 2026-09-14 as Q5 mitigation 3 ("cache
+  // headers so repeats hit Cloudflare's cache rather than R2/re-running the Worker").
+  // This is DIFFERENT from the programmatic Cache API and from the static-asset store's
+  // own automatic caching: without this, Cloudflare checks the cache *in front of* the
+  // Worker only when this is enabled, and it only ever applies to paths that reach the
+  // Worker in the first place (the three run_worker_first prefixes above) - it has no
+  // effect on the SPA/asset paths, which never invoke the Worker at all.
+  //
+  // Scoped by response, not by path: a response is only cached if its own Cache-Control
+  // header says so. The map responses (worker/index.js, PMTILES_HEADERS and
+  // handleRegionDownload) set long/immutable Cache-Control deliberately; /api/feedback
+  // and every error path set `Cache-Control: no-store` explicitly so a rate-limit
+  // rejection, a hotlink-blocked 403, or a filed-issue response never gets cached against
+  // that URL and replayed to the next caller. See DEPLOYING.md for the full writeup,
+  // including why it's fine that a warmed cache entry serves anyone (including a
+  // hotlinker) without re-checking Referer - that IS mitigation 3 working as intended.
+  "cache": {
+    "enabled": true
+  },
+
+  // Workers Rate Limiting (GA since 2025-09-19), Q5 mitigation 4. `namespace_id` is just
+  // a developer-chosen number unique within this account - unlike R2 below, this needs NO
+  // dashboard step and is created implicitly on deploy, which is why it's live here
+  // rather than left commented. 5 requests per 60 seconds per IP is generous for a
+  // feedback form filled in by hand but stops a flood; worker/index.js degrades to "no
+  // limit" if this binding is ever missing (e.g. a much older wrangler), rather than
+  // failing closed.
+  "ratelimits": [
+    {
+      "name": "FEEDBACK_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ]
+
+  // --- Not yet enabled: R2 bucket for pre-cut regional map files (Q5, mitigation 1) ---
+  // worker/index.js already has a full handler for this (handleRegionDownload), inert
+  // until `env.MAPS` exists. To turn it on:
+  //   1. John creates the bucket (dashboard or `wrangler r2 bucket create rangertrak-maps`
+  //      - needs Cloudflare credentials this environment does not have). See DEPLOYING.md,
+  //      "R2 bucket for regional maps", for the exact one-time steps.
+  //   2. Uncomment the block below, matching the bucket name actually created, and add a
+  //      trailing comma after the `ratelimits` block above.
+  //   3. Deploy. Uploading a region file is `wrangler r2 object put` - see DEPLOYING.md.
+  //
+  // Do NOT uncomment this ahead of step 1: `wrangler deploy` fails outright if
+  // `bucket_name` names a bucket that does not exist on the account.
+  //
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MAPS",
+  //     "bucket_name": "rangertrak-maps"
+  //   }
+  // ],
+  //
+  // Optional, once the above is live: a second rate-limit namespace dedicated to region
+  // downloads (worker/index.js already reads `env.MAPS_LIMITER`) - add this entry to the
+  // `ratelimits` array above, with its own unused namespace_id:
+  //
+  // { "name": "MAPS_LIMITER", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
 }
