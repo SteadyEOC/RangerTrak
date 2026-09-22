@@ -69,15 +69,30 @@ the difference between a working tool and a blank screen.
 
 ## 🗺️ Roadmap
 
-Current work is tracked in
-[milestones](https://github.com/SteadyEOC/RangerTrak/milestones) and the
-[issues page](https://github.com/SteadyEOC/RangerTrak/issues) — comments and feature
-suggestions are welcome on either. A consolidated public `ROADMAP.md` will follow once the
-next release's scope is firm.
+What has actually shipped is in [CHANGELOG.md](CHANGELOG.md) and the
+[releases](https://github.com/SteadyEOC/RangerTrak/releases) — that is the accurate record,
+and it moves most weeks. The [issues page](https://github.com/SteadyEOC/RangerTrak/issues) is
+the place for comments and feature suggestions, and
+[milestones](https://github.com/SteadyEOC/RangerTrak/milestones) group the longer-range ones;
+neither is a complete picture of day-to-day work. A consolidated public `ROADMAP.md` will
+follow once the next release's scope is firm.
 
-Known gaps worth stating plainly: teams that have **not** reported in are not yet flagged
-automatically, the offline map's detailed coverage is currently limited to a pilot region,
-and What3Words support is shelved pending an SDK migration.
+Note on version numbers: the minor version bumps **rapidly and deliberately**. `0.x.0` means
+"a meaningful batch of work landed," not "this is stable and supported." The release others
+are actively encouraged to adopt will be `1.0.0-rc.1`, and it is not near.
+
+Known gaps worth stating plainly:
+
+- It will not **interrupt** you. Overdue teams are shaded green through red on the map, the
+  roster and the Radio Log, against your mission's own check-in interval — but nothing beeps
+  or pops up, and the times refresh when a screen redraws rather than ticking.
+- There is no **geo-fence** — nothing warns that a ranger is outside an expected area.
+- The bundled offline map covers the **whole world at low detail**, with street-level detail
+  only for the demo area. Your own area needs saving on the street map beforehand, or a
+  `.pmtiles` file loading for it.
+- **What3Words** is not wired up, and would be the only coordinate format needing a key and a
+  network call — every other one is computed on-device.
+- The UI is **English-only** and the ICS forms are the **US** versions.
 
 ## 🚀 Quick start
 
