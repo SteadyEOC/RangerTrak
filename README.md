@@ -3,6 +3,10 @@
 [![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
+> **New here?** Start at **[rangertrak.com](https://rangertrak.com)** — what it is, the Field
+> Guide, and how to try it without a GitHub account. Try the app itself at
+> **[rangertrak.org](https://rangertrak.org)**. This repo is the source, issues and releases.
+
 **RangerTrak tracks and maps CERT, ACS, SAR, wildland-fire and other teams who are
 reachable only by HAM radio.** Field teams radio in their locations; a scribe at the
 command post transcribes them; RangerTrak builds a single mapped log of who was where,
