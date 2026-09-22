@@ -58,19 +58,46 @@ export class MissionAdvancedOptionsComponent {
    */
   onBtnExportMission() {
     // The backup bundles the full ranger roster, so it carries the same personal data as
-    // the Rangers page warns about - in an unencrypted file this app can no longer
-    // protect once written.
+    // the Rangers page warns about. E-122 Phase 1 made encrypting it optional, so this
+    // now offers the choice rather than only warning about the consequence.
     if (!confirm(`Back up this mission to a file?\n\n`
       + `The file includes the full ranger roster - legal names, personal `
-      + `phone numbers and call signs - and is NOT encrypted.\n\n`
-      + `Store it somewhere appropriate, share it only with people who need it for this `
-      + `mission, and delete it when the mission is over.`)) {
+      + `phone numbers and call signs.\n\n`
+      + `You will be offered a passphrase next. Either way, store the file `
+      + `appropriately, share it only with people who need it for this mission, and `
+      + `delete it when the mission is over.`)) {
       this.log.verbose('onBtnExportMission: user cancelled backup.', this.id)
       return
     }
 
+    // Blank = unencrypted, which stays the default: a passphrase nobody can recover
+    // destroys the mission record outright, and there is no server to reset it from.
+    const passphrase = prompt(`Passphrase for this backup?\n\n`
+      + `Leave blank for an UNENCRYPTED file (the previous behaviour).\n\n`
+      + `If you set one it CANNOT be recovered - no reset, no support address, no `
+      + `copy anywhere. Lose it and this backup is gone for good.`)
+
+    if (passphrase === null) {
+      this.log.verbose('onBtnExportMission: cancelled at the passphrase prompt.', this.id)
+      return
+    }
+
+    // Typed twice on purpose. A typo here is not discovered until the day someone needs
+    // the backup, by which time it is unrecoverable - the worst failure this can produce.
+    if (passphrase !== '') {
+      if (prompt('Type the same passphrase again to confirm it.') !== passphrase) {
+        alert('Those did not match. Nothing was written - start the backup again.')
+        this.log.warn('onBtnExportMission: passphrase confirmation did not match.', this.id)
+        return
+      }
+    }
+
     this.log.verbose('onBtnExportMission: Backing up mission.', this.id)
-    this.backupService.exportMission()
+    this.backupService.exportMission(passphrase || undefined)
+      .catch(error => {
+        this.log.error(`onBtnExportMission: backup failed: ${error.message}`, this.id)
+        alert(`Could not write the backup: ${error.message}`)
+      })
   }
 
   /**
@@ -87,7 +114,11 @@ export class MissionAdvancedOptionsComponent {
       return
     }
 
-    this.backupService.readFileAsMissionExport(file)
+    this.backupService.readFileAsMissionExport(file, hint => prompt(
+      `"${file.name}" is encrypted.\n\n`
+      + (hint?.exportedAt ? `Backed up ${hint.exportedAt}` : 'Backed up on an unknown date')
+      + (hint?.appVersion ? ` by RangerTrak ${hint.appVersion}` : '') + `.\n\n`
+      + `Enter its passphrase to restore it.`))
       .then(payload => {
         const summary = `Mission "${payload.settings.mission || '(unnamed)'}" backed up `
           + `${payload.exportedAt}, with ${payload.rangers.length} rangers and `

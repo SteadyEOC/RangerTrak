@@ -186,15 +186,38 @@ those and should be regenerated rather than edited. `favicon.svg` is a deliberat
 simplified drawing rather than the mark scaled down: at 16px the full mark's three waves merge
 into a smudge and the pin ring closes up.
 
-## Planned: encryption at rest
+## Encryption: exports today, storage later
 
-Today everything — roster, field reports, settings, and every export — is stored and
-written in the clear. The roster is the sensitive part (legal names, personal phone numbers,
-photos, and call signs that resolve to public licence records), and field reports can
-contain PII about missing persons. The UI warns about this in several places;
-the intent to fix it properly exists as scattered commented-out `crypto-js` code in
-`utility.ts`, `settings.service.ts` and `ranger.service.ts`. This section consolidates
-that into one plan.
+**Phase 1 shipped in 0.94.0: a mission backup can now be encrypted on its way out.**
+Everything still *at rest* — roster, field reports, settings in `localStorage` — remains in
+the clear. The roster is the sensitive part (legal names, personal phone numbers, photos,
+and call signs that resolve to public licence records), and field reports can contain PII
+about missing persons.
+
+That split is deliberate rather than half-finished, and the reason is in "The hard parts"
+below: encrypting storage forces every service's write path async, which is a refactor;
+encrypting a file on its way out is not. Files are also what actually leave the device.
+
+### What shipped (Phase 1)
+
+`shared/crypto/encrypted-file.ts` wraps any JSON payload in a self-describing envelope:
+PBKDF2-SHA256 (OWASP's current iteration floor, **stored in the envelope** so it can rise
+later without stranding old files), a fresh random salt and IV per file, and AES-GCM-256.
+
+- **Opt-in, per export.** Mission → Back up mission offers a passphrase. **Leaving it blank
+  writes the same plain file as before** — that is the default, and plain backups keep
+  importing with no passphrase prompt at all.
+- **Typed twice when set.** A typo is not discovered until the day someone needs the
+  backup, by which point it is unrecoverable.
+- **Detected structurally on import**, not by file extension, so a backup renamed in
+  transit still opens. The `.rtenc.json` suffix is for humans reading a folder listing.
+- **A small plaintext `hint`** (export date, app version) rides outside the ciphertext so a
+  locked file is still identifiable.
+- **AES-GCM is authenticated**: a tampered or truncated file fails to decrypt rather than
+  producing plausible garbage the import path would then try to apply.
+
+The commented-out `crypto-js` fragments in `utility.ts`, `settings.service.ts` and
+`ranger.service.ts` are the remains of an earlier attempt and are superseded by this.
 
 ### Threat model — decide this first
 
@@ -211,7 +234,7 @@ actually defends against here is narrow, and worth being honest about:
 
 ### Design sketch
 
-- **Use the Web Crypto API (`crypto.subtle`), not `crypto-js`.** It is native, audited, and
+- **Use the Web Crypto API (`crypto.subtle`), not `crypto-js`.** Done in Phase 1. It is native, audited, and
   already used elsewhere in this codebase for SHA-256. `crypto-js` is currently a
   dependency with **zero live call sites** — every use is commented out. It should be
   removed rather than left implying a capability that does not exist.
@@ -242,9 +265,11 @@ actually defends against here is narrow, and worth being honest about:
 
 ### Suggested staging
 
-- **Phase 1 — encrypted exports.** Optional passphrase on Back up mission, roster export,
-  and log export. Self-contained, needs no storage refactor, and targets the data that
-  actually leaves the device. Highest value per unit of work; do this first.
+- **Phase 1 — encrypted exports. ✅ Shipped 0.94.0 for the mission backup**, which is the
+  file carrying the concentrated risk: it bundles the whole roster *and* the reports, and it
+  is the one explicitly designed to move between devices. The roster and log CSV exports are
+  **not** covered yet — encrypting those turns a spreadsheet-openable file into an opaque
+  blob, which is a different UX question, and the backup already contains that data.
 - **Phase 2 — encrypted at rest**, tied to the IndexedDB migration so the async change is
   paid for once.
 - **Phase 3 — per-mission keys**, if agencies ask for separation between missions.

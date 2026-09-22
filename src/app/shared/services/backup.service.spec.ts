@@ -1,4 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
+import { encryptJson } from '../crypto/encrypted-file';
 import { TestBed } from '@angular/core/testing';
 
 import { BackupService, MissionExport } from './backup.service';
@@ -149,6 +150,63 @@ describe('BackupService', () => {
 
       expect(parsed.schemaVersion).toBe(payload.schemaVersion);
       expect(parsed.settings.mission).toBe(payload.settings.mission);
+    });
+
+    // E-122 Phase 1. Encryption is OPT-IN: leaving the passphrase blank must keep writing
+    // the plain file it always did, and such files must keep importing untouched.
+    describe('encrypted backups', () => {
+      it('still reads a plain, unencrypted backup - the blank-passphrase case', async () => {
+        const backup = TestBed.inject(BackupService);
+        const payload = backup.buildExportPayload();
+        const file = new File([JSON.stringify(payload)], 'mission.json', { type: 'application/json' });
+
+        // No passphrase callback supplied at all: a plain file must never ask for one.
+        const parsed = await backup.readFileAsMissionExport(file);
+        expect(parsed.settings.mission).toBe(payload.settings.mission);
+      });
+
+      it('round-trips an encrypted backup through the passphrase callback', async () => {
+        const backup = TestBed.inject(BackupService);
+        const payload = backup.buildExportPayload();
+        const envelope = await encryptJson(payload, 'a good passphrase',
+          { exportedAt: payload.exportedAt, appVersion: payload.appVersion });
+        const file = new File([JSON.stringify(envelope)], 'mission.rtenc.json',
+          { type: 'application/json' });
+
+        const parsed = await backup.readFileAsMissionExport(file, () => 'a good passphrase');
+
+        expect(parsed.settings.mission).toBe(payload.settings.mission);
+        expect(parsed.rangers.length).toBe(payload.rangers.length);
+      });
+
+      it('passes the plaintext hint to the prompt, so the file is identifiable while locked', async () => {
+        const backup = TestBed.inject(BackupService);
+        const payload = backup.buildExportPayload();
+        const envelope = await encryptJson(payload, 'pw', { exportedAt: '2026-09-22', appVersion: '0.93.0' });
+        const file = new File([JSON.stringify(envelope)], 'm.rtenc.json', { type: 'application/json' });
+
+        let seen: any = null;
+        await backup.readFileAsMissionExport(file, hint => { seen = hint; return 'pw'; });
+        expect(seen?.exportedAt).toBe('2026-09-22');
+        expect(seen?.appVersion).toBe('0.93.0');
+      });
+
+      it('fails clearly on the wrong passphrase instead of applying garbage', async () => {
+        const backup = TestBed.inject(BackupService);
+        const envelope = await encryptJson(backup.buildExportPayload(), 'right');
+        const file = new File([JSON.stringify(envelope)], 'm.rtenc.json', { type: 'application/json' });
+
+        await expectAsync(backup.readFileAsMissionExport(file, () => 'wrong')).toBeRejected();
+      });
+
+      it('treats a cancelled prompt as a cancelled restore, not a corrupt file', async () => {
+        const backup = TestBed.inject(BackupService);
+        const envelope = await encryptJson(backup.buildExportPayload(), 'pw');
+        const file = new File([JSON.stringify(envelope)], 'm.rtenc.json', { type: 'application/json' });
+
+        await expectAsync(backup.readFileAsMissionExport(file, () => null))
+          .toBeRejectedWithError(/Cancelled/);
+      });
     });
 
     it('rejects a file that is not valid JSON', async () => {

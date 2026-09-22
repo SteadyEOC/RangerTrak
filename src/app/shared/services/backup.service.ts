@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core'
+import { EncryptedFile, decryptJson, encryptJson, isEncryptedFile } from '../crypto/encrypted-file'
 
 import * as packageJson from '../../../../package.json'
 import {
@@ -78,14 +79,29 @@ export class BackupService {
   /**
    * Triggers a browser download of the current mission as a JSON file.
    */
-  exportMission(): void {
+  async exportMission(passphrase?: string): Promise<void> {
     const payload = this.buildExportPayload()
-    const json = JSON.stringify(payload, null, 2)
+
+    // E-122 Phase 1: the backup carries the whole roster, so it is the file most worth
+    // encrypting - and the one explicitly designed to travel between devices. Encryption
+    // is opt-in per export: a passphrase nobody can recover destroys the mission record,
+    // which for a life-safety tool can be worse than the exposure it prevents.
+    const encrypted = !!passphrase
+    const body = encrypted
+      ? await encryptJson(payload, passphrase!,
+        { exportedAt: payload.exportedAt, appVersion: payload.appVersion })
+      : payload
+
+    const json = JSON.stringify(body, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
 
     const missionLabel = (payload.settings.mission || 'mission').replace(/[^a-z0-9_-]+/gi, '_')
-    const filename = `rangertrak-${missionLabel}-${payload.exportedAt.slice(0, 10)}.json`
+    // Distinct extension so an encrypted backup is obvious in a file listing. Import does
+    // not rely on it - it detects the envelope by structure - but a person sorting through
+    // a folder of backups should not have to open one to find out.
+    const ext = encrypted ? 'rtenc.json' : 'json'
+    const filename = `rangertrak-${missionLabel}-${payload.exportedAt.slice(0, 10)}.${ext}`
 
     const a = document.createElement('a')
     a.href = url
@@ -93,7 +109,8 @@ export class BackupService {
     a.click()
     URL.revokeObjectURL(url)
 
-    this.log.info(`Exported mission to ${filename}`, this.id)
+    this.log.info(`Exported mission to ${filename}`
+      + `${encrypted ? ' (encrypted)' : ' (NOT encrypted)'}`, this.id)
   }
 
   /**
@@ -132,12 +149,29 @@ export class BackupService {
    * Reads a File (from an <input type="file"> change event) and parses it
    * as a MissionExport. Rejects on invalid JSON or an invalid shape.
    */
-  readFileAsMissionExport(file: File): Promise<MissionExport> {
+  readFileAsMissionExport(
+    file: File, getPassphrase?: (hint?: EncryptedFile['hint']) => string | null,
+  ): Promise<MissionExport> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = () => {
+      reader.onload = async () => {
         try {
-          const parsed = JSON.parse(reader.result as string)
+          let parsed = JSON.parse(reader.result as string)
+
+          // Detected structurally, not by file extension: a backup renamed on its way
+          // through email still has to open, and a plain backup must still import
+          // untouched (isEncryptedFile is deliberately strict about that).
+          if (isEncryptedFile(parsed)) {
+            if (!getPassphrase) {
+              throw new Error('This backup is encrypted, and no passphrase was supplied.')
+            }
+            const passphrase = getPassphrase(parsed.hint)
+            if (passphrase === null) {
+              throw new Error('Cancelled - an encrypted backup cannot be opened without its passphrase.')
+            }
+            parsed = await decryptJson(parsed, passphrase)
+          }
+
           this.validatePayload(parsed)
           resolve(parsed)
         } catch (error: any) {

@@ -68,8 +68,9 @@ the difference between a working tool and a blank screen.
 - **Free and open source**, under the AGPL — free to use, free to modify.
 
 > ⚠️ The roster contains personal information — names, addresses, phone numbers, and call
-> signs that map to public licence records — stored unencrypted on the device. See the
-> Field Guide for handling guidance.
+> signs that map to public licence records — **stored unencrypted on the device**. Mission
+> backups can be encrypted with a passphrase (optional, and blank still writes a plain
+> file), but data at rest is not yet. See the Field Guide for handling guidance.
 
 ## 🗺️ Roadmap
 

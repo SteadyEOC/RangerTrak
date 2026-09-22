@@ -372,9 +372,31 @@ That cuts both ways:
   or using a different device means starting empty. **Export regularly.**
 
 The roster is the sensitive part: names, personal phone numbers, photos, and call signs that
-tie back to publicly searchable licence records. It is stored unencrypted, and exports are
-plain files. **The same applies to log exports** — the log is a raw diagnostic record and
-can quote report details and addresses verbatim.
+tie back to publicly searchable licence records. It is stored unencrypted on the device.
+**The same applies to log exports** — the log is a raw diagnostic record and can quote
+report details and addresses verbatim.
+
+### Putting a passphrase on a mission backup
+
+**Mission → Back up mission** now offers a passphrase. This is the file most worth
+protecting: it contains the whole roster *and* every report, and it is the one meant to
+travel — onto a USB stick, into an email, across to another laptop.
+
+- **Leave the passphrase blank** and you get the same plain file as before. That is still
+  the default, and older backups keep opening normally.
+- **Type one** and the file is encrypted. You will be asked to type it a second time,
+  because a mistyped passphrase is not discovered until the day you need the backup.
+- Encrypted backups are saved as `.rtenc.json` so you can spot them in a folder. Restoring
+  one asks for the passphrase.
+
+> ⚠️ **A forgotten passphrase cannot be recovered.** There is no server, no reset, and
+> nobody to ask — that is the same property that keeps your data off the Internet. If the
+> passphrase is lost, so is that backup. Keep one unencrypted copy somewhere physically
+> secure, or store the passphrase the way your agency stores other credentials.
+
+This protects a file that has left your device — a lost laptop, a misplaced stick, an email
+forwarded further than intended. It does **not** protect the data sitting in the browser on
+an unlocked device, which is still in the clear.
 
 Given a callsign, the FCC's own public licensee lookup already shows more than this roster
 does — legal name and mailing address for any licensed amateur radio operator. This app does
