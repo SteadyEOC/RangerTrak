@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.93.0](https://github.com/SteadyEOC/RangerTrak/compare/v0.92.0...v0.93.0) (2026-09-22)
+
+
+### Features
+
+* **brand:** RangerTrak's own mark replaces the Material compass ([daf036d](https://github.com/SteadyEOC/RangerTrak/commit/daf036d65a3c61202542aa80293382e72de69cd8))
+* **mission:** flag overdue check-ins, relative to the mission's own interval ([6d96ae5](https://github.com/SteadyEOC/RangerTrak/commit/6d96ae55b265854f261d30c700e0e5f9174f614e))
+
+
+### Bug Fixes
+
+* **worker:** file feedback issues in SteadyEOC/RangerTrak ([31ff9ae](https://github.com/SteadyEOC/RangerTrak/commit/31ff9ae5f34cd8b35c4f560e1dcfa4e8d488434c))
+
 ## [0.92.0](https://github.com/EOCOnline/rangertrak/compare/v0.91.4...v0.92.0) (2026-09-15)
 
 
