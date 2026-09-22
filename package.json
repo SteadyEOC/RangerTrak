@@ -65,7 +65,7 @@
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "leaflet.offline": "^3.2.0",
-    "maplibre-gl": "^6.10.0",
+    "maplibre-gl": "^6.11.0",
     "mgrs": "^2.2.0",
     "pdf-lib": "^1.17.1",
     "pmtiles": "^4.5.0",
