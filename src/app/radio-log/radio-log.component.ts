@@ -1,4 +1,5 @@
 import { GridOptions, SelectionChangedEvent } from 'ag-grid-community'
+import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 // , TeamService
 import { Observable, subscribeOn, Subscription } from 'rxjs'
 
@@ -200,7 +201,14 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         valueSetter: (params: { data: RadioLogEntryType, newValue: any }) => this.setCoordinate(params.data, 'lng', params.newValue)
       },
       { headerName: "Reported", headerTooltip: 'Report date', valueGetter: this.myDateGetter, maxWidth: 170, editable: false },
-      { headerName: "Elapsed", headerTooltip: 'Hrs:Min:Sec since report', valueGetter: this.myMinuteGetter, maxWidth: 130, editable: false },
+      // E-118 (2026-09-22): same overdue ramp as the map and the Rangers grid. cellClass
+      // rather than cellStyle so the colour stays in the token layer (--rt-elapsed-N via
+      // the global .rt-elapsed--N in styles/_patterns.scss) instead of becoming a third
+      // hard-coded copy of the palette.
+      {
+        headerName: "Elapsed", headerTooltip: 'Hrs:Min:Sec since report', valueGetter: this.myMinuteGetter,
+        maxWidth: 130, editable: false, cellClass: this.elapsedCellClass,
+      },
       {
         headerName: "Status", field: "status", minWidth: 130, maxWidth: 220, cellRenderer: this.statusCellRenderer,
         cellStyle: (params: { value: string; }) => {
@@ -561,6 +569,17 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         }
     */
     return dt
+  }
+
+  /**
+   * E-118: overdue band for a row, as an ag-grid cellClass. Returns no class at band 0 so a
+   * log that is entirely current looks exactly as it did before this existed.
+   */
+  elapsedCellClass = (params: { data: RadioLogEntryType }) => {
+    const band = overdueBand(
+      elapsedMinutes(params.data.date),
+      this.settings?.checkInIntervalMin ?? DEFAULT_CHECK_IN_INTERVAL_MIN)
+    return band > 0 ? ['rt-elapsed', `rt-elapsed--${band}`] : []
   }
 
   myMinuteGetter = (params: { data: RadioLogEntryType }) => {

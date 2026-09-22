@@ -154,3 +154,21 @@
 .rt-field-grid__wide {
   grid-column: 1 / -1;
 }
+
+
+// ── Overdue check-in escalation (E-118) ──────────────────────────────────────
+// One ramp, three consumers: the Leaflet map's per-ranger staleness label, the Rangers
+// grid's "Last contact" cell and the Radio Log's "Elapsed" cell. Emitted globally (not in a
+// component stylesheet) precisely because it has more than one consumer now - the previous
+// copy lived inside mapLeaflet.component.scss and was unreachable from the grids.
+//
+// `.rt-elapsed--0` intentionally has no rule: band 0 is "not due yet" and must look like
+// ordinary text, not a cleared warning.
+.rt-elapsed {
+  border-radius: var(--rt-radius);
+  padding      : 0 0.35em;
+}
+
+@for $i from 1 through 7 {
+  .rt-elapsed--#{$i} { background: var(--rt-elapsed-#{$i}); }
+}

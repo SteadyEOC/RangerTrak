@@ -55,6 +55,20 @@
   // rather than three times over in _chrome.scss. Used by the Rangers confidentiality
   // bar; the ambers still hardcoded in log.component.scss and alerts want these next
   // (23b left them for Sprints B-F).
+  // ── Brand signal ──────────────────────────────────────────────────
+  // The orange in RangerTrak's mark (the waves leaving the antenna). Deliberately
+  // NOT per-skin and NOT inside _rt-chrome-tokens: the skins are the operator's
+  // choice of working palette, but the mark is the product's identity and has to
+  // match the favicon, the home-screen tile and rangertrak.com, none of which can
+  // follow a runtime `data-skin`. Checked against every skin's chrome: it clears
+  // the 3:1 bar for non-text contrast on all five (4.01:1 on sagebrush, the
+  // tightest, up to 5.99:1 on nightwatch).
+  //
+  // It is not an accent. Do not reach for it for links, buttons or focus rings -
+  // that is --rt-accent, which is per-skin and contrast-checked for text. This
+  // orange is 2.99:1 on white and would fail as text.
+  --rt-signal: #F0700A;
+
   --rt-notice: #{light-dark(#FFF8E1, #2A2110)};
   --rt-notice-ink: #{light-dark(#5C4400, #F6DFA0)};
   --rt-notice-line: #{light-dark(#D9A300, #8A6100)};
@@ -66,6 +80,26 @@
   --rt-readiness-red: #{light-dark(#B3261E, #FF6B5E)};
   --rt-readiness-amber: #{light-dark(#8A5A00, #D9A300)};
   --rt-readiness-green: #{light-dark(#3C6E2A, #7CC96A)};
+
+  // ── Overdue check-in escalation (E-118) ───────────────────────────
+  // Band 0 is "not due yet" and has no background at all - see shared/overdue.ts for why
+  // the normal state must not look like a warning. 1..7 run from just-due to fully overdue.
+  //
+  // Deliberately NOT per-skin, same argument as readiness above: a team that has gone quiet
+  // means the same thing under every skin. Moved here 2026-09-22 from
+  // mapLeaflet.component.scss, which was the only consumer back when the only readout was
+  // the map's trail label; the Rangers grid and Radio Log now use the same ramp.
+  //
+  // Alpha is baked in because these sit on top of map tiles and grid rows, which must stay
+  // legible through them. Dark-mode values are dimmed rather than re-hued: the ramp's whole
+  // job is green-through-red, and that reading must not change with the color scheme.
+  --rt-elapsed-1: #{light-dark(rgba(76, 175, 80, .70), rgba(76, 175, 80, .55))};
+  --rt-elapsed-2: #{light-dark(rgba(139, 195, 74, .70), rgba(139, 195, 74, .55))};
+  --rt-elapsed-3: #{light-dark(rgba(205, 220, 57, .70), rgba(205, 220, 57, .55))};
+  --rt-elapsed-4: #{light-dark(rgba(255, 193, 7, .70), rgba(255, 193, 7, .55))};
+  --rt-elapsed-5: #{light-dark(rgba(255, 152, 0, .70), rgba(255, 152, 0, .60))};
+  --rt-elapsed-6: #{light-dark(rgba(255, 87, 34, .70), rgba(255, 87, 34, .65))};
+  --rt-elapsed-7: #{light-dark(rgba(211, 47, 47, .70), rgba(211, 47, 47, .70))};
 
   // ── Status colors (data, not brand - see _status.scss) ───────────
   @each $name, $value in status.$light {

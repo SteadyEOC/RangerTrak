@@ -12,7 +12,8 @@ avoids implementation detail.*
 
 RangerTrak records **who is where, when, and in what condition** during a mission, and
 plots it on a map. It runs entirely in your browser on your own device. There is no
-server, no account, and no login — nothing you type is sent anywhere.
+server, no account, and no login — nothing you type is sent anywhere. It is free and open
+source, so you can copy it, change it, and keep running it for as long as you like.
 
 | Page | What it's for |
 | --- | --- |
@@ -21,7 +22,7 @@ server, no account, and no login — nothing you type is sent anywhere.
 | **Rangers** | Your roster — call signs, names, contact details, teams. |
 | **Map (Leaflet)** | Full-page map using standard online road maps. Best detail, anywhere in the world, but needs Internet. |
 | **Map (MapLibre+PMTiles)** | Full-page map using map data built into the app. Works with no Internet at all: a low-detail world map everywhere, plus real street-level detail in the Vashon Island demo area (or wherever you load your own map file — see step 6 below). |
-| **Settings** | Mission name, operating period, default location, status labels and colours, backup and restore. |
+| **Settings** | Mission name, operating period, expected check-in interval, default location, status labels and colours, backup and restore. |
 | **Log** | A running record of what the app did, including warnings and crashes. Export it when reporting a problem. |
 
 ### Who it's for
@@ -37,6 +38,30 @@ wildland-fire operations — where field members carry no networked device. Thre
    RangerTrak's job is to make their spoken location fast and unambiguous to write down.
 3. **Analyst / Incident Commander.** Uses the Reports table and maps during the incident to
    see coverage and status, and exports afterwards for the after-action record.
+
+### Spotting a team that has gone quiet
+
+Set **Mission → Operational period → Expected check-in interval** to how often your
+teams are supposed to report — 30 minutes by default.
+
+Once a team passes that interval, their elapsed time starts to colour: green just after they
+are due, then amber, then red at three times the interval. With the default 30 minutes, red
+means 90 minutes of silence. The same colours appear in three places, so you see it wherever
+you happen to be looking:
+
+- on the **map**, as a number of minutes beside the team's latest position,
+- on the **Rangers** page, in the Last contact column,
+- on the **Radio Log**, in the Elapsed column.
+
+A ranger who has never reported at all shows as **not checked in** in red, regardless of the
+interval.
+
+Set the interval to **0** if your mission has no fixed check-in cycle. Elapsed times then stay
+plain text with no colouring, rather than the app inventing a cadence nobody agreed to.
+
+Two things this does not do: it will not beep, flash or otherwise interrupt you, and the times
+update when a screen redraws — a new report arriving, or switching pages — rather than counting
+down second by second. It is there to be read, not to raise an alarm.
 
 ### No accounts, no API keys, ever
 

@@ -1,4 +1,5 @@
 import { Subscription } from 'rxjs'
+import { DEFAULT_CHECK_IN_INTERVAL_MIN } from '../shared/overdue'
 
 /**
  * Milliseconds for a value that is *typed* Date but may really be an ISO string from a JSON
@@ -71,6 +72,7 @@ const blankMission: MissionType = {
   imageDirectory: '', defRadioLogStatus: 0, radioLogStatuses: [],
   recipientOptions213: [], idFieldLabel: '', locationTypes: [],
   commandPostEnabled: false, commandPostServerUrl: '',
+  checkInIntervalMin: DEFAULT_CHECK_IN_INTERVAL_MIN,
 }
 
 @Component({
@@ -135,6 +137,11 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
     min(path.maplibre.overviewDifference, 1); max(path.maplibre.overviewDifference, 10)
     min(path.maplibre.overviewMinZoom, 1); max(path.maplibre.overviewMinZoom, 10)
     min(path.maplibre.overviewMaxZoom, 3); max(path.maplibre.overviewMaxZoom, 22)
+
+    // E-118: 0 is meaningful (no fixed check-in cycle, escalation off), so the floor is 0
+    // rather than `required`. The 1440 ceiling is one day - past that the ramp stops saying
+    // anything useful about an operational period.
+    min(path.checkInIntervalMin, 0); max(path.checkInIntervalMin, 1440)
   })
 
   // Mutated in the constructor's settings-subscription next callback, alongside the

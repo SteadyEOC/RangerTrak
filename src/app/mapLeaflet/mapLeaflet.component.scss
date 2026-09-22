@@ -89,18 +89,20 @@
   }
 }
 
-// 10-minute bands: 0 (under 20 min) is fully clear, 1-7 (20 min through 90+) sweep a
-// traffic-light scale from green to orange to red, so a scribe reads "how stale" from
-// hue alone rather than having to gauge one color's opacity. 0.7 alpha throughout (was an
-// inconsistent 0.85/0.9) per the same live report asking for "70% opaque".
+// E-118 (2026-09-22): the COLOURS now come from --rt-elapsed-N in styles/_tokens.scss, so
+// the map, the Rangers grid and the Radio Log cannot drift apart. Only these selectors stay
+// local, and only because of the ::ng-deep/.leaflet-tooltip specificity problem documented
+// above - a bare global `.rt-elapsed--N` ties with Leaflet's own `.leaflet-tooltip`
+// background rule on specificity and would win or lose by stylesheet load order.
+//
+// The bands are no longer fixed 10-minute steps. They run from "due" (one check-in
+// interval) to "fully overdue" (three), relative to the mission's own cadence - see
+// shared/overdue.ts. Band 0 has no rule on purpose: not due yet must not look like a
+// cleared warning.
 :host ::ng-deep {
-  .leaflet-tooltip.rt-trail-elapsed--1 { background: rgba(76, 175, 80, .7); }  // 20-29 min - green
-  .leaflet-tooltip.rt-trail-elapsed--2 { background: rgba(139, 195, 74, .7); } // 30-39 min - light green
-  .leaflet-tooltip.rt-trail-elapsed--3 { background: rgba(205, 220, 57, .7); } // 40-49 min - lime
-  .leaflet-tooltip.rt-trail-elapsed--4 { background: rgba(255, 193, 7, .7); }  // 50-59 min - amber
-  .leaflet-tooltip.rt-trail-elapsed--5 { background: rgba(255, 152, 0, .7); }  // 60-69 min - orange
-  .leaflet-tooltip.rt-trail-elapsed--6 { background: rgba(255, 87, 34, .7); }  // 70-79 min - deep orange
-  .leaflet-tooltip.rt-trail-elapsed--7 { background: rgba(211, 47, 47, .7); }  // 80+ min - red
+  @for $i from 1 through 7 {
+    .leaflet-tooltip.rt-trail-elapsed--#{$i} { background: var(--rt-elapsed-#{$i}); }
+  }
 }
 
 #mapLeaflet-overview {

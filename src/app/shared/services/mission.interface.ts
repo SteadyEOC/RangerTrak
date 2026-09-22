@@ -114,4 +114,15 @@ export type MissionType = {
   // redacted radio-log-only payload goes, they don't change what's in it.
   commandPostEnabled: boolean,
   commandPostServerUrl: string,
+
+  // E-118 (2026-09-22): how often teams are expected to check in, in minutes. Drives the
+  // overdue-escalation colour ramp on the map, the Rangers grid and the Radio Log - see
+  // `shared/overdue.ts` for the band maths and why the ramp is relative to this rather than
+  // fixed wall-clock minutes (a team on a 15-minute cycle is overdue long before one on a
+  // 2-hour cycle). `0` means "no fixed cycle": escalation is disabled and elapsed times show
+  // as plain text, which is the honest display when nobody has set a cadence.
+  // Additive-only field, same reasoning as idFieldLabel/locationTypes above - no
+  // MISSION_SCHEMA_VERSION bump needed, backfillMissingFields supplies
+  // DEFAULT_CHECK_IN_INTERVAL_MIN to any returning user whose stored settings predate it.
+  checkInIntervalMin: number,
 }

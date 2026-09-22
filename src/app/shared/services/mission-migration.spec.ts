@@ -36,6 +36,37 @@ describe('migrateMission', () => {
     } as unknown as MissionType
   }
 
+  /**
+   * E-118 regression guard. `checkInIntervalMin` is an additive-only field, so it relies
+   * entirely on backfillMissingFields rather than a schema bump - exactly the arrangement
+   * that has twice shipped a Settings page broken for returning users. These prove the
+   * returning-user path, not just the fresh-install one.
+   */
+  describe('checkInIntervalMin backfill (E-118)', () => {
+    it('hands the default to settings saved before the field existed', () => {
+      const stored = v0Settings()
+      expect('checkInIntervalMin' in stored).withContext('precondition: field absent').toBe(false)
+
+      const out = migrateMission(stored, defaultsWithInterval(30))
+      expect(out.checkInIntervalMin).toBe(30)
+    })
+
+    it('does not overwrite an interval the user has already chosen', () => {
+      const stored = { ...v0Settings(), checkInIntervalMin: 15 } as MissionType
+      expect(migrateMission(stored, defaultsWithInterval(30)).checkInIntervalMin).toBe(15)
+    })
+
+    it('preserves a deliberate 0 (escalation off) rather than treating it as missing', () => {
+      const stored = { ...v0Settings(), checkInIntervalMin: 0 } as MissionType
+      expect(migrateMission(stored, defaultsWithInterval(30)).checkInIntervalMin).toBe(0)
+    })
+
+    /** Defaults shaped like initMission()'s output, which is what production passes in. */
+    function defaultsWithInterval(checkInIntervalMin: number): MissionType {
+      return { ...v0Settings(), checkInIntervalMin } as MissionType
+    }
+  })
+
   it('stamps the current schema version on settings that had none', () => {
     const out = migrateMission(v0Settings())
     expect(out.schemaVersion).toBe(MISSION_SCHEMA_VERSION)

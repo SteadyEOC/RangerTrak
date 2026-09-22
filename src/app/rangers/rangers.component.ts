@@ -1,4 +1,5 @@
 import { ColDef, GridOptions } from 'ag-grid-community'
+import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 //import { TooltipModule } from 'ng2-tooltip-directive'
 import { Subscription } from 'rxjs'
 
@@ -229,7 +230,16 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
         + `style="font-size:18px;width:18px;height:18px;vertical-align:text-bottom;">phone_disabled</i>`
         + ` not checked in</span>`
     }
-    return `<span aria-hidden title="Last report received: ${last.toLocaleString()}">${formatReportTime(last)}</span>`
+    // E-118 (2026-09-22): the same overdue ramp the map has always had, now here too - this
+    // grid is where a scribe actually scans for a team that has gone quiet, and it used to
+    // show the time as plain text with no warning at all. Band 0 (not due yet) adds no
+    // class, so a healthy roster looks exactly as it did before.
+    const elapsed = elapsedMinutes(last)
+    const band = overdueBand(elapsed, this.settings?.checkInIntervalMin ?? DEFAULT_CHECK_IN_INTERVAL_MIN)
+    const cls = band > 0 ? ` class="rt-elapsed rt-elapsed--${band}"` : ''
+    const overdueNote = band > 0 ? ` - ${elapsed} min ago, overdue` : ''
+    return `<span${cls} aria-hidden title="Last report received: ${last.toLocaleString()}${overdueNote}">`
+      + `${formatReportTime(last)}</span>`
   }
 
   // Raised live, 2026-08-27: what to CALL a ranger's unique id varies by agency/region

@@ -79,5 +79,21 @@
           (newTimeEvent)="timeEventEnd.emit($event)"></rangertrak-time-picker>
       </div>
     </div>
+
+    <!-- E-118 (2026-09-22): how often teams are expected to check in. Drives the overdue
+         colour ramp on the map, the Rangers grid and the Radio Log. Lives in this card
+         rather than its own because it is a property of how this operational period is
+         being run, alongside its start and end. -->
+    <mat-form-field class="mission__checkin" floatLabel="always">
+      <mat-label>Expected check-in interval</mat-label>
+      <!-- No min/max/step attributes here: NG8022 forbids them alongside [formField].
+           The 0-1440 bounds are declared in mission.component.ts's form schema instead. -->
+      <input matInput [formField]="form.checkInIntervalMin" type="number" data-lpignore="true" />
+      <span matTextSuffix>minutes</span>
+      <mat-hint>A team is shown as due at this interval and fully overdue at three times it,
+        so 30 turns red at 90 minutes. The map, the Rangers grid and the Radio Log all shade
+        the elapsed time from green to red in between. Set 0 if this mission has no fixed
+        check-in cycle - elapsed times then stay plain text.</mat-hint>
+    </mat-form-field>
   </mat-card-content>
 </mat-card>

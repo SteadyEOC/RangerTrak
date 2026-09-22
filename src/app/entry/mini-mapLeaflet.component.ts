@@ -602,24 +602,11 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
   // }
 
 
-  // https://blog.mestwin.net/leaflet-angular-marker-clustering/
-  getIcon() {
-    const number = Math.floor(Math.random() * 6)
-    return L.icon({
-      iconSize: [25, 41],
-      iconAnchor: [13, 41],
-      iconUrl: `./../../assets/icons/t${number}.png`
-      //iconUrl: `./../../assets/icons/marker-icon.png`
-    })
-  }
-
-  createMarker_UNUSED() {
-    const mapIcon = this.getIcon();
-    // or const mapIcon = L.Icon.Default
-    // const coordinates = latLng([this.mapPoint.latitude, this.mapPoint.longitude]);
-    // this.lastLayer = marker(coordinates).setIcon(mapIcon);
-    // this.markerClusterGroup.addLayer(this.lastLayer)
-  }
+  // Removed 2026-09-22: getIcon() and createMarker_UNUSED() went with the assets/icons/
+  // t0-t7.png marker set. getIcon() had exactly one caller, createMarker_UNUSED(), whose
+  // own body was entirely commented out, so nothing reachable drew these. It was also
+  // already broken: it rolled `t${Math.floor(Math.random()*6)}` for t0-t5, but no t0.png
+  // ever existed and T1/T2 were capitalised, which a case-sensitive host would 404.
 
   /**
    * Per guidence on settings page: Maps do not use defLat/lng... They are auto-centered on the bounding coordinates centroid of all points entered and the map is then zoomed to show all points.

@@ -8,6 +8,7 @@
 // import-sort cannot undo it. It used to work only by accident, via the eager
 // `import L from 'leaflet'` that RadioLogService no longer has.
 import 'leaflet'
+import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 import 'leaflet.markercluster'
 import {
   getStorageInfo, getStoredTilesAsJson, getTilePoints, savetiles, tileLayerOffline
@@ -152,16 +153,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // TODO: Leaflet's version of following?
   overviewMapLeafletType = { cur: 2, types: { type: ['roadmap', 'terrain', 'satellite', 'hybrid',] } }
 
-  // https://leafletjs.com/reference.html#icon
-  mapCursor = L.icon({
-    iconUrl: '../../assets/icons/my-icon.png',
-    //iconSize: [38, 95],
-    //iconAnchor: [22, 94],
-    //popupAnchor: [-3, -76],
-    //shadowUrl: 'my-icon-shadow.png',
-    //shadowSize: [68, 95],
-    //shadowAnchor: [22, 94]
-  })
+  // Removed 2026-09-22: the `mapCursor` L.icon pointed at assets/icons/my-icon.png, which
+  // has never existed in this repo, and its only use was a commented-out L.marker() call.
 
   myMarkerCluster = new window.L.MarkerClusterGroup()
   // E-80 phase 1: per-callsign route trails, static (no animation/timer - see the roadmap
@@ -1261,9 +1254,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       else byRanger.set(key, [r])
     })
 
-    byRanger.forEach((reports, key) => {
-      if (reports.length < 2) return // nothing to trail for a single check-in
+    // E-118 (2026-09-22): the staleness badge used to live INSIDE the `< 2` guard below,
+    // so a ranger with exactly one check-in - the one most worth flagging, having reported
+    // once and then gone silent - got no badge at all. The badge is now drawn for every
+    // ranger, and only the polyline still needs two or more points.
+    const intervalMin = this.settings?.checkInIntervalMin ?? DEFAULT_CHECK_IN_INTERVAL_MIN
 
+    byRanger.forEach((reports, key) => {
       // Reports aren't guaranteed sorted - the trail is meaningless (and will look
       // plausible while being wrong) if drawn in array order instead of report date.
       const ordered = [...reports].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -1274,7 +1271,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       const color = rangerColorFor(key)
       const segmentCount = ordered.length - 1
 
-      for (let i = 0; i < segmentCount; i++) {
+      for (let i = 0; i < segmentCount; i++) { // no segments at all for a lone check-in
         const opacity = segmentCount === 1 ? 0.9 : 0.25 + (0.65 * i / (segmentCount - 1))
         const segment = L.polyline(
           [
@@ -1289,13 +1286,15 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       // Elapsed-time follow-on (2026-08-24): a static "minutes since" label at the
       // newest point, computed once here - see the method doc comment above for why this
       // isn't the live clock the original scoping excluded. Redone 2026-08-26: the label
-      // is now the bare number (the popup already gives full detail on hover/tap), and an
-      // --rt-elapsed-N modifier class steps its background from clear (under 20 min) through
-      // green, orange and finally red (90+) in 10-minute bands, so staleness reads at a
-      // glance without opening anything.
+      // is now the bare number (the popup already gives full detail on hover/tap).
+      //
+      // E-118 (2026-09-22): the band maths moved to shared/overdue.ts and is now measured
+      // against the mission's own check-in interval rather than fixed 10-minute steps from
+      // 20. The old inline version also disagreed with its own comment - it claimed red at
+      // 90+ but the arithmetic reached the top band at 80.
       const newest = ordered[ordered.length - 1]
-      const elapsedMin = Math.max(0, Math.round((Date.now() - new Date(newest.date).getTime()) / 60000))
-      const elapsedBand = elapsedMin < 20 ? 0 : Math.min(7, Math.floor((elapsedMin - 20) / 10) + 1)
+      const elapsedMin = elapsedMinutes(newest.date)
+      const elapsedBand = overdueBand(elapsedMin, intervalMin)
       const label = L.tooltip([newest.location.lat, newest.location.lng], {
         permanent: true,
         direction: 'top',

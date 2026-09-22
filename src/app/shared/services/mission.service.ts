@@ -1,4 +1,5 @@
 import { Observable, ReplaySubject } from 'rxjs'
+import { DEFAULT_CHECK_IN_INTERVAL_MIN } from '../overdue'
 
 import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 
@@ -315,6 +316,8 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       // fieldReportKeywords: [''],  // Future...could also just search notes field
       recipientOptions213: [...DEFAULT_RECIPIENT_OPTIONS_213],
       idFieldLabel: 'ID',
+      // E-118: 30 min x OVERDUE_RED_MULTIPLE (3) = red at 90 minutes, the stated default.
+      checkInIntervalMin: DEFAULT_CHECK_IN_INTERVAL_MIN,
       locationTypes: [...DEFAULT_LOCATION_TYPES],
       // E-87 Stage 1: off, blank, by default - a fresh install never publishes anywhere
       // until a mission explicitly opts in and names a server.
