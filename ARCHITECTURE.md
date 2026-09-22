@@ -21,7 +21,7 @@ E-64) with a toggle between them — the table below used to show them as separa
 | Mini-map component   | `MiniMapLeafletComponent`                                       | `MiniMapComponent`                                                      |
 | Basemap source       | OpenStreetMap/OpenTopoMap tile servers, over the network        | `src/assets/maps/world-vashon.pmtiles`, bundled in the app, or a scribe-loaded custom `.pmtiles` file |
 | Works offline        | Only for areas already viewed or explicitly saved               | **Yes, everywhere** — but only the bundled/loaded archive's own zoom range renders real detail; see the caching caveat below |
-| Coverage             | Anywhere in the world                                           | Low-detail (z0–5) worldwide background always; street-level detail in the bundled Vashon pilot area, or wherever a scribe loads their own `.pmtiles` file (2026-09-14, offline map coverage scoping) |
+| Coverage             | Anywhere in the world                                           | Low-detail (z0–5) worldwide background always; street-level detail in the bundled demo area (Vashon Island), or wherever a scribe loads their own `.pmtiles` file (2026-09-14, offline map coverage scoping) |
 | Bundle cost          | ~150 kB                                                         | ~950 kB (lazy chunk, loaded with `/map`)                                |
 | Clustering           | `leaflet.markercluster`                                         | Native GeoJSON clustering                                               |
 | Offline tile caching | `leaflet.offline` — "Save this area for offline use" control (OpenTopoMap only; OSM's own policy forbids bulk saving) | Not needed for the bundled/background layer; a scribe-loaded custom file (`CustomPmtilesService`, Map page's "Load a custom .pmtiles file…") replaces coverage outright instead |
@@ -120,6 +120,71 @@ Any key-requiring capability must be optional, must degrade honestly, and must n
 entering and mapping field reports. The current architecture satisfies this on every core
 path — coordinates, Plus Codes, both map engines, Nominatim, and export/import are all
 keyless.
+
+## Theming: skins, tokens, and what must not vary
+
+Five colour **skins** (`command` — the default — plus `ridgeline`, `nightwatch`, `sagebrush`,
+`signal`) are switchable at runtime, in light or dark, and there are two layers to it that
+meet at `:root`:
+
+- **`--mat-sys-*`** — emitted by `mat.theme()` in `styles.scss`, called once per skin, each
+  scoped to a `:root[data-skin="…"]` selector. This themes Material's own components.
+- **`--rt-*`** — 47 tokens in `styles/_tokens.scss`, read by 34 component stylesheets. This
+  themes everything Material does not. Values use CSS `light-dark()` rather than a
+  `prefers-color-scheme` block, so a single declaration covers both schemes and neither is
+  ever undefined.
+
+`SkinService` sets `data-skin` on `<html>`, and **`assets/theme-init.js` sets it again before
+Angular boots**, reading `skinChoice`/`themeMode` from `localStorage`. That file exists
+because the CSP is `script-src 'self'` with no `'unsafe-inline'` — an inline `<script>` in
+`index.html` would be blocked, and without it the app paints the default skin and then flips.
+
+### The rule that is easiest to get wrong
+
+Some tokens vary per skin and some deliberately do not, and putting a value in the wrong
+group is a real bug rather than a style preference:
+
+| Group | Varies per skin? | Why |
+| --- | --- | --- |
+| `--rt-ground/surface/ink/line/chrome` | **Yes** | They *are* the skin. |
+| `--rt-accent` | **Yes** | The accent is the operator's chosen palette, and is contrast-checked for text. |
+| `--rt-signal` | **No** | The brand orange in RangerTrak's mark. It has to match the favicon, the PWA tile and rangertrak.com, none of which can follow a runtime attribute. |
+| `--rt-elapsed-1..7`, `--rt-readiness-*`, `--rt-status-*`, `--rt-notice-*` | **No** | Red means the same thing under every skin. A team that has gone quiet must not read differently because someone picked a different palette. |
+
+`--rt-signal` is **not** an accent. It is 2.99:1 on white and fails as text — use
+`--rt-accent` for anything interactive.
+
+### Shared maths belongs beside its tokens, not in a component
+
+The overdue check-in ramp is the worked example. Its band arithmetic now lives in
+`shared/overdue.ts` and its colours in `_tokens.scss`, because all three consumers — the
+Leaflet map label, the Rangers grid and the Radio Log — need the same answer. It previously
+lived *inside* `mapLeaflet.component.ts` with its colours in that component's SCSS, which is
+precisely why the two grids showed the same elapsed time as plain text with no warning: the
+logic was unreachable from anywhere else.
+
+### Two traps that have already cost time
+
+- **A global class can lose to Leaflet on specificity.** Leaflet builds tooltip DOM itself,
+  outside Angular's view encapsulation, so component-scoped rules never match it and a bare
+  global `.rt-elapsed--N` ties with Leaflet's own `.leaflet-tooltip` background rule —
+  winning or losing by stylesheet load order. `mapLeaflet.component.scss` keeps local
+  selectors paired with `.leaflet-tooltip` for exactly this, and reads the shared tokens for
+  the values.
+- **Never use `var()` inside an SVG that ships as a file.** Renderers that only partly
+  understand CSS (librsvg, some PDF and email pipelines) apply the declaration, fail to
+  resolve the variable, and drop the attribute rather than falling back — the artwork
+  silently disappears. `assets/icons/*.svg` therefore carry plain presentation attributes,
+  with a `<style>` block only for motion. Verified against librsvg, where a `var()` fill made
+  the mark's waves vanish entirely.
+
+### Brand assets are generated, not hand-edited
+
+`assets/icons/rangertrak-mark.svg` (plus `-animated` and `-tile`) are the masters. Every
+raster beside them — `favicon.ico`, `apple-touch-icon.png`, `icon-*.png` — is produced from
+those and should be regenerated rather than edited. `favicon.svg` is a deliberately separate,
+simplified drawing rather than the mark scaled down: at 16px the full mark's three waves merge
+into a smudge and the pin ring closes up.
 
 ## Planned: encryption at rest
 
