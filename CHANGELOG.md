@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.94.0](https://github.com/SteadyEOC/RangerTrak/compare/v0.93.0...v0.94.0) (2026-09-22)
+
+
+### Features
+
+* **backup:** optional passphrase on mission backups (E-122 Phase 1) ([3fdb574](https://github.com/SteadyEOC/RangerTrak/commit/3fdb574778c6bf9af98cfafb411c9333d2bd768a))
+
 ## [0.93.0](https://github.com/SteadyEOC/RangerTrak/compare/v0.92.0...v0.93.0) (2026-09-22)
 
 
