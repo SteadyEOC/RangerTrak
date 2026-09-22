@@ -1,1 +1,23 @@
-<svg xmlns="https://www.w3.org/2000/svg" xmlns:svgjs="https://svgjs.com/svgjs" xmlns:xlink="https://www.w3.org/1999/xlink" width="24" height="24" version="1.1"><svg xmlns="https://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0V0z"/><path d="M12 4c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8zm2.01 10.01L6.5 17.5l3.49-7.51L17.5 6.5l-3.49 7.51z" opacity=".3"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z"/></svg><style>@media (prefers-color-scheme:light){:root{filter:none}}@media (prefers-color-scheme:dark){:root{filter:contrast(.8333333333333334) brightness(1.7)}}</style></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"
+     role="img" aria-label="RangerTrak">
+  <title>RangerTrak</title>
+  <!--
+    Tab-size mark. Deliberately NOT rangertrak-mark.svg scaled down: at 16px the
+    full mark's three thin waves collapse into a smudge and the pin ring closes
+    up. This is the simplified cut - filled pin, two waves, no slots - which is
+    what actually survives 16px. Geometry mirrors rangertrak-mark.svg; change
+    one, check the other.
+  -->
+  <style>
+    /* Browsers honour this in SVG favicons; renderers that do not just get the
+       light version, which is the correct fallback. */
+    @media (prefers-color-scheme: dark) { .pin { fill: #9DC2DC; } }
+  </style>
+  <path class="pin" fill="#12263F" fill-rule="evenodd"
+        d="M 11.5 29 L 6.26 21.84 A 6.5 6.5 0 1 1 16.74 21.84 Z
+           M 10.4 12.6 L 12.6 12.6 L 12.6 24.2 L 10.4 24.2 Z"/>
+  <g fill="none" stroke="#F0700A" stroke-width="3" stroke-linecap="round">
+    <path d="M 21.89 5 A 12 12 0 0 1 20.69 18.71"/>
+    <path d="M 26.22 2.5 A 17 17 0 0 1 24.52 21.93"/>
+  </g>
+</svg>

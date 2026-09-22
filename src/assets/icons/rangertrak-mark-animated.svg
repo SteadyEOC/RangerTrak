@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 155 260" width="155" height="260"
+     role="img" aria-label="RangerTrak">
+  <title>RangerTrak</title>
+  <!--
+    Static appearance is carried by presentation attributes, so any renderer
+    (librsvg, resvg, PDF, email) gets a correct still logo. The style block
+    below only adds motion, which browsers apply on top.
+
+    The three arcs never move and never leave: they sit at the mark's canonical
+    radii and only their brightness cycles, peaking in turn from the inside out.
+    So the signal still reads as travelling outward, but no geometry changes,
+    which is what makes it calm in peripheral vision. Opacity starts and ends a
+    cycle at the same value, so a 32% floor needs no fade to zero and there is
+    nothing to blink.
+  -->
+  <style>
+    /* One knob. Bigger = calmer. The stagger is derived, so any period loops. */
+    .wave {
+      --rt-period: 18s;
+      animation: rt-signal var(--rt-period) ease-in-out infinite;
+    }
+    /* Innermost is furthest along, so the bright peak travels outward. */
+    .wave-1 { animation-delay: calc(var(--rt-period) / -1.5); }
+    .wave-2 { animation-delay: calc(var(--rt-period) / -3); }
+
+    /*
+      The bright phase is a plateau, not a point. A wave holds full-strength
+      orange for a quarter of the cycle (about 4.5s at the default period), so
+      the peak actually reads as bold; it used to only touch 1.0 for an instant,
+      which is why the whole mark looked washed out. The long tail back down to
+      32% is what keeps the motion calm.
+    */
+    @keyframes rt-signal {
+      0%   { opacity: 0.32; }
+      15%  { opacity: 1; }
+      40%  { opacity: 1; }
+      100% { opacity: 0.32; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { .wave { animation: none; } }
+  </style>
+
+  <g fill="none" stroke="#12263F" stroke-linejoin="round">
+    <path d="M 52 239 L 18.4 175.8 A 38 38 0 1 1 85.6 175.8 Z" stroke-width="12"/>
+    <path d="M 52 96 L 52 150" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <rect x="44" y="142" width="16" height="58" rx="6" fill="#12263F"/>
+  <circle cx="52" cy="88" r="8" fill="#12263F"/>
+  <g fill="#fff">
+    <rect x="47.5" y="158" width="9" height="4" rx="2"/>
+    <rect x="47.5" y="170" width="9" height="4" rx="2"/>
+    <rect x="47.5" y="182" width="9" height="4" rx="2"/>
+  </g>
+
+  <!-- Signal colour: this one hex, once. Deliberately a plain attribute and not
+       a CSS var - a var() here makes renderers that half-understand CSS drop the
+       stroke completely instead of falling back, and the waves disappear. -->
+  <g fill="none" stroke="#F0700A" stroke-width="7" stroke-linecap="round"
+     vector-effect="non-scaling-stroke">
+    <path class="wave wave-1" transform="translate(52,88) scale(0.80) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+    <path class="wave wave-2" transform="translate(52,88) scale(1.30) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+    <path class="wave wave-3" transform="translate(52,88) scale(1.85) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+  </g>
+</svg>

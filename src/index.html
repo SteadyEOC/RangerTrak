@@ -9,12 +9,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description"
     content="RangerTrak is a free, open-source browser based tool to allow Search &amp; Rescue command to map their rangers with only radio contact">
+  <!-- SVG first: browsers that support it get a crisp mark at any DPI and the
+       file's own prefers-color-scheme rule lightens the pin on a dark tab bar.
+       favicon.ico stays for Safari and older browsers, which ignore the SVG. -->
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <!-- E-62 cheap tier: iOS/iPadOS ignores favicon.ico and manifest.webmanifest's icons
        for "Add to Home Screen" - without this it fell back to a screenshot thumbnail
-       instead of the app's actual mark. Flattened onto the app's ground token (#EDF1F5)
-       rather than left transparent - Apple's own guidance, since iOS composites this
-       under its own rounded-corner mask and does not handle alpha well. -->
+       instead of the app's actual mark. Flattened onto the brand navy (#28465A), the
+       same ground as the PWA tiles, rather than left transparent - Apple's own
+       guidance, since iOS composites this under its own rounded-corner mask and does
+       not handle alpha well. Regenerated from assets/icons/rangertrak-tile.svg. -->
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
   <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -62,9 +67,16 @@
        browser chrome/status bar around an installed PWA, so it was one more place the
        Angular-default identity was leaking through. Was also duplicated (this link/meta
        pair appeared twice) and, above, a malformed meta tag that mixed an HTTP header
-       fragment into an HTML attribute and never set a real theme-color value at all. -->
+       fragment into an HTML attribute and never set a real theme-color value at all.
+
+       REVISED 2026-09-22 (brand/palette integration): now --rt-chrome (#12263F), not the
+       Command accent. In an installed PWA this colours the status bar, which sits directly
+       above the navbar - and the navbar's background IS --rt-chrome, so the accent put a
+       bright blue band above a navy bar. Matching chrome makes the two continuous. Also
+       matches the home-screen tile's ground (assets/icons/rangertrak-tile.svg).
+       NOTE: this narrows D-37, which chose the Command accent here. Keep both in step. -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0B5FA8">
+  <meta name="theme-color" content="#12263F">
   <!-- Pre-Angular theme/skin + the Google Fonts load-swap above, both moved out of an inline
        <script> here into assets/theme-init.js on 2026-09-01 (E-44 CSP follow-up) - this
        repo's CSP (src/_headers) is `script-src 'self'` with no 'unsafe-inline', which an

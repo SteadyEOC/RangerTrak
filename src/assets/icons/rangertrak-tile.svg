@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="RangerTrak">
+  <title>RangerTrak</title>
+  <!--
+    Home-screen / PWA tile. Reversed palette (white pin on the brand navy) so it
+    holds up as a solid tile, which is what a maskable icon needs.
+
+    The mark is placed through a nested svg whose viewBox is the mark's measured
+    ink bounds, so it is centred on its artwork rather than on its own padded
+    viewBox. Sized to 317px of 512 - half-diagonal 182px against the maskable
+    safe radius of 205px, so nothing is clipped by a circular or squircle mask.
+
+    Regenerate the PNGs from this file; do not hand-edit them.
+  -->
+  <rect width="512" height="512" fill="#12263F"/>
+  <svg x="167.2" y="97.5" width="177.6" height="317"
+       viewBox="6.6 18.7 127.5 227.6">
+    <g fill="none" stroke="#FFFFFF" stroke-linejoin="round">
+    <path d="M 52 239 L 18.4 175.8 A 38 38 0 1 1 85.6 175.8 Z" stroke-width="12"/>
+    <path d="M 52 96 L 52 150" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <rect x="44" y="142" width="16" height="58" rx="6" fill="#FFFFFF"/>
+  <circle cx="52" cy="88" r="8" fill="#FFFFFF"/>
+  <g fill="#12263F">
+    <rect x="47.5" y="158" width="9" height="4" rx="2"/>
+    <rect x="47.5" y="170" width="9" height="4" rx="2"/>
+    <rect x="47.5" y="182" width="9" height="4" rx="2"/>
+  </g>
+
+  <!-- Signal colour: this one hex, once. Deliberately a plain attribute and not
+       a CSS var - a var() here makes renderers that half-understand CSS drop the
+       stroke completely instead of falling back, and the waves disappear. -->
+  <g fill="none" stroke="#F0700A" stroke-width="7" stroke-linecap="round"
+     vector-effect="non-scaling-stroke">
+    <path transform="translate(52,88) scale(0.80) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+    <path transform="translate(52,88) scale(1.30) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+    <path transform="translate(52,88) scale(1.85) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+  </g>
+  </svg>
+</svg>

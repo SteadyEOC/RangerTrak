@@ -92,6 +92,14 @@
   flex: none;
 }
 
+// The pin rides on currentColor so it follows the skin's chrome ink; only the
+// signal carries brand colour, and that comes from the token layer rather than a
+// literal here. See --rt-signal in styles/_tokens.scss for why it does not vary
+// by skin the way --rt-accent does.
+.brand-icon__signal {
+  stroke: var(--rt-signal);
+}
+
 .Navbar__progressBar {
   font-weight : bold;
   color       : crimson;

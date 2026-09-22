@@ -4,17 +4,26 @@
 
 <nav class="main-nav">
   <!-- E-63b: the brand mark IS the Home affordance now - the separate "Home" nav item is
-       gone. Icon is favicon.svg's own path (Material's "explore"/compass mark, already the
-       app's real icon per E-42/E-62 - not a new logo), inlined with currentColor so it
-       follows .title's color with no separate asset request. routerLinkActive mirrors
-       what "Home" used to show: active only on an exact match, not on every route (this
-       link's target). -->
+       gone. The icon is RangerTrak's own mark (map pin + handheld radio + signal), the
+       same geometry as assets/icons/favicon.svg, inlined so it costs no asset request.
+       It is the tab-size cut of the mark rather than the full one: at 26px the full
+       mark's three thin waves merge and its pin ring closes up. The pin takes
+       currentColor so it follows .title; only the signal carries brand colour, set in
+       the component SCSS. routerLinkActive mirrors what "Home" used to show: active
+       only on an exact match, not on every route (this link's target). -->
   <span title="RangerTrak" class="title">
     <a class="brand" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-      <svg class="brand-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z"
-          fill="currentColor" />
+      <svg class="brand-icon" width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <!-- The antenna is a hole punched through the pin (fill-rule evenodd), not a
+             painted-on stripe, so it shows whatever the navbar background is and needs
+             no second colour to stay in step with the theme. -->
+        <path fill="currentColor" fill-rule="evenodd"
+          d="M 11.5 29 L 6.26 21.84 A 6.5 6.5 0 1 1 16.74 21.84 Z
+             M 10.4 12.6 L 12.6 12.6 L 12.6 24.2 L 10.4 24.2 Z" />
+        <g class="brand-icon__signal" fill="none" stroke-width="3" stroke-linecap="round">
+          <path d="M 21.89 5 A 12 12 0 0 1 20.69 18.71" />
+          <path d="M 26.22 2.5 A 17 17 0 0 1 24.52 21.93" />
+        </g>
       </svg>
       RangerTrak™
     </a>

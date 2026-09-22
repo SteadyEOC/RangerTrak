@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 155 260" width="155" height="260"
+     role="img" aria-label="RangerTrak">
+  <title>RangerTrak</title>
+  <!--
+    RangerTrak's mark: a map pin that is also a handheld radio, with the signal
+    leaving the antenna. Geometry is shared with rangertrak-mark-animated.svg
+    and favicon.svg; change one, check the others.
+
+    Colours are plain presentation attributes on purpose. A CSS var() here makes
+    renderers that only half-understand CSS (librsvg, some PDF and email
+    pipelines) drop the attribute instead of falling back, and the waves vanish.
+  -->
+  <g fill="none" stroke="#12263F" stroke-linejoin="round">
+    <path d="M 52 239 L 18.4 175.8 A 38 38 0 1 1 85.6 175.8 Z" stroke-width="12"/>
+    <path d="M 52 96 L 52 150" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <rect x="44" y="142" width="16" height="58" rx="6" fill="#12263F"/>
+  <circle cx="52" cy="88" r="8" fill="#12263F"/>
+  <g fill="#fff">
+    <rect x="47.5" y="158" width="9" height="4" rx="2"/>
+    <rect x="47.5" y="170" width="9" height="4" rx="2"/>
+    <rect x="47.5" y="182" width="9" height="4" rx="2"/>
+  </g>
+
+  <!-- Signal colour: this one hex, once. Deliberately a plain attribute and not
+       a CSS var - a var() here makes renderers that half-understand CSS drop the
+       stroke completely instead of falling back, and the waves disappear. -->
+  <g fill="none" stroke="#F0700A" stroke-width="7" stroke-linecap="round"
+     vector-effect="non-scaling-stroke">
+    <path transform="translate(52,88) scale(0.80) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+    <path transform="translate(52,88) scale(1.30) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+    <path transform="translate(52,88) scale(1.85) translate(-52,-88)"
+          d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>
+  </g>
+</svg>
