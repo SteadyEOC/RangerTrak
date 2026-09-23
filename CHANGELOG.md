@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.95.2](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.1...v0.95.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **map:** MapLibre evidence markers honor the All/selected switch ([08a9646](https://github.com/SteadyEOC/RangerTrak/commit/08a96462a7cd620dcf0acd11c5ae26c5e79c9ad7))
+
 ### [0.95.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.0...v0.95.1) (2026-09-23)
 
 
