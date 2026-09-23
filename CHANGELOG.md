@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.95.3](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.2...v0.95.3) (2026-09-23)
+
+
+### Bug Fixes
+
+* **brand:** drop the unfinalized Faster One footer treatment, use the real mark in the navbar ([2bbdc7c](https://github.com/SteadyEOC/RangerTrak/commit/2bbdc7c72827840d555c02682ec05d0939703ed9))
+
 ### [0.95.2](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.1...v0.95.2) (2026-09-23)
 
 
