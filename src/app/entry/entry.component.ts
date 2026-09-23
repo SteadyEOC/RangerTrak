@@ -26,9 +26,9 @@ import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 import { TimePickerComponent } from '../shared/time-picker/time-picker.component'
 import { DDToDDM } from '../shared/mapping/coordinate'
 import {
-  RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, LocationType, LogService,
-  RangerService, RangerType, MissionService, MissionType, SampleDataService, statusColorValue,
-  undefinedAddressFlag, undefinedLocation, WelcomePanelService, FieldModeService
+  RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
+  LogService, RangerService, RangerType, MissionService, MissionType, SampleDataService,
+  statusColorValue, undefinedAddressFlag, undefinedLocation, WelcomePanelService, FieldModeService
 } from '../shared/services/'
 // Direct path, not the barrel above - see the note in rangers.component.ts for why a
 // service used as a DI token needs this; these are plain type/const exports with no such
@@ -163,7 +163,14 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // the maintainer's own placement ask), operator belongs OUTSIDE it (applies to every
   // report, not only 213s) - see entry.component.html's own tabindex-chain comment.
   subject213TabIndex = this.message213TabIndex + 1
-  operatorTabIndex = this.subject213TabIndex + 1
+  // Maintainer ask (2026-09-22): "Print this ICS-213 as soon as I submit" checkbox, last
+  // thing in the 213 box (after Subject) - see entry.component.html's own comment on
+  // .enter__213-details. Same [hidden]-not-@if reasoning the rest of the 213 fields already
+  // rely on: this slot is reserved whether or not the 213 box is open, which is exactly why
+  // the contiguity check (tools/e2e.js's checkEntryTabOrder) keeps working. Total moved from
+  // 46 to 47 - see that check's own comment for the running list of who else did this.
+  autoPrint213TabIndex = this.subject213TabIndex + 1
+  operatorTabIndex = this.autoPrint213TabIndex + 1
   resetTabIndex = this.operatorTabIndex + 1
   submitTabIndex = this.resetTabIndex + 1
 
@@ -927,6 +934,79 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Maintainer ask (2026-09-22): "some folks might want to automatically print ALL 213
+   * messages as soon as they are submitted." D2 of that scoping: Entry's checkbox and the
+   * Mission page's own checkbox (mission-recipients213) read/write the SAME field, not a
+   * second storage key - this is exactly the call every other settings write on this app
+   * already makes, and `this.settings` is picked straight back up by `missionSubscription`
+   * (constructor, above), so no local mirror signal is needed to keep the checkbox correct.
+   * Deliberately NOT part of entryModel/resetAll() - that is what makes it survive
+   * resetEntryForm(), i.e. "maintain its position from entry to entry."
+   */
+  onAutoPrint213Changed(checked: boolean): void {
+    this.missionService.updateMission({ ...this.settings, autoPrint213: checked })
+  }
+
+  /**
+   * Fire-and-forget from onFormSubmit() below, never awaited there - see that call site's
+   * own comment for why. The report is ALREADY SAVED by the time this runs (addRadioLogEntry()
+   * happened first), so nothing in here may ever surface as a failed submit; every path below
+   * only ever updates the existing fading confirmation line.
+   *
+   * Dynamically imports both the PDF-fill and print machinery: Entry is the EAGER route
+   * (app.routes.ts's own `path: ''`), and a static import of either module here would drag
+   * pdf-lib into main.js for every visitor who never files a 213 - the same E-115/bundle-
+   * discipline reasoning app.routes.ts's own header comment lays out for Leaflet, just applied
+   * to a different library. Verified against `ng build`'s own chunk output, not assumed.
+   */
+  private async autoPrint213(report: RadioLogEntryType): Promise<void> {
+    try {
+      const [{ fillIcs213Pdf, ics213FieldsFromReport }, { printIcs213 }] = await Promise.all([
+        import('../shared/export/ics213-pdf'),
+        import('../shared/export/ics213-print'),
+      ])
+
+      const res = await fetch('assets/forms/ics-213.pdf')
+      if (!res.ok) {
+        throw new Error(`Fetching the ICS-213 template failed: ${res.status}`)
+      }
+      const templateBytes = new Uint8Array(await res.arrayBuffer())
+      // Same eight-field mapping messages.component.ts's own manual "Print as ICS-213" uses -
+      // lifted into ics213-pdf.ts's own ics213FieldsFromReport() so the two callers cannot
+      // drift apart the way F29-47's blank Subject/Approved-by-Name once did.
+      const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings))
+      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`)
+
+      // First print only - printedAt's own doc comment (radio-log-entry.interface.ts)
+      // and messages.component.ts's manual print button both already establish this: it
+      // answers "has this gone out at all," not "when was it last printed."
+      if (!report.printedAt) {
+        report.printedAt = new Date()
+        this.radioLogService.saveEditedRadioLog()
+      }
+
+      // D1: the fallback is otherwise silent - say which one actually happened.
+      if (this.submitInfo) {
+        this.submitInfo.innerText = outcome === 'printed'
+          ? `Entry id # ${report.id} saved - 213 sent to print`
+          : `Entry id # ${report.id} saved - 213 downloaded (print dialog unavailable)`
+        Utility.resetMaterialFadeAnimation(this.submitInfo)
+      }
+      this.log.info(`Auto-print ICS-213 for report ${report.id}: ${outcome}`, this.id)
+    } catch (e) {
+      // No throw, no snackbar (debug-mode-only here, deliberately - see onFormSubmit()'s own
+      // comment on AlertsComponent.OpenSnackBar) - just the same fading line beside Submit a
+      // scribe is already watching, telling them the report itself is fine and where to go
+      // to print it by hand instead.
+      this.log.error(`Auto-print ICS-213 failed for report ${report.id}: ${e}`, this.id)
+      if (this.submitInfo) {
+        this.submitInfo.innerText = `Entry id # ${report.id} saved - 213 print failed, print it from Messages`
+        Utility.resetMaterialFadeAnimation(this.submitInfo)
+      }
+    }
+  }
+
+  /**
    * Save entries to Reports data storage...
    *
    * Ensure we have obtained values from child components (timePicker & location) to persist/submit
@@ -973,6 +1053,17 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // one a scribe actually needs, and it stays unconditional.
     if (this.settings?.debugMode) {
       this.alert.OpenSnackBar(`Entry id # ${newReport.id} Saved: ${formDataJSON} `, `Entry id # ${newReport.id} `, 3000)
+    }
+
+    // Maintainer ask (2026-09-22): auto-print. Deliberately NOT awaited - onFormSubmit()
+    // stays synchronous and resetEntryForm() below runs immediately, rather than leaving the
+    // form sitting full for a second or two on every 213 while a PDF fills and a print dialog
+    // opens (bad on the hot path - a scribe filing report after report). `newReport` is a
+    // real object reference captured here, so the reset that follows cannot affect what the
+    // print sees; autoPrint213() only ever touches `this.submitInfo`'s text afterward, never
+    // any form state.
+    if (this.settings?.autoPrint213 && newReport.generates213) {
+      this.autoPrint213(newReport)
     }
 
     this.resetEntryForm()  // std reset just blanks values, doesn't initialize the various form fields...

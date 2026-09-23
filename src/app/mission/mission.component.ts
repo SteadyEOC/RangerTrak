@@ -73,6 +73,7 @@ const blankMission: MissionType = {
   recipientOptions213: [], idFieldLabel: '', locationTypes: [],
   commandPostEnabled: false, commandPostServerUrl: '',
   checkInIntervalMin: DEFAULT_CHECK_IN_INTERVAL_MIN,
+  autoPrint213: false,
 }
 
 @Component({

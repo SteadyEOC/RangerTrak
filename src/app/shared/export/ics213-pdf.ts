@@ -1,4 +1,10 @@
 import { PDFDocument } from 'pdf-lib'
+// `import type` only - erased at compile time, so this doesn't pull radio-log-entry.interface.ts/
+// mission.interface.ts's own runtime code (there isn't any) into whichever chunk imports this
+// module. Kept as narrow Pick<>s below rather than the full types, so this file states exactly
+// which fields the mapping actually reads.
+import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { MissionType } from '../services/mission.interface'
 
 /**
  * Fills the real, official ICS-213 (General Message) AcroForm PDF - not a layout we drew
@@ -70,4 +76,45 @@ export async function fillIcs213Pdf(
   }
 
   return pdf.save()
+}
+
+/** The report fields `ics213FieldsFromReport()` below actually reads - narrower than the full
+ *  `RadioLogEntryType` so this file states exactly what it depends on. */
+export type Ics213SourceReport = Pick<
+  RadioLogEntryType, 'callsign' | 'date' | 'subject213' | 'message213' | 'recipients213' | 'operator'
+>
+/** Likewise for the mission settings passed alongside the report. */
+export type Ics213SourceMission = Pick<MissionType, 'event' | 'mission'>
+
+/**
+ * The ICS213_FIELDS mapping, lifted out of messages.component.ts's own `printAsIcs213()`
+ * (2026-09-22) once entry.component.ts's auto-print-on-submit needed the exact same eight
+ * fields - a second hand-written copy is exactly how F29-47 happened: '4 Subject' and
+ * '8 Approved by Name' were both declared in ICS213_FIELDS since E-31/E-41 phase 3 but never
+ * actually passed a value, so every 213 printed them blank for weeks before anyone noticed.
+ * One function both callers use now, so they cannot drift apart again the same way.
+ *
+ * `RadioLogEntryType` has no Approved-by-Name field of its own - `operator` (D-44, whoever
+ * actually filed the report) fills that slot, per this app's own established mapping; a
+ * genuinely missing operator renders blank rather than substituting anything else. The 213's
+ * REPLY block (fields 9/10, plus both signature fields) is never filled here either, for the
+ * same reason `fillIcs213Pdf()`'s own header comment gives - that's the recipient's to write
+ * by hand, after the fact.
+ */
+export function ics213FieldsFromReport(
+  report: Ics213SourceReport,
+  settings: Ics213SourceMission | undefined,
+): Ics213FieldValues {
+  const d = new Date(report.date)
+  return {
+    '1 Incident Name Optional': settings?.event || settings?.mission || '',
+    '2 To Name and Position': (report.recipients213 ?? []).join(', '),
+    '3 From Name and Position': report.callsign,
+    '4 Subject': report.subject213 ?? '',
+    '5 Date': d.toLocaleDateString(),
+    // hour12: false - 24-hour throughout the app, and the ICS-213's own convention.
+    '6 Time': d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+    '7 Message': report.message213 ?? '',
+    '8 Approved by Name': report.operator ?? '',
+  }
 }

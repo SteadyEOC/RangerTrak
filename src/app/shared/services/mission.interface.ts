@@ -125,4 +125,16 @@ export type MissionType = {
   // MISSION_SCHEMA_VERSION bump needed, backfillMissingFields supplies
   // DEFAULT_CHECK_IN_INTERVAL_MIN to any returning user whose stored settings predate it.
   checkInIntervalMin: number,
+
+  // Maintainer ask (2026-09-22): "some folks might want to automatically print ALL 213
+  // messages as soon as they are submitted." One value, two controls (D2 of that scoping) -
+  // the Mission page's own checkbox (mission-recipients213) and Entry's own checkbox both
+  // read and write THIS field, not a second storage key, which is also what makes Entry's
+  // checkbox "maintain its position from entry to entry" (and across reloads) for free.
+  // Additive-only field, same reasoning as checkInIntervalMin immediately above - no
+  // MISSION_SCHEMA_VERSION bump needed, backfillMissingFields supplies the default (false;
+  // see initMission()) to any returning user whose stored settings predate it. Default is
+  // deliberately false, not true - silently inheriting an auto-print-every-213 behavior is
+  // exactly the kind of surprise this field should never spring on an existing mission.
+  autoPrint213: boolean,
 }

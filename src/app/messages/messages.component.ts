@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms'
 import { PageComponent } from '../shared/page/page.component'
 import { MATERIAL_IMPORTS } from '../material-imports'
 import { formatReportTime } from '../shared'
-import { fillIcs213Pdf } from '../shared/export/ics213-pdf'
+import { fillIcs213Pdf, ics213FieldsFromReport } from '../shared/export/ics213-pdf'
 import {
   RadioLogService, RadioLogEntryType, LogService, MissionService, MissionType
 } from '../shared/services'
@@ -178,26 +178,13 @@ export class MessagesComponent implements OnInit, OnDestroy {
         throw new Error(`Fetching the ICS-213 template failed: ${res.status}`)
       }
       const templateBytes = new Uint8Array(await res.arrayBuffer())
-      const d = new Date(report.date)
 
-      // F29-47 (2026-08-29): '4 Subject' and '8 Approved by Name' were both declared in
-      // ICS213_FIELDS since E-31/E-41 phase 3 but never passed a value here, so every 213
-      // generated printed them blank. Subject is its own scribe-entered field (subject213),
-      // not derived from the message text; Approved by Name is the operator who filed the
-      // report - D-e: never the CURRENT session's operator, only whatever was actually
-      // stamped on this specific report at submit time, so a shift change can't
-      // retroactively re-attribute it.
-      const filled = await fillIcs213Pdf(templateBytes, {
-        '1 Incident Name Optional': this.settings?.event || this.settings?.mission || '',
-        '2 To Name and Position': (report.recipients213 ?? []).join(', '),
-        '3 From Name and Position': report.callsign,
-        '4 Subject': report.subject213 ?? '',
-        '5 Date': d.toLocaleDateString(),
-        // hour12: false - 24-hour throughout the app, and the ICS-213's own convention.
-        '6 Time': d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-        '7 Message': report.message213 ?? '',
-        '8 Approved by Name': report.operator ?? '',
-      })
+      // 2026-09-22: the field mapping itself moved to ics213-pdf.ts's own
+      // ics213FieldsFromReport() once entry.component.ts's auto-print-on-submit needed the
+      // exact same eight fields - see that function's own comment for why a second
+      // hand-written copy is exactly how F29-47 (blank Subject/Approved-by-Name for weeks)
+      // happened in the first place.
+      const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings))
 
       // TS's DOM lib types Uint8Array's `.buffer` as ArrayBufferLike (which could in theory
       // be a SharedArrayBuffer), stricter than BlobPart's ArrayBuffer requirement - a real

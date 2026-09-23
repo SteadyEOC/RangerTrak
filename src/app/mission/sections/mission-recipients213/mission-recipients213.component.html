@@ -13,6 +13,18 @@
       <mat-hint>One per line. Parsed when you click away, so a half-typed line never
         registers.</mat-hint>
     </mat-form-field>
+    <!-- Maintainer ask (2026-09-22): auto-print every ICS-213 the moment it's submitted -
+         a mission-wide setting (D1/D2 of that scoping), not per-report. Entry's own
+         checkbox reads/writes this SAME field - see MissionType.autoPrint213's own comment.
+         Bound through the FieldState's own WritableSignal, not [formField]: Signal Forms'
+         native binding cannot drive a Material checkbox (angular/components#32072, same as
+         mission.component.html's own Debug checkbox) - and a checkbox, not a slide toggle,
+         because this page's rule is that a toggle takes effect instantly while everything
+         else here waits for Save; this is no different. -->
+    <mat-checkbox data-testid="autoPrint213" [checked]="form.autoPrint213().value()"
+      (change)="form.autoPrint213().value.set($event.checked)">
+      Automatically print every ICS-213 on submit
+    </mat-checkbox>
   </mat-card-content>
   <mat-card-actions>
     <button matButton type="button" (click)="onBtnRestoreStarterList()"

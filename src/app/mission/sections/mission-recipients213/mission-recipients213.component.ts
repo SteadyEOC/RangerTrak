@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common'
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { FieldTree } from '@angular/forms/signals'
 
-import { DEFAULT_RECIPIENT_OPTIONS_213 } from '../../../shared/services/'
+import { DEFAULT_RECIPIENT_OPTIONS_213, MissionType } from '../../../shared/services/'
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 
 /**
@@ -27,6 +28,14 @@ import { MATERIAL_IMPORTS } from '../../../material-imports'
 export class MissionRecipients213Component implements OnChanges {
   @Input({ required: true }) options: string[] = []
   @Output() optionsChange = new EventEmitter<string[]>()
+
+  // Maintainer ask (2026-09-22): the auto-print-213-on-submit setting, added here rather
+  // than as a third @Input/@Output pair - this is the page's own 213 section, and unlike
+  // `options` (which needs its own textarea parse/blur handling above) a plain boolean is
+  // the exact shape mission-command-post's own `[form]="settingsForm"` pattern already
+  // covers, so this component takes the whole form tree the same way rather than inventing
+  // a second wiring style for one checkbox.
+  @Input({ required: true }) form!: FieldTree<MissionType>
 
   /** The textarea's own working text - only reconciled with `options` on external change. */
   text = ''

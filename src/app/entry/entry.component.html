@@ -403,6 +403,24 @@
             <input matInput type="text" [formField]="entryForm.subject213"
               [attr.tabindex]="subject213TabIndex" />
           </mat-form-field>
+
+          <!-- Maintainer ask (2026-09-22): auto-print every ICS-213 the moment it's
+               submitted. Bound to `settings.autoPrint213` (a component method, not a form
+               field) rather than anything inside entryForm/entryModel - D2 of that scoping is
+               that this is ONE value shared with the Mission page's own checkbox
+               (mission-recipients213), not a second storage key, and it is deliberately NOT
+               part of the report being entered - resetEntryForm()/resetAll() never touch it,
+               which is exactly what makes it "maintain its position from entry to entry" (and
+               across reloads: MissionService.updateMission() persists it immediately). Last
+               control in this box, after Subject, per the same placement the maintainer has
+               used for every other 213-box addition. -->
+          <mat-checkbox [checked]="settings.autoPrint213" [tabIndex]="autoPrint213TabIndex"
+            (change)="onAutoPrint213Changed($event.checked)">
+            Print this ICS-213 as soon as I submit
+            <span class="field-help" tabindex="0" role="img"
+              aria-label="This is a mission-wide setting, not just for this one report - it stays on for every scribe on this device until turned off, and can also be changed from the Mission page."
+              title="This is a mission-wide setting, not just for this one report - it stays on for every scribe on this device until turned off, and can also be changed from the Mission page.">ⓘ</span>
+          </mat-checkbox>
         </div>
       </div>
     </div>

@@ -539,30 +539,36 @@ async function checkEntryTabOrder() {
   // This comment previously described an ordering (evidence-location AFTER the whole 213
   // section) that no longer matches entry.component.ts's actual chain - evidence-location
   // was moved into the Where section on 2026-08-26 (see showEvidenceLocationTabIndex's own
-  // comment there) without this comment being updated to match. Rewritten 2026-08-26 (E-103)
-  // to follow the real declaration order in entry.component.ts:
+  // comment there) without this comment being updated to match. Rewritten 2026-09-22 (auto-
+  // print-213 scoping, found stale again while inserting autoPrint213TabIndex - the previous
+  // rewrite, 2026-08-26/E-103, had already fallen behind F29-47's subject213/operator
+  // insertion three days later and was never corrected) to follow the real declaration order
+  // in entry.component.ts, kept current as of THIS change:
   // callsign(1) + Location's 26 DD/DDM/DMS+MGRS+UTM+address fields(2-27, Sprint H grew
   // this from 19 when MGRS/UTM were added - see LocationComponent.TAB_SLOT_COUNT) +
   // showEvidenceLocation checkbox(28, 2026-08-26 architecture decision, moved here as part
   // of the Where section) + its own three conditional fields, EvidenceLocationComponent's
-  // distance/unit/bearing(29-31) + date(32) + time's own hour/minute/AM-PM segments(33-35,
-  // 2026-08-22 grew this from a single native time input to three plain segments - see
-  // TimePickerComponent.TIME_TAB_SLOT_COUNT) + status(36) + source(37, E-41 phase 1,
-  // 2026-08-26 - gathered on every report) + notes(38) + generates213 checkbox(39) +
-  // its two conditional fields, reply-requested/message(40-41) + E-103 (2026-08-26): the
-  // per-mission recipients213 checkbox group's own single reserved slot(42, the group
-  // wrapper, not one stop per checkbox - see recipients213CheckboxesTabIndex's own comment
-  // in entry.component.ts for why a runtime-variable-length list can't get a per-item slot
-  // the way the fixed 213 fields do) + the recipients213 "Additional" free-text field(43) +
-  // reset(44) + submit(45). Every conditional block ALWAYS reserves its tab stops even
-  // though only reachable once its own checkbox is ticked - see the [hidden]-not-@if
-  // comment on entry.component.html's .enter__213-details/.enter__evidence for why this
-  // grows the count instead of leaving those fields unreserved. Asserting CONTIGUITY
-  // rather than just a count: a gap means a field was removed without renumbering, and a
-  // changed total means one was added without re-planning the sequence - exactly what
-  // entry.component.ts's computed tabindex chain (locationTabIndexStart -> dateTabIndex
-  // -> ... -> submitTabIndex) exists to get right automatically instead of hardcoded
-  // literals.
+  // distance/unit/bearing(29-31) + date(32) + time's own hour/minute segments(33-34; a third,
+  // AM/PM, existed until 2026-08-30 when the picker switched to 24-hour display - see
+  // TimePickerComponent.TIME_TAB_SLOT_COUNT) + status(35) + source(36, E-41 phase 1,
+  // 2026-08-26 - gathered on every report) + notes(37) + generates213 checkbox(38) +
+  // its conditional fields in DOM order: reply-requested(39), E-103's (2026-08-26) per-
+  // mission recipients213 checkbox group's own single reserved slot(40, the group wrapper,
+  // not one stop per checkbox - see recipients213CheckboxesTabIndex's own comment in
+  // entry.component.ts for why a runtime-variable-length list can't get a per-item slot the
+  // way the fixed 213 fields do), the recipients213 "Additional" free-text field(41),
+  // message(42), F29-47's (2026-08-29) subject213(43), and this change's own
+  // autoPrint213(44, 2026-09-22 - "Print this ICS-213 as soon as I submit", last in the 213
+  // box per the maintainer's own placement ask, same as every 213-box addition before it) +
+  // operator(45, OUTSIDE the 213 box - applies to every report, not only 213s) + reset(46) +
+  // submit(47). Every conditional block ALWAYS reserves its tab stops even though only
+  // reachable once its own checkbox is ticked - see the [hidden]-not-@if comment on
+  // entry.component.html's .enter__213-details/.enter__evidence for why this grows the count
+  // instead of leaving those fields unreserved. Asserting CONTIGUITY rather than just a
+  // count: a gap means a field was removed without renumbering, and a changed total means
+  // one was added without re-planning the sequence - exactly what entry.component.ts's
+  // computed tabindex chain (locationTabIndexStart -> dateTabIndex -> ... -> submitTabIndex)
+  // exists to get right automatically instead of hardcoded literals.
   //
   // Fixed alongside E-103/E-11 (2026-08-26, found while verifying them): location.component
   // .html's DD/DDM/DMS/MGRS/UTM blocks used to be wrapped in @if (isVisible(...)), which
@@ -575,12 +581,12 @@ async function checkEntryTabOrder() {
   // defaulted off for a fresh install, and this check is what caught it. Now [hidden]
   // throughout, matching every other conditional section.
   check('Entry tab stops are contiguous 1..N with no gaps', r.contiguous, true)
-  // 46, not 47: the time picker's AM/PM segment (a tab stop of its own,
-  // TimePickerComponent.TIME_TAB_SLOT_COUNT) was removed 2026-08-30 when the picker switched
-  // to 24-hour display, one fewer stop than the 47 that count included after F29-47
-  // (2026-08-29) inserted subject213TabIndex and operatorTabIndex at the tail of the chain -
-  // see entry.component.ts's own comments on both changes.
-  check('Entry exposes the expected number of keyboard stops', r.count, 46)
+  // 47, not 46: autoPrint213TabIndex (2026-09-22, the "Print this ICS-213 as soon as I
+  // submit" checkbox, last in the 213 box) inserted one new stop into the chain, same as
+  // F29-47's subject213/operator insertion (2026-08-29) and the AM/PM segment's removal
+  // (2026-08-30) each moved this number before it - see entry.component.ts's own comments on
+  // all three changes, and the walkthrough just above for the full, current 1..47 accounting.
+  check('Entry exposes the expected number of keyboard stops', r.count, 47)
 }
 
 async function checkEntryAutofocusAndReset() {
