@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.95.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.0...v0.95.1) (2026-09-23)
+
+
+### Features
+
+* **entry:** auto-print the ICS-213 on submit ([864db6b](https://github.com/SteadyEOC/RangerTrak/commit/864db6b52c1a04f5561bc06bea8dc9c640b3503f))
+* **map:** zoom to extent of currently-displayed reports, evidence and locations ([ab86aef](https://github.com/SteadyEOC/RangerTrak/commit/ab86aefdcb8226b74224857e117d5a080ad15dea))
+* **radio-log:** let the three action bars sit side by side on a wide screen ([e042293](https://github.com/SteadyEOC/RangerTrak/commit/e042293fd46fd98c65a3c2b6edcc84b64e5ce57a))
+
 ## [0.95.0](https://github.com/SteadyEOC/RangerTrak/compare/v0.94.0...v0.95.0) (2026-09-23)
 
 ## [0.94.0](https://github.com/SteadyEOC/RangerTrak/compare/v0.93.0...v0.94.0) (2026-09-22)
