@@ -4,25 +4,90 @@
 
 <nav class="main-nav">
   <!-- E-63b: the brand mark IS the Home affordance now - the separate "Home" nav item is
-       gone. The icon is RangerTrak's own mark (map pin + handheld radio + signal), the
-       same geometry as assets/icons/favicon.svg, inlined so it costs no asset request.
-       It is the tab-size cut of the mark rather than the full one: at 26px the full
-       mark's three thin waves merge and its pin ring closes up. The pin takes
-       currentColor so it follows .title; only the signal carries brand colour, set in
-       the component SCSS. routerLinkActive mirrors what "Home" used to show: active
-       only on an exact match, not on every route (this link's target). -->
+       gone. routerLinkActive mirrors what "Home" used to show: active only on an exact
+       match, not on every route (this link's target).
+
+       Maintainer ask, 2026-09-23: "too small, uses the favicon, not the travelling logo."
+       Was the tab-size cut (assets/icons/favicon.svg's own compact geometry, hand-simplified
+       to survive 26px) with a static 2-wave signal. Now the SAME path data as
+       assets/icons/rangertrak-mark-animated.svg - map pin + handheld radio + the real
+       3-wave signal, animated (see the <style> block below, copied verbatim from that
+       file) - reused wholesale rather than hand-fit to a smaller box, so no coordinate here
+       was eyeballed. Rendered at 24x40 (viewBox stays the source's own 155x260, so nothing
+       is distorted) - a genuinely bigger, taller icon than the old 26x26 square, which is
+       the point.
+
+       That source file fills the pin/radio navy (#12263F) on the assumption of a light
+       background - the wrong assumption here, since .main-nav's chrome is dark under every
+       skin in both light/dark mode (navbar.component.scss's #gitLogo comment already
+       establishes this). rangertrak-tile.svg already solves the same problem for the dark
+       PWA tile background by reversing to a white pin - this does the CSS-native version of
+       that: currentColor (this component's existing --rt-chrome-ink treatment) instead of a
+       hardcoded white, so it still tracks the skin. The three slot marks on the radio body
+       are cut through to var(--rt-chrome) (the navbar's own background token) rather than
+       kept as fixed white - same "hole punched through, not a second colour" trick the old
+       antenna cutout used, just via a CSS var instead of fill-rule since these are separate
+       rects layered on the body, not one compound path. -->
   <span title="RangerTrak" class="title">
     <a class="brand" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-      <svg class="brand-icon" width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <!-- The antenna is a hole punched through the pin (fill-rule evenodd), not a
-             painted-on stripe, so it shows whatever the navbar background is and needs
-             no second colour to stay in step with the theme. -->
-        <path fill="currentColor" fill-rule="evenodd"
-          d="M 11.5 29 L 6.26 21.84 A 6.5 6.5 0 1 1 16.74 21.84 Z
-             M 10.4 12.6 L 12.6 12.6 L 12.6 24.2 L 10.4 24.2 Z" />
-        <g class="brand-icon__signal" fill="none" stroke-width="3" stroke-linecap="round">
-          <path d="M 21.89 5 A 12 12 0 0 1 20.69 18.71" />
-          <path d="M 26.22 2.5 A 17 17 0 0 1 24.52 21.93" />
+      <svg class="brand-icon" width="24" height="40" viewBox="0 0 155 260" aria-hidden="true">
+        <style>
+          .brand-icon .wave {
+            --rt-period: 18s;
+            animation: rt-signal var(--rt-period) ease-in-out infinite;
+          }
+
+          .brand-icon .wave-1 {
+            animation-delay: calc(var(--rt-period) / -1.5);
+          }
+
+          .brand-icon .wave-2 {
+            animation-delay: calc(var(--rt-period) / -3);
+          }
+
+          @keyframes rt-signal {
+            0% {
+              opacity: 0.32;
+            }
+
+            15% {
+              opacity: 1;
+            }
+
+            40% {
+              opacity: 1;
+            }
+
+            100% {
+              opacity: 0.32;
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .brand-icon .wave {
+              animation: none;
+            }
+          }
+        </style>
+        <g fill="none" stroke="currentColor" stroke-linejoin="round">
+          <path d="M 52 239 L 18.4 175.8 A 38 38 0 1 1 85.6 175.8 Z" stroke-width="12" />
+          <path d="M 52 96 L 52 150" stroke-width="5" stroke-linecap="round" />
+        </g>
+        <rect x="44" y="142" width="16" height="58" rx="6" fill="currentColor" />
+        <circle cx="52" cy="88" r="8" fill="currentColor" />
+        <g fill="var(--rt-chrome)">
+          <rect x="47.5" y="158" width="9" height="4" rx="2" />
+          <rect x="47.5" y="170" width="9" height="4" rx="2" />
+          <rect x="47.5" y="182" width="9" height="4" rx="2" />
+        </g>
+        <g class="brand-icon__signal" fill="none" stroke-width="7" stroke-linecap="round"
+          vector-effect="non-scaling-stroke">
+          <path class="wave wave-1" transform="translate(52,88) scale(0.80) translate(-52,-88)"
+            d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71" />
+          <path class="wave wave-2" transform="translate(52,88) scale(1.30) translate(-52,-88)"
+            d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71" />
+          <path class="wave wave-3" transform="translate(52,88) scale(1.85) translate(-52,-88)"
+            d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71" />
         </g>
       </svg>
       RangerTrak™

@@ -23,6 +23,16 @@
 // (Google) font as it was originally" - restored, on top of the same type-label
 // size/line-height role E-54 already got right.
 //
+// Maintainer ask, 2026-09-23: drop Faster One again - NOT a rendering-defect diagnosis
+// this time (2026-08-20 already confirmed the font genuinely loads), this is a branding
+// call: Faster One is eoc.online's own display face, and the SteadyEOC product brand it's
+// carrying here hasn't been decided yet (see the brand-architecture note). So this reverts
+// to the app's real body font - same @include type.type-label already used for sizing,
+// with the font-family/font-style overrides simply gone rather than pointed at a second
+// placeholder face. `assets/fonts/fonts.css`'s Faster One @font-face rules are left in
+// place, unreferenced but harmless (an unused @font-face fetches nothing) - restore this
+// rule (or point it at whatever face SteadyEOC settles on) once that's decided.
+//
 // 2026-08-21: `float: right` is gone - .rt-footer below is a flex row now, and
 // `margin-left: auto` is what actually pins this to the row's right edge. The float
 // version never reliably reached the true right edge of the footer's own container width
@@ -31,8 +41,6 @@
 .copyLeft {
   text-decoration: none;
   @include type.type-label;
-  font-family    : 'Faster One', cursive;
-  font-style     : italic;
   margin-left    : auto;
   color          : var(--rt-ink-2);
 }
