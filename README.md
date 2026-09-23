@@ -20,7 +20,9 @@ required either, for RangerTrak's core function; address lookup uses a keyless d
 (OpenStreetMap's Nominatim), with an optional Google Geocoding key if you supply your own.
 
 Because reading latitude and longitude over a radio is slow and error-prone, locations can
-also be reported as street addresses or Plus Codes.
+also be reported as Plus Codes (computed on-device, always available) or street addresses
+(a live lookup against Nominatim/Google — see [FIELD-GUIDE.md](FIELD-GUIDE.md#what-needs-internet-and-what-doesnt),
+needs Internet).
 
 **Try it: <https://RangerTrak.org>**
 
@@ -50,8 +52,10 @@ the difference between a working tool and a blank screen.
   conversion, and mission export/import are all local to your device.
 - **Six coordinate formats**, entered however the field team read them out: Decimal
   Degrees, Degrees/Decimal Minutes, Degrees-Minutes-Seconds, MGRS, UTM, and Maidenhead grid
-  locators — plus Plus Codes and street addresses. All lat/long and grid conversion is
-  computed on-device, so it keeps working with no connection.
+  locators — plus Plus Codes. All lat/long and grid conversion is computed on-device, so it
+  keeps working with no connection. Street addresses are also accepted, both ways (typing
+  one in, or having one filled in from coordinates you entered another way) — but that's a
+  live lookup, not a conversion, so it needs Internet.
 - **Two map engines, switchable on one page.** A Leaflet map over standard online road
   maps — with a switchable base layer (OpenStreetMap or OpenTopoMap) and the ability to
   save an area's tiles for offline use — and an offline map (MapLibre + PMTiles) whose

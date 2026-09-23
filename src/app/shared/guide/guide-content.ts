@@ -153,7 +153,16 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Degrees Minutes Seconds (DMS) — 47° 26′ 51″ N',
               '[MGRS](https://en.wikipedia.org/wiki/Military_Grid_Reference_System) (Military Grid Reference System) — 10TFS 12345 67890',
               '[UTM](https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system) (Universal Transverse Mercator) — Zone 10 N, easting, northing',
-              '[Plus Code](https://en.wikipedia.org/wiki/Open_Location_Code), [Maidenhead](https://en.wikipedia.org/wiki/Maidenhead_Locator_System), or a street address — the single field below the coordinates'
+              '[Plus Code](https://en.wikipedia.org/wiki/Open_Location_Code) or [Maidenhead](https://en.wikipedia.org/wiki/Maidenhead_Locator_System) — the single field below the coordinates, computed on-device like everything above',
+              // Maintainer ask, 2026-09-22: the app's own dimmed-label/offline-tag UI
+              // (location.component.html) already says this at the point of use, but the
+              // Guide text listed street address alongside Plus Code/Maidenhead as if all
+              // three behaved the same way - they don't. Both directions need saying: typing
+              // one in (geocodeAddress) and the Derived address filled in from coordinates
+              // you DID type (reverseGeocode) are both live lookups against Nominatim (or a
+              // Google key, if configured) - see geocoding-provider.interface.ts. Neither
+              // Plus Code nor Maidenhead touch the network either direction.
+              'Street address — same field, but unlike every format above it this is a live lookup, not an on-device conversion: needs Internet both to turn a typed address into coordinates AND to fill in a Derived address from coordinates you entered another way. Offline, that field just stays blank — nothing is lost, use one of the formats above instead.'
             ]
           },
           {
