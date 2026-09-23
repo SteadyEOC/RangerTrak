@@ -36,6 +36,9 @@ import { rangerColorFor, evidenceMarkerSvg } from '../shared/mapping/ranger-mark
 // (pure, no Leaflet import) - previously it lived alongside the Leaflet-typed
 // locationIconFor() in location-icon.ts, which pulled `leaflet` in here too.
 import { locationMarkerSvg } from '../shared/mapping/location-marker'
+// Imported directly, not via the '../shared' barrel - same reasoning as the other
+// shared/mapping/* imports above, this file must not risk pulling Leaflet in.
+import { computeExtent, ExtentPoint } from '../shared/mapping/extent'
 import {
   RadioLogType, RadioLogService, RadioLogEntryType, LogService, MissionLocationService,
   MissionLocationType, MissionService, MissionType, CustomPmtilesService, OfflineBasemapService
@@ -866,6 +869,44 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Toggled by the "Add Location" button (template). Arms the next plain map click. */
   onToggleAddLocation(): void {
     this.placingLocation.set(!this.placingLocation())
+  }
+
+  /**
+   * "Zoom to Extent" (maintainer ask, 2026-09-22): re-runnable, unlike the once-at-load
+   * fitToBounds() above, which always covers the WHOLE log and ignores evidence markers and
+   * Location pins entirely. Fits whatever is actually drawn right now.
+   *
+   * Reports are read back off buildGeoJson()'s own output rather than re-deriving the
+   * All/selected filter a second time here - guarantees this always agrees with what's
+   * actually on screen even if that filter logic changes later. Evidence is read straight off
+   * the already-built Marker array (refreshEvidenceMarkers) for the same reason, which also
+   * means this inherits that method's own pre-existing gap versus buildGeoJson(): it draws
+   * from the WHOLE log's evidenceLocations, not honoring the All/selected switch (see its own
+   * comment above) - a discrepancy with the Leaflet engine (whose displayMarkers() DOES honor
+   * the switch for evidence), not something to silently fix as part of this task.
+   */
+  onBtnZoomToExtent(): void {
+    const points: ExtentPoint[] = []
+    for (const f of this.buildGeoJson().features) {
+      const [lng, lat] = f.geometry.coordinates
+      points.push({ lat, lng })
+    }
+    for (const m of this.evidenceMarkers) {
+      const ll = m.getLngLat()
+      points.push({ lat: ll.lat, lng: ll.lng })
+    }
+    this.locations.forEach(loc => points.push({ lat: loc.lat, lng: loc.lng }))
+
+    const b = computeExtent(points)
+    if (!b) {
+      // Nothing to fit (empty mission, or the selected-only view filtered down to nothing) -
+      // leave the camera where the operator left it rather than snapping to a default.
+      this.log.info('onBtnZoomToExtent(): nothing to fit, leaving the camera alone', 'MapLibreComponent')
+      return
+    }
+    // MapLibre wants [lng, lat] pairs, the reverse of Leaflet - fitToBounds() above already
+    // documents this. maxZoom matters: without it, two reports 10m apart would slam to max zoom.
+    this.map.fitBounds([[b.west, b.south], [b.east, b.north]], { padding: 40, maxZoom: 16 })
   }
 
   ngOnDestroy(): void {

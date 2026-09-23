@@ -56,6 +56,16 @@ Field reports to show: All ({{numAllRows()}})
 </div>
 
 <br />
+<!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now (reports
+     honoring the All/selected switch, evidence markers, Location pins) - not the once-at-load
+     fit to the whole log. data-testid, not a class - tools/e2e.js needs a stable hook and
+     this repo has already been burned by e2e selectors hanging off styling classes. -->
+<button matButton="outlined" type="button" (click)="onBtnZoomToExtent()"
+  data-testid="zoomToExtent" title="Zoom out until every report, evidence marker and location now shown fits on screen">
+  <mat-icon>zoom_out_map</mat-icon>
+  Zoom to Extent
+</button>
+
 <!-- ADR D-49: arms the next plain map click to place a Location there instead of copying
      coordinates - see placingLocation's own comment (mapLibre.component.ts) for why this is
      one-shot rather than a persistent mode. -->

@@ -34,7 +34,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 
 import {
   AbstractMap, Utility, rangerIconFor, rangerColorFor, evidenceIconFor, radioLogStatusColor,
-  locationCategoryColor, locationIconFor, formatReportTime
+  locationCategoryColor, locationIconFor, formatReportTime, computeExtent, ExtentPoint
 } from '../shared'
 import { DDToUTM, UTMToDD } from '../shared/mapping/coordinate'
 import {
@@ -1138,6 +1138,39 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   /** Toggled by the "Add Location" button (template). Arms the next plain map click. */
   onToggleAddLocation(): void {
     this.placingLocation.set(!this.placingLocation())
+  }
+
+  /**
+   * "Zoom to Extent" (maintainer ask, 2026-09-22): re-runnable, unlike the once-at-init
+   * fitBounds() in ngOnInit() above, which always covers the WHOLE log regardless of the
+   * All/selected switch and ignores evidence markers and Location pins entirely. This fits
+   * whatever is actually drawn right now - same three sources displayMarkers()/
+   * refreshLocationMarkers() draw from.
+   */
+  onBtnZoomToExtent(): void {
+    const points: ExtentPoint[] = []
+    // Same `i.location.lat && i.location.lng` guard displayMarkers() (above) uses before
+    // drawing a marker - a falsy 0 is indistinguishable from "no coordinate" there, so this
+    // stays consistent with what's actually on screen rather than being stricter.
+    this.displayedRadioLogEntries.forEach(i => {
+      if (i.location.lat && i.location.lng) {
+        points.push(i.location)
+      }
+      if (i.evidenceLocation?.lat && i.evidenceLocation?.lng) {
+        points.push(i.evidenceLocation)
+      }
+    })
+    this.locations.forEach(loc => points.push(loc))
+
+    const b = computeExtent(points)
+    if (!b) {
+      // Nothing to fit (empty mission, or the selected-only view filtered down to nothing) -
+      // leave the camera where the operator left it rather than snapping to defLat/defLng.
+      this.log.info('onBtnZoomToExtent(): nothing to fit, leaving the camera alone', this.id)
+      return
+    }
+    // maxZoom matters: without it, two reports 10m apart would slam the map to max zoom.
+    this.lMap.fitBounds(L.latLngBounds([b.south, b.west], [b.north, b.east]), { padding: [24, 24], maxZoom: 16 })
   }
 
   /**
