@@ -403,11 +403,18 @@ does — legal name and mailing address for any licensed amateur radio operator.
 not meaningfully add to that public exposure, with one exception: photographs, which are not
 part of any public record.
 
-> **Planned:** optional passphrase encryption, first for exported files and later for the
-> data held on the device. Until then, the practical protection is device security — lock
-> the device, and treat exported files the way you would a printed roster. Share only with people who need it for the
-mission, and delete exports when the mission is over. Follow your agency's policy on
-handling participant information.
+> **Shipped so far:** the passphrase above, for **Mission → Back up mission** only (the
+> section right above this one). **Still plain, no passphrase option yet:** Rangers'
+> **Export roster**, and the Radio Log/Rangers spreadsheet exports — if the roster needs to
+> leave the device and Back up mission's own scope (settings + roster + reports) is more
+> than you want to hand over, a mission backup with a passphrase is the protected option
+> today; those narrower exports are not. **Still planned:** encryption for the data sitting
+> on the device itself, not just what leaves it.
+
+The practical protection for anything not yet encrypted is device security — lock the
+device, and treat exported files the way you would a printed roster. Share only with
+people who need it for the mission, and delete exports when the mission is over. Follow
+your agency's policy on handling participant information.
 
 ---
 
