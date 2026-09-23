@@ -12,20 +12,44 @@
 # only harden things (HSTS, no-sniff, no-framing, referrer trimming) that no
 # legitimate RangerTrak behaviour depends on.
 #
-# The Content-Security-Policy is NOT one of those four, and is deliberately
-# Report-Only rather than enforcing. RangerTrak fetches from a real, non-trivial
-# set of external origins at runtime - OpenStreetMap tiles, Nominatim geocoding,
-# optionally Google's Geocoding API if a user configures a key in Settings,
-# Google Fonts. An enforcing CSP that's missed one of those would SILENTLY
-# break a real feature - most likely the offline map tiles or address
-# geocoding, both of which a search-and-rescue exercise depends on -
-# and there is no way to catch that from a local build: this repo's local static
-# server does not read or apply `_headers` at all (that's a Cloudflare-only
-# mechanism), so this policy is genuinely untested until it reaches the live
-# edge. Report-Only logs violations to the browser console without blocking
-# anything, which is the standard safe way to roll one out. Switching to
-# enforcing needs someone actually using the deployed app for a while first and
-# checking DevTools for violation reports - not a decision to make blind.
+# The Content-Security-Policy is now ENFORCING (2026-09-22). It spent a month
+# as Report-Only, which was the right call and did its job - see below for the
+# one real violation that surfaced in that time.
+#
+# Two things had to be true before flipping it, and now both are:
+#
+# 1. A violation actually showed up and was fixed. PageSpeed Insights
+#    (2026-09-22) logged a CSP issue against Cloudflare's own Web Analytics
+#    beacon, which the edge injects into the page - `script-src 'self'` would
+#    have blocked it. static.cloudflareinsights.com is now allowed explicitly.
+#    That is precisely the class of silent breakage Report-Only existed to
+#    catch, and it would have shipped unnoticed otherwise.
+#
+# 2. The policy is testable locally. tools/serve-dist.js now reads and applies
+#    this file (it previously ignored it, which is why this comment used to say
+#    the policy was "genuinely untested until it reaches the live edge"). The
+#    e2e suite runs against that server, so an enforcing CSP that breaks map
+#    tiles or geocoding now fails locally instead of during a callout.
+#
+# Also simplified: fonts.googleapis.com and fonts.gstatic.com are GONE from the
+# policy, because the webfonts are self-hosted as of the same date. Two fewer
+# third-party origins to trust.
+#
+# ONE BUILD SETTING IS LOAD-BEARING FOR THIS: angular.json's
+# `optimization.styles.inlineCritical` must stay FALSE. With it on, Angular
+# emits the compiled stylesheet as
+#     <link rel="stylesheet" href="styles-*.css" media="print" onload="this.media='all'">
+# and an enforcing script-src blocks inline EVENT HANDLERS. A hash cannot cover
+# one without 'unsafe-hashes' (same constraint that moved theme-init.js out of
+# index.html). The stylesheet then never activates, the app renders unstyled,
+# and /map overflows a phone viewport. That is exactly what happened on the
+# first enforcing build, and the e2e suite caught it - because serve-dist.js
+# now applies this file. Turning inlineCritical back on means going back to
+# Report-Only, or finding another way to defer that stylesheet.
+#
+# If something does break in the field, the fast rollback is to rename this
+# header back to Content-Security-Policy-Report-Only and redeploy - that
+# restores the previous logging-only behaviour without changing the policy.
 #
 # No Strict-Transport-Security line here - confirmed live 2026-08-20 (curl
 # against the deployed edge, twice, cache bypassed both times) that the zone
@@ -89,7 +113,7 @@
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
   Cross-Origin-Embedder-Policy-Report-Only: credentialless
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; connect-src 'self' https://nominatim.openstreetmap.org https://maps.googleapis.com https://api.what3words.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; connect-src 'self' https://nominatim.openstreetmap.org https://maps.googleapis.com https://api.what3words.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
 
 # Only the files that MUST NOT be cached are listed below. Everything else keeps
 # Cloudflare's default ETag revalidation, which is already correct for the

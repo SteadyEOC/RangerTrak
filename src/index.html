@@ -22,7 +22,6 @@
        not handle alpha well. Regenerated from assets/icons/rangertrak-tile.svg. -->
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
-  <link rel="preconnect" href="https://fonts.gstatic.com">
 
   <!-- PageSpeed Insights (2026-08-29): Entry's own reverse-geocode of the mission's
        default position sits on the critical path (~956ms) on first load, and flagged
@@ -32,35 +31,20 @@
        geocode itself fires. -->
   <link rel="preconnect" href="https://nominatim.openstreetmap.org" crossorigin>
 
-  <!-- E-44 audit, 2026-08-26: was requesting 8 font families (Open Sans Condensed, Saira
-       Extra Condensed, Boogaloo, Anton, Arima Madurai, Black Ops One) left over from the
-       Font Explorium tool, which was extracted out of the app entirely on 2026-08-20 (see
-       mission-advanced-options.component.ts's own doc comment) - none of those six are
-       referenced anywhere in the app anymore. The real list is three: Roboto (body font),
-       Faster One (footer tagline, ADR D-39), and Material Icons - the last one was never
-       actually in this link despite three live `.material-icons` ligature-icon usages
-       (rangers.component.html, alerts.component.html) needing it; confirmed against the
-       deployed CSS that they've been rendering as unstyled text in production. Switched to
-       the modern css2 endpoint, which gets font-display:swap for free (the legacy `css?`
-       endpoint used above until now never requested it). Also deferred (Lighthouse's own
-       biggest single finding on this page, "Render-blocking requests", ~1050ms estimated) -
-       a plain synchronous stylesheet `<link>` to a cross-origin host blocks first paint on
-       the DNS+TLS+response round trip; the `media="print"` swap trick is the same one the
-       app's own compiled stylesheet already uses below, just never applied here. The
-       `<noscript>` fallback keeps the fonts loading normally with JS disabled.
+  <!-- Self-hosted since 2026-09-22. These used to come from fonts.googleapis.com, which
+       PageSpeed measured at 173 KiB and ~1,425 ms on the critical path - the largest
+       third-party cost on the page.
 
-       The swap used to fire from this tag's own `onload="this.media='all'"` attribute -
-       moved into assets/theme-init.js (below) 2026-09-01, since CSP blocks inline event
-       handlers same as inline scripts, and a hash can't cover an event-handler attribute at
-       all without also adding 'unsafe-hashes' (see src/_headers). The `id` below is only so
-       that script can find this exact tag. -->
-  <link id="rt-google-fonts"
-    href="https://fonts.googleapis.com/css2?family=Roboto&family=Faster+One&family=Material+Icons&display=swap"
-    rel="stylesheet" media="print">
-  <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Faster+One&family=Material+Icons&display=swap"
-      rel="stylesheet">
-  </noscript>
+       The point is not the milliseconds. This is an offline-first app, and a third-party
+       font host is a network dependency in a product whose whole claim is that it works
+       when the network does not. Same-origin means ngsw precaches these with everything
+       else, so the UI renders identically offline.
+
+       All the machinery this replaced is gone with it: the media="print" async swap, the
+       <noscript> fallback, the preconnect to fonts.gstatic.com, and theme-init.js's
+       load listener. A same-origin stylesheet of this size does not need deferring, and
+       the CSP no longer has to allow either Google host. See assets/fonts/fonts.css. -->
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
 
   <!-- E-42: theme-color was Angular Material's default blue (#1976d2), unrelated to the
        app's actual Command skin accent (#0B5FA8, ADR D-37) - this is what colors the

@@ -1,6 +1,6 @@
-// Pre-Angular theme/skin applier and the Google Fonts async-load handoff, both extracted
-// out of index.html's <head> on 2026-09-01 (E-44 CSP follow-up). Neither can move into the
-// compiled app bundle: both must run before Angular (and its stylesheet) loads, and the
+// Pre-Angular theme/skin applier, extracted out of index.html's <head> on 2026-09-01
+// (E-44 CSP follow-up). It cannot move into the compiled app bundle: it must run before
+// Angular (and its stylesheet) loads, and the
 // bundle itself loads as a deferred <script type="module"> at the end of <body>, by which
 // point first paint has already happened. This has to stay a classic, render-blocking
 // <script src> in <head>, in the exact position index.html's own comment describes, so it
@@ -45,18 +45,6 @@ try {
   }
 } catch (e) { /* localStorage unavailable - fall back to command */ }
 
-// The Google Fonts <link>'s async-load swap (index.html's own comment on that tag has the
-// full Lighthouse/render-blocking reasoning). Previously the tag's own onload="this.media=
-// 'all'" attribute - CSP blocks inline EVENT HANDLERS as script-src too, and unlike the
-// block above, a hash can never cover this: hashes explicitly do not apply to event-handler
-// attributes without 'unsafe-hashes' (browsers say so in the violation report itself), so
-// moving the block above into a file wasn't enough on its own without also moving this.
-// By the time this runs, the <link> node already exists in the DOM (the parser reached and
-// created it before reaching this script, immediately above), even though its own stylesheet
-// fetch may still be in flight - so attaching the listener here is not a race.
-try {
-  var rtFontsLink = document.getElementById('rt-google-fonts');
-  if (rtFontsLink) {
-    rtFontsLink.addEventListener('load', function () { rtFontsLink.media = 'all'; });
-  }
-} catch (e) { /* getElementById/addEventListener unavailable - fonts stay print-only, degrades to system font */ }
+// The Google Fonts async-load swap that used to live here is gone (2026-09-22): the fonts
+// are self-hosted and same-origin now, so there is no cross-origin round trip to defer and
+// nothing to swap. See index.html's comment on the stylesheet link, and assets/fonts/.

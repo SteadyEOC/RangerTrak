@@ -26,6 +26,43 @@ const MIME = {
   '.pmtiles': 'application/octet-stream', '.txt': 'text/plain'
 };
 
+/**
+ * Apply src/_headers to every response.
+ *
+ * Added 2026-09-22. Before this, `_headers` was a Cloudflare-only mechanism that this
+ * server ignored entirely - which src/_headers' own comment called out as the reason the
+ * Content-Security-Policy was "genuinely untested until it reaches the live edge," and why
+ * it had to stay Report-Only. That gap is what made enforcing it a blind decision.
+ *
+ * Now `npm run server` (and therefore the e2e suite that runs against it) serves the same
+ * headers Cloudflare will, so an enforcing CSP that breaks a real feature fails locally
+ * instead of in production.
+ *
+ * Deliberately simple: only the catch-all `/*` block is read, which is the only one this
+ * file has. Per-path blocks would need real Cloudflare `_headers` matching semantics, and
+ * inventing a half-version of those would be worse than not having them.
+ */
+function loadHeaders() {
+  const file = path.join(__dirname, '..', 'src', '_headers');
+  if (!fs.existsSync(file)) return {};
+  const out = {};
+  let inCatchAll = false;
+  for (const raw of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    if (!line.includes(':') || line.startsWith('/')) { inCatchAll = line === '/*'; continue; }
+    if (!inCatchAll) continue;
+    const i = line.indexOf(':');
+    out[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+  }
+  return out;
+}
+
+const EXTRA_HEADERS = loadHeaders();
+if (Object.keys(EXTRA_HEADERS).length) {
+  console.log(`Applying ${Object.keys(EXTRA_HEADERS).length} headers from src/_headers`);
+}
+
 function send(res, filePath, stats, range) {
   const contentType = MIME[path.extname(filePath)] || 'application/octet-stream';
 
@@ -35,6 +72,7 @@ function send(res, filePath, stats, range) {
     const start = parseInt(startStr, 10);
     const end = endStr ? parseInt(endStr, 10) : size - 1;
     res.writeHead(206, {
+      ...EXTRA_HEADERS,
       'Content-Range': `bytes ${start}-${end}/${size}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': end - start + 1,
@@ -44,6 +82,7 @@ function send(res, filePath, stats, range) {
     fs.createReadStream(filePath, { start, end }).pipe(res);
   } else {
     res.writeHead(200, {
+      ...EXTRA_HEADERS,
       'Content-Type': contentType,
       'Accept-Ranges': 'bytes',
       'Content-Length': stats.size,

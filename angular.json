@@ -105,7 +105,7 @@
                   "inline": true
                 },
                 "styles": {
-                  "inlineCritical": true
+                  "inlineCritical": false
                 }
               },
               "outputHashing": "all",
@@ -137,7 +137,8 @@
                   "inline": true
                 },
                 "styles": {
-                  "inlineCritical": true
+                  "//": "inlineCritical MUST stay false while the CSP is enforcing (2026-09-22). It makes Angular emit the compiled stylesheet as <link media=\"print\" onload=\"this.media='all'\">, and an enforcing script-src blocks inline EVENT HANDLERS - a hash cannot cover one without 'unsafe-hashes'. The stylesheet then never activates: the app renders unstyled and /map overflows a phone viewport. Caught by e2e once tools/serve-dist.js began applying src/_headers.",
+                  "inlineCritical": false
                 }
               },
               "outputHashing": "all",

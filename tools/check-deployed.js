@@ -63,14 +63,16 @@ function expectedBundle() {
 // by design (src/_headers explains why), so its presence isn't a pass/fail-worthy fact the
 // way an enforcing header's is.
 //
-// No strict-transport-security entry - it very nearly was one, at a value src/_headers used
-// to declare, until checking the FIRST live deploy of this file (2026-08-20) showed the zone
-// actually serves `max-age=15552000; includeSubDomains; preload` - Cloudflare's own
-// dashboard-level HSTS setting, which takes precedence over whatever an origin header says.
-// Checking the origin's own (unread) declaration here would have meant this script passing
-// forever while asserting a fact that was never true - the exact bug class this whole file
-// exists to prevent, just self-inflicted. If HSTS is ever worth verifying again, check
-// against the zone-level value above, not an origin declaration.
+// strict-transport-security IS checked now (2026-09-22), but not as a fixed string - see
+// checkHsts() below. The zone-level value is Cloudflare's, not this repo's, which is why
+// this was skipped originally: asserting an origin declaration the edge never reads would
+// have been a self-inflicted version of the very bug class this file exists to prevent.
+//
+// What changed: PageSpeed (2026-09-22) flagged the live max-age as too low, and it is -
+// the zone serves `max-age=15552000` (180 days) WITH `preload`, but the preload list
+// requires at least 31536000 (1 year). So the domain advertises a commitment it cannot
+// actually be accepted for. That is worth catching automatically rather than rediscovering
+// from a Lighthouse run, so the check below asserts the relationship rather than a value.
 const EXPECTED_HEADERS = {
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',
@@ -81,8 +83,34 @@ const EXPECTED_HEADERS = {
   'permissions-policy': 'geolocation=(self), camera=(), microphone=(), payment=(), usb=()',
 };
 
+/**
+ * HSTS is Cloudflare zone-level config, so this asserts the INVARIANT rather than an exact
+ * value: if the header claims `preload`, max-age must be at least a year, or the domain can
+ * never actually be accepted onto the preload list. Fix in the dashboard
+ * (SSL/TLS -> Edge Certificates -> HTTP Strict Transport Security), not in src/_headers -
+ * an origin declaration there is not read.
+ */
+const HSTS_PRELOAD_MIN_AGE = 31536000 // one year, the preload list's own floor
+
+function checkHsts(headers) {
+  const value = headers.get('strict-transport-security')
+  if (!value) return `${ORIGIN}/ serves no strict-transport-security header`
+
+  const maxAge = Number((value.match(/max-age=(\d+)/) || [])[1])
+  if (!Number.isFinite(maxAge)) return `${ORIGIN}/ HSTS has no readable max-age: "${value}"`
+
+  if (/;\s*preload/.test(value) && maxAge < HSTS_PRELOAD_MIN_AGE) {
+    return `${ORIGIN}/ HSTS claims "preload" but max-age is ${maxAge}s `
+      + `(${Math.round(maxAge / 86400)} days); the preload list requires at least `
+      + `${HSTS_PRELOAD_MIN_AGE}s (365 days). Raise it in the Cloudflare dashboard.`
+  }
+  return null
+}
+
 /** Returns a failure message, or null if every expected header matches exactly. */
 function checkSecurityHeaders(headers) {
+  const hsts = checkHsts(headers)
+  if (hsts) return hsts
   for (const [name, expected] of Object.entries(EXPECTED_HEADERS)) {
     const actual = headers.get(name);
     if (actual !== expected) {
