@@ -647,10 +647,23 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     this.map.on('mouseleave', 'unclustered-point', () => { this.map.getCanvas().style.cursor = '' })
   }
 
-  private buildGeoJson(): FeatureCollection<Point, { title: string, statusColor: string, rangerColor: string }> {
-    const reportsToShow = this.showingSelectedOnly
+  /**
+   * The single place the All/selected choice is resolved into an actual entry list -
+   * buildGeoJson() (report dots) and refreshEvidenceMarkers() (evidence flags) both read
+   * from here now, same as Leaflet's displayedRadioLogEntries backs both displayMarkers()'s
+   * report AND evidence loops (mapLeaflet.component.ts). Before this, refreshEvidenceMarkers()
+   * had its own hardcoded `radioLog.logEntries` and never honored the switch at all - fixed
+   * live 2026-09-22 ("fix MapLibre so it acts as Leaflet does") alongside wiring
+   * onSwitchSelectedRadioLog() to actually call refreshEvidenceMarkers() (see there).
+   */
+  private displayedEntries(): RadioLogEntryType[] {
+    return this.showingSelectedOnly
       ? this.radioLogService.getSelectedRadioLogEntries().logEntries
       : (this.radioLog?.logEntries ?? [])
+  }
+
+  private buildGeoJson(): FeatureCollection<Point, { title: string, statusColor: string, rangerColor: string }> {
+    const reportsToShow = this.displayedEntries()
 
     return {
       type: 'FeatureCollection',
@@ -741,6 +754,13 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       this.numSelectedRows.set(this.radioLogService.getSelectedRadioLogEntries().logEntries.length)
     }
     this.refreshMarkers()
+    // Fixed 2026-09-22 alongside displayedEntries(): this used to only refresh the report
+    // dots, so evidence flags went stale on every toggle until the next radio-log update
+    // happened to fire refreshEvidenceMarkers() on its own. Leaflet's equivalent
+    // (onSwitchSelectedRadioLog in map.ts, via refreshMap() -> displayMarkers()) redraws
+    // both together because they share one loop - this engine draws them separately, so
+    // both calls are needed here to match.
+    this.refreshEvidenceMarkers()
   }
 
   private onClusterClick(ev: MapLayerMouseEvent): void {
@@ -833,13 +853,19 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
    * inventing a second look for the same meaning. Rebuilt wholesale on every radio-log
    * update, same as refreshLocationMarkers() - evidence points are rare enough per mission
    * that a full rebuild costs nothing worth optimizing away.
+   *
+   * Reads displayedEntries() (fixed 2026-09-22), not the raw whole log - it used to hardcode
+   * `radioLog.logEntries` regardless of the All/selected switch, unlike Leaflet's
+   * displayMarkers() (which draws evidence from the same displayedRadioLogEntries its report
+   * markers use). A scribe with "Just selected" on was seeing evidence flags for reports NOT
+   * currently selected, which this engine's own report dots never did.
    */
   private refreshEvidenceMarkers(): void {
     if (!this.map) {
       return
     }
     this.evidenceMarkers.forEach(m => m.remove())
-    this.evidenceMarkers = (this.radioLog?.logEntries ?? [])
+    this.evidenceMarkers = this.displayedEntries()
       .filter((r): r is RadioLogEntryType & { evidenceLocation: NonNullable<RadioLogEntryType['evidenceLocation']> } =>
         !!r.evidenceLocation)
       .map(r => {
@@ -879,11 +905,11 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
    * Reports are read back off buildGeoJson()'s own output rather than re-deriving the
    * All/selected filter a second time here - guarantees this always agrees with what's
    * actually on screen even if that filter logic changes later. Evidence is read straight off
-   * the already-built Marker array (refreshEvidenceMarkers) for the same reason, which also
-   * means this inherits that method's own pre-existing gap versus buildGeoJson(): it draws
-   * from the WHOLE log's evidenceLocations, not honoring the All/selected switch (see its own
-   * comment above) - a discrepancy with the Leaflet engine (whose displayMarkers() DOES honor
-   * the switch for evidence), not something to silently fix as part of this task.
+   * the already-built Marker array (refreshEvidenceMarkers) for the same reason; now that
+   * refreshEvidenceMarkers() itself reads displayedEntries() (fixed same day - see its own
+   * comment), that array is always in step with the All/selected switch too, so both sources
+   * genuinely agree with what's on screen, matching Leaflet's own displayMarkers()/
+   * onSwitchSelectedRadioLog() behavior.
    */
   onBtnZoomToExtent(): void {
     const points: ExtentPoint[] = []
