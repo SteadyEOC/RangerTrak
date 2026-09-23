@@ -28,94 +28,100 @@
            - see the comments on getParamValue()/onBtnExport() there for what each of those
            three reads would have done post-conversion (one throws, one silently exports the
            wrong rows). -->
-      <div class="rt-action-bar">
-        <span class="rt-action-bar__status">
-          {{ selectedRows() }} selected
-          @if (selectedRows() > 0) {
-            <span class="reports__selected-note">&mdash; both maps can show only these</span>
-          }
-        </span>
+      <!-- Wraps all three action bars below in the shared `.rt-action-bar-group` pattern
+           (styles/_patterns.scss) - side by side at laptop-up and wider, stacked as before
+           below that. Each bar keeps its own HTML comment; that reasoning still holds inside
+           the group, it just no longer also has to carry the sticky-bottom placement itself. -->
+      <div class="rt-action-bar-group">
+        <div class="rt-action-bar">
+          <span class="rt-action-bar__status">
+            {{ selectedRows() }} selected
+            @if (selectedRows() > 0) {
+              <span class="reports__selected-note">&mdash; both maps can show only these</span>
+            }
+          </span>
 
-        <div class="rt-action-bar__buttons">
-          <mat-form-field class="reports__control reports__control--rows">
-            <mat-label>Rows per page</mat-label>
-            <mat-select [value]="rowsPerPage()"
-              (selectionChange)="rowsPerPage.set($event.value); onRowsPerPage($event.value)">
-              @for (opt of rowsPerPageOptions; track opt) {
-                <mat-option [value]="opt">{{ opt }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <div class="rt-action-bar__buttons">
+            <mat-form-field class="reports__control reports__control--rows">
+              <mat-label>Rows per page</mat-label>
+              <mat-select [value]="rowsPerPage()"
+                (selectionChange)="rowsPerPage.set($event.value); onRowsPerPage($event.value)">
+                @for (opt of rowsPerPageOptions; track opt) {
+                  <mat-option [value]="opt">{{ opt }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
 
-          <mat-form-field class="reports__control reports__control--sep">
-            <mat-label>CSV separator</mat-label>
-            <mat-select [value]="columnSeparator()"
-              (selectionChange)="columnSeparator.set($event.value); onSeperatorChange()">
-              @for (opt of separatorOptions; track opt.value) {
-                <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+            <mat-form-field class="reports__control reports__control--sep">
+              <mat-label>CSV separator</mat-label>
+              <mat-select [value]="columnSeparator()"
+                (selectionChange)="columnSeparator.set($event.value); onSeperatorChange()">
+                @for (opt of separatorOptions; track opt.value) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
 
-          <mat-checkbox [checked]="allRows()" (change)="allRows.set($event.checked)"
-            title="By default only the filtered and sorted rows are exported.">
-            All rows
-          </mat-checkbox>
+            <mat-checkbox [checked]="allRows()" (change)="allRows.set($event.checked)"
+              title="By default only the filtered and sorted rows are exported.">
+              All rows
+            </mat-checkbox>
 
-          <button matButton="filled" type="button" (click)="onBtnExport()">
-            <mat-icon>download</mat-icon>
-            Export
-          </button>
+            <button matButton="filled" type="button" (click)="onBtnExport()">
+              <mat-icon>download</mat-icon>
+              Export
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- E-31/E-41 phase 3, piece 3 (2026-08-31): "Print 309" - a printable ICS-309 comms
-           log, scoped to whichever rows the picker names. Own row, not folded into the CSV
-           bar above: this produces a formal paper/PDF record, not a spreadsheet, and the
-           two shouldn't be visually conflated. -->
-      <div class="rt-action-bar">
-        <span class="rt-action-bar__status">Print ICS-309 log</span>
-        <div class="rt-action-bar__buttons">
-          <mat-form-field class="reports__control reports__control--print-scope">
-            <mat-label>Scope</mat-label>
-            <mat-select [value]="printScope()" (selectionChange)="printScope.set($event.value)">
-              @for (opt of printScopeOptions; track opt.value) {
-                <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+        <!-- E-31/E-41 phase 3, piece 3 (2026-08-31): "Print 309" - a printable ICS-309 comms
+             log, scoped to whichever rows the picker names. Own row, not folded into the CSV
+             bar above: this produces a formal paper/PDF record, not a spreadsheet, and the
+             two shouldn't be visually conflated. -->
+        <div class="rt-action-bar">
+          <span class="rt-action-bar__status">Print ICS-309 log</span>
+          <div class="rt-action-bar__buttons">
+            <mat-form-field class="reports__control reports__control--print-scope">
+              <mat-label>Scope</mat-label>
+              <mat-select [value]="printScope()" (selectionChange)="printScope.set($event.value)">
+                @for (opt of printScopeOptions; track opt.value) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
 
-          <button matButton="filled" type="button" (click)="onBtnPrint309()">
-            <mat-icon>print</mat-icon>
-            Print 309 Log
-          </button>
+            <button matButton="filled" type="button" (click)="onBtnPrint309()">
+              <mat-icon>print</mat-icon>
+              Print 309 Log
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- E-114 Phase 1 (2026-08-31): a queued, store-and-forward hand-off for reports that
-           originated on a different device (typically a remote ranger's own phone) - see
-           radio-log.component.ts's own doc comments and the roadmap's E-114 write-up.
-           Deliberately its own row, not folded into the CSV export bar above: this produces
-           a different kind of file for a different purpose (merging reports IN, not reading
-           data OUT), and Build/Load read better as their own pair. -->
-      <div class="rt-action-bar">
-        <span class="rt-action-bar__status">
-          Report Packet &mdash; reports from another device
-        </span>
-        <div class="rt-action-bar__buttons">
-          <button matButton="outlined" type="button" (click)="onBtnBuildReportPacket()"
-            title="Package every field report on THIS device into one file for another device to merge in">
-            <mat-icon>archive</mat-icon>
-            Build Report Packet
-          </button>
+        <!-- E-114 Phase 1 (2026-08-31): a queued, store-and-forward hand-off for reports that
+             originated on a different device (typically a remote ranger's own phone) - see
+             radio-log.component.ts's own doc comments and the roadmap's E-114 write-up.
+             Deliberately its own row, not folded into the CSV export bar above: this produces
+             a different kind of file for a different purpose (merging reports IN, not reading
+             data OUT), and Build/Load read better as their own pair. -->
+        <div class="rt-action-bar">
+          <span class="rt-action-bar__status">
+            Report Packet &mdash; reports from another device
+          </span>
+          <div class="rt-action-bar__buttons">
+            <button matButton="outlined" type="button" (click)="onBtnBuildReportPacket()"
+              title="Package every field report on THIS device into one file for another device to merge in">
+              <mat-icon>archive</mat-icon>
+              Build Report Packet
+            </button>
 
-          <button matButton="outlined" type="button" (click)="reportPacketFileInput.click()"
-            title="Merge in the reports from a Report Packet someone handed you - never replaces anything already here">
-            <mat-icon>upload</mat-icon>
-            Load Report Packet
-          </button>
-          <input #reportPacketFileInput type="file" accept="text/plain,.txt,.json"
-            (change)="onReportPacketFileSelected($event)" hidden />
+            <button matButton="outlined" type="button" (click)="reportPacketFileInput.click()"
+              title="Merge in the reports from a Report Packet someone handed you - never replaces anything already here">
+              <mat-icon>upload</mat-icon>
+              Load Report Packet
+            </button>
+            <input #reportPacketFileInput type="file" accept="text/plain,.txt,.json"
+              (change)="onReportPacketFileSelected($event)" hidden />
+          </div>
         </div>
       </div>
     }

@@ -15,6 +15,7 @@
 //  page structure, and a component that needs one is by definition a routed page.
 // ─────────────────────────────────────────────────────────────────────────────
 
+@use './breakpoints' as bp;
 @use './typography' as type;
 
 // ── 5. Action bar ────────────────────────────────────────────────────────────
@@ -62,6 +63,67 @@
   // future action bar can grow past two items the same way.
   flex-wrap: wrap;
   gap      : 0.6em;
+}
+
+// ── 5b. Action bar group (side-by-side bars) ─────────────────────────────────
+// Radio Log ask (maintainer, 2026-09-22): "on a wide screen the horizontal bars at the
+// bottom of the radio log are too wide, and could be next to one another saving vertical
+// room." Radio Log stacks THREE `.rt-action-bar`s (CSV export, Print ICS-309, Report
+// Packet) - each `position: sticky; bottom: 0` on its own, so all three pin to the SAME
+// viewport bottom and overlap one another rather than stacking, once more than one of them
+// is close enough to actually stick at once.
+//
+// Wraps a run of `.rt-action-bar`s. Below laptop-up (D-33: <1024px) this stays a plain
+// block - children stack exactly as before, no visual change at all. At laptop-up and
+// wider it becomes a grid, so bars sit side by side only when there's genuinely room,
+// falling back to fewer columns rather than a fixed 3-across that would wrap mid-bar on a
+// narrower laptop. `minmax(38ch, 1fr)` is eyeballed against these three bars' real content,
+// not a measured value - the CSV bar (two selects + a checkbox + a button) is the widest of
+// the three, and 38ch is roughly where it stops wrapping to three rows at 1440px; revisit
+// this number if a future bar's own content changes that.
+//
+// The STICKY behavior moves up to the group, not the children: three sticky siblings each
+// independently pinned to `bottom: 0` is what caused the overlap above. Inside the group
+// the children fall back to `position: static` and give up their own border/shadow, so the
+// group reads as one band rather than three stacked slabs.
+//
+// Rangers deliberately does NOT use this yet (D4, 2026-09-22 scoping): its first action bar
+// alone already holds seven controls, and halving its width would only make it taller, not
+// more usable. Don't "finish the job" by wrapping Rangers' bars in this without re-checking
+// that reasoning first.
+.rt-action-bar-group {
+  display   : block;
+  margin    : 1.5em 0 0;
+  position  : sticky;
+  bottom    : 0;
+  z-index   : 10;
+  background: var(--rt-surface);
+  border-top: 1px solid var(--rt-line-strong);
+  box-shadow: 0 -2px 12px rgb(0 0 0 / 8%);
+
+  @include bp.laptop-up {
+    display               : grid;
+    grid-template-columns : repeat(auto-fit, minmax(38ch, 1fr));
+    gap                   : var(--rt-gap);
+  }
+
+  // The group now owns the sticky/border/shadow treatment above - a child keeping its own
+  // copy would double the border and shadow inside the band.
+  .rt-action-bar {
+    position  : static;
+    margin    : 0;
+    border-top: none;
+    box-shadow: none;
+  }
+
+  // Belt-and-braces: radio-log.component.scss already hides the whole #reportsgrid block
+  // (grid + every action bar + the danger zone) under @media print, which this group sits
+  // inside of - but a sticky position with a border/shadow has no business surviving onto
+  // paper even if that containment ever changes, so it's turned off here too.
+  @media print {
+    position  : static;
+    box-shadow: none;
+  }
 }
 
 // ── 6. Danger zone ───────────────────────────────────────────────────────────
