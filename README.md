@@ -1,11 +1,16 @@
-# 🌲 RangerTrak™ 📡
+<p align="center">
+  <img src="src/assets/icons/rangertrak-mark.svg" width="96" alt="RangerTrak logo: a map pin that is also a handheld radio">
+</p>
+
+<h1 align="center">RangerTrak™</h1>
 
 [![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-> **New here?** Start at **[rangertrak.com](https://rangertrak.com)** — what it is, the Field
-> Guide, and how to try it without a GitHub account. Try the app itself at
-> **[rangertrak.org](https://rangertrak.org)**. This repo is the source, issues and releases.
+> **New here?** Start at **[rangertrak.com](https://rangertrak.com)** — what it is, and how
+> to try it without a GitHub account. Try the app itself at
+> **[rangertrak.org](https://rangertrak.org)**; its built-in **Help** is the full reference.
+> This repo is the source, issues and releases.
 
 **RangerTrak tracks and maps CERT, ACS, SAR, wildland-fire and other teams who are
 reachable only by HAM radio.** Field teams radio in their locations; a scribe at the
@@ -32,49 +37,46 @@ needs Internet).
 
 | Document | For | Contents |
 | --- | --- | --- |
-| **[FIELD-GUIDE.md](FIELD-GUIDE.md)** | Operators, ECs, scribes | How to prepare a device before a mission, so it still works when the network doesn't |
-| **In-app Help** | Operators, ECs, scribes | The full reference for every screen — built into the app, always matches the version you're running, and works with no Internet |
+| **In-app Help** | Operators, ECs, scribes | The source of truth for every screen — built into the app, always matches the version you're running, and works with no Internet |
+| **[rangertrak.com](https://rangertrak.com)** | Everyone | The front door: what RangerTrak is, the Field Notes blog, and a short field guide that points into Help |
+| **[FIELD-GUIDE.md](FIELD-GUIDE.md)** | Operators, ECs, scribes | The printable pre-mission companion: preparing a device so it still works when the network doesn't |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | Developers | How the app is built: map engines, geocoding, bundle and loading strategy |
 | **[DEVELOPING.md](DEVELOPING.md)** | Developers | Running, testing, releasing, updating dependencies, deploying |
 | **[contributing.md](contributing.md)** | Everyone | Code of conduct |
 | **[CHANGELOG.md](CHANGELOG.md)** | Everyone | Release history |
 | **[.vscode/SETUP.md](.vscode/SETUP.md)** | Developers | VS Code workspace setup |
 
-**New to RangerTrak? Start with the [Field Guide](FIELD-GUIDE.md).** In particular, read
-"Before the mission" — the difference between a prepared device and an unprepared one is
-the difference between a working tool and a blank screen.
+**New to RangerTrak? Start at [rangertrak.com](https://rangertrak.com), then the in-app
+Help.** Before a real mission, print or read the [Field Guide](FIELD-GUIDE.md)'s "Before
+the mission" — the difference between a prepared device and an unprepared one is the
+difference between a working tool and a blank screen.
 
 ---
 
 ## ✨ What it does
 
-- **Works offline.** Entering reports, the roster, the report table, coordinate
-  conversion, and mission export/import are all local to your device.
-- **Six coordinate formats**, entered however the field team read them out: Decimal
-  Degrees, Degrees/Decimal Minutes, Degrees-Minutes-Seconds, MGRS, UTM, and Maidenhead grid
-  locators — plus Plus Codes. All lat/long and grid conversion is computed on-device, so it
-  keeps working with no connection. Street addresses are also accepted, both ways (typing
-  one in, or having one filled in from coordinates you entered another way) — but that's a
-  live lookup, not a conversion, so it needs Internet.
-- **Two map engines, switchable on one page.** A Leaflet map over standard online road
-  maps — with a switchable base layer (OpenStreetMap or OpenTopoMap) and the ability to
-  save an area's tiles for offline use — and an offline map (MapLibre + PMTiles) whose
-  basemap data ships inside the app. Both cluster markers and have overview maps.
-- **Per-ranger markers and route trails.** Each callsign gets a distinct marker shape and
-  colour, with a trail showing where they've been.
-- **Roster with call-sign lookup.** Fast entry by tactical call sign, for individuals or
-  teams.
-- **Editable statuses** with custom names and colours, plus searchable free-text notes.
-- **Mission and operational period tracking.**
-- **Export and import.** Reports and roster export to CSV/Excel; a whole mission
-  (settings, roster, reports) exports to a single file for backup or handover.
-- **Sample data** for demonstrations and training, loadable in one click.
-- **Free and open source**, under the AGPL — free to use, free to modify.
+- **Works offline.** Field reports, the roster, the Radio Log, coordinate conversion and
+  mission backups all stay on the device and need no connection.
+- **Locations however the field reads them out:** lat/long in three notations, MGRS, UTM,
+  Maidenhead and Plus Codes, all converted on-device. Street addresses work too, but need
+  Internet.
+- **Two map engines on one page:** Leaflet over online road and topo maps, with areas
+  saveable for offline use, and MapLibre + PMTiles with a bundled offline basemap. Each
+  ranger gets a distinct marker and a trail.
+- **ICS paperwork:** a printable ICS-309 comms log, and ICS-213 messages generated from field reports.
+- **Roster, statuses, mission and operational period**, all configurable per mission.
+- **Backup, export and demo data:** spreadsheets, whole-mission backups (optionally
+  passphrase-encrypted), and demo scenarios for training.
+- **Free and open source**, under the AGPL.
+
+How to use each screen is in the app's Help, not here; developer detail is in
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
 > ⚠️ The roster contains personal information — names, addresses, phone numbers, and call
 > signs that map to public licence records — **stored unencrypted on the device**. Mission
 > backups can be encrypted with a passphrase (optional, and blank still writes a plain
-> file), but data at rest is not yet. See the Field Guide for handling guidance.
+> file), but data at rest is not yet. See Help → **Your data** in the app for handling
+> guidance.
 
 ## 🗺️ Roadmap
 
@@ -105,15 +107,15 @@ Known gaps worth stating plainly:
 
 ## 🚀 Quick start
 
-**Using it:** visit <https://RangerTrak.org>, then set up the mission in **Settings**, add
-people on the **Rangers** page, and enter reports on the **Home** screen. Full walkthrough
-in the [Field Guide](FIELD-GUIDE.md).
+**Using it:** visit <https://RangerTrak.org>, then name the mission on the **Mission** page,
+add people on the **Rangers** page, and enter reports on **Field Entry** (the RangerTrak
+link at top left). Help → **Start here** walks through it.
 
 **Developing it:**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rangertrak.git
-cd rangertrak
+git clone https://github.com/SteadyEOC/RangerTrak.git
+cd RangerTrak
 npm install
 npm start
 ```
