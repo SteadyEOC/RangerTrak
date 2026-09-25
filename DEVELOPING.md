@@ -63,6 +63,24 @@ Note that `lint:tsc` deliberately runs against `tsconfig.app.json` and
 `moduleResolution: "bundler"`, which disables TypeScript's automatic `@types` discovery for
 a bare `tsc` run and produces a flood of spurious "Cannot find name 'describe'" errors.
 
+### End-to-end checks
+
+These run against a production build, in real headless Chrome:
+
+```bash
+npm run build
+npm run server &          # tools/e2e.js expects the build served on :8080
+npm run e2e:full          # the full browser suite; run before every push
+npm run e2e:offline       # does the Alternative map really work offline? (starts its own server)
+```
+
+`e2e:offline` is separate on purpose: "offline" has to mean the server is actually gone, so
+it starts its own copy of the server on port 8091, warms the device, stops that server and
+restarts Chrome before looking at the map again. Browser offline emulation was not trusted
+for this - requests the service worker passes through may escape it. Run it whenever map,
+service-worker (`ngsw-config.json`) or caching code changes. See the script's header for the
+2026-09-25 bug it was written against.
+
 ## Bundle size
 
 The initial bundle is budgeted in [angular.json](angular.json) and currently passes with

@@ -27,3 +27,11 @@
 // ...) needs a NEW filename or a `?v=N` query bump here, or every device that already warmed
 // the old one will keep serving it from cache indefinitely instead of ever re-fetching.
 export const DEFAULT_PMTILES_URL = '/assets/maps/world-vashon.pmtiles'
+
+/**
+ * The Cache Storage cache OfflineBasemapService warms DEFAULT_PMTILES_URL into, and that
+ * CacheFirstSource (cache-first-source.ts) reads the map from when it is there. One constant
+ * so the writer and the reader cannot drift apart - until 2026-09-25 only the writer (and the
+ * readiness check) knew this cache existed, and the map went blank offline.
+ */
+export const PMTILES_WARM_CACHE_NAME = 'rangertrak-pmtiles-warm'

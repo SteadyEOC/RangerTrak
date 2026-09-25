@@ -1,9 +1,8 @@
 import { Injectable, signal } from '@angular/core'
 
-import { DEFAULT_PMTILES_URL } from '../mapping/pmtiles-config'
+import { DEFAULT_PMTILES_URL, PMTILES_WARM_CACHE_NAME as CACHE_NAME } from '../mapping/pmtiles-config'
 import { LogService } from './log.service'
 
-const CACHE_NAME = 'rangertrak-pmtiles-warm'
 /** Reset on every chunk received, not a fixed total deadline - a real 15-20 MB archive over
  *  slow field LTE can legitimately take longer than any fixed total would allow. This is a
  *  STALL detector: no bytes at all for this long means the connection is dead, not slow. */

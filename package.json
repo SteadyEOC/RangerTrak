@@ -15,6 +15,7 @@
     "e2e": "node tools/e2e.js",
     "e2e:full": "node tools/e2e.js --full",
     "e2e:prod": "node tools/e2e.js --base=https://rangertrak.org --read-only --full",
+    "e2e:offline": "node tools/e2e-offline-map.js",
     "check:secrets": "node tools/check-no-secrets.js",
     "deploy": "run-s build check:secrets deploy:only",
     "deploy:only": "wrangler deploy",

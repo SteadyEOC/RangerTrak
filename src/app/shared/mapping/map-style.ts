@@ -1,7 +1,8 @@
 import { addProtocol, setWorkerUrl, type StyleSpecification } from 'maplibre-gl'
-import { FetchSource, FileSource, PMTiles, Protocol, ResolvedValueCache } from 'pmtiles'
+import { FileSource, PMTiles, Protocol, ResolvedValueCache } from 'pmtiles'
 
-import { DEFAULT_PMTILES_URL } from './pmtiles-config'
+import { CacheFirstSource } from './cache-first-source'
+import { DEFAULT_PMTILES_URL, PMTILES_WARM_CACHE_NAME } from './pmtiles-config'
 
 export { DEFAULT_PMTILES_URL }
 
@@ -74,7 +75,11 @@ export function registerPmtilesProtocol(): void {
   }
   setWorkerUrl(MAPLIBRE_WORKER_URL)
   pmtilesProtocol = new Protocol()
-  pmtilesProtocol.add(new PMTiles(new FetchSource(DEFAULT_PMTILES_URL), new ResolvedValueCache()))
+  // CacheFirstSource, not a plain FetchSource (2026-09-25): reads the copy
+  // OfflineBasemapService warmed into Cache Storage when there is one, which is what makes
+  // this map work offline at all - see that class's own comment. Its getKey() is still the
+  // unresolved DEFAULT_PMTILES_URL, per the key-matching note above.
+  pmtilesProtocol.add(new PMTiles(new CacheFirstSource(DEFAULT_PMTILES_URL, PMTILES_WARM_CACHE_NAME), new ResolvedValueCache()))
   addProtocol('pmtiles', pmtilesProtocol.tile)
   maplibreInitialized = true
 }
