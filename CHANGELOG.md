@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.96.0](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.6...v0.96.0) (2026-09-25)
+
+
+### Features
+
+* **demo:** Grand Canyon is the default demo, and a demo moves the mission's default location ([a6a8e2a](https://github.com/SteadyEOC/RangerTrak/commit/a6a8e2a3a459163ca21e6c913178ea07372f918f))
+
 ### [0.95.6](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.5...v0.95.6) (2026-09-25)
 
 ### [0.95.5](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.4...v0.95.5) (2026-09-23)
