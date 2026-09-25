@@ -31,8 +31,8 @@
     <p class="mission__status mission__status--ok">
       <mat-icon aria-hidden="true">check_circle</mat-icon>
       Persistent storage is granted. This browser should not clear RangerTrak&rsquo;s data
-      without your explicit action &mdash; except iOS/iPadOS, which does not reliably honor
-      this. Back up your mission regularly as a precaution regardless of this setting.
+      without your explicit action. Back up your mission regularly as a precaution regardless
+      of this setting.
     </p>
     } @else if (storagePersistence.persisted() === false) {
     <p class="mission__status mission__status--warn">
@@ -50,6 +50,12 @@
       regularly as a precaution.
     </p>
     }
+    <p class="mission__note mission__note--warn">
+      Especially on iPhone and iPad: every browser there, Chrome included, runs on
+      Safari&rsquo;s engine, which does not reliably honor this protection and can clear a
+      site&rsquo;s data after about a week unused. Safari on a Mac does the same. There,
+      installing RangerTrak and backing up your mission are the real protection.
+    </p>
 
     <!-- Style A ("Mission Backup"/"Mission Restore") - a `backup`/`restore` icon pair,
          distinct from Style B's shared `layers` icon (Rangers, /prep) so the two families

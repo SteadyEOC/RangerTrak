@@ -140,14 +140,20 @@ proper icon, a window without browser clutter, and makes the device far more lik
 keep your data.
 
 **2. Ask the browser to protect your data.**
-Go to **Settings** and check the storage status. If it offers to request persistent
-storage, accept. Without this, a browser short on disk space may quietly discard your
-mission data. RangerTrak asks automatically, but browsers are more willing to say yes once
-the app is installed — so do this *after* step 1.
+On the **Mission** page, find the **Data safety** card and check the storage status. If it
+offers to request persistent storage, accept. Without this, a browser short on disk space
+may quietly discard your mission data. RangerTrak asks automatically, but browsers are more
+willing to say yes once the app is installed — so do this *after* step 1.
+
+Especially on iPhone and iPad, every browser (Chrome included) runs on Safari's engine,
+which does not reliably honor this request and can clear a site's data after about a week
+unused. Safari on a Mac does the same. There, installing (step 1) and **Back up mission**
+are the real protection.
 
 **3. Load your roster.**
-On the **Rangers** page, enter your people or import them, then use **Save Rangers**.
-Roster edits are *not* saved automatically — you must press the button.
+On the **Rangers** page, enter your people or import them. Adding, importing and deleting
+save themselves, but edits typed into the grid are *not* saved until you press **Save
+edits**, under the grid.
 
 **4. Set up the mission.**
 On the **Settings** page, fill in the mission and event names, the operating period start

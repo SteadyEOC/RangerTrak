@@ -104,6 +104,7 @@ const YOUR_DATA: GuideTab = {
       bullets: [
         'Another device — even another browser on this same machine — has its own separate copy.',
         'Clearing site data clears the mission. Back up mission, on the Mission page, guards against this.',
+        'Especially on iPhone and iPad, every browser can clear a site\'s data after about a week unused, and storage protection is not reliable there (nor in Safari on a Mac). Install RangerTrak and back up the mission.',
         'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.'
       ]
     }
