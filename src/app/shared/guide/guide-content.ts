@@ -97,14 +97,14 @@ const YOUR_DATA: GuideTab = {
   blocks: [
     {
       heading: 'Where it lives',
-      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login, and nothing you type is sent anywhere — unless you turn on Command Post Server publishing yourself (Mission Setup), which is off by default. See "Command Post Server" on the Mission page for exactly what that sends and to whom.'
+      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login, and nothing you type is sent anywhere — unless you turn on Command Post Server publishing yourself (on the Mission page), which is off by default. See "Command Post Server" on the Mission page for exactly what that sends and to whom.'
     },
     {
       heading: 'What that means',
       bullets: [
         'Another device — even another browser on this same machine — has its own separate copy.',
-        'Clearing site data clears the mission. Mission Setup has an Export that guards against this.',
-        'An exported file contains the ranger roster in the clear: legal names, phone numbers and call signs. It is not encrypted.'
+        'Clearing site data clears the mission. Back up mission, on the Mission page, guards against this.',
+        'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.'
       ]
     }
   ]
@@ -177,7 +177,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             heading: 'Field mode — a ranger\'s own phone',
             text: 'This turns a personal phone into a stripped-down device for filing your own reports — not a second command post. The welcome panel offers the choice once, on a genuinely empty device (before any rangers, reports, or mission name are set); there is no way to turn it back off from within the app once chosen.',
             bullets: [
-              'Everything except this page and Help disappears from the menu — a field phone has no reason to see the roster, the map, or Mission Setup, and a typed-in address to one of those pages is blocked the same way.',
+              'Everything except this page and Help disappears from the menu — a field phone has no reason to see the roster, the map, or the Mission page, and a typed-in address to one of those pages is blocked the same way.',
               'Location starts from the phone\'s own GPS instead of the mission\'s configured default, if the phone allows it — a best-effort fill, never required, and never overwrites a position already typed by hand.',
               'Whichever coordinate format (DD, DDM, MGRS…) you last used is what this device opens on next time, on any mission — every device, not just field mode, remembers this now.',
               'Install the PWA from [rangertrak.org](https://rangertrak.org) BEFORE heading out, not after — loading it fresh from a command-post laptop\'s own address in the field gets no offline capability at all, since that address is not secure enough for a browser to allow it.'
@@ -293,7 +293,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Moving a whole mission',
-            text: 'To move the roster, settings and field reports together, use Back up mission/Restore mission on the Mission Setup page. Import/Export roster here moves only the roster. To hand a coordinator a starting point for a NEW device before a mission begins - any combination of roster, photos, locations and settings, no field reports - use the Setup files page instead.'
+            text: 'To move the roster, settings and field reports together, use Back up mission/Restore mission on the Mission page. Import/Export roster here moves only the roster. To hand a coordinator a starting point for a NEW device before a mission begins - any combination of roster, photos, locations and settings, no field reports - use the Setup files page instead.'
           },
           {
             heading: 'Tactical call signs',
@@ -327,7 +327,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
   },
 
   '/mission': {
-    screen: 'Mission Setup',
+    screen: 'Mission',
     tabs: [
       {
         label: 'This page',
@@ -412,7 +412,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               // coverage, but "Load a custom .pmtiles file…" (CustomPmtilesService) has existed
               // since 2026-08-27.
               'The MapLibre + PMTiles engine needs no network at all. A low-detail world map is built into the app everywhere, with real street-level detail in the Vashon Island demo area today. If you have a .pmtiles map file for your own area, press "Load a custom .pmtiles file…" below that map to add real detail there too — it then works offline the same way.',
-              'A coordinator can build that map file ahead of time with a free command-line tool — see "Make an offline map file for your area" in the printed Field Guide for the steps.'
+              'A coordinator can build that map file ahead of time with a free command-line tool — see "For coordinators: make your own offline map file" in the printed Field Guide for the steps.'
             ]
           },
           {
@@ -440,7 +440,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
         blocks: [
           {
             heading: 'What a setup file is - and is not',
-            text: 'A pre-mission PROVISIONING file for setting up a device: any combination of this device\'s current roster (with ranger photos), locations, and mission settings, bundled into one file - check only the categories you want to hand off. It has no field reports, because it is built before a mission has any. That makes it a different artifact from Mission Setup\'s "Back up mission," which IS a mid/post-mission backup and always includes field reports - export setup files to hand a coordinator a starting point, back up a mission to protect or move one already in progress.'
+            text: 'A pre-mission PROVISIONING file for setting up a device: any combination of this device\'s current roster (with ranger photos), locations, and mission settings, bundled into one file - check only the categories you want to hand off. It has no field reports, because it is built before a mission has any. That makes it a different artifact from the Mission page\'s "Back up mission," which IS a mid/post-mission backup and always includes field reports - export setup files to hand a coordinator a starting point, back up a mission to protect or move one already in progress.'
           },
           {
             heading: 'Loading merges, it does not replace',
