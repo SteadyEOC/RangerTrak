@@ -7,11 +7,18 @@ import {
 
 /**
  * A named demonstration mission a user can pick, so "load the sample mission" isn't limited
- * to one place. `vashon` stays the default everywhere it's offered (Entry, Mission > Danger
- * zone, Rangers) - it's the original, most-tested scenario. See SAMPLE_SCENARIOS below for
- * the label/hint shown in each picker.
+ * to one place. DEFAULT_SAMPLE_SCENARIO below is what every picker (Entry, Mission > Danger
+ * zone, Rangers) starts on. See SAMPLE_SCENARIOS below for the label/hint shown in each.
  */
 export type SampleScenarioId = 'vashon' | 'grand-canyon' | 'state-fair' | 'near-me'
+
+/**
+ * 2026-09-25 (maintainer): Grand Canyon replaces Vashon as the default - a place a national
+ * and international audience already knows, where Vashon Island means little outside the
+ * Puget Sound. Vashon stays in the list (it is still the original, most-tested scenario).
+ * One constant so the three pickers and loadSampleMission()'s own default cannot drift.
+ */
+export const DEFAULT_SAMPLE_SCENARIO: SampleScenarioId = 'grand-canyon'
 
 export type SampleScenarioOption = {
   id: SampleScenarioId
@@ -22,21 +29,22 @@ export type SampleScenarioOption = {
 /**
  * F29-?? (2026-09-14, maintainer's own ask): "other areas as an alternative: Grand Canyon,
  * state fair, and one tied to their own coordinates." Every entry point that used to offer a
- * single "Load sample mission" action now offers this list instead, defaulting to `vashon`.
+ * single "Load sample mission" action now offers this list instead, defaulting to
+ * DEFAULT_SAMPLE_SCENARIO. Listed default-first.
  *
  * Kept here (not a component) so every picker - Entry, Mission > Danger zone, Rangers - reads
  * the exact same three sentences rather than three hand-copied descriptions drifting apart.
  */
 export const SAMPLE_SCENARIOS: ReadonlyArray<SampleScenarioOption> = [
   {
-    id: 'vashon',
-    label: 'Vashon Island (default)',
-    hint: 'The original demo: a missing-hiker search across two real Vashon-Maury parks.',
+    id: 'grand-canyon',
+    label: 'Grand Canyon, South Rim (default)',
+    hint: 'A missing-hiker search near the Bright Angel Trailhead and the Rim Trail.',
   },
   {
-    id: 'grand-canyon',
-    label: 'Grand Canyon, South Rim',
-    hint: 'A missing-hiker search near the Bright Angel Trailhead and the Rim Trail.',
+    id: 'vashon',
+    label: 'Vashon Island, WA',
+    hint: 'The original demo: a missing-hiker search across two real Vashon-Maury parks.',
   },
   {
     id: 'state-fair',
@@ -83,6 +91,10 @@ type ScenarioData = {
   rangers: RangerType[]
   rows: Row[]
   locations: MissionLocationType[]
+  /** Becomes the mission's default location (defLat/defLng), so Entry's starting position
+   *  and mini-map open where the demo happens rather than wherever the device was last set
+   *  up - added 2026-09-25 when Grand Canyon became the default demo on a Vashon default. */
+  commandPost: { lat: number, lng: number }
 }
 
 /**
@@ -197,7 +209,7 @@ export class SampleDataService {
    * The other three scenarios resolve synchronously under the hood but still return a
    * Promise, so every caller has exactly one code path to await rather than a branch.
    */
-  public async loadSampleMission(scenario: SampleScenarioId = 'vashon'): Promise<void> {
+  public async loadSampleMission(scenario: SampleScenarioId = DEFAULT_SAMPLE_SCENARIO): Promise<void> {
     const data = await this.buildScenario(scenario)
 
     // Settings first, then rangers, then reports - the same ordering (and for the same
@@ -208,6 +220,8 @@ export class SampleDataService {
       mission: SampleDataService.sampleMissionId(),
       event: data.event,
       eventNotes: data.eventNotes,
+      defLat: data.commandPost.lat,
+      defLng: data.commandPost.lng,
     })
     this.rangerService.replaceAllRangers(data.rangers)
     const radioLog = this.assembleRadioLog(data.rows, data.rangers, data.event)
@@ -224,12 +238,12 @@ export class SampleDataService {
 
   private async buildScenario(scenario: SampleScenarioId): Promise<ScenarioData> {
     switch (scenario) {
-      case 'grand-canyon': return this.buildGrandCanyonScenario()
+      case 'vashon': return this.buildVashonScenario()
       case 'state-fair': return this.buildStateFairScenario()
       case 'near-me': return this.buildNearMeScenario(await this.resolveDeviceLocation())
-      case 'vashon':
+      case 'grand-canyon':
       default:
-        return this.buildVashonScenario()
+        return this.buildGrandCanyonScenario()
     }
   }
 
@@ -363,7 +377,7 @@ export class SampleDataService {
     return configured.map(s => s.status)
   }
 
-  // ── Scenario 1: Vashon Island (default) ──────────────────────────────────────────────
+  // ── Scenario 1: Vashon Island (the original; default until 2026-09-25) ──────────────────────────────────────────────
 
   /**
    * The original demo, reshaped to the common 12/4-teams/2-objectives pattern (see this
@@ -478,7 +492,7 @@ export class SampleDataService {
     return {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: SampleDataService.SAMPLE_EVENT_NOTES,
-      rangers, rows, locations,
+      rangers, rows, locations, commandPost: CP,
     }
   }
 
@@ -594,7 +608,7 @@ export class SampleDataService {
     return {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: 'Missing hiker last seen near the Bright Angel Trailhead',
-      rangers, rows, locations,
+      rangers, rows, locations, commandPost: CP,
     }
   }
 
@@ -704,7 +718,7 @@ export class SampleDataService {
     return {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: 'Lost child reported near the midway; heat illness and crowd-flow support ongoing',
-      rangers, rows, locations,
+      rangers, rows, locations, commandPost: CP,
     }
   }
 
@@ -811,7 +825,7 @@ export class SampleDataService {
     return {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: 'Investigate report of a lost individual near this location',
-      rangers, rows, locations,
+      rangers, rows, locations, commandPost: CP,
     }
   }
 }

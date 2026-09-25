@@ -7,7 +7,7 @@ import {
   BackupService, LogService, SampleDataService, StoragePersistenceService
 } from '../../../shared/services/'
 // Direct path, not the barrel above - see the note in rangers.component.ts.
-import { SAMPLE_SCENARIOS, SampleScenarioId } from '../../../shared/services/sample-data.service'
+import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../../../shared/services/sample-data.service'
 
 /**
  * Data safety (Storage Protection, Mission Backup) and the page's Danger Zone (reset
@@ -144,7 +144,7 @@ export class MissionAdvancedOptionsComponent {
 
   /** Scenario picker for "Load sample mission" below - see SAMPLE_SCENARIOS' own comment. */
   readonly sampleScenarios = SAMPLE_SCENARIOS
-  selectedScenario = signal<SampleScenarioId>('vashon')
+  selectedScenario = signal<SampleScenarioId>(DEFAULT_SAMPLE_SCENARIO)
 
   /** One-line description of whichever scenario is currently selected in the picker above. */
   selectedScenarioHint(): string {
@@ -161,7 +161,8 @@ export class MissionAdvancedOptionsComponent {
 
     if (!confirm(`Load the "${label}" sample mission?\n\n`
       + `This REPLACES all rangers, field reports and locations currently on this device with `
-      + `demonstration data, and renames the mission to make that obvious.\n\n`
+      + `demonstration data, renames the mission to make that obvious, and moves the mission's `
+      + `default location to the demo's command post.\n\n`
       + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
       this.log.verbose('onBtnLoadSampleData: user cancelled.', this.id)
       return

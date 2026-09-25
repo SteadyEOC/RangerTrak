@@ -28,7 +28,7 @@ import {
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 // Direct path too - plain type/const exports, but kept alongside the barrel import above
 // would mean splitting SampleDataService out of it for no real benefit.
-import { SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
+import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
 import { extractMissionZip, MissionZipManifest, MissionZipPhoto } from '../shared/export/mission-zip'
 import { mergeRangers } from '../shared/services/ranger-migration'
 import { CustomTooltip } from './customTooltip'
@@ -392,7 +392,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** Scenario picker for "Load sample mission" below - see SAMPLE_SCENARIOS' own comment. */
   readonly sampleScenarios = SAMPLE_SCENARIOS
-  selectedScenario = signal<SampleScenarioId>('vashon')
+  selectedScenario = signal<SampleScenarioId>(DEFAULT_SAMPLE_SCENARIO)
 
   /**
    * "Load sample mission" from the empty-state block (see rangers.component.html) - the
@@ -408,7 +408,8 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (!confirm(`Load the "${label}" sample mission?\n\n`
       + `This REPLACES all rangers, field reports and locations currently on this device with `
-      + `demonstration data, and renames the mission to make that obvious.\n\n`
+      + `demonstration data, renames the mission to make that obvious, and moves the mission's `
+      + `default location to the demo's command post.\n\n`
       + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
       this.log.verbose('onBtnLoadSampleMission: user cancelled.', this.id)
       return

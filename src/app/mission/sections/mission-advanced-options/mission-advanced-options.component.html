@@ -120,7 +120,8 @@
 
       <!-- 2026-09-14: scenario picker added alongside the existing action - four ready-made
            demo missions (Vashon Island, Grand Canyon, a state fair, and one generated around
-           this device's own location) instead of one fixed one. Vashon stays the default. -->
+           this device's own location) instead of one fixed one. Grand Canyon is the default
+           since 2026-09-25 (DEFAULT_SAMPLE_SCENARIO). -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mission__sample-scenario">
         <mat-label>Demo scenario</mat-label>
         <mat-select [value]="selectedScenario()" (selectionChange)="selectedScenario.set($event.value)">

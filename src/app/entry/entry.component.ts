@@ -34,7 +34,7 @@ import {
 // service used as a DI token needs this; these are plain type/const exports with no such
 // constraint, but keeping the sample-scenario picker's imports together in one line is
 // clearer than splitting SampleDataService itself out of the barrel import too.
-import { SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
+import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
 //import { LocationComponent } from './location.component'
 
 import { MATERIAL_IMPORTS } from '../material-imports'
@@ -445,9 +445,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /** Scenario picker for the "Load Demo Data" button below - see SAMPLE_SCENARIOS' own
-   *  comment for what each option means. Defaults to Vashon, the original demo. */
+   *  comment for what each option means. Defaults to DEFAULT_SAMPLE_SCENARIO (Grand Canyon). */
   readonly sampleScenarios = SAMPLE_SCENARIOS
-  selectedScenario = signal<SampleScenarioId>('vashon')
+  selectedScenario = signal<SampleScenarioId>(DEFAULT_SAMPLE_SCENARIO)
 
   /**
    * No confirm() dialog, unlike every other place this same action is offered

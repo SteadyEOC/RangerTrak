@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
-import { SampleDataService, SampleScenarioId, SAMPLE_SCENARIOS } from './sample-data.service';
+import { DEFAULT_SAMPLE_SCENARIO, SampleDataService, SampleScenarioId, SAMPLE_SCENARIOS } from './sample-data.service';
 import { MissionService } from './mission.service';
 import { RangerService } from './ranger.service';
 import { RadioLogService } from './radio-log.service';
@@ -62,7 +62,8 @@ describe('SampleDataService', () => {
   });
 
   it('SAMPLE_SCENARIOS defaults to Vashon first and lists exactly the four scenarios', () => {
-    expect(SAMPLE_SCENARIOS.map(s => s.id)).toEqual(['vashon', 'grand-canyon', 'state-fair', 'near-me']);
+    expect(SAMPLE_SCENARIOS.map(s => s.id)).toEqual(['grand-canyon', 'vashon', 'state-fair', 'near-me']);
+    expect(SAMPLE_SCENARIOS[0].id).toBe(DEFAULT_SAMPLE_SCENARIO);
   });
 
   SCENARIOS.forEach(scenario => {
@@ -125,14 +126,23 @@ describe('SampleDataService', () => {
   });
 
   describe('loadSampleMission (general)', () => {
-    it('defaults to the Vashon scenario when called with no argument', async () => {
+    it('defaults to the Grand Canyon scenario when called with no argument', async () => {
       const sampleData = TestBed.inject(SampleDataService);
       const missionService = TestBed.inject(MissionService);
+      const radioLogService = TestBed.inject(RadioLogService);
 
       await sampleData.loadSampleMission();
 
       expect(missionService.settings.mission).toMatch(/^\d{4}-\d{2}-Search$/);
       expect(missionService.settings.event).toBe(SampleDataService.SAMPLE_EVENT_NAME);
+      // Every scenario shares the event name above, so that alone can't tell them apart -
+      // check the reports actually landed at the South Rim (~36.06 N, -112.14 W).
+      const first = radioLogService.getCurrentRadioLog().logEntries[0].location;
+      expect(first.lat).toBeCloseTo(36.06, 0);
+      expect(first.lng).toBeCloseTo(-112.14, 0);
+      // ...and the mission's default location follows the demo, so Entry opens there too.
+      expect(missionService.settings.defLat).toBeCloseTo(36.06, 1);
+      expect(missionService.settings.defLng).toBeCloseTo(-112.15, 1);
     });
 
     it('stamps a computed, current-month mission ID rather than a fixed string', async () => {
