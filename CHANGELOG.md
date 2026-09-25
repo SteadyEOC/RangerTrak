@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.0...v0.96.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **map:** the Alternative map works offline again - read the warmed copy ([fbce6f3](https://github.com/SteadyEOC/RangerTrak/commit/fbce6f3caabc9f66bf0140793f77921fe31364ae))
+
 ## [0.96.0](https://github.com/SteadyEOC/RangerTrak/compare/v0.95.6...v0.96.0) (2026-09-25)
 
 
