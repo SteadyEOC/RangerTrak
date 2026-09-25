@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="src/assets/icons/rangertrak-mark.svg" width="96" alt="RangerTrak logo: a map pin that is also a handheld radio">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/rangertrak-mark-on-dark.svg">
+    <img src="src/assets/icons/rangertrak-mark.svg" width="96" alt="RangerTrak logo: a map pin that is also a handheld radio">
+  </picture>
 </p>
 
 <h1 align="center">RangerTrak™</h1>
