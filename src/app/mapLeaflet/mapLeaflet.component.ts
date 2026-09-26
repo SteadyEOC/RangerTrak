@@ -34,7 +34,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 
 import {
   AbstractMap, Utility, rangerIconFor, rangerColorFor, evidenceIconFor, radioLogStatusColor,
-  locationCategoryColor, locationIconFor, formatReportTime, computeExtent, ExtentPoint
+  locationCategoryColor, locationIconFor, resolveLocationIcon, formatReportTime, computeExtent, ExtentPoint
 } from '../shared'
 import { DDToUTM, UTMToDD } from '../shared/mapping/coordinate'
 import {
@@ -1109,7 +1109,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
     this.locations.forEach(loc => {
       const color = locationCategoryColor(loc.type, this.settings.locationTypes)
-      const marker = L.marker([loc.lat, loc.lng], { title: loc.name, icon: locationIconFor(loc.type, color) })
+      const icon = resolveLocationIcon(loc.type, this.settings.locationTypes)
+      const marker = L.marker([loc.lat, loc.lng], { title: loc.name, icon: locationIconFor(icon, color) })
       // Leaflet's default bubblingMouseEvents means a marker click ALSO reaches the map's
       // own click handler (onMouseClick, bound on the container div in the template) unless
       // stopped here - without this, clicking a location would also copy its coordinates to

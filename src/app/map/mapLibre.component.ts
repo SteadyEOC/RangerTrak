@@ -35,7 +35,7 @@ import { rangerColorFor, evidenceMarkerSvg } from '../shared/mapping/ranger-mark
 // ADR D-49, same 2026-09-02 resolution: locationMarkerSvg() moved to location-marker.ts
 // (pure, no Leaflet import) - previously it lived alongside the Leaflet-typed
 // locationIconFor() in location-icon.ts, which pulled `leaflet` in here too.
-import { locationMarkerSvg } from '../shared/mapping/location-marker'
+import { locationMarkerSvg, resolveLocationIcon } from '../shared/mapping/location-marker'
 // Imported directly, not via the '../shared' barrel - same reasoning as the other
 // shared/mapping/* imports above, this file must not risk pulling Leaflet in.
 import { computeExtent, ExtentPoint } from '../shared/mapping/extent'
@@ -828,9 +828,10 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     this.locationMarkers.forEach(m => m.remove())
     this.locationMarkers = this.locations.map(loc => {
       const color = locationCategoryColor(loc.type, this.settings.locationTypes)
+      const icon = resolveLocationIcon(loc.type, this.settings.locationTypes)
       const el = document.createElement('div')
       el.className = 'rt-location-marker'
-      el.innerHTML = locationMarkerSvg(loc.type, color)
+      el.innerHTML = locationMarkerSvg(icon, color)
       el.title = loc.name
       // MapLibre's marker element sits in the same container the map's own 'click' listener
       // is bound to (unlike Leaflet's synthetic event system) - without stopping propagation

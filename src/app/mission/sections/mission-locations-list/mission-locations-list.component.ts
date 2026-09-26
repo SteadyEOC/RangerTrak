@@ -3,9 +3,11 @@ import { Subscription } from 'rxjs'
 import { CommonModule } from '@angular/common'
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, signal } from '@angular/core'
 import { MatDialog } from '@angular/material/dialog'
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
 
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 import { LocationDialogComponent } from '../../../map/location-dialog/location-dialog.component'
+import { locationMarkerSvg, resolveLocationIcon } from '../../../shared/mapping/location-marker'
 import { locationCategoryColor } from '../../../shared/mapping/report-marker-status'
 import { LogService, MissionLocationService, MissionLocationType, MissionService } from '../../../shared/services/'
 
@@ -42,6 +44,7 @@ export class MissionLocationsListComponent implements OnInit, OnDestroy {
     private missionService: MissionService,
     private dialog: MatDialog,
     private log: LogService,
+    private sanitizer: DomSanitizer,
   ) { }
 
   ngOnInit(): void {
@@ -57,6 +60,20 @@ export class MissionLocationsListComponent implements OnInit, OnDestroy {
 
   colorFor(type: string): string {
     return locationCategoryColor(type, this.missionService.settings.locationTypes)
+  }
+
+  /**
+   * The actual marker SVG for this location's category (E-117), not just its color swatch -
+   * same `resolveLocationIcon()` both map engines and the location dialog go through, so a
+   * category's icon here always matches what the map itself draws. `bypassSecurityTrustHtml`
+   * mirrors `GuideDrawerComponent`'s identical need to bind hand-built SVG/HTML markup that
+   * isn't sourced from user input.
+   */
+  markerFor(type: string): SafeHtml {
+    const locationTypes = this.missionService.settings.locationTypes
+    const icon = resolveLocationIcon(type, locationTypes)
+    const svg = locationMarkerSvg(icon, locationCategoryColor(type, locationTypes))
+    return this.sanitizer.bypassSecurityTrustHtml(svg)
   }
 
   onEdit(location: MissionLocationType): void {

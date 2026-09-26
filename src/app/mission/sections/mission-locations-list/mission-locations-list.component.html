@@ -19,7 +19,7 @@
     <tr>
       <td>{{ loc.name }}</td>
       <td>
-        <span class="rt-locations-list__swatch" [style.background]="colorFor(loc.type)"></span>
+        <span class="rt-locations-list__marker" [innerHTML]="markerFor(loc.type)"></span>
         {{ loc.type }}
       </td>
       <td>{{ loc.lat.toFixed(5) }}, {{ loc.lng.toFixed(5) }}</td>

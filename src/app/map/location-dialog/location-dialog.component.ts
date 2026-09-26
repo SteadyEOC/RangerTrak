@@ -2,8 +2,11 @@ import { CommonModule } from '@angular/common'
 import { ChangeDetectionStrategy, Component, Inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog'
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
 
 import { MATERIAL_IMPORTS } from '../../material-imports'
+import { locationMarkerSvg, resolveLocationIcon } from '../../shared/mapping/location-marker'
+import { locationCategoryColor } from '../../shared/mapping/report-marker-status'
 import { LocationCategoryType, LogService, MissionLocationService, MissionLocationType } from '../../shared/services'
 
 /** What a map engine hands in when opening this dialog - see each engine's own open call. */
@@ -53,7 +56,20 @@ export class LocationDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: LocationDialogData,
     private locationService: MissionLocationService,
     private log: LogService,
+    private sanitizer: DomSanitizer,
   ) { }
+
+  /**
+   * The marker preview shown next to each category option (E-117) - same
+   * `resolveLocationIcon()` both map engines and the Mission locations list go through, so
+   * what a scribe picks here always matches what lands on the map. `bypassSecurityTrustHtml`
+   * mirrors `GuideDrawerComponent`'s identical need for hand-built (not user-sourced) markup.
+   */
+  markerFor(type: string): SafeHtml {
+    const icon = resolveLocationIcon(type, this.data.locationTypes)
+    const svg = locationMarkerSvg(icon, locationCategoryColor(type, this.data.locationTypes))
+    return this.sanitizer.bypassSecurityTrustHtml(svg)
+  }
 
   onSave(): void {
     const name = this.name().trim()

@@ -28,7 +28,9 @@ export { LocationType, undefinedAddressFlag, undefinedLocation } from "./locatio
 export { LogLevel, LogLevelNames, LogType, LogHeadings } from "./log.interface"
 export { RangerType, UnknownRanger } from "./ranger.interface"
 export { MissionType } from "./mission.interface"
-export { LocationCategoryType, MissionLocationType } from "./mission-location.interface"
+export {
+  LocationCategoryType, MissionLocationType, LocationIconId, LOCATION_ICON_OPTIONS
+} from "./mission-location.interface"
 export {
   MISSION_SCHEMA_VERSION, DEFAULT_RADIO_LOG_STATUSES, DEFAULT_RECIPIENT_OPTIONS_213,
   DEFAULT_LOCATION_TYPES, DEFAULT_OP_PERIOD_HOURS, migrateMission

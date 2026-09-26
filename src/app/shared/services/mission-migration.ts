@@ -89,17 +89,24 @@ export const DEFAULT_RECIPIENT_OPTIONS_213: ReadonlyArray<string> = [
  * those tokens are specifically for field-report status and adding a second consumer would
  * mean touching `_status.scss`/`_tokens.scss`/STATUS_KEYS for an unrelated feature. Editable
  * per-mission via `MissionType.locationTypes`, same as radioLogStatuses.
+ *
+ * `icon` values (E-117, 2026-09-25) are explicit here even though `ICON_BY_NAME` in
+ * `location-marker.ts` would resolve every one of these names to the same shape anyway - a
+ * BRAND NEW mission gets an icon it can immediately see and change in the grid, rather than
+ * an invisible name-match a maintainer has to know exists. Renaming one of these categories
+ * without picking a new icon still falls through to `ICON_BY_NAME`/pin, same as before this
+ * field existed.
  */
 export const DEFAULT_LOCATION_TYPES: ReadonlyArray<LocationCategoryType> = [
-  { type: 'Command Post', color: '#1565C0' },
-  { type: 'Staging Area', color: '#EF6C00' },
-  { type: 'Ranger First Aid', color: '#C62828' },
+  { type: 'Command Post', color: '#1565C0', icon: 'command-post' },
+  { type: 'Staging Area', color: '#EF6C00', icon: 'staging' },
+  { type: 'Ranger First Aid', color: '#C62828', icon: 'first-aid' },
   // Expanded live 2026-08-30 from the original four (which included a catch-all "Other" -
-  // dropped here per the maintainer's own specified list; locationIconFor()'s generic-pin
+  // dropped here per the maintainer's own specified list; locationMarkerSvg()'s generic-pin
   // fallback still covers any category name a mission adds beyond this starter set).
-  { type: 'EOC', color: '#6A1B9A' },
-  { type: 'Fire Station', color: '#D84315' },
-  { type: 'Dock', color: '#00838F' },
+  { type: 'EOC', color: '#6A1B9A', icon: 'eoc' },
+  { type: 'Fire Station', color: '#D84315', icon: 'fire-station' },
+  { type: 'Dock', color: '#00838F', icon: 'dock' },
 ]
 
 /**

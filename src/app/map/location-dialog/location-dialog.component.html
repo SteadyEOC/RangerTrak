@@ -11,7 +11,10 @@
     <mat-label>Category</mat-label>
     <mat-select [ngModel]="type()" (ngModelChange)="type.set($event)">
       @for (t of data.locationTypes; track t.type) {
-      <mat-option [value]="t.type">{{ t.type }}</mat-option>
+      <mat-option [value]="t.type">
+        <span class="rt-location-dialog__option-marker" [innerHTML]="markerFor(t.type)"></span>
+        {{ t.type }}
+      </mat-option>
       }
     </mat-select>
   </mat-form-field>

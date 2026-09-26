@@ -15,6 +15,19 @@
   flex: 1 1 auto;
 }
 
+.rt-location-dialog__option-marker {
+  display       : inline-flex;
+  width         : 1.2em;
+  height        : 1.2em;
+  margin-right  : 0.4em;
+  vertical-align: -0.3em;
+
+  svg {
+    width : 100%;
+    height: 100%;
+  }
+}
+
 .rt-location-dialog__delete {
   --mat-button-outlined-label-text-color: var(--rt-readiness-red);
   --mat-button-outlined-outline-color   : var(--rt-readiness-red);
