@@ -1,11 +1,5 @@
 # RangerTrak Individual Contributor License Agreement
 
-> **DRAFT — not yet in force.** This text needs the maintainer's review before it's wired up
-> to gate pull requests (see `.github/workflows/cla.yml`, added alongside this file but not
-> yet enabled). See ADR D-01 and D-23 in the private roadmap for why this exists — a CLA is
-> required before the first outside contribution lands, or dual-licensing a future commercial
-> tier becomes impossible once contributions carry mixed copyright.
-
 Thank you for your interest in contributing to RangerTrak ("the Project"), maintained by
 **John Cornelison** ("the Maintainer"). This Contributor License Agreement ("Agreement")
 clarifies the intellectual

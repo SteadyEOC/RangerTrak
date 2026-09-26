@@ -1,7 +1,12 @@
-# Gates external pull requests on signing CLA.md (E-23 / ADR D-01). Not yet enabled — see the
-# DRAFT notice at the top of CLA.md; needs the maintainer's placeholder fields filled in and
-# a PERSONAL_ACCESS_TOKEN secret (repo scope) created before this can actually comment/commit
-# signatures. Until that secret exists, runs of this workflow fail rather than silently no-op.
+# Gates external pull requests on signing CLA.md (E-23 / ADR D-01, ADR-0006). Enabled
+# 2026-09-26. Signatures are committed to the `cla-signatures` branch using the
+# CLA_SIGNATURES_TOKEN repo secret (a fine-grained PAT: Contents and Pull requests, read and
+# write, this repo only). If that secret is missing or expired, runs fail rather than
+# silently passing - deliberate, so an unsigned outside PR can never slip through.
+#
+# `allowlist` is GitHub LOGINS, not git author names: the maintainer's login is VashJuan
+# (git commits say "JCornelison", which is a different GitHub account). The bots are the two
+# that open PRs here.
 name: CLA Assistant
 
 on:
@@ -30,7 +35,7 @@ jobs:
           path-to-signatures: "signatures/cla.json"
           path-to-document: "https://github.com/${{ github.repository }}/blob/main/CLA.md"
           branch: "cla-signatures"
-          allowlist: JCornelison
+          allowlist: VashJuan,dependabot[bot],ImgBotApp,imgbot[bot]
           custom-pr-sign-comment: "I have read the CLA Document and I hereby sign the CLA"
           custom-notsigned-prcomment: >
             Thanks for the pull request! Before it can be reviewed, please read
