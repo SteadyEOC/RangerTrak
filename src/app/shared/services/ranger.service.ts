@@ -1,4 +1,4 @@
-import { Observable, Observer, of, ReplaySubject, throwError } from 'rxjs'
+import { Observable, Observer, of, ReplaySubject } from 'rxjs'
 
 import { formatDate } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
@@ -54,10 +54,12 @@ export class RangerService implements OnInit {
        * future modules don't provide extra copies of this singleton service
        * per pg 84 of Angular Cookbook: do NOT add services to *.module.ts!
        */
-      throwError(() => {
-        console.error(`This singleton service has already been provided in the application. Avoid providing it again in child modules.`)
-        new Error(`This singleton service has already been provided in the application. Avoid providing it again in child modules.`)
-      })
+      // See mission.service.ts's own constructor for why this is `throw new Error(...)`
+      // and not `throwError(() => ...)` - the rxjs creation function only builds an
+      // observable; nothing subscribed to it here, so the guard never actually fired.
+      const msg = `RangerService has already been provided. It is providedIn:'root' - do not list it in a component's providers.`
+      this.log.error(msg, this.id)
+      throw new Error(msg)
     }
     this.log.verbose("======== Constructor() ============", this.id)
     // REVIEW: this.log.verbose(`Constructor call stack: ${new Error().stack}`, this.id)
