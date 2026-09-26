@@ -17,6 +17,10 @@ import { rehydrateDateFields } from './json-dates'
 // is unresolvable to the compiler ("no suitable injection token") - the same reason
 // rangers.component.ts imports RangerPhotoService directly instead of via './'.
 import { RangerService } from './ranger.service'
+// E-122 Phase 2a: field reports are PII, and now live behind RecordStore (in-memory +
+// IndexedDB) rather than directly in localStorage. Direct import, same reasoning as the
+// RangerService import above.
+import { recordStore } from '../storage/record-store'
 // E-114 Phase 0: resolving a self-typed credential (a zero-provisioning lite device has no
 // roster of its own) against THIS device's roster reuses the exact comparison
 // normalizeRangerIds() already applies everywhere else - not a second matching rule.
@@ -151,7 +155,10 @@ export class RadioLogService {
    * @returns
    */
   private loadRadioLogFromLocalStorage(): RadioLogType {
-    let localStorageFieldReports = localStorage.getItem(this.storageLocalName)
+    // E-122 Phase 2a: through RecordStore now, not localStorage directly - field reports can
+    // carry missing-person PII (ARCHITECTURE.md "Encryption: exports today, storage later").
+    // Synchronous to this caller, same as localStorage.getItem() was.
+    let localStorageFieldReports = recordStore.getItem(this.storageLocalName)
 
     if (localStorageFieldReports == null) {
       this.log.warn(`No Field Reports found in Local Storage. Will rebuild from defaults.`, this.id)
@@ -159,7 +166,7 @@ export class RadioLogService {
     }
     else if (localStorageFieldReports.indexOf("version") <= 0) {
       this.log.error(`Field Reports in Local Storage appear corrupted (no version #) & will be stored in Local Storage with key: '${this.storageLocalName}-BAD'. Will rebuild from defaults.`, this.id)
-      localStorage.setItem(this.storageLocalName + '-BAD', localStorageFieldReports)
+      recordStore.setItem(this.storageLocalName + '-BAD', localStorageFieldReports)
       return this.initEmptyRadioLog()
     } else {
       // ADR D-42 Phase 2: everything stored goes through migrateRadioLog(), which
@@ -239,7 +246,9 @@ export class RadioLogService {
       this.radioLog.numReport = this.radioLog.logEntries.length
     }
 
-    localStorage.setItem(this.storageLocalName, JSON.stringify(this.radioLog))
+    // E-122 Phase 2a: through RecordStore now (see loadRadioLogFromLocalStorage()'s own
+    // comment) - synchronous to this caller, so nothing else in this method changes.
+    recordStore.setItem(this.storageLocalName, JSON.stringify(this.radioLog))
 
     this.log.excessive(`New radio log is available to observers...`, this.id)
     // Signal gets a fresh copy for the same reason as RangerService.rangers:
@@ -470,7 +479,7 @@ export class RadioLogService {
   public deleteAllRadioLogEntries() {
     // TODO: reset header properties too?!
     this.radioLog.logEntries = []
-    localStorage.removeItem(this.storageLocalName)
+    recordStore.removeItem(this.storageLocalName)
     // E-114 (2026-08-31): maxId is deliberately NOT reset any more (was `= 0` here, flagged
     // with its own "is this desired???"). Resetting let a brand-new, unrelated report reuse
     // an old display number after a clear-all - confusing on its own, worse once a printed/

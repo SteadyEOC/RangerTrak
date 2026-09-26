@@ -9,6 +9,10 @@ import { LogService, RangerType, UnknownRanger } from './'
 // ADR D-42/D-43: identity + versioned storage for the roster. Kept as a direct import (not
 // via the barrel) to avoid a cycle - the barrel re-exports this service.
 import { migrateRangers, normalizeRangerIds, RANGER_SCHEMA_VERSION } from './ranger-migration'
+// E-122 Phase 2a: the roster is PII, and now lives behind RecordStore (in-memory + IndexedDB)
+// rather than directly in localStorage. Direct import (not the barrel), same reasoning as the
+// migration import above.
+import { recordStore } from '../storage/record-store'
 
 // TODO: Update server with new/deleted Rangers:  https://angular.io/tutorial/toh-pt6#heroes-and-http
 
@@ -125,7 +129,12 @@ export class RangerService implements OnInit {
     // ADR D-42/D-43 Phase 2: stored as a VERSIONED WRAPPER now, not a bare array, so a
     // future schema change has a seam to hook into. migrateRangers() still reads the old bare
     // form, so this transition is one-way and silent.
-    localStorage.setItem(this.localStorageRangerName,
+    //
+    // E-122 Phase 2a: through RecordStore now, not localStorage.setItem() directly - the
+    // roster is PII (ARCHITECTURE.md "Encryption: exports today, storage later"). RecordStore
+    // is synchronous to this caller (an in-memory Map backs getItem/setItem), so nothing else
+    // in this method needs to change.
+    recordStore.setItem(this.localStorageRangerName,
       JSON.stringify({ schemaVersion: RANGER_SCHEMA_VERSION, rangers: this.rangers }))
 
     // Signal gets a fresh array copy: this.rangers is mutated in place
@@ -147,7 +156,9 @@ export class RangerService implements OnInit {
   // `this.rangers = []` outcome below - there's no longer a decision that depends on which
   // one it was.
   LoadRangersFromLocalStorage() { // WARN: Replaces any existing Rangers
-    let localStorageRangers = localStorage.getItem(this.localStorageRangerName)
+    // E-122 Phase 2a: reads through RecordStore now (see updateLocalStorageAndPublish()'s own
+    // comment) - synchronous, same as localStorage.getItem() was, so nothing below changes.
+    let localStorageRangers = recordStore.getItem(this.localStorageRangerName)
     try {
       // ADR D-42/D-43, Phase 2: everything stored goes through migrateRangers(), which
       // accepts BOTH the versioned `{schemaVersion, rangers}` wrapper and the bare array this

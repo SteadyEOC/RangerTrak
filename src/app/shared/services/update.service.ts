@@ -5,6 +5,7 @@ import { MatSnackBar } from "@angular/material/snack-bar"
 import { SwUpdate, VersionReadyEvent } from "@angular/service-worker"
 
 import { LogService } from "./log.service"
+import { recordStore } from "../storage/record-store"
 
 // Based on: https://angular.io/guide/service-worker-communications
 
@@ -107,6 +108,8 @@ export class UpdateService {
   public async activateAndReload(): Promise<void> {
     try {
       await this.updates.activateUpdate()
+      // E-122 Phase 2a: a report saved moments ago may still be queued for IndexedDB.
+      await recordStore.flush()
       this.log.info(`New version activated; reloading.`, this.id)
       location.reload()
     } catch (e) {

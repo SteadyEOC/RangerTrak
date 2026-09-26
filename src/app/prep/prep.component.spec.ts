@@ -6,6 +6,9 @@ import { MISSION_ZIP_SCHEMA_VERSION, MissionZipManifest, MissionZipPhoto } from 
 import { MissionLocationService, MissionService, RangerService } from '../shared/services'
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 import { UnknownRanger } from '../shared/services/ranger.interface'
+// E-122 Phase 2a: rangers/locations now live behind RecordStore, not localStorage directly -
+// see that module's own doc comment.
+import { recordStore } from '../shared/storage/record-store'
 
 import { PrepComponent } from './prep.component'
 
@@ -39,6 +42,7 @@ describe('PrepComponent', () => {
 
   beforeEach(async () => {
     localStorage.clear()
+    await recordStore.resetForTests()
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideRouter([])] })
     fixture = TestBed.createComponent(PrepComponent)
     component = fixture.componentInstance
@@ -52,6 +56,7 @@ describe('PrepComponent', () => {
 
   afterEach(async () => {
     localStorage.clear()
+    await recordStore.resetForTests()
     await photos.clear()
   })
 

@@ -6,6 +6,9 @@ import { BackupService, MissionExport } from './backup.service';
 import { RadioLogService } from './radio-log.service';
 import { RangerService } from './ranger.service';
 import { MissionService } from './mission.service';
+// E-122 Phase 2a: the roster (and radio log) now live behind RecordStore, not localStorage
+// directly - see that module's own doc comment.
+import { recordStore } from '../storage/record-store';
 
 /**
  * Covers PRIVATE-Roadmap.md Section 8/R3 and the Section 12 step 7 DoD literally:
@@ -18,13 +21,15 @@ describe('BackupService', () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient()] });
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
     configure();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
   });
 
   describe('buildExportPayload', () => {
@@ -57,7 +62,7 @@ describe('BackupService', () => {
   });
 
   describe('export -> clear storage -> import round trip', () => {
-    it('reproduces the mission exactly after storage is cleared and reloaded', () => {
+    it('reproduces the mission exactly after storage is cleared and reloaded', async () => {
       // 1. Build up real mission state.
       const settings = TestBed.inject(MissionService);
       const rangers = TestBed.inject(RangerService);
@@ -85,6 +90,7 @@ describe('BackupService', () => {
       // except the exported payload itself - exactly the scenario a mission
       // backup exists to protect against.
       localStorage.clear();
+      await recordStore.resetForTests();
       TestBed.resetTestingModule();
       configure();
 
@@ -113,7 +119,7 @@ describe('BackupService', () => {
       // Also persisted to localStorage, not just in-memory.
       // ADR D-42/D-43 Phase 2: the roster is stored as a versioned
       // { schemaVersion, rangers } wrapper now, not a bare array.
-      const storedRangers = JSON.parse(localStorage.getItem('rangers')!).rangers;
+      const storedRangers = JSON.parse(recordStore.getItem('rangers')!).rangers;
       expect(storedRangers.some((r: any) => r.callsign === 'RT1')).toBeTrue();
       const storedSettings = JSON.parse(localStorage.getItem('appSettings')!);
       expect(storedSettings.mission).toBe('Roundtrip Mission');
@@ -233,12 +239,15 @@ describe('BackupService', () => {
   });
 
   describe('importMission validation', () => {
-    it('throws on a structurally invalid payload rather than partially applying it', () => {
+    it('throws on a structurally invalid payload rather than partially applying it', async () => {
       const settings = TestBed.inject(MissionService);
       const backup = TestBed.inject(BackupService);
       const missionBefore = settings.settings.mission;
 
-      expect(() => backup.importMission({ mission: 'nope' } as any)).toThrow();
+      // E-122 Phase 2a: importMission() is `async` now (it awaits recordStore.flush() at the
+      // end), so a synchronous throw inside it surfaces as a REJECTED PROMISE, not a thrown
+      // exception a plain `expect(() => ...).toThrow()` can catch.
+      await expectAsync(backup.importMission({ mission: 'nope' } as any)).toBeRejected();
       expect(settings.settings.mission).toBe(missionBefore);
     });
   });

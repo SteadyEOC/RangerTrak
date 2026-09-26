@@ -27,6 +27,8 @@ import {
   RadioLogService, RadioLogStatusType, RadioLogType, RadioLogEntryType, LogService,
   RangerService, MissionService, MissionType, statusColorValue, statusInkValue
 } from '../shared/services'
+// E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
+import { recordStore } from '../shared/storage/record-store'
 
 @Pipe({ name: 'myUnusedPipe' })
 export class myUnusedPipe implements PipeTransform {
@@ -535,8 +537,13 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     }
   }
 
-  reloadPage() {
+  /**
+   * E-122 Phase 2a: awaits `recordStore.flush()` first - see RangersComponent.reloadPage()'s
+   * own doc comment for the full reasoning (field reports now persist to IndexedDB async).
+   */
+  async reloadPage() {
     this.log.verbose(`Reloading window!`, this.id)
+    await recordStore.flush()
     window.location.reload()
   }
 

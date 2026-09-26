@@ -26,6 +26,8 @@ import {
 // shared/services/index.ts leaves it unresolvable to the compiler ("no suitable injection
 // token"), the same way the barrel broke `imports:` arrays during Sprint B.
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
+// E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
+import { recordStore } from '../shared/storage/record-store'
 // Direct path too - plain type/const exports, but kept alongside the barrel import above
 // would mean splitting SampleDataService out of it for no real benefit.
 import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
@@ -713,8 +715,18 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     this.reloadPage()
   }
 
-  reloadPage() {
+  /**
+   * E-122 Phase 2a: awaits `recordStore.flush()` first. Every caller here follows a roster
+   * mutation (import, delete all, restore, ...) - those used to be safe to reload straight
+   * after with localStorage's synchronous writes, but the roster now persists to IndexedDB on
+   * RecordStore's own async queue, so a reload could otherwise race an in-flight write and
+   * silently revert it. Same fix, same reasoning, as BackupService.importMission()'s own doc
+   * comment. `async` costs callers nothing - none of them awaited this already, and a
+   * fire-and-forget call still runs the reload once the flush resolves.
+   */
+  async reloadPage() {
     this.log.verbose(`Reloading window!`, this.id)
+    await recordStore.flush()
     window.location.reload()
   }
 

@@ -2,6 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import { MissionReadinessService } from './mission-readiness.service';
+// E-122 Phase 2a: this service's constructor transitively constructs RangerService et al.,
+// whose keys now live behind RecordStore rather than localStorage - reset for isolation, same
+// as those services' own specs. This suite overrides every signal directly, so the roster
+// content itself never matters, but the FRESH construction (a stray roster from a previous
+// spec's own resetForTests()-less run) shouldn't leak in either.
+import { recordStore } from '../storage/record-store';
 
 /**
  * The six underlying signals are exercised by their own services (MissionService,
@@ -13,14 +19,16 @@ import { MissionReadinessService } from './mission-readiness.service';
 describe('MissionReadinessService', () => {
   let service: MissionReadinessService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
     TestBed.configureTestingModule({ providers: [provideHttpClient()] });
     service = TestBed.inject(MissionReadinessService);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
   });
 
   function setAll(ready: boolean) {

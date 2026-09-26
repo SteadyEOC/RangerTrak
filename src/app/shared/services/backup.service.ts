@@ -10,6 +10,7 @@ import { migrateMission } from './mission-migration'
 import { normalizeRangerIds } from './ranger-migration'
 import { migrateRadioLog } from './radio-log-migration'
 import { normalizeLocationUids } from './mission-location-migration'
+import { recordStore } from '../storage/record-store'
 
 /**
  * A full mission backup: everything needed to restore the app to its
@@ -117,8 +118,19 @@ export class BackupService {
    * Validates and applies a MissionExport, replacing current settings,
    * rangers, and field reports. Throws on structurally invalid input rather
    * than silently partially-applying a corrupt import.
+   *
+   * E-122 Phase 2a: `async` now, and the last thing this does is await `recordStore.flush()`.
+   * Every caller (only `onImportFileSelected()` in mission-advanced-options.component.ts, "Restore
+   * mission") reloads the page immediately after this returns - that reload used to be safe
+   * with localStorage's synchronous writes, but rangers/radioLog/locations now persist to
+   * IndexedDB on RecordStore's own async queue. Without this await, a reload could tear down
+   * the page before that write actually committed, silently reverting the very roster this
+   * import just replaced - confirmed live via e2e (checkMissionRoundTrip: "mission import
+   * restores the roster after a wipe" failed intermittently until this was added). The
+   * synchronous replaceAll* calls below are unchanged and still apply immediately, in memory
+   * and to RecordStore's Map - only the on-disk durability guarantee is what's new here.
    */
-  importMission(payload: MissionExport): void {
+  async importMission(payload: MissionExport): Promise<void> {
     this.validatePayload(payload)
 
     // Settings first: RadioLogService.recalcRadioLogBounds() (called inside
@@ -143,6 +155,8 @@ export class BackupService {
     this.locationService.replaceAllLocations(normalizeLocationUids(payload.locations ?? []))
 
     this.log.warn(`Imported mission from export dated ${payload.exportedAt} (schema v${payload.schemaVersion}, app v${payload.appVersion})`, this.id)
+
+    await recordStore.flush()
   }
 
   /**

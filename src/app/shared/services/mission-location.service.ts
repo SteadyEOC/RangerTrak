@@ -5,6 +5,10 @@ import { Injectable, Optional, SkipSelf, signal } from '@angular/core'
 import { LogService } from './log.service'
 import { MissionLocationType } from './mission-location.interface'
 import { LOCATION_SCHEMA_VERSION, migrateLocations, normalizeLocationUids } from './mission-location-migration'
+// E-122 Phase 2a: locations now live behind RecordStore (in-memory + IndexedDB) rather than
+// directly in localStorage. Locations themselves aren't PII, but they share RecordStore with
+// the two services that are, per the scoping pass's "all three, own key only" shape.
+import { recordStore } from '../storage/record-store'
 
 /**
  * ADR D-49: per-mission storage for named Locations (Command Post, Staging Area, Ranger
@@ -48,7 +52,8 @@ export class MissionLocationService {
   }
 
   private loadFromLocalStorage(): void {
-    const stored = localStorage.getItem(this.storageKey)
+    // E-122 Phase 2a: through RecordStore now - synchronous, same as localStorage.getItem().
+    const stored = recordStore.getItem(this.storageKey)
     try {
       const parsed = stored != null ? JSON.parse(stored) : null
       const result = migrateLocations(parsed)
@@ -61,7 +66,9 @@ export class MissionLocationService {
   }
 
   private updateLocalStorageAndPublish(): void {
-    localStorage.setItem(this.storageKey,
+    // E-122 Phase 2a: through RecordStore now - synchronous to this caller, so nothing else
+    // in this method changes.
+    recordStore.setItem(this.storageKey,
       JSON.stringify({ schemaVersion: LOCATION_SCHEMA_VERSION, locations: this.locations }))
     // Fresh array copy for the signal - this.locations is mutated in place, so passing the
     // same reference would be a no-op under the signal's default equality check. Same

@@ -189,14 +189,23 @@ into a smudge and the pin ring closes up.
 ## Encryption: exports today, storage later
 
 **Phase 1 shipped in 0.94.0: a mission backup can now be encrypted on its way out.**
-Everything still *at rest* — roster, field reports, settings in `localStorage` — remains in
-the clear. The roster is the sensitive part (legal names, personal phone numbers, photos,
-and call signs that resolve to public licence records), and field reports can contain PII
-about missing persons.
+Everything still *at rest* remains in the clear. The roster is the sensitive part (legal
+names, personal phone numbers, photos, and call signs that resolve to public licence
+records), and field reports can contain PII about missing persons.
 
-That split is deliberate rather than half-finished, and the reason is in "The hard parts"
-below: encrypting storage forces every service's write path async, which is a refactor;
-encrypting a file on its way out is not. Files are also what actually leave the device.
+**Phase 2a (E-122) has since moved where "at rest" lives.** The roster, field reports and
+locations - `RangerService`, `RadioLogService`, `MissionLocationService` - now live in
+IndexedDB (`shared/storage/record-store.ts`, database `rangertrak-records`) behind
+`RecordStore`, a synchronous in-memory cache over an async IndexedDB store, instead of
+directly in `localStorage`. Mission settings (`appSettings`) and every UI-preference key stay
+on `localStorage` - they hold no roster PII. **This is a storage move, not encryption. The
+data is still in the clear** - it just lives in a different browser storage mechanism, on the
+way to Phase 2b below, which encrypts it.
+
+That the roster still sits in the clear is deliberate rather than half-finished, and the
+reason is in "The hard parts" below: encrypting storage forces every service's write path
+async, which is a refactor - now paid for by Phase 2a's IndexedDB move; encrypting a file on
+its way out is not. Files are also what actually leave the device.
 
 ### What shipped (Phase 1)
 
@@ -246,11 +255,14 @@ actually defends against here is narrow, and worth being honest about:
 
 ### The hard parts, in order of cost
 
-1. **`localStorage` is synchronous; Web Crypto is not.** Every service writes synchronously
-   inside `updateLocalStorageAndPublish()`. Encrypting forces the storage layer async,
-   which is the main implementation cost — not the cryptography. The natural pairing is to
-   do it alongside a move to **IndexedDB** (the `idb` package is already a dependency),
-   which is async regardless.
+1. **`localStorage` is synchronous; Web Crypto is not.** ✅ Paid for by Phase 2a. Every
+   service still writes synchronously inside `updateLocalStorageAndPublish()` /
+   `updateRadioLogAndPublish()` - but that call now goes through `RecordStore`
+   (`shared/storage/record-store.ts`), whose in-memory `Map` is synchronous to the caller
+   while the actual IndexedDB write happens on its own async queue behind it. Phase 2b's
+   `crypto.subtle.encrypt()` call belongs on that same async side (`RecordStore`'s write
+   queue, right before the IndexedDB `put()`) - no service's write path needs to change
+   again to make room for it.
 2. **A forgotten passphrase destroys the mission record, permanently.** With no server
    there is no escrow and no reset. For a life-safety tool that failure mode may be worse
    than the exposure it prevents, so it must be designed for deliberately: keep encryption
@@ -270,7 +282,10 @@ actually defends against here is narrow, and worth being honest about:
   is the one explicitly designed to move between devices. The roster and log CSV exports are
   **not** covered yet — encrypting those turns a spreadsheet-openable file into an opaque
   blob, which is a different UX question, and the backup already contains that data.
-- **Phase 2 — encrypted at rest**, tied to the IndexedDB migration so the async change is
+- **Phase 2a — ✅ moved the roster, field reports and locations off `localStorage` onto
+  IndexedDB** (`RecordStore`, see above) - unencrypted still, but the storage refactor
+  encryption needs is now done.
+- **Phase 2b — encrypted at rest**, tied to the IndexedDB migration so the async change is
   paid for once.
 - **Phase 3 — per-mission keys**, if agencies ask for separation between missions.
 

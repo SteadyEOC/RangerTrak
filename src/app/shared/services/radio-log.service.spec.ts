@@ -4,6 +4,10 @@ import { TestBed } from '@angular/core/testing';
 import { RadioLogService } from './radio-log.service';
 import { RadioLogType, RadioLogEntryType } from './radio-log-entry.interface';
 import { RangerService } from './ranger.service';
+// E-122 Phase 2a: field reports now live behind RecordStore, not localStorage directly - see
+// that module's own doc comment. resetForTests() is this suite's equivalent of the
+// localStorage.clear() it used to rely on for isolation between specs.
+import { recordStore } from '../storage/record-store';
 
 /**
  * Characterization tests: pin RadioLogService's current localStorage-backed
@@ -31,15 +35,17 @@ describe('RadioLogService', () => {
     });
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
     TestBed.configureTestingModule({
       providers: [provideHttpClient()]
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
   });
 
   describe('construction / localStorage round-trip', () => {
@@ -56,7 +62,7 @@ describe('RadioLogService', () => {
       const service = TestBed.inject(RadioLogService);
       service.addRadioLogEntry(makeReport({ callsign: 'ROUND1' }));
 
-      const stored: RadioLogType = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+      const stored: RadioLogType = JSON.parse(recordStore.getItem(STORAGE_KEY)!);
       expect(stored.logEntries.length).toBe(1);
       expect(stored.logEntries[0].callsign).toBe('ROUND1');
     });
@@ -76,14 +82,14 @@ describe('RadioLogService', () => {
     });
 
     it('rebuilds from defaults and preserves the original under a "-BAD" key when localStorage has no version marker', () => {
-      localStorage.setItem(STORAGE_KEY, '{"garbage": true}');
+      recordStore.setItem(STORAGE_KEY, '{"garbage": true}');
 
       const service = TestBed.inject(RadioLogService);
       let latest!: RadioLogType;
       service.getRadioLogObserver().subscribe(r => latest = r);
 
       expect(latest.numReport).toBe(0);
-      expect(localStorage.getItem(STORAGE_KEY + '-BAD')).toContain('garbage');
+      expect(recordStore.getItem(STORAGE_KEY + '-BAD')).toContain('garbage');
     });
   });
 
@@ -119,7 +125,7 @@ describe('RadioLogService', () => {
       added.location.lat = 47.5;
       service.saveEditedRadioLog();
 
-      const stored: RadioLogType = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+      const stored: RadioLogType = JSON.parse(recordStore.getItem(STORAGE_KEY)!);
       expect(stored.logEntries[0].notes).toBe('corrected by scribe');
 
       let latest!: RadioLogType;
@@ -172,7 +178,7 @@ describe('RadioLogService', () => {
       let latest!: RadioLogType;
       service.getRadioLogObserver().subscribe(r => latest = r);
       expect(latest.logEntries).toEqual([]);
-      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+      expect(recordStore.getItem(STORAGE_KEY)).toBeNull();
     });
 
     it('E-114: does NOT reset maxId, so a new report never reuses a cleared report\'s display number', () => {

@@ -119,7 +119,7 @@ export class MissionAdvancedOptionsComponent {
       + (hint?.exportedAt ? `Backed up ${hint.exportedAt}` : 'Backed up on an unknown date')
       + (hint?.appVersion ? ` by RangerTrak ${hint.appVersion}` : '') + `.\n\n`
       + `Enter its passphrase to restore it.`))
-      .then(payload => {
+      .then(async payload => {
         const summary = `Mission "${payload.settings.mission || '(unnamed)'}" backed up `
           + `${payload.exportedAt}, with ${payload.rangers.length} rangers and `
           + `${payload.radioLog.logEntries.length} field reports.`
@@ -131,7 +131,10 @@ export class MissionAdvancedOptionsComponent {
           return
         }
 
-        this.backupService.importMission(payload)
+        // E-122 Phase 2a: awaited now - importMission() only resolves once rangers/radioLog/
+        // locations have actually committed to IndexedDB (RecordStore.flush()), which the
+        // reload() right below depends on. See importMission()'s own doc comment.
+        await this.backupService.importMission(payload)
         this.log.warn(`Restored mission from ${file.name}.`, this.id)
         alert('Mission restored. Reloading to refresh every screen with the new data...')
         window.location.reload()

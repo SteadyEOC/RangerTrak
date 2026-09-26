@@ -13,6 +13,9 @@ import { mergeRangers, RangerMergeResult } from '../shared/services/ranger-migra
 import { mergeLocations, LocationMergeResult } from '../shared/services/mission-location-migration'
 import { LogService, MissionLocationService, MissionService, RangerService, RangerType } from '../shared/services'
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
+// E-122 Phase 2a: reloadPage() below awaits this before reloading - see
+// RangersComponent.reloadPage()'s own doc comment for the full reasoning.
+import { recordStore } from '../shared/storage/record-store'
 
 /**
  * E-109 **Setup files**, v2 (2026-08-31, ADR D-48 - "a lazy-loaded route inside RangerTrak...
@@ -335,7 +338,8 @@ export class PrepComponent {
   // Karma page mid-suite. Naming it after the sibling component's identical method, not
   // inventing a new convention. Called from the explicit "Reload now" button only (R-2) -
   // never automatically, so `sessionLog` survives long enough to be read.
-  reloadPage(): void {
+  async reloadPage(): Promise<void> {
+    await recordStore.flush()
     window.location.reload()
   }
 

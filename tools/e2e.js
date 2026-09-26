@@ -114,6 +114,117 @@ async function evaluate(expression) {
   return r.result.value
 }
 
+/**
+ * E-122 Phase 2a: rangers/radioLog/radioLog-BAD/locations moved off localStorage onto
+ * IndexedDB behind RecordStore (database 'rangertrak-records', object store 'kv' - see
+ * shared/storage/record-store.ts). These three helpers are this file's replacement for the
+ * `localStorage.getItem/setItem/removeItem(key)` calls checks used to make directly: they run
+ * the equivalent IndexedDB access as its own small `evaluate()` round trip against the SAME
+ * live page (Runtime.evaluate always executes in the current page, so this is exactly as real
+ * as reading localStorage directly was), and hand back a plain value/string. A key genuinely
+ * missing from the store resolves to `null`, matching `localStorage.getItem()`'s own contract.
+ *
+ * A check that also drives the DOM (types into a field, clicks Submit) still does that in its
+ * own `evaluate()` call as before; it just no longer folds a storage read into that SAME
+ * call. Splitting them costs one extra (fast, local) CDP round trip per check and, in
+ * exchange, keeps every storage access reading through one identical, easy-to-audit path
+ * rather than the `indexedDB.open()`/transaction boilerplate hand-written at each call site
+ * (the pre-existing photo-store poll a little further down in this file is exactly that
+ * boilerplate, kept there rather than migrated onto these helpers since it targets a
+ * different database, `rangertrak-photos`, that E-122 does not touch).
+ */
+async function idbGetRaw(key) {
+  return evaluate(`(new Promise(res => {
+    const req = indexedDB.open('rangertrak-records');
+    // A read must never CREATE the database: an empty v1 database with no 'kv' store
+    // would stop the app's own open() from ever running its upgrade.
+    req.onupgradeneeded = () => req.transaction.abort();
+    req.onsuccess = () => { const db = req.result;
+      if (!db.objectStoreNames.contains('kv')) { db.close(); return res(null); }
+      const g = db.transaction('kv', 'readonly').objectStore('kv').get(${JSON.stringify(key)});
+      g.onsuccess = () => { db.close(); res(g.result ?? null); };
+      g.onerror = () => { db.close(); res(null); };
+    };
+    req.onerror = () => res(null);
+  }))`)
+}
+async function idbSetRaw(key, value) {
+  return evaluate(`(new Promise(res => {
+    const req = indexedDB.open('rangertrak-records');
+    req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv'); };
+    req.onsuccess = () => { const db = req.result;
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(${JSON.stringify(value)}, ${JSON.stringify(key)});
+      tx.oncomplete = () => { db.close(); res(null); };
+      tx.onerror = () => { db.close(); res(null); };
+    };
+    req.onerror = () => res(null);
+  }))`)
+}
+async function idbRemoveRaw(key) {
+  return evaluate(`(new Promise(res => {
+    const req = indexedDB.open('rangertrak-records');
+    // A read must never CREATE the database: an empty v1 database with no 'kv' store
+    // would stop the app's own open() from ever running its upgrade.
+    req.onupgradeneeded = () => req.transaction.abort();
+    req.onsuccess = () => { const db = req.result;
+      if (!db.objectStoreNames.contains('kv')) { db.close(); return res(null); }
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').delete(${JSON.stringify(key)});
+      tx.oncomplete = () => { db.close(); res(null); };
+      tx.onerror = () => { db.close(); res(null); };
+    };
+    req.onerror = () => res(null);
+  }))`)
+}
+/**
+ * Deletes every key RecordStore manages (rangers/radioLog/radioLog-BAD/locations - must match
+ * `MIGRATED_KEYS` in shared/storage/record-store.ts) - this file's replacement for a bare
+ * `localStorage.clear()` wherever a check needs a genuinely blank roster/radioLog/locations
+ * state. Many checks run one after another in the same long-lived browser session/profile
+ * (see main()), so `localStorage.clear()` alone stopped being enough the moment these keys
+ * moved off localStorage - a later check would otherwise still see whatever an earlier one
+ * left in IndexedDB.
+ *
+ * Deliberately NOT `indexedDB.deleteDatabase()`: the page open at the time this runs already
+ * has its own live RecordStore connection to this same database (opened at boot, never
+ * closed), and `deleteDatabase()` only actually completes once every connection open AT THE
+ * TIME OF THE CALL has closed - it fires `blocked` instead of `success` while one is still
+ * open, and this file's own next `goto()` closing that connection doesn't happen until well
+ * after this call has already returned. Treating `blocked` as "done" (an earlier version of
+ * this helper did) meant the delete was silently still pending when the very next check
+ * assumed a clean slate - exactly the kind of async-storage flake this suite's own
+ * "run e2e:full twice" rule exists to catch. Deleting each key with an ordinary transaction
+ * has no such exclusivity requirement: it runs immediately alongside whatever connection the
+ * open page already holds.
+ */
+async function idbClearAll() {
+  for (const key of ['rangers', 'radioLog', 'radioLog-BAD', 'locations']) {
+    await idbRemoveRaw(key)
+  }
+}
+
+/**
+ * Polls `readFn` (typically an `idbGetRaw()` read, possibly parsed/computed further) until
+ * `isReady` accepts its result, rather than a flat `sleep()` before a single read. RecordStore
+ * writes commit to IndexedDB asynchronously (a microtask-coalesced queue, not the synchronous
+ * `localStorage.setItem()` write this suite could previously assume completed before its own
+ * next line ran) - a fixed sleep long enough in the common case still isn't a guarantee, and
+ * this is exactly the "async storage: pass-then-fail" flake class the project's own notes
+ * warn about. Same reasoning, same shape, as the pre-existing IndexedDB photo poll in
+ * checkSetupFileMerge() a little further down this file - this generalizes it for RecordStore
+ * reads rather than duplicating the loop at every call site.
+ */
+async function pollUntil(readFn, isReady, tries = 20, intervalMs = 300) {
+  let value
+  for (let i = 0; i < tries; i++) {
+    value = await readFn()
+    if (isReady(value)) return value
+    await sleep(intervalMs)
+  }
+  return value
+}
+
 async function goto(route, settleMs = 3500) {
   consoleErrors.length = 0
   await send('Page.navigate', { url: BASE + route })
@@ -369,6 +480,7 @@ async function checkRosterLifecycle(fx) {
   console.log('\nRoster: import JSON, empty it, confirm it stays empty, re-import')
   await goto('/')
   await evaluate(`localStorage.clear()`)
+  await idbClearAll()
   await goto('/rangers')
 
   // 2026-08-26: this asserted the OPPOSITE until 0.55.0 - a fresh browser used to auto-seed
@@ -379,16 +491,18 @@ async function checkRosterLifecycle(fx) {
   // MissionReadinessService's roster signal keys off (isRealRosterLoaded is now a plain
   // length check), so a regression here would silently light the readiness dot green on a
   // brand-new install with no roster.
-  const seeded = await evaluate(`(JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]).length`)
+  const seeded = (JSON.parse((await idbGetRaw('rangers'))||'{"rangers":[]}').rangers||[]).length
   check('a fresh browser starts with a BLANK roster, not the built-in stations', seeded, 0)
 
   await setFileInput('#importRosterFile', fx.rosterPath)
-  await sleep(4000)
-  const imported = await evaluate(`(() => {
-    const r = (JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]);
-    return { count: r.length, named: r.filter(x => (x.fullName||'').trim()).length,
-             teams: r.filter(x => x.team).length, id: r.filter(x => x.id).length };
-  })()`)
+  await sleep(2000)
+  const imported = await pollUntil(
+    async () => {
+      const r = (JSON.parse((await idbGetRaw('rangers'))||'{"rangers":[]}').rangers||[]);
+      return { count: r.length, named: r.filter(x => (x.fullName||'').trim()).length,
+               teams: r.filter(x => x.team).length, id: r.filter(x => x.id).length };
+    },
+    v => v.count >= fx.rangers.length)
   check('roster JSON imports every entry', imported.count, fx.rangers.length)
   check('...with names', imported.named, fx.rangers.length)
   check('...with teams', imported.teams, fx.rangers.length)
@@ -400,20 +514,26 @@ async function checkRosterLifecycle(fx) {
   // Advanced is a plain always-visible section now (2026-08-25: collapsible sections
   // removed app-wide), so there's no summary to click open before reaching the button.
   await evaluate(`[...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Delete all rangers')?.click()`)
-  await sleep(3000)
+  await sleep(1500)
   // ADR D-42/D-43: asserts the CONTENT is an empty list, not that the raw value is the
   // literal string '[]' - the roster is stored as a versioned { schemaVersion, rangers }
   // wrapper now. The point of the check is unchanged: the key must still exist holding an
   // empty roster, which is what makes a deliberate delete survive a reload.
+  const afterDelete = await pollUntil(
+    () => idbGetRaw('rangers'),
+    raw => JSON.stringify(JSON.parse(raw||'{}').rangers ?? null) === '[]')
   check('deleting stores an empty list, keeping the key',
-    await evaluate(`JSON.stringify(JSON.parse(localStorage.getItem('rangers')||'{}').rangers ?? null)`), '[]')
+    JSON.stringify(JSON.parse(afterDelete||'{}').rangers ?? null), '[]')
 
   await goto('/rangers')
-  check('an emptied roster STAYS empty across a reload', await evaluate(`(JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]).length`), 0)
+  check('an emptied roster STAYS empty across a reload', (JSON.parse((await idbGetRaw('rangers'))||'{"rangers":[]}').rangers||[]).length, 0)
 
   await setFileInput('#importRosterFile', fx.rosterPath)
-  await sleep(4000)
-  check('roster re-imports after being emptied', await evaluate(`(JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]).length`), fx.rangers.length)
+  await sleep(2000)
+  const reimported = await pollUntil(
+    async () => (JSON.parse((await idbGetRaw('rangers'))||'{"rangers":[]}').rangers||[]).length,
+    n => n >= fx.rangers.length)
+  check('roster re-imports after being emptied', reimported, fx.rangers.length)
 }
 
 async function checkFieldNameAliases(fx) {
@@ -421,10 +541,11 @@ async function checkFieldNameAliases(fx) {
   await goto('/rangers')
   await setFileInput('#importRosterFile', fx.aliasPath)
   await sleep(4000)
-  const r = await evaluate(`(() => {
-    const a = (JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]);
+  const aliasRaw = await idbGetRaw('rangers')
+  const r = (() => {
+    const a = (JSON.parse(aliasRaw||'{"rangers":[]}').rangers||[]);
     return { count: a.length, name: a[0] && a[0].fullName, role: a[0] && a[0].role };
-  })()`)
+  })()
   check('licensee maps to fullName', r.name, 'Aliased Name')
   check('status maps to role', r.role, 'Licensed')
 }
@@ -439,8 +560,25 @@ async function checkSetupFileMerge(fx) {
   // same session, then failed twice in a row later, always missing exactly the SECOND
   // photo - the classic signature of a timeout that is usually enough but not tied to the
   // real completion condition. Same fix already applied twice elsewhere in this file.
+  //
+  // E-122 Phase 2a: the roster is now IndexedDB too (a different database, 'rangertrak-
+  // records' rather than 'rangertrak-photos'), so this reads both the same way - inline
+  // indexedDB access inside the SAME evaluate() round trip as the photo poll, rather than a
+  // separate idbGetRaw() call, so the two stay read together as one consistent snapshot.
   const readState = `(async () => {
-    const rangers = (JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]);
+    const rangers = await new Promise(res => {
+      const req = indexedDB.open('rangertrak-records');
+      // A read must never CREATE the database: an empty v1 database with no 'kv' store
+      // would stop the app's own open() from ever running its upgrade.
+      req.onupgradeneeded = () => req.transaction.abort();
+      req.onsuccess = () => { const db = req.result;
+        if (!db.objectStoreNames.contains('kv')) { db.close(); return res([]); }
+        const g = db.transaction('kv','readonly').objectStore('kv').get('rangers');
+        g.onsuccess = () => { db.close(); res((JSON.parse(g.result||'{"rangers":[]}').rangers)||[]); };
+        g.onerror = () => { db.close(); res([]); };
+      };
+      req.onerror = () => res([]);
+    });
     const photos = await new Promise(res => {
       const req = indexedDB.open('rangertrak-photos');
       req.onsuccess = () => { const db = req.result;
@@ -628,7 +766,7 @@ async function checkEntryAutofocusAndReset() {
 async function checkEvidenceLocation() {
   console.log('\nEvidence/clue location: range-and-bearing computes a marker and survives to storage (2026-08-26)')
   await goto('/')
-  await evaluate(`localStorage.removeItem('radioLog')`)
+  await idbRemoveRaw('radioLog')
   await goto('/')
   await sleep(1500) // let the mini-map + default position settle
 
@@ -676,11 +814,12 @@ async function checkEvidenceLocation() {
     await new Promise(r => setTimeout(r, 1200));
   })()`)
 
-  const stored = await evaluate(`(() => {
-    const r = JSON.parse(localStorage.getItem('radioLog') || '{}');
+  const evidenceLogRaw = await idbGetRaw('radioLog')
+  const stored = (() => {
+    const r = JSON.parse(evidenceLogRaw || '{}');
     const report = (r.logEntries || []).find(f => f.callsign === 'E2E-EVID');
     return report?.evidenceLocation ?? null;
-  })()`)
+  })()
   check('the submitted report stored a real evidenceLocation', !!stored && typeof stored.lat === 'number', true)
   check('the stored latitude moved north (bearing 0 = due north)', stored ? stored.lat > 47.4472 : false, true)
 
@@ -700,7 +839,7 @@ async function checkEvidenceLocation() {
 async function checkMessagesPage() {
   console.log('\nMessages: a generates213 report shows up, in full, with a working Print as ICS-213 button')
   await goto('/')
-  await evaluate(`localStorage.removeItem('radioLog')`)
+  await idbRemoveRaw('radioLog')
   await goto('/')
   await sleep(1200)
 
@@ -731,11 +870,12 @@ async function checkMessagesPage() {
     await new Promise(r => setTimeout(r, 1200));
   })()`)
 
-  const stored = await evaluate(`(() => {
-    const r = JSON.parse(localStorage.getItem('radioLog') || '{}');
+  const msgLogRaw = await idbGetRaw('radioLog')
+  const stored = (() => {
+    const r = JSON.parse(msgLogRaw || '{}');
     const report = (r.logEntries || []).find(f => f.callsign === 'E2E-MSG');
     return report ?? null;
-  })()`)
+  })()
   check('the submitted report has generates213 set', stored?.generates213, true)
   check('the submitted report stored the message text', stored?.message213, 'E2E-MSG test message body')
   check('the submitted report stored at least one recipient', (stored?.recipients213 || []).length > 0, true)
@@ -1268,7 +1408,7 @@ async function checkStatusColorsBothSchemes() {
 async function checkCallsignIsSaved() {
   console.log('\nBUG-1 (open): the callsign chosen on Entry must reach the saved report')
   await goto('/')
-  const saved = await evaluate(`(async () => {
+  await evaluate(`(async () => {
     const input = document.getElementById('enter__Callsign-input');
     const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
     set.call(input, 'E2E-AA1');
@@ -1277,19 +1417,23 @@ async function checkCallsignIsSaved() {
     await new Promise(r => setTimeout(r, 1200));   // past the 700ms autocomplete debounce
     document.querySelector('.enter__Submit-button').click();
     await new Promise(r => setTimeout(r, 1200));
-    const reports = JSON.parse(localStorage.getItem('radioLog') || '{}');
+  })()`)
+  // E-122 Phase 2a: radioLog/rangers moved off localStorage - read separately, after the DOM
+  // round trip above already waited out the submit's own settle time.
+  const reports = JSON.parse((await idbGetRaw('radioLog')) || '{}');
+  const roster = (JSON.parse((await idbGetRaw('rangers')) || '{"rangers":[]}').rangers) || [];
+  const saved = (() => {
     const list = reports.logEntries || [];
     const last = list[list.length - 1] || {};
     // ADR D-42/D-43: the report should also carry rangerUid, resolved from the typed
     // callsign, and it must equal that ranger's uid in the roster.
-    const roster = (JSON.parse(localStorage.getItem('rangers') || '{"rangers":[]}').rangers) || [];
     const match = roster.find(r => r.callsign === 'E2E-AA1') || {};
     return {
       count: list.length, callsign: last.callsign, typedInto: 'E2E-AA1',
       rangerUid: last.rangerUid || '', rosterUid: match.uid || '',
       schemaVersion: reports.schemaVersion,
     };
-  })()`)
+  })()
   check('a report was actually stored', saved.count > 0, true)
   // ADR D-42/D-43 phase 4: the whole chain, end to end - typed callsign resolves to a ranger,
   // and the report is attributed by the surrogate key rather than by a string match done
@@ -1306,7 +1450,7 @@ async function checkCallsignIsSaved() {
 async function checkReportsSurviveNavigation() {
   console.log('\nBUG-2 (open): reports entered on Entry must be visible on the Reports page')
   await goto('/')
-  await evaluate(`localStorage.removeItem('radioLog')`)
+  await idbRemoveRaw('radioLog')
   await goto('/')
 
   for (const note of ['E2E-FIRST', 'E2E-SECOND']) {
@@ -1322,10 +1466,7 @@ async function checkReportsSurviveNavigation() {
     })()`)
   }
 
-  const stored = await evaluate(`(() => {
-    const r = JSON.parse(localStorage.getItem('radioLog') || '{}');
-    return (r.logEntries || []).length;
-  })()`)
+  const stored = (JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || []).length
   check('both reports reached storage', stored, 2)
 
   // Click through, do NOT reload: a reload rebuilds every service and hides the bug.
@@ -1353,7 +1494,7 @@ async function checkReportsSurviveNavigation() {
 async function checkTeamTrailsRender() {
   console.log('\nE-80: a route trail renders for a callsign with multiple check-ins')
   await goto('/')
-  await evaluate(`localStorage.removeItem('radioLog')`)
+  await idbRemoveRaw('radioLog')
   await goto('/')
 
   // Two distinct positions near the default Vashon EOC location, submitted under the same
@@ -1386,10 +1527,8 @@ async function checkTeamTrailsRender() {
     })()`)
   }
 
-  const stored = await evaluate(`(() => {
-    const r = JSON.parse(localStorage.getItem('radioLog') || '{}');
-    return (r.logEntries || []).filter(f => f.callsign === 'E2E-TRAIL').length;
-  })()`)
+  const stored = (JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || [])
+    .filter(f => f.callsign === 'E2E-TRAIL').length
   check('both E2E-TRAIL reports reached storage', stored, 2)
 
   await navigateInApp('Map', 3500)
@@ -1424,7 +1563,7 @@ async function checkTeamTrailsRender() {
 async function checkRangerMarkersAreDistinct() {
   console.log('\nE-86: two different callsigns get visibly distinct map markers')
   await goto('/')
-  await evaluate(`localStorage.removeItem('radioLog')`)
+  await idbRemoveRaw('radioLog')
   await goto('/')
 
   for (const { callsign, lat, lng } of [
@@ -1456,10 +1595,8 @@ async function checkRangerMarkersAreDistinct() {
     })()`)
   }
 
-  const stored = await evaluate(`(() => {
-    const r = JSON.parse(localStorage.getItem('radioLog') || '{}');
-    return (r.logEntries || []).filter(f => f.callsign === 'E2E-MARKER-A' || f.callsign === 'E2E-MARKER-B').length;
-  })()`)
+  const stored = (JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || [])
+    .filter(f => f.callsign === 'E2E-MARKER-A' || f.callsign === 'E2E-MARKER-B').length
   check('both E2E-MARKER reports reached storage', stored, 2)
 
   await navigateInApp('Map', 3500)
@@ -1496,16 +1633,19 @@ async function checkNoCallsignRangersGetDistinctIdentity() {
   const nameA = 'Fixture NoCallsign One', nameB = 'Fixture NoCallsign Two'
 
   await goto('/')
-  await evaluate(`(() => {
-    const cur = JSON.parse(localStorage.getItem('rangers') || '{"schemaVersion":1,"rangers":[]}');
+  // E-122 Phase 2a: rangers moved off localStorage - written straight into IndexedDB here
+  // (bypassing the app entirely, same as the old direct localStorage.setItem() did) so the
+  // NEXT goto('/') below boots with this roster already in place.
+  {
+    const cur = JSON.parse((await idbGetRaw('rangers')) || '{"schemaVersion":1,"rangers":[]}');
     cur.rangers = (cur.rangers || []).concat([
-      { uid: ${JSON.stringify(uidA)}, id: 'REW-9101', callsign: '', fullName: ${JSON.stringify(nameA)}, phone: '', image: '', rew: '', team: '', role: '', note: '' },
-      { uid: ${JSON.stringify(uidB)}, id: 'REW-9102', callsign: '', fullName: ${JSON.stringify(nameB)}, phone: '', image: '', rew: '', team: '', role: '', note: '' },
+      { uid: uidA, id: 'REW-9101', callsign: '', fullName: nameA, phone: '', image: '', rew: '', team: '', role: '', note: '' },
+      { uid: uidB, id: 'REW-9102', callsign: '', fullName: nameB, phone: '', image: '', rew: '', team: '', role: '', note: '' },
     ]);
     cur.schemaVersion = cur.schemaVersion ?? 1;
-    localStorage.setItem('rangers', JSON.stringify(cur));
-  })()`)
-  await evaluate(`localStorage.removeItem('radioLog')`)
+    await idbSetRaw('rangers', JSON.stringify(cur));
+  }
+  await idbRemoveRaw('radioLog')
   await goto('/')
 
   // Two check-ins each, close together within a ranger (so a real trail has something to
@@ -1545,15 +1685,16 @@ async function checkNoCallsignRangersGetDistinctIdentity() {
     })()`)
   }
 
-  const stored = await evaluate(`(() => {
-    const r = JSON.parse(localStorage.getItem('radioLog') || '{}');
+  const nocsLogRaw = await idbGetRaw('radioLog')
+  const stored = (() => {
+    const r = JSON.parse(nocsLogRaw || '{}');
     const list = r.logEntries || [];
     return {
-      countA: list.filter(f => f.rangerUid === ${JSON.stringify(uidA)}).length,
-      countB: list.filter(f => f.rangerUid === ${JSON.stringify(uidB)}).length,
-      blankCallsigns: list.filter(f => (f.rangerUid === ${JSON.stringify(uidA)} || f.rangerUid === ${JSON.stringify(uidB)}) && f.callsign === '').length,
+      countA: list.filter(f => f.rangerUid === uidA).length,
+      countB: list.filter(f => f.rangerUid === uidB).length,
+      blankCallsigns: list.filter(f => (f.rangerUid === uidA || f.rangerUid === uidB) && f.callsign === '').length,
     };
-  })()`)
+  })()
   check('both check-ins for the first callsignless ranger resolved by rangerUid', stored.countA, 2)
   check('both check-ins for the second callsignless ranger resolved by rangerUid', stored.countB, 2)
   check('all four reports correctly kept a blank callsign (identified by name, not radio)', stored.blankCallsigns, 4)
@@ -1577,7 +1718,7 @@ async function checkNoCallsignRangersGetDistinctIdentity() {
   // individual '.rt-ranger-marker' svgs regardless of whether the identity fix works. One
   // report per ranger, at the same separation checkRangerMarkersAreDistinct() uses, removes
   // that confound.
-  await evaluate(`localStorage.removeItem('radioLog')`)
+  await idbRemoveRaw('radioLog')
   await goto('/')
   for (const { name, lat, lng } of [
     { name: nameA, lat: 47.60, lng: -122.30 },
@@ -1868,15 +2009,22 @@ async function checkMissionRoundTrip(downloads) {
 
   await goto('/mission')
   await evaluate(`localStorage.clear()`)
+  await idbClearAll()
   await goto('/mission')
   await setFileInput('#importMissionFile', missionFile)
-  await sleep(5000)
+  await sleep(2000)
 
+  // Poll rather than a flat sleep+single-read - RecordStore's write to IndexedDB is
+  // asynchronous (microtask-coalesced), unlike the synchronous localStorage.setItem() this
+  // check could previously assume had already landed. See pollUntil()'s own doc comment.
+  const rosterAfterImportRaw = await pollUntil(
+    () => idbGetRaw('rangers'),
+    raw => (JSON.parse(raw||'{"rangers":[]}').rangers||[]).length > 0)
   const restored = await evaluate(`(() => {
-    const r = (JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]);
     const s = JSON.parse(localStorage.getItem('appSettings')||'{}');
-    return { rangers: r.length, mission: s.mission };
+    return { mission: s.mission };
   })()`)
+  restored.rangers = (JSON.parse(rosterAfterImportRaw||'{"rangers":[]}').rangers||[]).length
   check('mission import restores the roster after a wipe', restored.rangers > 0, true)
   check('mission import restores the mission name', restored.mission, 'E2E-MISSION')
 }
@@ -1897,7 +2045,7 @@ async function checkMissionRoundTrip(downloads) {
 async function checkReportPacketRoundTrip(downloads) {
   console.log('\nReport Packet (E-114 Phase 1): build -> re-import twice, second import is a no-op')
   await goto('/')
-  await evaluate(`localStorage.removeItem('radioLog')`)
+  await idbRemoveRaw('radioLog')
   await goto('/')
 
   await evaluate(`(async () => {
@@ -1927,12 +2075,12 @@ async function checkReportPacketRoundTrip(downloads) {
   // elsewhere) - see radio-log.component.html's own Report Packet action bar.
   await setFileInput('input[type="file"]', packetFile)
   await sleep(1500)
-  const afterFirstImport = await evaluate(`(() => (JSON.parse(localStorage.getItem('radioLog')||'{}').logEntries||[]).length)()`)
+  const afterFirstImport = (JSON.parse((await idbGetRaw('radioLog'))||'{}').logEntries||[]).length
   check('the packet\'s entry is merged in on the first import', afterFirstImport, 2)
 
   await setFileInput('input[type="file"]', packetFile)
   await sleep(1500)
-  const afterSecondImport = await evaluate(`(() => (JSON.parse(localStorage.getItem('radioLog')||'{}').logEntries||[]).length)()`)
+  const afterSecondImport = (JSON.parse((await idbGetRaw('radioLog'))||'{}').logEntries||[]).length
   check('importing the exact same packet a second time changes nothing', afterSecondImport, afterFirstImport)
 }
 
@@ -1950,6 +2098,7 @@ async function checkSampleMissionLoads() {
   console.log('\nMission: Load sample mission seeds the ICS-structured roster/reports/messages (F29-11)')
   await goto('/mission')
   await evaluate(`localStorage.clear()`)
+  await idbClearAll()
   await goto('/mission')
 
   // Open the collapsed danger-zone section before reaching the button inside it.
@@ -1963,19 +2112,23 @@ async function checkSampleMissionLoads() {
   await evaluate(`(() => {
     [...document.querySelectorAll('button')].find(b => /Load sample mission/i.test(b.textContent))?.click();
   })()`)
-  await sleep(3000) // confirm()/alert() auto-accepted, then onBtnLoadSampleData()'s own reload
+  await sleep(1500) // confirm()/alert() auto-accepted, then onBtnLoadSampleData()'s own reload
 
-  const seeded = await evaluate(`(() => {
-    const rangers = (JSON.parse(localStorage.getItem('rangers')||'{"rangers":[]}').rangers||[]);
-    const reports = (JSON.parse(localStorage.getItem('radioLog')||'{"logEntries":[]}').logEntries||[]);
-    return {
-      rangerCount: rangers.length,
-      reportCount: reports.length,
-      roles: rangers.map(r => r.role),
-      messages: reports.filter(r => r.generates213).length,
-      operatorsSet: reports.every(r => !!r.operator),
-    };
-  })()`)
+  // Poll (see pollUntil()'s own doc comment) rather than a single read after a flat sleep -
+  // the reload this button triggers races against RecordStore's own async IndexedDB commit.
+  const seeded = await pollUntil(
+    async () => {
+      const rangers = (JSON.parse((await idbGetRaw('rangers'))||'{"rangers":[]}').rangers||[]);
+      const reports = (JSON.parse((await idbGetRaw('radioLog'))||'{"logEntries":[]}').logEntries||[]);
+      return {
+        rangerCount: rangers.length,
+        reportCount: reports.length,
+        roles: rangers.map(r => r.role),
+        messages: reports.filter(r => r.generates213).length,
+        operatorsSet: reports.every(r => !!r.operator),
+      };
+    },
+    v => v.rangerCount >= 12 && v.reportCount > 20)
   check('sample mission seeds 12 rangers', seeded.rangerCount, 12)
   check('...including an Incident Commander', seeded.roles.includes('Incident Commander'), true)
   check('...and at least one Section Chief', seeded.roles.some(r => (r || '').includes('Section Chief')), true)
@@ -2130,7 +2283,7 @@ async function main() {
       } else {
         note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkSampleMissionLoads (pass --full to include)')
       }
-      await goto('/'); await evaluate(`localStorage.clear()`)
+      await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
     }
   } catch (e) {
     // Without this, a throw inside any check (a bad selector, a malformed evaluate()) was

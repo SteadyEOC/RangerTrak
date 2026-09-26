@@ -4,6 +4,10 @@ import { TestBed } from '@angular/core/testing';
 import { RangerType } from './ranger.interface';
 import { RangerService } from './ranger.service';
 import { RANGER_SCHEMA_VERSION } from './ranger-migration';
+// E-122 Phase 2a: the roster now lives behind RecordStore, not localStorage directly - see
+// that module's own doc comment. resetForTests() is this suite's equivalent of the
+// localStorage.clear() it used to rely on for isolation between specs.
+import { recordStore } from '../storage/record-store';
 
 /**
  * Characterization tests: pin RangerService's current localStorage-backed
@@ -18,23 +22,25 @@ describe('RangerService', () => {
   // wrapper now, not a bare array. These helpers keep the assertions about CONTENT rather
   // than about the envelope, so a future schema bump does not churn every test here.
   function storedRangers(): RangerType[] {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = recordStore.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw).rangers : [];
   }
   function storedSchemaVersion(): number | undefined {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = recordStore.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw).schemaVersion : undefined;
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
     TestBed.configureTestingModule({
       providers: [provideHttpClient()]
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
   });
 
   describe('emptying the roster (0.15.3)', () => {
@@ -169,7 +175,7 @@ describe('RangerService', () => {
         { callsign: 'ACS1', fullName: 'A', phone: '', image: '', rew: 'VI-01', team: '', role: '', note: '' },
         { callsign: 'CERT1', fullName: 'B', phone: '', image: '', rew: '', team: '', role: '', note: '' },
       ];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(legacy));
+      recordStore.setItem(STORAGE_KEY, JSON.stringify(legacy));
 
       const service = TestBed.inject(RangerService);
 
@@ -181,7 +187,7 @@ describe('RangerService', () => {
     });
 
     it('rewrites storage into the versioned wrapper', () => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([
+      recordStore.setItem(STORAGE_KEY, JSON.stringify([
         { callsign: 'ACS1', fullName: '', phone: '', image: '', rew: '', team: '', role: '', note: '' }
       ]));
 
@@ -192,7 +198,7 @@ describe('RangerService', () => {
     });
 
     it('keeps uids stable across a reload - reports would orphan otherwise', () => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([
+      recordStore.setItem(STORAGE_KEY, JSON.stringify([
         { callsign: 'ACS1', fullName: '', phone: '', image: '', rew: '', team: '', role: '', note: '' }
       ]));
       const first = TestBed.inject(RangerService).rangers[0].uid;
@@ -225,7 +231,7 @@ describe('RangerService', () => {
       const seeded: RangerType[] = [
         { callsign: 'ZZZ1', fullName: 'Seeded Ranger', phone: '', image: '', team: '', role: '', note: '' }
       ];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      recordStore.setItem(STORAGE_KEY, JSON.stringify(seeded));
 
       const service = TestBed.inject(RangerService);
 
@@ -234,7 +240,7 @@ describe('RangerService', () => {
     });
 
     it('falls back to an empty array (not a throw) when localStorage contains invalid JSON', () => {
-      localStorage.setItem(STORAGE_KEY, '{not valid json');
+      recordStore.setItem(STORAGE_KEY, '{not valid json');
 
       const service = TestBed.inject(RangerService);
 

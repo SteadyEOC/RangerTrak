@@ -6,6 +6,9 @@ import { MissionService } from './mission.service';
 import { RangerService } from './ranger.service';
 import { RadioLogService } from './radio-log.service';
 import { MissionLocationService } from './mission-location.service';
+// E-122 Phase 2a: rangers/radioLog/locations now live behind RecordStore, not localStorage
+// directly - see that module's own doc comment.
+import { recordStore } from '../storage/record-store';
 
 /**
  * F-scenarios (2026-09-14): SampleDataService went from one fixed "Vashon Island" mission to
@@ -39,8 +42,9 @@ describe('SampleDataService', () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient()] });
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
     configure();
 
     // Deterministic, offline stand-in for navigator.geolocation so the shared invariant
@@ -57,8 +61,9 @@ describe('SampleDataService', () => {
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     localStorage.clear();
+    await recordStore.resetForTests();
   });
 
   it('SAMPLE_SCENARIOS defaults to Vashon first and lists exactly the four scenarios', () => {

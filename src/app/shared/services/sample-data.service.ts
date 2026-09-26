@@ -4,6 +4,7 @@ import {
   RadioLogService, RadioLogType, RadioLogEntryType, LogService, RangerService, RangerType,
   MissionService, MissionLocationService, MissionLocationType
 } from './'
+import { recordStore } from '../storage/record-store'
 
 /**
  * A named demonstration mission a user can pick, so "load the sample mission" isn't limited
@@ -232,6 +233,14 @@ export class SampleDataService {
       `Loaded sample mission "${scenario}": ${data.rangers.length} rangers, `
       + `${radioLog.numReport} field reports, ${data.locations.length} locations. This is DEMO data.`,
       this.id)
+
+    // E-122 Phase 2a: every caller (mission-advanced-options.component.ts,
+    // entry.component.ts) reloads the page right after this resolves - rangers/radioLog/
+    // locations now persist to IndexedDB on RecordStore's own async queue rather than
+    // localStorage's synchronous one, so without this the reload could race the write and
+    // silently revert the sample mission it just loaded. Same fix, same reasoning, as
+    // BackupService.importMission()'s own doc comment.
+    await recordStore.flush()
   }
 
   // ---------------------------------------------------------------------------
