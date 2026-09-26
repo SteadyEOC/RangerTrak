@@ -261,6 +261,16 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       cancelPendingTileRequestsWhileZooming: false
     })
 
+    // tools/e2e.js (#76 - the All/selected switch): stashed for read-only e2e introspection
+    // only. MapLibre draws reports as a GeoJSON circle layer (buildGeoJson()/refreshMarkers()
+    // above), not one DOM marker per point the way Leaflet's rangerIconFor() does, so there is
+    // no DOM node for the suite to count the way it counts '.rt-ranger-marker' on the Leaflet
+    // engine. This lets it read the real, live source data
+    // (map.getSource('field-reports').serialize().data.features.length) - proof the switch
+    // actually reached the map's own data, not a second computation of the same filter that
+    // could agree with itself while the real source stayed stale.
+    ;(this.mapContainer.nativeElement as unknown as { __rtMap?: MaplibreMap }).__rtMap = this.map
+
     // Without a listener MapLibre swallows source/tile failures into a console warning at
     // most, so a basemap that never loads looks identical to one that loaded empty. Log
     // them: an offline map silently showing blank is the single most confusing failure

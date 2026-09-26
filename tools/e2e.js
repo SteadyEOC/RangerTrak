@@ -1783,6 +1783,138 @@ async function checkNoCallsignRangersGetDistinctIdentity() {
   }
 }
 
+/**
+ * GitHub #76 ("Un/Selected Reports not working properly", filed 2022): the Radio Log grid's
+ * row selection is supposed to narrow what BOTH map engines draw, once their own All/selected
+ * switch on /map is flipped to "selected" - RadioLogService.setSelectedRadioLogEntries()/
+ * getSelectedRadioLogEntries() feed AbstractMap.displayedRadioLogEntries (shared/mapping/
+ * map.ts, Leaflet's base class) and MapLibreComponent's own displayedEntries() the identical
+ * value. Nobody had verified this end-to-end since the issue was filed - the only existing
+ * coverage (mapLibre.component.spec.ts) is
+ * `expect(() => component.onSwitchSelectedRadioLog()).not.toThrow()`, which passes whether or
+ * not the right reports actually show.
+ *
+ * Seeds 5 reports at widely-separated positions, selects exactly two of them in the grid (a
+ * plain click plus a ctrl-click - the only selection gesture this grid offers per its own
+ * config: rowSelection.enableClickSelection, no checkboxes/header checkbox - radio-
+ * log.component.ts), then checks each engine with the switch OFF (expect all 5) and back ON
+ * (expect exactly the 2 selected).
+ *
+ * Neither engine is read via a raw DOM marker count - both read the real data each engine
+ * just drew/set, not a second independent recomputation of the same filter that could agree
+ * with itself while the actual map stayed stale:
+ *   - Leaflet clusters markers by screen proximity (Leaflet.markercluster). With 5 points and
+ *     a wide fitBounds, a '.rt-ranger-marker' DOM count (checkRangerMarkersAreDistinct's own
+ *     approach, fine for 2 widely-spaced points) risks undercounting by merging distinct
+ *     markers into one cluster bubble. mapLeaflet.component.ts stashes the marker cluster
+ *     GROUP itself (__rtMarkerCluster) on '#mapLeaflet-main', so this reads
+ *     .getLayers().length - every marker actually added, regardless of how many bubbles that
+ *     renders as on screen.
+ *   - MapLibre draws reports as a single GeoJSON circle layer (buildGeoJson()/
+ *     refreshMarkers()), not one DOM node per point - there is no marker element to count at
+ *     all. mapLibre.component.ts stashes the live map (__rtMap) on '#pmtiles-map', so this
+ *     reads map.getSource('field-reports').serialize().data.features.length - the actual data
+ *     the switch just set on the real source.
+ * Both selectors are scoped to each engine's own MAIN map element, never the overview
+ * mini-map - see checkTeamTrailsRender's own comment on why an earlier check once passed
+ * vacuously by counting shapes on the wrong map.
+ */
+async function checkRadioLogSelectionFiltersMaps() {
+  console.log('\n#76: the Radio Log All/selected switch actually narrows both map engines')
+  await goto('/')
+  await idbRemoveRaw('radioLog')
+  await goto('/')
+
+  const reports = [
+    { callsign: 'E2E-SEL-A', lat: 47.60, lng: -122.30 },
+    { callsign: 'E2E-SEL-B', lat: 45.90, lng: -122.60 },
+    { callsign: 'E2E-SEL-C', lat: 40.50, lng: -120.50 },
+    { callsign: 'E2E-SEL-D', lat: 36.50, lng: -119.50 },
+    { callsign: 'E2E-SEL-E', lat: 32.50, lng: -117.50 },
+  ]
+  for (const { callsign, lat, lng } of reports) {
+    await evaluate(`(async () => {
+      const set = (id, v) => {
+        const el = document.getElementById(id);
+        Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, String(v));
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+      set('enter__Where-latI', Math.trunc(${lat}));
+      set('enter__Where-latF', Math.round((Math.abs(${lat}) % 1) * 10000));
+      set('enter__Where-lngI', Math.trunc(${lng}));
+      set('enter__Where-lngF', Math.round((Math.abs(${lng}) % 1) * 10000));
+      await new Promise(r => setTimeout(r, 900));
+
+      const cs = document.getElementById('enter__Callsign-input');
+      const csSet = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      csSet.call(cs, ${JSON.stringify(callsign)});
+      cs.dispatchEvent(new Event('input', { bubbles: true }));
+      cs.dispatchEvent(new Event('change', { bubbles: true }));
+      await new Promise(r => setTimeout(r, 900));
+
+      document.querySelector('.enter__Submit-button')?.click();
+      await new Promise(r => setTimeout(r, 1200));
+    })()`)
+  }
+
+  const stored = (JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || [])
+    .filter(f => f.callsign.startsWith('E2E-SEL-')).length
+  check('all 5 E2E-SEL reports reached storage', stored, 5)
+
+  // Select exactly two of the five rows - B and D - via the grid's own click gesture.
+  await navigateInApp('Radio Log', 3500)
+  const selected = await evaluate(`(() => {
+    const findRow = (cs) => [...document.querySelectorAll('#reportsgrid .ag-row')]
+      .find(r => r.textContent.includes(cs));
+    const rowB = findRow('E2E-SEL-B');
+    const rowD = findRow('E2E-SEL-D');
+    if (!rowB || !rowD) return { found: false, selectedCount: -1 };
+    // A real click carries no modifier keys; a real ctrl-click does - enableClickSelection
+    // reads that off the actual MouseEvent, not off a bare .click() (which sets none).
+    rowB.querySelector('.ag-cell')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    rowD.querySelector('.ag-cell')?.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));
+    return {
+      found: true,
+      selectedCount: [rowB, rowD].filter(r => r.classList.contains('ag-row-selected')).length,
+    };
+  })()`)
+  check('both target rows were found in the grid', selected.found, true)
+  check('both target rows show selected after the click + ctrl-click', selected.selectedCount, 2)
+
+  // Click through, do NOT reload (checkReportsSurviveNavigation's own reasoning): the
+  // selection just made lives only in RadioLogService's in-memory selectedRadioLog field (no
+  // Observable, no persistence - see that service's own comment on setSelectedRadioLogEntries)
+  // - a reload rebuilds every service and would silently discard it before either map ever saw it.
+  await navigateInApp('Map', 3500)
+
+  const readLeaflet = `document.querySelector('#mapLeaflet-main')?.__rtMarkerCluster?.getLayers().length ?? -1`
+  const readMaplibre = `(() => {
+    const src = document.querySelector('#pmtiles-map')?.__rtMap?.getSource('field-reports');
+    return src ? src.serialize().data.features.length : -1;
+  })()`
+
+  // Leaflet is the default engine on load.
+  const leafletAll = await pollUntil(() => evaluate(readLeaflet), v => v === 5, 10, 300)
+  check('Leaflet, "All": every seeded report is drawn', leafletAll, 5)
+
+  await evaluate(`document.querySelector('[data-testid="allSelectedSwitch"] button').click()`)
+  const leafletSelected = await pollUntil(() => evaluate(readLeaflet), v => v === 2, 10, 300)
+  check('Leaflet, "Selected": only the 2 rows selected on Radio Log are drawn', leafletSelected, 2)
+
+  // Flip the engine switch to MapLibre - a fresh instance always starts back on "All"
+  // (component state, not persisted - see AbstractMap.showingSelectedOnly's own comment).
+  await evaluate(`document.querySelector('[data-testid="mapEngineSwitch"] button').click()`)
+  await sleep(2500) // dynamic import() of the MapLibre chunk + map construction
+
+  const maplibreAll = await pollUntil(() => evaluate(readMaplibre), v => v === 5, 10, 300)
+  check('MapLibre, "All": every seeded report is drawn', maplibreAll, 5)
+
+  await evaluate(`document.querySelector('[data-testid="allSelectedSwitch"] button').click()`)
+  const maplibreSelected = await pollUntil(() => evaluate(readMaplibre), v => v === 2, 10, 300)
+  check('MapLibre, "Selected": only the 2 rows selected on Radio Log are drawn', maplibreSelected, 2)
+}
+
 async function checkMissionWithPersistedSettings() {
   console.log('\nBUG-3 (open): /mission must not throw for a RETURNING user (dates as ISO strings)')
   // A fresh browser gets initSettings() with real Date objects and never reproduces this.
@@ -2393,8 +2525,9 @@ async function main() {
         await checkTeamTrailsRender()
         await checkRangerMarkersAreDistinct()
         await checkNoCallsignRangersGetDistinctIdentity()
+        await checkRadioLogSelectionFiltersMaps()
       } else {
-        note('fast run: skipping checkTeamTrailsRender, checkRangerMarkersAreDistinct, checkNoCallsignRangersGetDistinctIdentity (pass --full to include)')
+        note('fast run: skipping checkTeamTrailsRender, checkRangerMarkersAreDistinct, checkNoCallsignRangersGetDistinctIdentity, checkRadioLogSelectionFiltersMaps (pass --full to include)')
       }
       await checkMissionWithPersistedSettings()
       if (FULL) {

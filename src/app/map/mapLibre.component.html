@@ -27,7 +27,10 @@
 <br />
 
 Field reports to show: All ({{numAllRows()}})
-<mat-slide-toggle (change)="onSwitchSelectedRadioLog()">
+<!-- data-testid, not a class - same reason mapEngineSwitch/zoomToExtent above carry one
+     (tools/e2e.js#76 needs a stable hook, and this repo has already been burned by e2e
+     selectors hanging off styling classes). -->
+<mat-slide-toggle data-testid="allSelectedSwitch" (change)="onSwitchSelectedRadioLog()">
   Just those ({{numSelectedRows()}}) selected on the Radio Log page
 </mat-slide-toggle>
 

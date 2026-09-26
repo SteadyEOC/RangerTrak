@@ -379,6 +379,16 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       return
     }
 
+    // tools/e2e.js (#76 - the All/selected switch): stashed for read-only e2e introspection
+    // only. A wide-enough spread of reports to rule out Leaflet.markercluster merging two
+    // DISTINCT markers into one bubble (checkRangerMarkersAreDistinct's own approach) gets
+    // harder to guarantee the more points a check seeds and the more zoomed-out fitBounds
+    // ends up - clustering fewer markers into one bubble would silently undercount real,
+    // correctly-filtered markers. Reading the cluster group's own layer count
+    // (myMarkerCluster.getLayers().length) is what displayMarkers() actually populated,
+    // regardless of how many bubbles that renders as on screen.
+    ;(this.mapContainer.nativeElement as unknown as { __rtMarkerCluster?: unknown }).__rtMarkerCluster = this.myMarkerCluster
+
     // https://stackoverflow.com/questions/14106687/how-do-i-change-the-default-cursor-in-leaflet-maps
     L.DomUtil.addClass(this.lMap.getContainer(), 'crosshair-cursor-enabled')  //  Enable crosshairs
     // L.DomUtil.removeClass(map._container,'crosshair-cursor-enabled') // Disable crosshairs
