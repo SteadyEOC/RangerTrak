@@ -180,6 +180,21 @@ rangertrak-footer {
   border: 0;
 }
 
+// Printing an ICS-309 from the Radio Log (radio-log.component.ts, onBtnPrint309) prints the
+// log alone: the app's navbar, banners, page header and footer are hidden only while that
+// print is running. Global because those elements live outside the Radio Log component.
+@media print {
+  body.rt-print-309 {
+    rangertrak-navbar,
+    rangertrak-stale-origin-notice,
+    rangertrak-install-update,
+    rangertrak-footer,
+    pageHeader {
+      display: none !important;
+    }
+  }
+}
+
 // Sprint A gate check (D-26): with a real token layer in place, changing the active skin
 // must visibly change the whole app. Originally verified by editing one value in
 // styles/_active-skin.scss (a compile-time choice, since removed); now the same fact holds

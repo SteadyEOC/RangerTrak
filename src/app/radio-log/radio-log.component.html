@@ -90,6 +90,15 @@
               </mat-select>
             </mat-form-field>
 
+            <mat-form-field class="reports__control reports__control--print-scope">
+              <mat-label>Layout</mat-label>
+              <mat-select [value]="printLayout()" (selectionChange)="printLayout.set($event.value)">
+                @for (opt of printLayoutOptions; track opt.value) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
             <button matButton="filled" type="button" (click)="onBtnPrint309()">
               <mat-icon>print</mat-icon>
               Print 309 Log
@@ -203,6 +212,92 @@
        (also hidden there) - a scribe printing the comms log wants the log, not a paper copy of
        the interactive grid chrome. Populated by onBtnPrint309() just before window.print(). -->
   @if (ics309Log(); as log) {
+    @if (printLayout() === 'form') {
+    <!-- The standard ICS 309 layout (see printLayout's comment in the .ts). Boxes RangerTrak
+         has no data for - 3, 4, the TO column, both Msg # columns, the signature - print
+         empty, to be filled in by hand the way the paper form is. -->
+    <div class="ics309-print ics309-form">
+      <table class="ics309-form__box">
+        <tr>
+          <td colspan="2" class="ics309-form__title">COMMUNICATIONS LOG</td>
+          <td class="ics309-form__formno">ICS 309</td>
+        </tr>
+        <tr>
+          <td class="ics309-form__cell">
+            <span class="ics309-form__label">1. Incident Name</span>
+            <span class="ics309-form__value">{{ log.header.incidentName }}</span>
+          </td>
+          <td colspan="2" class="ics309-form__cell">
+            <span class="ics309-form__label">2. Operational Period</span>
+            <span class="ics309-form__value">
+              From: Date {{ log.header.opPeriodStart ? formatLogDate(log.header.opPeriodStart) : '' }}
+              &nbsp; Time {{ log.header.opPeriodStart ? formatLogTime(log.header.opPeriodStart) : '' }}<br />
+              To: &nbsp;&nbsp; Date {{ log.header.opPeriodEnd ? formatLogDate(log.header.opPeriodEnd) : '' }}
+              &nbsp; Time {{ log.header.opPeriodEnd ? formatLogTime(log.header.opPeriodEnd) : '' }}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td class="ics309-form__cell ics309-form__cell--tall">
+            <span class="ics309-form__label">3. Radio Net Name or Position/Tactical Call</span>
+          </td>
+          <td colspan="2" class="ics309-form__cell ics309-form__cell--tall">
+            <span class="ics309-form__label">4. Radio Operator (Name, Call Sign)</span>
+          </td>
+        </tr>
+      </table>
+
+      <table class="ics309-form__log">
+        <thead>
+          <tr><th colspan="6" class="ics309-form__section">5. Communications Log</th></tr>
+          <tr>
+            <th rowspan="2" class="ics309-form__time">Time<br />(24:00)</th>
+            <th colspan="2">FROM</th>
+            <th colspan="2">TO</th>
+            <th rowspan="2">Message</th>
+          </tr>
+          <tr>
+            <th class="ics309-form__call">Call Sign/ID</th>
+            <th class="ics309-form__msgno">Msg #</th>
+            <th class="ics309-form__call">Call Sign/ID</th>
+            <th class="ics309-form__msgno">Msg #</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of log.rows; track $index) {
+            <tr>
+              <td>{{ formatLogTime(row.time) }}</td>
+              <td>{{ row.from }}</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td>{{ row.message }}@if (row.source) {<span class="ics309-form__via"> (via {{ row.source }})</span>}</td>
+            </tr>
+          }
+          <!-- A few empty rows for traffic logged by hand after printing, as on the paper form. -->
+          @for (blank of [1, 2, 3]; track blank) {
+            <tr class="ics309-form__blank"><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          }
+        </tbody>
+      </table>
+
+      <table class="ics309-form__box">
+        <tr>
+          <td class="ics309-form__cell">
+            <span class="ics309-form__label">6. Prepared By (Name, Position)</span>
+            <span class="ics309-form__value">{{ log.header.preparedBy }}</span>
+            <span class="ics309-form__label ics309-form__sig">Signature</span>
+          </td>
+          <td class="ics309-form__cell">
+            <span class="ics309-form__label">7. Date &amp; Time Prepared</span>
+            <span class="ics309-form__value">{{ formatLogDateTime(log.header.datePrepared) }}</span>
+          </td>
+          <td class="ics309-form__cell ics309-form__page">Page ____ of ____</td>
+        </tr>
+      </table>
+      <p class="ics309-form__note">Printed from RangerTrak. TO, Msg # and boxes 3–4 are left for hand entry.</p>
+    </div>
+    } @else {
     <div class="ics309-print">
       <h1>ICS-309 Communications Log</h1>
       @if (log.header.incidentName) {
@@ -237,6 +332,7 @@
         </tbody>
       </table>
     </div>
+    }
   }
 
 </rangertrak-page>

@@ -138,6 +138,97 @@
       background: #eee;
     }
   }
+
+  // The standard-form layout (2026-09-25). Same fixed-black-on-white rule as above: paper
+  // has no light/dark mode. The boxes are tables so the borders line up across rows the way
+  // the printed form's do.
+  .ics309-form {
+    color: #000;
+
+    table {
+      margin-top: 0;
+      font-size : 0.8rem;
+    }
+
+    .ics309-form__box + .ics309-form__log,
+    .ics309-form__log + .ics309-form__box {
+      border-top: 0;
+    }
+
+    .ics309-form__title {
+      font-size  : 1.15rem;
+      font-weight: 700;
+      text-align : center;
+    }
+
+    .ics309-form__formno {
+      width      : 18%;
+      font-weight: 700;
+      text-align : center;
+    }
+
+    .ics309-form__cell {
+      height: 2.6rem;
+    }
+
+    .ics309-form__cell--tall {
+      height: 3rem;
+    }
+
+    .ics309-form__label {
+      display    : block;
+      font-size  : 0.7rem;
+      font-weight: 700;
+    }
+
+    .ics309-form__value {
+      display: block;
+    }
+
+    .ics309-form__sig {
+      margin-top: 0.6rem;
+    }
+
+    .ics309-form__section {
+      text-align: left;
+    }
+
+    th {
+      text-align: center;
+      font-size : 0.72rem;
+    }
+
+    .ics309-form__time {
+      width: 9%;
+    }
+
+    .ics309-form__call {
+      width: 12%;
+    }
+
+    .ics309-form__msgno {
+      width: 6%;
+    }
+
+    .ics309-form__via {
+      font-size: 0.7rem;
+    }
+
+    .ics309-form__blank td {
+      height: 1.4rem;
+    }
+
+    .ics309-form__page {
+      width      : 18%;
+      text-align : center;
+      font-weight: 700;
+    }
+
+    .ics309-form__note {
+      margin-top: 0.3rem;
+      font-size : 0.65rem;
+    }
+  }
 }
 
 // The selection count's own trailing note - secondary to the number itself, and only

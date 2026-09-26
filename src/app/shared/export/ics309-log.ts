@@ -38,6 +38,11 @@ export interface Ics309LogHeader {
   // sentinel: this module has no UI wired to it yet (E-31/E-41 phase 3 status), so there is
   // nowhere for a caller to source this from today beyond passing it through.
   preparedBy: string
+  // 2026-09-25: the standard form's box 2 splits the period into From/To date and time, so
+  // the raw bounds travel alongside the formatted `operationalPeriod` string. Null when the
+  // mission has no operational period at all (the same case that string is blank for).
+  opPeriodStart: Date | null
+  opPeriodEnd: Date | null
 }
 
 export interface Ics309LogRow {
@@ -89,6 +94,8 @@ export function buildIcs309Log(
       operationalPeriod: formatOperationalPeriod(mission),
       datePrepared: now,
       preparedBy,
+      opPeriodStart: hasOperationalPeriod(mission) ? mission.opPeriodStart : null,
+      opPeriodEnd: hasOperationalPeriod(mission) ? mission.opPeriodEnd : null,
     },
     rows,
   }
@@ -108,8 +115,12 @@ function formatMessage(report: RadioLogEntryType): string {
   return status ? `[${status}] ${notes}`.trim() : notes
 }
 
+function hasOperationalPeriod(mission: Ics309MissionInfo): boolean {
+  return !!(mission.opPeriod || mission.opPeriodStart || mission.opPeriodEnd)
+}
+
 function formatOperationalPeriod(mission: Ics309MissionInfo): string {
-  if (!mission.opPeriod && !mission.opPeriodStart && !mission.opPeriodEnd) return ''
+  if (!hasOperationalPeriod(mission)) return ''
   const label = mission.opPeriod ? `${mission.opPeriod}: ` : ''
   // hour12: false - 24-hour clock throughout the app, and ICS-309's own convention.
   const opts: Intl.DateTimeFormatOptions = {

@@ -59,6 +59,9 @@ describe('buildIcs309Log', () => {
 
     expect(log.header.incidentName).toBe('SAMPLE - Vashon Island Exercise')
     expect(log.header.operationalPeriod).toContain('Period 1')
+    // The standard form's box 2 needs the raw bounds, not just the formatted string.
+    expect(log.header.opPeriodStart).toBeInstanceOf(Date)
+    expect(log.header.opPeriodEnd).toBeInstanceOf(Date)
   })
 
   it('handles zero reports without throwing', () => {

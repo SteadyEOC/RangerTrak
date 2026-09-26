@@ -118,6 +118,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     { value: 'selected', label: 'Selected rows' },
     { value: 'sincePrint', label: 'Since the last print' },
   ]
+  // 2026-09-25 (maintainer): "does it print on a form that looks like the official ICS-309?
+  // The option should be there." 'form' mirrors the standard ICS 309 as ARES/AUXCOMM groups
+  // publish it (FEMA's current forms list has no 309 - see ics309-log.ts) - numbered boxes
+  // 1-7, FROM/TO call sign and Msg # columns. 'list' is the original compact printout. The
+  // form is the default: it is what a receiving EOC or net manager expects to be handed.
+  public printLayout = signal<'form' | 'list'>('form')
+  readonly printLayoutOptions: { value: 'form' | 'list'; label: string }[] = [
+    { value: 'form', label: 'ICS-309 form' },
+    { value: 'list', label: 'Simple list' },
+  ]
   // Read by the print-only block in the template (radio-log.component.html) - null
   // until "Print 309 Log" is clicked, so nothing renders under `@media print` before then.
   public ics309Log = signal<Ics309Log | null>(null)
@@ -793,7 +803,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // signal write isn't guaranteed to see the updated DOM. Same reasoning as elsewhere in
     // this app that defers a native browser action by one tick after a state change.
     setTimeout(() => {
+      // 2026-09-25: the navbar, page header and footer used to print above and below the log
+      // (both layouts). A 309 handed to an EOC should be the form alone - styles.scss hides
+      // the app chrome under @media print while this class is on <body>. Scoped to this one
+      // print so the Map page's own print output is unaffected. window.print() blocks until
+      // the dialog closes in every browser this app supports, so removing the class right
+      // after it is safe; 'afterprint' is the belt to that brace.
+      document.body.classList.add('rt-print-309')
+      window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-309'), { once: true })
       window.print()
+      document.body.classList.remove('rt-print-309')
       // First print of THIS batch only marks the log, same "first print only" precedent
       // messages.component.ts's printAsIcs213() already established for printedAt - a
       // reprint of the same or an overlapping scope shouldn't keep pushing the "since last
@@ -832,6 +851,10 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   /** 24-hour clock throughout this app (see report-time.ts) - not the locale-default DatePipe. */
   formatLogTime(date: Date | string): string {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  }
+
+  formatLogDate(date: Date | string): string {
+    return new Date(date).toLocaleDateString()
   }
 
   formatLogDateTime(date: Date | string): string {
