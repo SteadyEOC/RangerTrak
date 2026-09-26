@@ -262,10 +262,17 @@ export class RangerPhotoService {
    * what derives `key` in the first place). Reads back through the already-decrypted object
    * URLs (`this.urls`) rather than re-opening IndexedDB, the same shortcut `allPhotoBlobs()`
    * already takes and for the same reason: they are already the in-memory source of truth.
+   *
+   * E-122 Phase 2b follow-up: still attempts every photo (a failure here leaves the photo
+   * merely unencrypted, not stranded, unlike RecordStore's roster/report records - see
+   * record-store.ts's enableEncryption()), but now THROWS if any failed rather than only
+   * logging, so mission-advanced-options.component.ts's caller cannot report "Device
+   * encryption is on" while a photo silently stayed in the clear.
    */
   async encryptAll(key: CryptoKey): Promise<void> {
     await this.ready
     if (!this.db) return
+    const failures: string[] = []
     for (const [stem, url] of this.urls) {
       try {
         const blob = await (await fetch(url)).blob()
@@ -273,9 +280,14 @@ export class RangerPhotoService {
         await this.tx('readwrite', s => s.put(record, stem))
       } catch (e: any) {
         this.log.error(`Could not encrypt stored photo "${stem}": ${e?.message ?? e}`, this.id)
+        failures.push(stem)
       }
     }
-    this.log.warn(`Encrypted ${this.urls.size} ranger photos on this device.`, this.id)
+    this.log.warn(`Encrypted ${this.urls.size - failures.length} ranger photos on this device.`, this.id)
+    if (failures.length) {
+      throw new Error(`could not encrypt ${failures.length} photo(s) (${failures.join(', ')}); `
+        + `they remain unencrypted on this device. Try Enable again.`)
+    }
   }
 
   /**
@@ -286,6 +298,13 @@ export class RangerPhotoService {
    * back out of IndexedDB rather than off an in-memory object URL - `this.urls` already holds
    * plaintext object URLs regardless of what is on disk (loadAll() decrypts into them at
    * startup), so re-reading raw IndexedDB is the only way to reach the still-encrypted form.
+   *
+   * E-122 Phase 2b follow-up: THROWS if any photo fails to decrypt, instead of only logging.
+   * This runs BEFORE `RecordStore.disableEncryption()` in the caller
+   * (mission-advanced-options.component.ts) precisely so that failing loudly here stops the
+   * caller from ever reaching that call - a photo left encrypted here would otherwise be
+   * stranded the instant the marker/key it needs are cleared, with no way back. Still attempts
+   * every photo rather than stopping at the first failure, same as `encryptAll()`.
    */
   async decryptAll(key: CryptoKey): Promise<void> {
     await this.ready
@@ -293,6 +312,7 @@ export class RangerPhotoService {
     const keys = await this.tx<IDBValidKey[]>('readonly', s => s.getAllKeys())
     const stored = await this.tx<unknown[]>('readonly', s => s.getAll())
     let count = 0
+    const failures: string[] = []
     for (let i = 0; i < keys.length; i++) {
       const stem = String(keys[i])
       const value = stored[i]
@@ -303,9 +323,14 @@ export class RangerPhotoService {
         count++
       } catch (e: any) {
         this.log.error(`Could not decrypt stored photo "${stem}" while disabling encryption: ${e?.message ?? e}`, this.id)
+        failures.push(stem)
       }
     }
     this.log.warn(`Decrypted ${count} ranger photos on this device.`, this.id)
+    if (failures.length) {
+      throw new Error(`could not decrypt ${failures.length} photo(s) (${failures.join(', ')}); `
+        + `they are still encrypted and encryption was not turned off.`)
+    }
   }
 
   private revoke(callsign: string) {

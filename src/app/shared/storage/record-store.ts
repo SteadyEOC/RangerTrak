@@ -208,24 +208,42 @@ class RecordStoreImpl {
    * Mission > Data safety's "Enable" action. Requires the caller (the component) to have
    * already gated this on a fresh backup and a twice-typed passphrase - this method only
    * does the storage work: write a fresh marker, arm the key, and re-encrypt every
-   * `ENCRYPTED_KEYS` record already in the Map in place. Awaits `flush()` before returning, so
-   * the caller can report success only once every record has actually committed encrypted.
-   * Ranger photos are a separate service/database and are NOT touched here - the caller
-   * fetches `getEncryptionKey()` afterward and hands it to `RangerPhotoService.encryptAll()`.
+   * `ENCRYPTED_KEYS` record already in the Map in place.
+   *
+   * E-122 Phase 2b follow-up: the marker is persisted FIRST, on its own, awaited directly
+   * rather than routed through `queueWrite()`/`drain()` - `drain()` only logs a failed write
+   * and moves on, which is fine for an ordinary key but not for the one record every future
+   * unlock depends on. Nothing has been encrypted yet at this point, so a failed marker write
+   * is fully recoverable: `this.marker`/`this.key` are never assigned, and this throws instead
+   * of leaving the caller to report success. Only once the marker is safely down does this
+   * requeue the `ENCRYPTED_KEYS` records through the normal pipeline and await them with
+   * `flushReportingFailures()` (rather than plain `flush()`) so a failed record write also
+   * throws instead of being silently swallowed - the marker being present already means
+   * `load()` still works either way (it decides per record via `isEncryptedEnvelope()`), but
+   * the caller must not be told this finished cleanly when it didn't.
    */
   async enableEncryption(passphrase: string): Promise<void> {
     if (this.marker) throw new Error('Encryption is already enabled on this device.')
     const { marker, key } = await createEncryptionMarker(passphrase)
+
+    await this.ensureDb()
+    try {
+      if (this.dbAvailable) await this.idbPut(ENCRYPTION_MARKER_KEY, JSON.stringify(marker))
+      else localStorage.setItem(ENCRYPTION_MARKER_KEY, JSON.stringify(marker))
+    } catch (e: any) {
+      throw new Error(`the new passphrase could not be saved; nothing was changed (${e?.message ?? e}).`)
+    }
     this.marker = marker
     this.key = key
-    // Routed through the same pending/drain() pipeline as any other key: drain() only
-    // encrypts keys in ENCRYPTED_KEYS, so the marker record itself (not a member of that
-    // list) always lands in the clear, same as reading/writing any other plain kv entry.
-    this.queueWrite(ENCRYPTION_MARKER_KEY, JSON.stringify(marker))
+
     for (const k of ENCRYPTED_KEYS) {
       if (this.map.has(k)) this.setItem(k, this.map.get(k)!)
     }
-    await this.flush()
+    const failures = await this.flushReportingFailures()
+    if (failures.size) {
+      throw new Error(`encryption is on, but ${[...failures].join(', ')} could not be `
+        + `re-encrypted yet; try Enable again to finish.`)
+    }
   }
 
   /**
@@ -236,20 +254,52 @@ class RecordStoreImpl {
    * checking `this.key` at the moment it actually runs, not when queued) writes them out in
    * the clear. The in-memory Map was never anything but plaintext, so there is nothing to
    * decrypt here - only a marker to delete and every record to re-persist unencrypted.
+   *
+   * E-122 Phase 2b follow-up: `flushReportingFailures()` (not plain `flush()`) is awaited for
+   * the record rewrites, and their local copies of the marker/key are kept so a failed write
+   * can be rolled back - drain()'s own log-and-continue used to let this resolve
+   * "successfully" while a record stayed encrypted with no marker left to unlock it. If any
+   * record fails, the marker/key are restored (encryption is, and must keep reporting as,
+   * still ON) and this throws. Only once every record has actually committed plaintext does
+   * the marker itself get deleted - a failure at THAT point is harmless (see below) but still
+   * thrown, so the caller never reports unconditional success.
    */
   async disableEncryption(): Promise<void> {
     if (!this.marker) throw new Error('Encryption is not enabled on this device.')
+    const marker = this.marker
+    const key = this.key
     this.marker = undefined
     this.key = undefined
-    // Records first, marker LAST: drain() writes in queue order, so if the page dies partway
-    // through, the marker is still there and the next boot still asks for the passphrase and
-    // decrypts whatever is left encrypted. The other order could strand encrypted records
-    // with no marker - no unlock prompt, no key, and the data unreadable for good.
+
+    // Records first, marker LAST: if the marker delete below fails or never runs, the next
+    // boot still asks for the passphrase and decrypts whatever is left encrypted. The other
+    // order could strand encrypted records with no marker - no unlock prompt, no key, and the
+    // data unreadable for good.
     for (const k of ENCRYPTED_KEYS) {
       if (this.map.has(k)) this.setItem(k, this.map.get(k)!)
     }
-    this.queueWrite(ENCRYPTION_MARKER_KEY, null)
-    await this.flush()
+    const failures = await this.flushReportingFailures()
+    if (failures.size) {
+      // Some records are still encrypted with no way to rewrite them differently right now -
+      // restoring the marker/key means the device keeps describing reality (still encrypted)
+      // rather than silently becoming impossible to unlock.
+      this.marker = marker
+      this.key = key
+      throw new Error(`some data could not be rewritten unencrypted (${[...failures].join(', ')}); `
+        + `your data is still protected. Try again.`)
+    }
+
+    try {
+      if (this.dbAvailable) await this.idbDelete(ENCRYPTION_MARKER_KEY)
+      else localStorage.removeItem(ENCRYPTION_MARKER_KEY)
+    } catch (e: any) {
+      // Every record already committed in the clear - only the marker itself is stuck. Next
+      // boot still asks for the (now-irrelevant) passphrase, unlock() still succeeds against
+      // it, and load() finds every record already plaintext (isEncryptedEnvelope() sees no
+      // envelope) and returns it as-is. Thrown anyway so the caller doesn't report success.
+      throw new Error(`the marker could not be removed, but your data is already unencrypted `
+        + `and safe; you may be asked for the passphrase once more (${e?.message ?? e}).`)
+    }
   }
 
   /**
@@ -454,7 +504,14 @@ class RecordStoreImpl {
     })
   }
 
-  private async drain(): Promise<void> {
+  /**
+   * `failures`, when given, collects the key of every write that fails in this pass, in
+   * addition to (not instead of) the usual `console.error()` - used only by
+   * `flushReportingFailures()` (enable/disable's own flush) so they can fail loudly. An
+   * ordinary `setItem()`/`removeItem()` caller goes through the microtask-scheduled call below
+   * with no `failures` set, and keeps today's log-and-continue behaviour unchanged.
+   */
+  private async drain(failures?: Set<string>): Promise<void> {
     const entries = [...this.pending.entries()]
     this.pending.clear()
     if (!entries.length) return
@@ -473,8 +530,13 @@ class RecordStoreImpl {
       // (the marker is already in IndexedDB) and only lost IndexedDB access just now - a
       // transient failure must not be the reason plaintext PII lands in localStorage.
       for (const [key, value] of entries) {
-        if (value === null) { localStorage.removeItem(key); continue }
-        localStorage.setItem(key, await this.encryptIfNeeded(key, value))
+        try {
+          if (value === null) { localStorage.removeItem(key); continue }
+          localStorage.setItem(key, await this.encryptIfNeeded(key, value))
+        } catch (e: any) {
+          console.error(`RecordStore: failed to persist "${key}" to localStorage: ${e?.message ?? e}`)
+          failures?.add(key)
+        }
       }
       return
     }
@@ -485,6 +547,7 @@ class RecordStoreImpl {
         await this.idbPut(key, await this.encryptIfNeeded(key, value))
       } catch (e: any) {
         console.error(`RecordStore: failed to persist "${key}" to IndexedDB: ${e?.message ?? e}`)
+        failures?.add(key)
       }
     }
   }
@@ -501,6 +564,25 @@ class RecordStoreImpl {
       this.writeChain = this.writeChain.then(() => this.drain())
     }
     await this.writeChain
+  }
+
+  /**
+   * Like `flush()`, but returns the set of keys whose write failed during this pass instead of
+   * only logging them - used solely by `enableEncryption()`/`disableEncryption()`, which must
+   * fail loudly rather than report success while a record silently failed to (re)write. Safe to
+   * call right after synchronously queueing writes (as both of those do): `queueWrite()` always
+   * runs `scheduleFlush()` first, so `flushQueued` is already true and the drain pass this
+   * triggers is the one that will actually process them - nothing else runs in between in this
+   * single-threaded flow to smuggle in unrelated pending entries.
+   */
+  private async flushReportingFailures(): Promise<Set<string>> {
+    const failures = new Set<string>()
+    if (this.flushQueued) {
+      this.flushQueued = false
+      this.writeChain = this.writeChain.then(() => this.drain(failures))
+    }
+    await this.writeChain
+    return failures
   }
 
   /**

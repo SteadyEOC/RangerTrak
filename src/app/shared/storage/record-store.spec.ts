@@ -465,23 +465,90 @@ describe('RecordStore', () => {
       expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG);
     });
 
-    it('crash-safe order: if the marker delete fails, records already sit in the clear but the marker survives', async () => {
+    it('crash-safe order: if the marker delete fails, records already sit in the clear but the marker delete is still reported as a failure', async () => {
       await recordStore.enableEncryption(PASS);
       recordStore.setItem('rangers', ROSTER);
       await recordStore.flush();
       expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
 
-      // Simulates the process dying right as disableEncryption()'s drain() reaches the
-      // marker's own queued delete - by then every ENCRYPTED_KEYS record ahead of it in the
-      // same queue (see disableEncryption()'s own comment on ordering) has already been
-      // written in the clear. drain() catches and logs a per-entry failure rather than
-      // throwing, so disableEncryption() itself still resolves.
+      // Simulates the process dying right as disableEncryption() reaches the marker's own
+      // delete - by then every ENCRYPTED_KEYS record ahead of it (see disableEncryption()'s
+      // own comment on ordering) has already been written in the clear. E-122 Phase 2b
+      // follow-up: this specific failure is harmless (the data is already safe) but is now
+      // THROWN rather than swallowed, so the caller is never told this finished silently.
       spyOn(IDBObjectStore.prototype as any, 'delete').and.throwError('simulated crash deleting the marker');
 
-      await recordStore.disableEncryption();
+      await expectAsync(recordStore.disableEncryption()).toBeRejected();
 
       expect(await readRawFromIdb('rangers')).toBe(ROSTER);
       expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).not.toBeNull();
+      // The data is genuinely unencrypted now (every record committed before the marker
+      // delete failed), so this session correctly stops reporting encryption as on - the next
+      // real boot will still find the stale marker and ask for a passphrase once more, but
+      // load() finds every record already plaintext and returns it as-is.
+      expect(recordStore.isEncryptionEnabled()).toBe(false);
+    });
+
+    /**
+     * E-122 Phase 2b follow-up: before this fix, drain() only console.error()'d a failed
+     * write and let enableEncryption()/disableEncryption() resolve as if nothing went wrong -
+     * see this file's own header comment on the two ways that could strand data. These tests
+     * confirm the fail-loudly behaviour directly, spying on IDBObjectStore.prototype.put to
+     * fail for one specific key.
+     */
+    it('enableEncryption() rejects if the marker write itself fails, and leaves the device unencrypted', async () => {
+      const realPut = IDBObjectStore.prototype.put;
+      spyOn(IDBObjectStore.prototype as any, 'put').and.callFake(function (this: IDBObjectStore, value: any, key: any) {
+        if (key === ENCRYPTION_MARKER_KEY) throw new Error('simulated marker put failure');
+        return realPut.call(this, value, key);
+      });
+      recordStore.setItem('rangers', ROSTER);
+      await recordStore.flush();
+
+      await expectAsync(recordStore.enableEncryption(PASS)).toBeRejected();
+
+      expect(recordStore.isEncryptionEnabled()).toBe(false);
+      expect(recordStore.getEncryptionKey()).toBeUndefined();
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull();
+      // Nothing was encrypted - the roster is exactly the plaintext it was before the attempt.
+      expect(await readRawFromIdb('rangers')).toBe(ROSTER);
+      expect(recordStore.getItem('rangers')).toBe(ROSTER);
+    });
+
+    it('disableEncryption() rejects if a record rewrite fails, leaving the marker and that record encrypted', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      recordStore.setItem('radioLog', RADIO_LOG);
+      await recordStore.flush();
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+
+      const realPut = IDBObjectStore.prototype.put;
+      spyOn(IDBObjectStore.prototype as any, 'put').and.callFake(function (this: IDBObjectStore, value: any, key: any) {
+        if (key === 'rangers') throw new Error('simulated rangers put failure');
+        return realPut.call(this, value, key);
+      });
+
+      await expectAsync(recordStore.disableEncryption()).toBeRejected();
+
+      // Still reports as encrypted - the caller must not be told this succeeded.
+      expect(recordStore.isEncryptionEnabled()).toBe(true);
+      expect(recordStore.getEncryptionKey()).toBeDefined();
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).not.toBeNull();
+      // rangers' rewrite failed, so it is still encrypted on disk; radioLog's own put
+      // succeeded, so it already committed plaintext - the exact mixed state
+      // disableEncryption()'s own header comment describes load() as already handling.
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+      expect(await readRawFromIdb('radioLog')).toBe(RADIO_LOG);
+
+      // Simulate the next session (a reload): drop the in-memory key/marker, then unlock and
+      // load normally - nothing was lost, and everything reads back intact.
+      (recordStore as any).key = undefined;
+      (recordStore as any).marker = undefined;
+      expect(await recordStore.checkEncryption()).toBe(true);
+      expect(await recordStore.unlock(PASS)).toBe(true);
+      await recordStore.load();
+      expect(recordStore.getItem('rangers')).toBe(ROSTER);
+      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG);
     });
   });
 });
