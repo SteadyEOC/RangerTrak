@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+* **help:** swap the backdrop to a licensed marmot photo (Pixabay, Veronika Andrews), with attribution ([05aa302](https://github.com/SteadyEOC/RangerTrak/commit/05aa302))
 * **help:** restore missing spaces between linked page names and button names ([66e5363](https://github.com/SteadyEOC/RangerTrak/commit/66e53635513202ecc5adf48f0a5f901686b17f5f))
 * **radio-log:** give the sections below the log card borders and real headings ([#237](https://github.com/SteadyEOC/RangerTrak/issues/237)) ([e12f718](https://github.com/SteadyEOC/RangerTrak/commit/e12f718aa4c23c1540200479d439eac2e32601ea))
 * **storage:** enable/disable encryption fail loudly on a failed write instead of stranding records (E-122 Phase 2b) ([f4cf4d5](https://github.com/SteadyEOC/RangerTrak/commit/f4cf4d5ceb0965bc1cd51c8d74e7c43349c093c5))
