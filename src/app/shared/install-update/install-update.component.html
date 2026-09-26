@@ -5,7 +5,9 @@
     <div class="rt-install-update rt-install-update--update" [class.rt-install-update--sticky-bottom]="stickyBottom"
       [class.rt-install-update--detailed]="detailed">
       <button type="button" class="rt-install-update__main" (click)="onReload()"
-        title="A new version of RangerTrak is ready. Reload now to start using it.">
+        [title]="willAskForPassphrase
+          ? 'A new version of RangerTrak is ready. Reload now to start using it - you will be asked for your device passphrase again.'
+          : 'A new version of RangerTrak is ready. Reload now to start using it.'">
         <svg class="rt-install-update__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M20 12a8 8 0 10-2.34 5.66M20 12V6m0 6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
@@ -40,6 +42,9 @@
         A new version is ready. Reloading takes a few seconds and won't lose anything
         you've entered &mdash; every report is already saved on this device, not just in
         this browser tab.
+        @if (willAskForPassphrase) {
+        You will be asked for your device passphrase again after reloading.
+        }
       </div>
     </span>
   }

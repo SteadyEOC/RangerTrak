@@ -76,10 +76,10 @@ How to use each screen is in the app's Help, not here; developer detail is in
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
 > ⚠️ The roster contains personal information — names, addresses, phone numbers, and call
-> signs that map to public licence records — **stored unencrypted on the device**. Mission
-> backups can be encrypted with a passphrase (optional, and blank still writes a plain
-> file), but data at rest is not yet. See Help → **Your data** in the app for handling
-> guidance.
+> signs that map to public licence records — **stored unencrypted on the device, unless you
+> turn on device encryption** (Mission → Data safety). Mission backups can also be encrypted
+> with a passphrase (optional, and blank still writes a plain file). See Help → **Your data**
+> in the app for handling guidance.
 
 ## 🗺️ Roadmap
 

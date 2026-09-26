@@ -217,8 +217,9 @@ settings, roster, and any reports. Keep it somewhere safe — a USB stick, anoth
 If the browser data is ever lost, **Restore mission** restores everything.
 
 > ⚠️ That export file contains personal information about your people — names, home
-> addresses, phone numbers, and call signs — and it is **not encrypted**. Treat it like any
-> other confidential roster.
+> addresses, phone numbers, and call signs — and it is **not encrypted**, even if you have
+> turned on device encryption (that protects the browser copy, not this file). Treat it like
+> any other confidential roster.
 
 **8. Try it for real.**
 Turn off Wi-Fi and mobile data, then open RangerTrak and enter a test report. Five minutes
@@ -379,9 +380,34 @@ That cuts both ways:
   or using a different device means starting empty. **Export regularly.**
 
 The roster is the sensitive part: names, personal phone numbers, photos, and call signs that
-tie back to publicly searchable licence records. It is stored unencrypted on the device.
-**The same applies to log exports** — the log is a raw diagnostic record and can quote
-report details and addresses verbatim.
+tie back to publicly searchable licence records. It is stored unencrypted on the device,
+unless you turn on **device encryption** (Mission → Data safety → Device encryption), which
+also covers field reports and ranger photos and needs a passphrase you choose — see below.
+**The same applies to log exports regardless** — the log is a raw diagnostic record and can
+quote report details and addresses verbatim, and is never encrypted.
+
+### Encrypting the roster and reports on this device
+
+Mission → Data safety has a **Device encryption** toggle. Turned on, it encrypts the roster,
+field reports and ranger photos stored in this browser with a passphrase you choose — so a
+lost or stolen device, or someone else's hands on a shared command-post laptop, doesn't hand
+over the roster in the clear. It does **not** protect the app while it is open and unlocked,
+the same as any lock screen wouldn't.
+
+- **Requires a recent backup first** — one finished in the last 10 minutes, plain or
+  passphrase-protected, either counts. That guarantees a way back if the passphrase is ever
+  mistyped or forgotten.
+- **The passphrase is typed twice, with no hint stored anywhere.** Forget it, and that data
+  is gone for good — there is no reset and no recovery, the same property that keeps a
+  passphrase-protected backup safe.
+- **You will be asked for it again** on your next visit and after every app update — reloading
+  clears it from memory.
+- **Locations and mission settings stay in the clear either way** — they carry little to no
+  personal data, and keeping them plain means the map still works if you are ever locked out
+  before restoring from a backup.
+- If you ever cannot remember the passphrase, the lock screen offers **"Forgot it: erase this
+  device's mission data"** — it deletes the roster, reports and photos on this device (not any
+  backup file elsewhere) and lets you restore from a backup afterward.
 
 ### Putting a passphrase on a mission backup
 
@@ -403,7 +429,8 @@ travel — onto a USB stick, into an email, across to another laptop.
 
 This protects a file that has left your device — a lost laptop, a misplaced stick, an email
 forwarded further than intended. It does **not** protect the data sitting in the browser on
-an unlocked device, which is still in the clear.
+an unlocked device — that's what **device encryption** (above) is for, and it too stops
+mattering the moment the device is open and unlocked.
 
 Given a callsign, the FCC's own public licensee lookup already shows more than this roster
 does — legal name and mailing address for any licensed amateur radio operator. This app does

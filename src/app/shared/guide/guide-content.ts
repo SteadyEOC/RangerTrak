@@ -105,7 +105,8 @@ const YOUR_DATA: GuideTab = {
         'Another device — even another browser on this same machine — has its own separate copy.',
         'Clearing site data clears the mission. Back up mission, on the Mission page, guards against this.',
         'Especially on iPhone and iPad, every browser can clear a site\'s data after about a week unused, and storage protection is not reliable there (nor in Safari on a Mac). Install RangerTrak and back up the mission.',
-        'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.'
+        'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.',
+        'The roster, field reports and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).'
       ]
     }
   ]
@@ -313,7 +314,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
         blocks: [
           {
             heading: 'This roster is confidential',
-            text: 'It holds participant personal data — legal names, personal phone numbers, call signs — stored unencrypted in this browser and exported unencrypted.'
+            text: 'It holds participant personal data — legal names, personal phone numbers, call signs — stored unencrypted in this browser (unless you turn on device encryption on the Mission page) and exported unencrypted.'
           },
           {
             heading: 'Handling it',

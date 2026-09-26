@@ -78,6 +78,39 @@
       <mat-icon>backup</mat-icon>
       Back up mission
     </button>
+
+    <!-- E-122 Phase 2b: opt-in encryption at rest. The roster, field reports and ranger
+         photos - the same data Mission backup's warning above names - can be encrypted on
+         THIS device with a passphrase, rather than only on their way out in a backup file. -->
+    <h3 class="mission__subhead">Device encryption</h3>
+    @if (encryptionEnabled()) {
+    <p class="mission__status mission__status--ok">
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      The roster, field reports and ranger photos on this device are encrypted. You will be
+      asked for the passphrase on your next visit and after every app update.
+    </p>
+    <button matButton="outlined" type="button" (click)="onBtnDisableEncryption()"
+      title="Decrypt the roster, field reports and ranger photos on this device">
+      <mat-icon>lock_open</mat-icon>
+      Turn off device encryption
+    </button>
+    } @else {
+    <p class="mission__note">
+      Encrypts the roster, field reports and ranger photos stored on this device with a
+      passphrase you choose. It protects a lost or stolen device or a shared browser - it does
+      not protect the app while it is open and unlocked, the same as any lock screen.
+    </p>
+    <p class="mission__note mission__note--warn">
+      If you forget the passphrase, this data is gone for good &mdash; there is no reset and no
+      recovery. A backup finished in the last 10 minutes is required before this can be turned
+      on, so there is always a way back.
+    </p>
+    <button matButton="outlined" type="button" (click)="onBtnEnableEncryption()"
+      title="Encrypt the roster, field reports and ranger photos on this device with a passphrase">
+      <mat-icon>lock</mat-icon>
+      Turn on device encryption
+    </button>
+    }
   </mat-card-content>
 </mat-card>
 

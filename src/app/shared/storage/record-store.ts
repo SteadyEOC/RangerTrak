@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'
+import { Injectable, signal } from '@angular/core'
 
 import {
   ENCRYPTED_KEYS, ENCRYPTION_MARKER_KEY, EncryptionMarker, createEncryptionMarker,
@@ -121,8 +121,18 @@ class RecordStoreImpl {
    * Set once `checkEncryption()` has read the plaintext marker record (E-122 Phase 2b).
    * `undefined` means "no marker" - either encryption was never enabled, or it hasn't been
    * checked yet this session.
+   *
+   * A signal, not a plain field: this app runs zoneless (`provideZonelessChangeDetection()`,
+   * app.config.ts), so Angular has no zone.js patch to notice a plain field changing inside an
+   * `async` method's post-`await` continuation - only a signal write schedules the check that
+   * updates a template reading it (Mission > Data safety's Enable/Disable button, via
+   * `isEncryptionEnabled()` below). `RecordStoreImpl` otherwise avoids Angular imports (this
+   * file's own header comment explains why - `load()` runs before an injector exists), but
+   * `signal()` is a plain reactive primitive, not DI, so it works the same here as anywhere.
    */
-  private marker?: EncryptionMarker
+  private readonly markerSignal = signal<EncryptionMarker | undefined>(undefined)
+  private get marker(): EncryptionMarker | undefined { return this.markerSignal() }
+  private set marker(value: EncryptionMarker | undefined) { this.markerSignal.set(value) }
 
   /**
    * The derived AES-GCM key for this session, non-extractable, held only here - never

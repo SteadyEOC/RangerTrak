@@ -99,6 +99,21 @@ let ws
 const consoleErrors = []
 const dialogs = []
 
+/**
+ * E-122 Phase 2b: the fixed dialog handler below (`accept: true`, no `promptText`) is enough
+ * for every check that predates device encryption - a confirm() just needs "OK", and every
+ * existing prompt() (the mission backup passphrase) treats an unmodified default as "leave it
+ * blank." Enabling/unlocking encryption needs an ACTUAL typed passphrase, which the fixed
+ * handler cannot supply. `queueDialogs()` lets a check queue exact responses, popped in the
+ * SAME order the dialogs actually open - one entry per dialog, including the confirm()s, so
+ * the queue and the real dialog sequence must be counted out 1:1 by whoever calls it. `true`/
+ * `false` accept or dismiss with no text (a confirm()); a string accepts with that text as
+ * `promptText` (a prompt()). An empty queue falls back to the pre-2b default untouched, so no
+ * existing check changes behaviour.
+ */
+const dialogQueue = []
+function queueDialogs(...responses) { dialogQueue.push(...responses) }
+
 const send = (method, params = {}) => {
   const id = nextId++
   ws.send(JSON.stringify({ id, method, params }))
@@ -199,7 +214,13 @@ async function idbRemoveRaw(key) {
  * open page already holds.
  */
 async function idbClearAll() {
-  for (const key of ['rangers', 'radioLog', 'radioLog-BAD', 'locations']) {
+  // '__encryption' (E-122 Phase 2b, ENCRYPTION_MARKER_KEY in record-encryption.ts) rides
+  // along here too: it is a reserved key in the same 'kv' store, and leaving it behind would
+  // make every check AFTER an encryption check hit the plain-DOM unlock gate on its next
+  // goto() - checkDeviceEncryption() also disables encryption itself before returning, but
+  // clearing it here too means a check that throws partway through never leaves the profile
+  // stuck locked for everything that runs after it.
+  for (const key of ['rangers', 'radioLog', 'radioLog-BAD', 'locations', '__encryption']) {
     await idbRemoveRaw(key)
   }
 }
@@ -2142,6 +2163,101 @@ async function checkSampleMissionLoads() {
   check('the Messages page renders both sample messages', messageRows, 2)
 }
 
+/**
+ * E-122 Phase 2b: opt-in encryption at rest, end to end through the real UI dialogs (see
+ * queueDialogs()'s own comment for why the fixed auto-accept handler alone cannot drive this).
+ * Covers the maintainer's four decisions together: a fresh backup gates "Enable", the roster
+ * is unreadable at rest once encrypted, a RELOAD re-locks the device (main.ts's plain-DOM gate
+ * runs before Angular/bootstrapApplication - see unlock-form.ts), the wrong passphrase is
+ * rejected with an on-screen error rather than silently, and the right one unlocks with the
+ * data intact. Runs last among the FULL checks and disables encryption again before returning
+ * (on top of idbClearAll()'s own belt-and-braces removal of the marker) so nothing after it in
+ * the same profile/run ever hits a lock screen unexpectedly.
+ */
+async function checkDeviceEncryption() {
+  console.log('\nMission > Data safety: opt-in device encryption (E-122 Phase 2b)')
+  const PASS = 'e2e-correct-horse-battery'
+
+  await goto('/mission')
+  await evaluate(`localStorage.clear()`)
+  await idbClearAll()
+  await idbSetRaw('rangers', JSON.stringify({ schemaVersion: 1, rangers: [{ callsign: 'ENCE2E1', fullName: 'Encryption Fixture' }] }))
+  await goto('/mission')
+
+  // A fresh backup is the gate on "Enable" (maintainer's decision 1: any backup, plain or
+  // passphrase-protected, counts) - blank passphrase here, same as every other check that
+  // clicks this button with an empty dialog queue (see queueDialogs()'s own comment).
+  await evaluate(`[...document.querySelectorAll('button')].find(b => /Back up mission/i.test(b.textContent))?.click()`)
+  await sleep(1200)
+
+  // confirm() -> OK, prompt() (passphrase) -> PASS, prompt() (confirm passphrase) -> PASS -
+  // exactly onBtnEnableEncryption()'s three dialogs, in that order.
+  queueDialogs(true, PASS, PASS)
+  await evaluate(`[...document.querySelectorAll('button')].find(b => /Turn on device encryption/i.test(b.textContent))?.click()`)
+
+  // Poll rather than a flat sleep: enableEncryption() derives a fresh PBKDF2 key (310,000
+  // iterations) before it re-encrypts anything, and that alone can outrun a short fixed wait
+  // on a loaded machine - the same "async storage: pass-then-fail" flake class this suite's
+  // pollUntil() exists for elsewhere.
+  const enabledUi = await pollUntil(
+    () => evaluate(`!![...document.querySelectorAll('button')].find(b => /Turn off device encryption/i.test(b.textContent))`),
+    v => v === true)
+  check('Mission > Data safety shows encryption as on after Enable', enabledUi, true)
+
+  const rosterRawEncrypted = await pollUntil(() => idbGetRaw('rangers'), raw => !!raw && !String(raw).includes('ENCE2E1'))
+  check('the roster in IndexedDB no longer contains the plaintext callsign once encrypted',
+    !!rosterRawEncrypted && !rosterRawEncrypted.includes('ENCE2E1'), true)
+
+  // A reload clears the in-memory key - main.ts's unlock gate must appear BEFORE Angular
+  // boots, as a plain (non-Angular) DOM element outside the app shell.
+  await goto('/mission')
+  const gateShown = await evaluate(`!!document.getElementById('rt-unlock-passphrase')`)
+  check('reloading an encrypted device shows the plain-DOM unlock gate', gateShown, true)
+
+  // Wrong passphrase: typed, submitted, rejected with an on-screen, announced error - and the
+  // gate stays up (no lockout, but also no way through without the right passphrase).
+  await evaluate(`(() => {
+    const input = document.getElementById('rt-unlock-passphrase');
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(input, 'wrong passphrase entirely');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('.rt-unlock__card').requestSubmit();
+  })()`)
+  await sleep(400)
+  const wrongPassError = await evaluate(`document.getElementById('rt-unlock-error')?.textContent || ''`)
+  check('a wrong passphrase shows an on-screen error', wrongPassError.length > 0, true)
+  check('the unlock gate stays up after a wrong passphrase (no lockout, no way through)',
+    await evaluate(`!!document.getElementById('rt-unlock-passphrase')`), true)
+
+  // Right passphrase: the gate comes down and Angular boots with the roster intact.
+  await evaluate(`(() => {
+    const input = document.getElementById('rt-unlock-passphrase');
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(PASS)});
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('.rt-unlock__card').requestSubmit();
+  })()`)
+  const unlocked = await pollUntil(() => evaluate(`!document.getElementById('rt-unlock-passphrase')`), v => v === true)
+  check('the right passphrase unlocks and removes the gate', unlocked, true)
+
+  await sleep(1500) // Angular bootstrapping + RecordStore.load()/decrypt
+  await navigateInApp('Rangers')
+  const rosterIntact = await evaluate(`document.body.textContent.includes('ENCE2E1')`)
+  check('the roster is intact and readable again after unlocking', rosterIntact, true)
+
+  // Leave the device unencrypted again - see this function's own doc comment on why. Reached
+  // by CLICKING the nav (navigateInApp), not a reload: this session is already unlocked (the
+  // key is live in RecordStore), and a goto() reload here would re-lock the device behind the
+  // gate before Mission's own "Turn off" button ever exists to click.
+  await navigateInApp('Mission')
+  queueDialogs(true, PASS)
+  await evaluate(`[...document.querySelectorAll('button')].find(b => /Turn off device encryption/i.test(b.textContent))?.click()`)
+  const disabledUi = await pollUntil(
+    () => evaluate(`!![...document.querySelectorAll('button')].find(b => /Turn on device encryption/i.test(b.textContent))`),
+    v => v === true)
+  check('Mission > Data safety shows encryption as off again after Disable', disabledUi, true)
+
+  await goto('/mission'); await evaluate(`localStorage.clear()`); await idbClearAll()
+}
+
 // ── runner ───────────────────────────────────────────────────────────────────
 
 function findChrome() {
@@ -2203,7 +2319,12 @@ async function main() {
         consoleErrors.push(m.params.args.map(a => a.value ?? a.description).join(' '))
       } else if (m.method === 'Page.javascriptDialogOpening') {
         dialogs.push(m.params.message.split('\n')[0].slice(0, 100))
-        await send('Page.handleJavaScriptDialog', { accept: true })
+        // See queueDialogs()'s own comment: an empty queue is the original, unconditional
+        // accept - only a check that explicitly queued responses gets different handling.
+        const next = dialogQueue.length ? dialogQueue.shift() : true
+        if (next === false) await send('Page.handleJavaScriptDialog', { accept: false })
+        else if (typeof next === 'string') await send('Page.handleJavaScriptDialog', { accept: true, promptText: next })
+        else await send('Page.handleJavaScriptDialog', { accept: true })
       }
     }
 
@@ -2280,8 +2401,9 @@ async function main() {
         await checkMissionRoundTrip(downloads)
         await checkReportPacketRoundTrip(downloads)
         await checkSampleMissionLoads()
+        await checkDeviceEncryption()
       } else {
-        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkSampleMissionLoads (pass --full to include)')
+        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkSampleMissionLoads, checkDeviceEncryption (pass --full to include)')
       }
       await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
     }

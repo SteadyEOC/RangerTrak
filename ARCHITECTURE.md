@@ -186,26 +186,35 @@ those and should be regenerated rather than edited. `favicon.svg` is a deliberat
 simplified drawing rather than the mark scaled down: at 16px the full mark's three waves merge
 into a smudge and the pin ring closes up.
 
-## Encryption: exports today, storage later
+## Encryption: exports, and now storage too
 
-**Phase 1 shipped in 0.94.0: a mission backup can now be encrypted on its way out.**
-Everything still *at rest* remains in the clear. The roster is the sensitive part (legal
-names, personal phone numbers, photos, and call signs that resolve to public licence
-records), and field reports can contain PII about missing persons.
+**Phase 1 shipped in 0.94.0: a mission backup can be encrypted on its way out.** The roster is
+the sensitive part (legal names, personal phone numbers, photos, and call signs that resolve
+to public licence records), and field reports can contain PII about missing persons.
 
-**Phase 2a (E-122) has since moved where "at rest" lives.** The roster, field reports and
-locations - `RangerService`, `RadioLogService`, `MissionLocationService` - now live in
-IndexedDB (`shared/storage/record-store.ts`, database `rangertrak-records`) behind
-`RecordStore`, a synchronous in-memory cache over an async IndexedDB store, instead of
-directly in `localStorage`. Mission settings (`appSettings`) and every UI-preference key stay
-on `localStorage` - they hold no roster PII. **This is a storage move, not encryption. The
-data is still in the clear** - it just lives in a different browser storage mechanism, on the
-way to Phase 2b below, which encrypts it.
+**Phase 2a (E-122) moved where "at rest" lives.** The roster, field reports and locations -
+`RangerService`, `RadioLogService`, `MissionLocationService` - live in IndexedDB
+(`shared/storage/record-store.ts`, database `rangertrak-records`) behind `RecordStore`, a
+synchronous in-memory cache over an async IndexedDB store, instead of directly in
+`localStorage`. Mission settings (`appSettings`) and every UI-preference key stay on
+`localStorage` - they hold no roster PII. That move was storage only, not encryption; it paid
+for the async write path Phase 2b below needed.
 
-That the roster still sits in the clear is deliberate rather than half-finished, and the
-reason is in "The hard parts" below: encrypting storage forces every service's write path
-async, which is a refactor - now paid for by Phase 2a's IndexedDB move; encrypting a file on
-its way out is not. Files are also what actually leave the device.
+**Phase 2b (opt-in, shipped): the roster and field reports can now be encrypted at rest, on
+this device.** Mission → Data safety → **Device encryption** turns it on with a passphrase.
+Turned on, `RecordStore` encrypts `rangers`/`radioLog`/`radioLog-BAD` (AES-GCM-256, a fresh IV
+per write) right before each IndexedDB write and decrypts right after each read - the
+in-memory `Map` every service reads/writes stays plaintext throughout, so no service changed.
+Ranger photos (`ranger-photo.service.ts`, a separate database) are encrypted under the same
+session key. `locations` and every `localStorage`-only key stay in the clear, unaffected -
+see "Design sketch" and "The hard parts" below for why, and `shared/storage/
+record-encryption.ts` for the actual primitives (a plaintext marker record with a PBKDF2 salt/
+iteration count and an AES-GCM-encrypted verifier; the derived key is a non-extractable
+`CryptoKey` held in memory only, for the session).
+
+Turning it on or off, and the plain-DOM passphrase form `main.ts` shows before Angular boots
+when the device is locked, are covered in the Help/FIELD-GUIDE copy for operators - this
+section stays about the design.
 
 ### What shipped (Phase 1)
 
@@ -266,7 +275,8 @@ actually defends against here is narrow, and worth being honest about:
 2. **A forgotten passphrase destroys the mission record, permanently.** With no server
    there is no escrow and no reset. For a life-safety tool that failure mode may be worse
    than the exposure it prevents, so it must be designed for deliberately: keep encryption
-   **opt-in per device**, and require an unencrypted export before enabling it.
+   **opt-in per device**, and require any fresh backup - plain or passphrase-protected,
+   either counts - before enabling it, so there is always a way back.
 3. **Unlock friction must never land during a callout.** Same rule as the API-key
    principle: surface setup during mission preparedness, not when someone is on the radio
    waiting. A locked app that a scribe cannot open mid-incident is a worse outcome than an
@@ -284,9 +294,9 @@ actually defends against here is narrow, and worth being honest about:
   blob, which is a different UX question, and the backup already contains that data.
 - **Phase 2a — ✅ moved the roster, field reports and locations off `localStorage` onto
   IndexedDB** (`RecordStore`, see above) - unencrypted still, but the storage refactor
-  encryption needs is now done.
-- **Phase 2b — encrypted at rest**, tied to the IndexedDB migration so the async change is
-  paid for once.
+  encryption needed was now done.
+- **Phase 2b — ✅ opt-in encryption at rest**, tied to the IndexedDB migration so the async
+  change was paid for once. See above.
 - **Phase 3 — per-mission keys**, if agencies ask for separation between missions.
 
 ## Service worker and app updates

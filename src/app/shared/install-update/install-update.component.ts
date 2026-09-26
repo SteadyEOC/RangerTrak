@@ -3,6 +3,9 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core'
 import { RouterLink } from '@angular/router'
 
 import { InstallableService, UpdateService } from '../services'
+// E-122 Phase 2b: reload clears the in-memory encryption key (main.ts derives it fresh at
+// unlock, and nothing persists it) - see the getter below for why this pill needs to know.
+import { RecordStore } from '../storage/record-store'
 
 /**
  * E-55: RangerTrak used to offer "install this app" and "a new version is ready" through
@@ -79,10 +82,22 @@ export class InstallUpdateComponent {
 
   constructor(
     private installableService: InstallableService,
-    private updateService: UpdateService) { }
+    private updateService: UpdateService,
+    private recordStore: RecordStore) { }
 
   get updateReady(): boolean {
     return this.updateService.updateReady()
+  }
+
+  /**
+   * E-122 Phase 2b: whether reloading for this update will ask for the device passphrase
+   * again. Reload clears the in-memory key the same way it clears everything else in memory -
+   * there is nothing E-43-specific here, it is just the first place that matters enough to
+   * say so out loud, since a scribe mid-mission should not be surprised by a lock screen they
+   * did not expect.
+   */
+  get willAskForPassphrase(): boolean {
+    return this.recordStore.isEncryptionEnabled()
   }
 
   get installable(): boolean {

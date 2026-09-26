@@ -4,10 +4,16 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output, signal } from
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import {
-  BackupService, LogService, SampleDataService, StoragePersistenceService
+  BackupService, LogService, RangerPhotoService, SampleDataService, StoragePersistenceService
 } from '../../../shared/services/'
 // Direct path, not the barrel above - see the note in rangers.component.ts.
 import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../../../shared/services/sample-data.service'
+// E-122 Phase 2b: the DI wrapper, not the module-level singleton - see record-store.ts's own
+// comment on why this is the one Angular consumer that reaches encryption this way.
+import { RecordStore } from '../../../shared/storage/record-store'
+
+/** Enable requires a backup finished within this long - see BackupService.lastBackupCompletedAt. */
+const FRESH_BACKUP_WINDOW_MS = 10 * 60 * 1000
 
 /**
  * Data safety (Storage Protection, Mission Backup) and the page's Danger Zone (reset
@@ -45,11 +51,128 @@ export class MissionAdvancedOptionsComponent {
     private backupService: BackupService,
     private sampleDataService: SampleDataService,
     public storagePersistence: StoragePersistenceService,
+    private recordStore: RecordStore,
+    private rangerPhotoService: RangerPhotoService,
     private log: LogService) { }
 
   onBtnRequestPersistence() {
     this.log.verbose('onBtnRequestPersistence: re-requesting persistent storage.', this.id)
     this.storagePersistence.requestPersistence()
+  }
+
+  // ── E-122 Phase 2b: device encryption ──────────────────────────────────
+
+  /** Whether this device currently encrypts the roster and field reports at rest. */
+  encryptionEnabled(): boolean {
+    return this.recordStore.isEncryptionEnabled()
+  }
+
+  /**
+   * Whether "Enable encryption" is allowed to run right now: a backup (plain or
+   * passphrase-protected - either counts, per the maintainer's 2026-09-26 decision) must have
+   * finished in THIS session within the last ~10 minutes. Enabling without one risks a typo'd
+   * passphrase destroying the only copy of the mission with nothing to fall back to.
+   */
+  hasFreshBackup(): boolean {
+    const at = this.backupService.lastBackupCompletedAt()
+    return at !== null && (Date.now() - at) <= FRESH_BACKUP_WINDOW_MS
+  }
+
+  /**
+   * Mission > Data safety's "Enable device encryption". Gates on a fresh backup, then asks for
+   * the passphrase twice with a plain-words warning that losing it loses the data for good -
+   * same pattern as onBtnExportMission()'s passphrase prompt, for the same reason: a typo here
+   * is not discovered until the day someone needs the data back.
+   */
+  async onBtnEnableEncryption(): Promise<void> {
+    if (this.encryptionEnabled()) return
+
+    if (!this.hasFreshBackup()) {
+      alert(`Back up this mission first.\n\n`
+        + `Enabling encryption needs a backup finished in the last 10 minutes (plain or `
+        + `passphrase-protected, either works) - otherwise a mistyped passphrase could `
+        + `destroy the only copy of this mission with nothing to restore from.\n\n`
+        + `Use "Back up mission" above, then try this again.`)
+      this.log.verbose('onBtnEnableEncryption: no fresh backup this session.', this.id)
+      return
+    }
+
+    if (!confirm(`Turn on device encryption?\n\n`
+      + `This encrypts the roster, field reports and ranger photos stored on THIS device. `
+      + `You will set a passphrase next.\n\n`
+      + `If you forget it, this data is gone for good - there is no reset, no support `
+      + `address, and no way to recover it. It only protects a lost or stolen device or a `
+      + `shared browser; it does nothing while the app is open and unlocked, same as any lock `
+      + `screen.`)) {
+      this.log.verbose('onBtnEnableEncryption: user cancelled.', this.id)
+      return
+    }
+
+    const passphrase = prompt('Choose a passphrase for this device.\n\n'
+      + 'Write it down somewhere safe outside this app - there is no hint and no recovery.')
+    if (!passphrase) {
+      this.log.verbose('onBtnEnableEncryption: cancelled at the passphrase prompt.', this.id)
+      return
+    }
+    if (prompt('Type the same passphrase again to confirm it.') !== passphrase) {
+      alert('Those did not match. Encryption was not turned on - start again.')
+      this.log.warn('onBtnEnableEncryption: passphrase confirmation did not match.', this.id)
+      return
+    }
+
+    try {
+      await this.recordStore.enableEncryption(passphrase)
+      const key = this.recordStore.getEncryptionKey()
+      if (key) await this.rangerPhotoService.encryptAll(key)
+      this.log.warn('Device encryption turned on: roster, field reports and photos are now encrypted at rest.', this.id)
+      alert('Device encryption is on. You will be asked for this passphrase on your next visit '
+        + 'and after every app update.')
+    } catch (error: any) {
+      this.log.error(`onBtnEnableEncryption: failed: ${error.message}`, this.id)
+      alert(`Could not turn on encryption: ${error.message}`)
+    }
+  }
+
+  /**
+   * Mission > Data safety's "Disable device encryption". Asks for the passphrase to verify it
+   * (rather than trusting the already-unlocked session key), matching the spirit of every
+   * other destructive/security-sensitive action on this page confirming explicitly first.
+   */
+  async onBtnDisableEncryption(): Promise<void> {
+    if (!this.encryptionEnabled()) return
+
+    if (!confirm(`Turn off device encryption?\n\n`
+      + `The roster, field reports and ranger photos on this device go back to being stored `
+      + `unencrypted, exactly as before.`)) {
+      this.log.verbose('onBtnDisableEncryption: user cancelled.', this.id)
+      return
+    }
+
+    const passphrase = prompt('Enter this device\'s passphrase to confirm.')
+    if (passphrase === null) {
+      this.log.verbose('onBtnDisableEncryption: cancelled at the passphrase prompt.', this.id)
+      return
+    }
+
+    const key = await this.recordStore.verifyPassphrase(passphrase)
+    if (!key) {
+      alert('Wrong passphrase. Encryption was not turned off.')
+      this.log.warn('onBtnDisableEncryption: wrong passphrase.', this.id)
+      return
+    }
+
+    try {
+      // Photos first: decryptAll() needs to read their still-encrypted bytes back out of
+      // IndexedDB, which only works while RecordStore still reports a key - see
+      // RangerPhotoService.decryptAll()'s own comment on why the order matters here.
+      await this.rangerPhotoService.decryptAll(key)
+      await this.recordStore.disableEncryption()
+      this.log.warn('Device encryption turned off: roster, field reports and photos are stored unencrypted again.', this.id)
+      alert('Device encryption is off.')
+    } catch (error: any) {
+      this.log.error(`onBtnDisableEncryption: failed: ${error.message}`, this.id)
+      alert(`Could not turn off encryption: ${error.message}`)
+    }
   }
 
   /**

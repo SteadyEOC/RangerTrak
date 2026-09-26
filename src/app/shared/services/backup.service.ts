@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'
+import { Injectable, signal } from '@angular/core'
 import { EncryptedFile, decryptJson, encryptJson, isEncryptedFile } from '../crypto/encrypted-file'
 
 import * as packageJson from '../../../../package.json'
@@ -45,6 +45,17 @@ export const MISSION_EXPORT_SCHEMA_VERSION = 1
 export class BackupService {
 
   private id = 'Backup Service'
+
+  /**
+   * E-122 Phase 2b: when a backup (plain OR passphrase-protected - either counts, per the
+   * maintainer's 2026-09-26 answer) last finished this session, as `Date.now()`. Mission >
+   * Data safety's "Enable encryption" reads this to require a backup taken within the last
+   * ~10 minutes before it will proceed - enabling encryption without one risks a passphrase
+   * typo destroying the only copy of the mission. Session-only and unpersisted on purpose: a
+   * backup from a previous session says nothing about whether CURRENT, unsaved changes are
+   * covered.
+   */
+  readonly lastBackupCompletedAt = signal<number | null>(null)
 
   constructor(
     private missionService: MissionService,
@@ -112,6 +123,7 @@ export class BackupService {
 
     this.log.info(`Exported mission to ${filename}`
       + `${encrypted ? ' (encrypted)' : ' (NOT encrypted)'}`, this.id)
+    this.lastBackupCompletedAt.set(Date.now())
   }
 
   /**
