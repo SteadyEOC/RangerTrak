@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.2](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.1...v0.96.2) (2026-09-26)
+
+
+### Features
+
+* **radio-log:** print the ICS-309 on the standard form layout ([fa82f75](https://github.com/SteadyEOC/RangerTrak/commit/fa82f75394b8d6340c10ba8cd02fd24938f864dd))
+
 ### [0.96.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.0...v0.96.1) (2026-09-25)
 
 
