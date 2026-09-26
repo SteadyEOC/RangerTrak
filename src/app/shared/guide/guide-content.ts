@@ -97,7 +97,7 @@ const YOUR_DATA: GuideTab = {
   blocks: [
     {
       heading: 'Where it lives',
-      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login, and nothing you type is sent anywhere — unless you turn on Command Post Server publishing yourself (on the Mission page), which is off by default. See "Command Post Server" on the Mission page for exactly what that sends and to whom.'
+      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login. Your mission is sent nowhere unless you choose to: looking up an address, sending feedback, or turning on Command Post Server publishing yourself (on the Mission page), which is off by default. See "Command Post Server" on the Mission page for exactly what that sends and to whom.'
     },
     {
       heading: 'What that means',

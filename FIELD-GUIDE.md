@@ -12,7 +12,8 @@ avoids implementation detail.*
 
 RangerTrak records **who is where, when, and in what condition** during a mission, and
 plots it on a map. It runs entirely in your browser on your own device. There is no
-server, no account, and no login — nothing you type is sent anywhere. It is free and open
+server, no account, and no login — your mission is sent nowhere unless you choose to,
+for example by looking up an address. It is free and open
 source, so you can copy it, change it, and keep running it for as long as you like.
 
 | Page | What it's for |
