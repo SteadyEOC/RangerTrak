@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.7](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.6...v0.96.7) (2026-09-26)
+
+
+### Features
+
+* **cla:** put the CLA in force and fix the allowlist to real GitHub logins (ADR-0006) ([90b4169](https://github.com/SteadyEOC/RangerTrak/commit/90b4169e6b1f402bb8cee0e46a8ec2ac737a7f62))
+
+
+### Bug Fixes
+
+* **help:** restore missing spaces between linked page names and button names ([66e5363](https://github.com/SteadyEOC/RangerTrak/commit/66e53635513202ecc5adf48f0a5f901686b17f5f))
+* **radio-log:** give the sections below the log card borders and real headings ([#237](https://github.com/SteadyEOC/RangerTrak/issues/237)) ([e12f718](https://github.com/SteadyEOC/RangerTrak/commit/e12f718aa4c23c1540200479d439eac2e32601ea))
+* **storage:** enable/disable encryption fail loudly on a failed write instead of stranding records (E-122 Phase 2b) ([f4cf4d5](https://github.com/SteadyEOC/RangerTrak/commit/f4cf4d5ceb0965bc1cd51c8d74e7c43349c093c5))
+* **storage:** honest messages when encryption turns on only partly ([3332f28](https://github.com/SteadyEOC/RangerTrak/commit/3332f28461c644e7d7d9262716a22286e10f4123))
+
 ### [0.96.6](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.5...v0.96.6) (2026-09-26)
 
 
