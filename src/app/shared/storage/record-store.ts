@@ -241,10 +241,14 @@ class RecordStoreImpl {
     if (!this.marker) throw new Error('Encryption is not enabled on this device.')
     this.marker = undefined
     this.key = undefined
-    this.queueWrite(ENCRYPTION_MARKER_KEY, null)
+    // Records first, marker LAST: drain() writes in queue order, so if the page dies partway
+    // through, the marker is still there and the next boot still asks for the passphrase and
+    // decrypts whatever is left encrypted. The other order could strand encrypted records
+    // with no marker - no unlock prompt, no key, and the data unreadable for good.
     for (const k of ENCRYPTED_KEYS) {
       if (this.map.has(k)) this.setItem(k, this.map.get(k)!)
     }
+    this.queueWrite(ENCRYPTION_MARKER_KEY, null)
     await this.flush()
   }
 

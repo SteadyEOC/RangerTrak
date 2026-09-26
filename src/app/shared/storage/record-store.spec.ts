@@ -38,6 +38,27 @@ describe('RecordStore', () => {
     });
   }
 
+  /** Writes a key straight into IndexedDB, independent of RecordStore's own internals - the
+   *  raw-IDB counterpart to `readRawFromIdb()` above. Used to seed the mixed plaintext/
+   *  encrypted state a real crash mid-disableEncryption()/enableEncryption() could leave
+   *  behind, without going through RecordStore's own encrypt/decrypt path to get there. */
+  function writeRawToIdb(key: string, value: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME);
+      // Same rule as readRawFromIdb(): never create the database from a test writer - the
+      // store must already exist (an earlier enableEncryption()/flush() in the same test).
+      req.onupgradeneeded = () => req.transaction!.abort();
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(value, key);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
   beforeEach(async () => {
     localStorage.clear();
     await recordStore.resetForTests();
@@ -411,6 +432,56 @@ describe('RecordStore', () => {
 
     it('disableEncryption() throws if encryption is not enabled', async () => {
       await expectAsync(recordStore.disableEncryption()).toBeRejected();
+    });
+
+    /**
+     * A crash partway through enableEncryption()/disableEncryption() leaves the `kv` store in
+     * a mix of encrypted and still-plaintext ENCRYPTED_KEYS records, still under a marker (see
+     * the crash-safe ordering test below). `decryptIfNeeded()` has to tell an encrypted record
+     * from a plaintext one PER RECORD (isEncryptedEnvelope()), not by asking the marker - see
+     * record-encryption.ts's own header comment ("self-describing records, not marker-driven
+     * decisions"). These tests seed that mixed state directly in IndexedDB, bypassing
+     * RecordStore's own write path, and confirm load() already relies on that per-record check.
+     */
+    it('load() returns both an encrypted record and a still-plaintext one intact under the same marker', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      await recordStore.flush();
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER); // genuinely encrypted on disk
+
+      // Simulate a crash mid-disableEncryption(): radioLog already rewritten plaintext (the
+      // records-first half of that ordering), but the marker delete never ran.
+      await writeRawToIdb('radioLog', RADIO_LOG);
+
+      // Next "session": drop the in-memory key/marker, the way a reload would.
+      (recordStore as any).key = undefined;
+      (recordStore as any).marker = undefined;
+
+      expect(await recordStore.checkEncryption()).toBe(true);
+      expect(await recordStore.unlock(PASS)).toBe(true);
+      await recordStore.load();
+
+      expect(recordStore.getItem('rangers')).toBe(ROSTER);
+      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG);
+    });
+
+    it('crash-safe order: if the marker delete fails, records already sit in the clear but the marker survives', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      await recordStore.flush();
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+
+      // Simulates the process dying right as disableEncryption()'s drain() reaches the
+      // marker's own queued delete - by then every ENCRYPTED_KEYS record ahead of it in the
+      // same queue (see disableEncryption()'s own comment on ordering) has already been
+      // written in the clear. drain() catches and logs a per-entry failure rather than
+      // throwing, so disableEncryption() itself still resolves.
+      spyOn(IDBObjectStore.prototype as any, 'delete').and.throwError('simulated crash deleting the marker');
+
+      await recordStore.disableEncryption();
+
+      expect(await readRawFromIdb('rangers')).toBe(ROSTER);
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).not.toBeNull();
     });
   });
 });
