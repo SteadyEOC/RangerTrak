@@ -45,10 +45,17 @@
   color          : var(--rt-ink-2);
 }
 
-.copyLeft:hover,
-.copyLeft:focus-visible {
-  color          : var(--rt-accent);
+// E-120: .copyLeft itself is a plain <span> now (it used to be the link, out to a
+// steadyeoc.com page that doesn't exist) - only the "rangertrak.com" text inside it links
+// anywhere, so the hover/focus accent moves onto that inner <a> instead of the whole line.
+.copyLeft a {
+  color          : inherit;
   text-decoration: underline;
+}
+
+.copyLeft a:hover,
+.copyLeft a:focus-visible {
+  color          : var(--rt-accent);
 }
 
 // 2026-08-21: replaces the old bare `div` float layout. `rangertrak-install-update` is a

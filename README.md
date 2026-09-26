@@ -127,8 +127,9 @@ Details, testing and release process in [DEVELOPING.md](DEVELOPING.md).
 
 ## 🌐 SteadyEOC
 
-RangerTrak is a free, open-source project from [SteadyEOC](https://steadyeoc.com). We'd
-love to hear how you use RangerTrak and what you need from it.
+RangerTrak is a free, open-source project from SteadyEOC - see
+[rangertrak.com](https://rangertrak.com). We'd love to hear how you use RangerTrak and what
+you need from it.
 
 ## 🗣️ Feedback & contribution
 
