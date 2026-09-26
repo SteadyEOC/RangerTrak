@@ -97,7 +97,7 @@ const YOUR_DATA: GuideTab = {
   blocks: [
     {
       heading: 'Where it lives',
-      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login. Your mission is sent nowhere unless you choose to: looking up an address, sending feedback, or turning on Command Post Server publishing yourself (on the Mission page), which is off by default. See "Command Post Server" on the Mission page for exactly what that sends and to whom.'
+      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login. Your mission stays on this device. When online, the app fetches map images and looks up addresses for report locations automatically. Sending feedback, and turning on Command Post Server publishing yourself (on the Mission page, off by default), only happen if you choose to. See "Command Post Server" on the Mission page for exactly what that sends and to whom, and https://rangertrak.com/privacy.html for the full privacy policy.'
     },
     {
       heading: 'What that means',

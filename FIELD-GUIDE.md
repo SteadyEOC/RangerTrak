@@ -12,9 +12,11 @@ avoids implementation detail.*
 
 RangerTrak records **who is where, when, and in what condition** during a mission, and
 plots it on a map. It runs entirely in your browser on your own device. There is no
-server, no account, and no login — your mission is sent nowhere unless you choose to,
-for example by looking up an address. It is free and open
-source, so you can copy it, change it, and keep running it for as long as you like.
+server, no account, and no login — your mission stays on this device. When online, the
+app fetches map images and looks up addresses for report locations. See
+[RangerTrak's privacy policy](https://rangertrak.com/privacy.html) for the full picture.
+It is free and open source, so you can copy it, change it, and keep running it for as
+long as you like.
 
 | Page | What it's for |
 | --- | --- |
@@ -139,6 +141,11 @@ difference between a working tool and a blank screen.
 Look for the **Install** button in the top-right of the header. Installing gives you a
 proper icon, a window without browser clutter, and makes the device far more likely to
 keep your data.
+
+On an iPhone or iPad, do this *before* setting up a mission. An installed (Home Screen)
+app keeps its own storage, separate from Safari's — a mission started in a Safari tab
+will not appear once you install. If you already started in Safari, use **Back up
+mission** there, then **Restore mission** in the installed app.
 
 **2. Ask the browser to protect your data.**
 On the **Mission** page, find the **Data safety** card and check the storage status. If it
