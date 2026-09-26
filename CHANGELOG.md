@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.3](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.2...v0.96.3) (2026-09-26)
+
+
+### Features
+
+* **demo:** spread the Grand Canyon demo over real ground, with one main team ([2325477](https://github.com/SteadyEOC/RangerTrak/commit/23254772d69bfdb8ba7d4e6664dc4a73cad1a975))
+
 ### [0.96.2](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.1...v0.96.2) (2026-09-26)
 
 
