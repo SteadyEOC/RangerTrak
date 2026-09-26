@@ -129,15 +129,7 @@ export class TimePickerComponent implements OnInit, OnChanges {
     @Inject(DOCUMENT) private document: Document) {
     this.log.excessive(`======== Constructor() ============`, this.id)
 
-    // BUG: maybe should be in EntryComponent.ts instead? as locationFrmGrp is there...
-    // new values here bubble up as emitted events - see onNewLocation()
-    // ! Same code just below too
-    // this version just to avoid not-defined error...
-    // this.timepickerFormGroup = this._formBuilder.group({
-    //   time: [this.time]
-    // })
-
-    // REVIEW: Min/Max times ignored?!
+    // REVIEW: min/max are hardcoded here rather than configurable - see TODO below.
     // TODO: These should get passed in
     this._setMinDate(10) // no times early than 10 hours ago
     this._setMaxDate(1)  // no times later than 1 hours from now

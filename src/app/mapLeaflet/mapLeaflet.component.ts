@@ -119,13 +119,11 @@ function formatBytes(bytes: number): string {
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [
     './mapLeaflet.component.scss'
-    //,     "../../../node_modules/leaflet.markercluster/dist/MarkerCluster.css", // REVIEW: also added to angular.json: needed there?
-    // "../../../node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css" // (not needed if you use your own iconCreateFunction instead of the default one)
-    //'../../../node_modules/leaflet/dist/leaflet.css' // only seems to work when embedded in angular.json & Here! (chgs there REQUIRE restart!)
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   // Deliberately NOT providing MissionService: it is providedIn:'root' and a second
-  // instance here would diverge from everyone else's. See BUG-2 in entry.component.ts.
+  // instance here would diverge from everyone else's - see entry.component.ts's own
+  // fixed-2026-08-19 note on the same historical mistake.
 })
 export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit, OnDestroy {  //OnInit,
 
@@ -234,7 +232,14 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     super.ngOnInit()
     this.log.excessive("ngOnInit()", this.id)
 
-    this.initMainMap()  //! REVIEW: Causes LOTS of "mapLeaflet:1 Uncaught (in promise) {message: 'A listener indicated an asynchronous response by r…age channel closed before a response was received'}" May need to wait, or ?????
+    // #81 finding (real, open - see the roadmap list): this used to be blamed for a
+    // "mapLeaflet:1 Uncaught (in promise) {message: 'A listener indicated an asynchronous
+    // response by returning true, but the message channel closed before a response was
+    // received'}" console error seen twice in this file. That exact wording is a well-known
+    // Chrome EXTENSION message-passing warning (password managers/ad-blockers intercepting
+    // runtime.sendMessage), essentially never caused by page code - worth reconfirming in a
+    // clean profile with no extensions before assuming initMainMap() is the source.
+    this.initMainMap()
 
     this.lMap.addLayer(this.locationsLayer)
     this.refreshLocationMarkers()
@@ -411,8 +416,6 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     })
 
-    // TODO!
-    //! REVIEW: Causes LOTS of "mapLeaflet:1 Uncaught (in promise) {message: 'A listener indicated an asynchronous response by r…age channel closed before a response was received'}" May need to wait, or ?????
     // Raised live 2026-08-30: default base layer is OpenTopoMap (contours), not OSM - see
     // openTopoTiles.addTo() below, which replaces this call. `tiles` (OSM) is still built
     // and offered in the layer switcher, just no longer the one shown on first load.
@@ -1045,8 +1048,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   override displayMarkers() {
     super.displayMarkers()
 
-
-    // REVIEW: wipes out any manually dropped markers. Could save 'em, but no request for that...
+    // "Manually dropped markers" (the concern this comment used to raise) were never actually
+    // built - onMouseClick()'s `allowManualPinDrops` branch (shared/mapping/map.ts) is still an
+    // unimplemented stub - and the real need it anticipated is now served by Locations (ADR
+    // D-49), which lives in its own separate locationsLayer and isn't touched by this redraw.
     if (!this.displayedRadioLogEntries) {
       this.log.error(`displayAllMarkers did not find field reports to display`, this.id)
       return

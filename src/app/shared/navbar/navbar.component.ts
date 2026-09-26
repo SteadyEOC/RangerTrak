@@ -90,15 +90,6 @@ export class NavbarComponent implements OnInit {
         }
       }
     )
-
-    /* REVIEW: unused?!
-    const topAppBarElement = document.querySelector('.mdc-top-app-bar')
-    if (!topAppBarElement) {
-      console.warn("Navbar Component: no topAppBarElement")
-      return
-    }
-    const topAppBar = new MDCTopAppBar(topAppBarElement)
-    */
   }
 
   ngOnInit(): void {

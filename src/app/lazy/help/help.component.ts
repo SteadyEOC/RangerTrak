@@ -51,7 +51,8 @@ import { HelpFaqComponent } from './tabs/help-faq.component'
   styleUrls: ['./help.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   // Deliberately NOT providing MissionService: it is providedIn:'root' and a second
-  // instance here would diverge from everyone else's. See BUG-2 in entry.component.ts.
+  // instance here would diverge from everyone else's - see entry.component.ts's own
+  // fixed-2026-08-19 note on the same historical mistake.
 })
 export class HelpComponent implements OnDestroy {
 

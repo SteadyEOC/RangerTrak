@@ -64,7 +64,8 @@ L.Marker.prototype.options.icon = iconDefault;
     '../../../node_modules/leaflet/dist/leaflet.css'], // only seems to work when embedded in angular.json & Here! (chgs there REQUIRE restart!)]
   changeDetection: ChangeDetectionStrategy.Eager,
   // Deliberately NOT providing MissionService: it is providedIn:'root' and a second
-  // instance here would diverge from everyone else's. See BUG-2 in entry.component.ts.
+  // instance here would diverge from everyone else's - see entry.component.ts's own
+  // fixed-2026-08-19 note on the same historical mistake.
 })
 export class MiniMapLeafletComponent extends AbstractMap implements OnInit, AfterViewInit, OnDestroy {
 
@@ -188,7 +189,11 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     this.log.verbose(`======== Constructor() ============, using https://www.LeafletJS.com version ${L.version}`, this.id)
 
     this.hasOverviewMap = false
-    this.displayReports = true  //! Hides ALL markers, not just all reports???
+    this.displayReports = true
+    // #81 finding: see displayMarkers()'s own comment below - combined with
+    // displayReports=true above, this currently means the mini-map's report markers never
+    // actually render (displayedRadioLogEntries stays permanently empty). Worth confirming
+    // intent before touching either flag.
     this.hasSelectedReports = false
     // per https://stackoverflow.com/a/71574063/18004414 & https://github.com/Leaflet/Leaflet/issues/8451
     this.myMarkerCluster = new window.L.MarkerClusterGroup()
@@ -277,8 +282,8 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
   }
 
   override initMainMap() {
-    //!Gets: Leaflet MiniMap Component: InitMap(): map not a leaflet or google map - ignoring as uninitialized?  i.e., this.map is NOT yet an instance of MapLeaflet...
-    // ! REVIEW: Does this make a copy (that devolves) or a reference (always in sync)
+    // A reference, not a copy - L.Map is a class instance, and JS/TS assignment of an object
+    // always assigns the reference. Always in sync with this.lMap by construction.
     this.map = this.lMap
     super.initMainMap()
 
@@ -351,8 +356,9 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     hillshadeOverlay.addTo(this.lMap)
     // !debugger
     if (this.displayReports && this.radioLog) {
-      // ! REVIEW: need to see which way switch is set and maybe set: displayedRadioLogEntries 1st....
-      // maybe do this further down?!
+      // No All/selected switch exists on this map (hasSelectedReports = false, above), so
+      // there's no "which way is it set" to check here - see displayMarkers()'s own #81
+      // comment for the actual open question this map still has.
       this.displayMarkers()
       const b = this.radioLog.bounds
       // bounds is stored as a plain, serializable BoundsType - Leaflet takes [SW, NE]
@@ -565,11 +571,17 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
   override displayMarkers() {
     super.displayMarkers()
 
-    // REVIEW: wipes out any manually dropped markers. Could save 'em, but no request for that...
-    //! This needs to be rerun & ONLY display selected rows/markers: i.e., to use  displayedRadioLogEntries
+    // Already draws from displayedRadioLogEntries (below), same as the main map's own
+    // displayMarkers() - see that override's comment on why "manually dropped markers"
+    // isn't actually a live concern (never implemented; Locations/ADR D-49 covers the need).
+    // #81 finding (real, open - see the roadmap list): this component sets
+    // hasSelectedReports = false (this.hasSelectedReports's own doc comment calls that
+    // "normal for maps without an all/selected control, e.g. the Entry mini-map"), which
+    // means AbstractMap.updateRadioLog() always returns before ever populating
+    // displayedRadioLogEntries for THIS map - it stays permanently []. Worth confirming
+    // whether the Entry mini-map is meant to show any prior check-in markers at all today.
     if (!this.displayedRadioLogEntries) {
       this.log.error(`displayMarkers did not find field reports to display`, this.id)
-      //return
     }
     this.log.verbose(`displayMarkers: all ${this.displayedRadioLogEntries.length} of 'em`, this.id)
     this.displayedRadioLogEntries.forEach(i => {

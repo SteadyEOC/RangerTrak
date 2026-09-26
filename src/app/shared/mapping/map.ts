@@ -233,33 +233,6 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
     }
   }
 
-  // updateOverviewMap() {
-  //   this.log.verbose(`updateOverviewMap`, this.id)
-
-  // TODO: display a small semi-transparent rectangle showing where the main map is
-
-  //let latlng = new google.maps.LatLng(this.settings.defLat, this.settings.deflng)
-  //let latlngL = {lat: this.settings.defLat, lng: this.settings.deflng}
-
-  // TODO: FitBounds to new point, not to DefLat & Deflng  -- do it on addMarker?
-  // see also: https://tomik23.github.io/leaflet-examples/#10.matching-all-markers-to-the-map-view
-
-  // this.map?.setCenter(latlng) // REVIEW: this and/or next line. (Bounds should be private though!)
-  //this.map?.fitBounds(this.radioLogService.bounds.extend({ lat: this.settings.defLat, lng: this.settings.defLng })) // zooms to max!
-
-  //   this.map.setZoom(17) // no effect
-  // }
-
-  // onMapMouseMove(event: L.LeafletMouseEvent | google.maps.MapMouseEvent) {
-  //   if (event.latLng) {
-  //     this.mouseLatLng = event.latLng.toJSON()
-  //     //this.log.excessive('moving()', this.id);
-  //   }
-  //   else {
-  //     this.log.warn('move(): NO event.latLng!!!!!!!!!!!!!', this.id);
-  //   }
-  // }
-
   clamp(num: number, min: number, max: number) {
     return Math.min(Math.max(num, min), max)
   }
@@ -298,16 +271,6 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
   }
 
 
-
-  /*
-  What gets displayed: alternates between all & selected rows, based on the switch
-  private override selectedReports: RadioLogType | null = null
-  public override displayedRadioLogEntries: RadioLogEntryType[] = []
-  !this is just a subcomponent of the above: use the above if possible...  OH NO: this actually flipps back & forth between all & selected field reports, based on the switch...
-  following doesn't need a subscription as user selections are auto-saved & available,
-  if they switch to this page
-  REVIEW: UNLESS the switch was already on "selected rows" and isn't reswitched!!!: so just check/reset in ngOnInit?!
-  */
 
   gotNewRadioLog(newReports: RadioLogType) {
     this.log.verbose(`(Abstract) gotNewRadioLog(): New collection of ${newReports.numReport} Field Reports observed.`, this.id)
@@ -376,9 +339,6 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
   removeAllMarkers() {
     this.log.verbose(`(Abstract) removeAllMarkers()`, this.id)
     this.hideMarkers()
-    // this.clearMarkers = [] // BUG: this won't work!
-    // this.map.clear();
-    // this.markerCluster.clearMarkers()
   }
 
   ngOnDestroy() {

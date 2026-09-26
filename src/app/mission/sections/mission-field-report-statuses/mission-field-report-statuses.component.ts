@@ -154,7 +154,10 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
   }
 
   onFirstDataRendered(params: any) {
-    this.refreshStatusGrid() // REVIEW: needed???
+    // Also called from onGridReady() above - onFirstDataRendered fires at a distinctly later
+    // point (after the first real render, not just API construction) and refreshStatusGrid()
+    // is idempotent, so the duplicate call is a cheap safeguard, not dead weight.
+    this.refreshStatusGrid()
   }
 
   onBtnAddFRStatus() {

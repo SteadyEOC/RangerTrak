@@ -73,7 +73,7 @@ export class BackupService {
     const currentFieldReports = this.radioLogService.getCurrentRadioLog()
     const { bounds: _omitted, ...fieldReportsSansBounds } = currentFieldReports
 
-    // REVIEW: Workaround for "Error: Should not import the named export ... from
+    // Workaround for "Error: Should not import the named export ... from
     // default-exporting module" - same pattern already used in mission.service.ts.
     const appVersion = JSON.parse(JSON.stringify(packageJson)).version
 

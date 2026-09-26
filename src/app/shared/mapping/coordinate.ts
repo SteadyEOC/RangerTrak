@@ -8,7 +8,7 @@ import { UpperCasePipe } from '@angular/common'
 import { forward as mgrsForward, toPoint as mgrsToPoint } from 'mgrs'
 import { fromLatLon as utmFromLatLon, toLatLon as utmToLatLon } from 'utm'
 
-// REVIEW: Much of this is overlap with:
+// See also Google's own coordinate conventions, for comparison:
 // https://developers.google.com/maps/documentation/javascript/coordinates
 // https://developers.google.com/maps/documentation/javascript/reference/coordinates
 
@@ -374,7 +374,9 @@ export function AddressToDD(newAddress: string) {
 */
 
 
-// REVIEW: Duplicate of one in Utility class...
+// #81 finding (confirmed dead - see the roadmap list): unused anywhere in src/, duplicates a
+// function in the Utility class, and returns a google.maps.LatLng despite Google Maps having
+// been removed from this app. Left as-is here (comment-only pass); a safe delete candidate.
 export function strToLatLng_Unused(str: string) {
   const latlngStr = str.split(",", 2);
   return new google.maps.LatLng(parseFloat(latlngStr[0]), parseFloat(latlngStr[1]))

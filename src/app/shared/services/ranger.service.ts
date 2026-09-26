@@ -112,8 +112,10 @@ export class RangerService implements OnInit {
   }
 
   /**
-    * Update localStorage with new rangers & notify observers
-    * REVIEW: ALSO called from RangerComponent with new updates!
+    * Update localStorage with new rangers & notify observers.
+    *
+    * The single persistence point regardless of caller - RangerComponent calls this too,
+    * after mutating `this.rangers` in place, same as every other write path here.
     *
     * TODO: Should new rangers be a parameter/argum,ent?!
     */
@@ -526,7 +528,9 @@ export class RangerService implements OnInit {
     /* Following from 98070 AND 98013 zip codes, MUST be sorted by call sign!
         https://wireless2.fcc.gov/UlsApp/UlsSearch/searchAmateur.jsp
   */
-    // REVIEW: push (i.e., add) vs. replace?
+    // Push, not replace - fine as-is: this method is test-fixture-only now (see this class's
+    // own comment above on why the live "Add station callsigns" button that used to call it
+    // was removed 2026-08-31), so append-only for a quick test roster is the only remaining use.
     this.rangers.push(
 
       // NOTE: The image names are case-sensitive!!

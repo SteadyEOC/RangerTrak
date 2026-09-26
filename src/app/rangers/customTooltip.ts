@@ -10,8 +10,10 @@ export class CustomTooltip implements ITooltipComp {
     eGui.classList.add('custom-tooltip');
     //@ts-ignore
     eGui.style['background-color'] = color
-    //! BUGBUG: IMage directory is hardcoded, NOT obtained from ${this.settings.imageDirectory}
-    // src= "${this.settings.imageDirectory}${params.data.image}">
+    // #81 finding (real, open - see the roadmap list): the image path below is hardcoded
+    // rather than read from settings.imageDirectory (mission.component.ts's own imgDir field) -
+    // harmless today since both are always the same bundled path, but a latent inconsistency
+    // if imageDirectory is ever made genuinely configurable.
     eGui.innerHTML = `
     <p>
     <img class="licenseImg" style="height:256px; width:256px;" alt= "${params.data.fullName}"

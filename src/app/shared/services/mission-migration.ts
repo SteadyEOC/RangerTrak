@@ -24,7 +24,8 @@ import { StatusKey } from './status-color'
  * convention.
  *
  * 1 - status colors become semantic keys rather than raw CSS color strings.
- * 2 - backfill any field MissionType declares that the stored object lacks (BUG-3).
+ * 2 - backfill any field MissionType declares that the stored object lacks (fixes the
+ *     returning-user Settings crash documented on backfillMissingFields() below).
  * 3 - rename the legacy `google` settings block to `maplibre` (E-70).
  * 4 - drop `w3wLocale` and `defPlusCode`, both dead controls removed from MissionType
  *     during the E-84 audit's cleanup (E-89/E-90).
@@ -137,7 +138,8 @@ export function migrateMission(raw: MissionType, defaults?: MissionType): Missio
     settings = { ...settings, schemaVersion: MISSION_SCHEMA_VERSION }
   }
 
-  // Recurrence of BUG-3 (2026-08-20): Sprint H added six new MissionType fields
+  // Recurrence of the returning-user Settings crash, 2026-08-20 (see backfillMissingFields()'s
+  // own comment for the original 2026-08-19 incident): Sprint H added six new MissionType fields
   // (showDD/showDDM/showDMS/showMGRS/showUTM/showMaidenhead) without bumping
   // MISSION_SCHEMA_VERSION, so this ran once for every user already at version 2 and never
   // again - `this.field() is not a function`, firing on every change-detection pass (once a
@@ -159,7 +161,7 @@ const MISSION_DATE_FIELDS = ['settingsDate', 'opPeriodStart', 'opPeriodEnd', 'la
 /**
  * v1 -> v2. Adds any top-level key `MissionType` has that this stored object does not.
  *
- * Why this exists (BUG-3, 2026-08-19): settings saved before `googleGeocodingApiKey` was
+ * Why this exists (fixed 2026-08-19): settings saved before `googleGeocodingApiKey` was
  * introduced simply have no such property. `mission-maps-section` binds
  * `[formField]="form.googleGeocodingApiKey"`, and Signal Forms cannot build a field for a
  * property absent from the model - it threw `this.field(...) is not a function` on every

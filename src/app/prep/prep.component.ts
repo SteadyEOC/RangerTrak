@@ -106,7 +106,7 @@ export class PrepComponent {
     try {
       // No rangers in the file means no photo could possibly match anyone in it.
       const photoBlobs = includeRangers ? await this.photos.allPhotoBlobs() : []
-      // REVIEW: same JSON.parse(JSON.stringify(...)) workaround backup.service.ts and
+      // Same JSON.parse(JSON.stringify(...)) workaround backup.service.ts and
       // mission.service.ts already use for "Should not import the named export ... from
       // default-exporting module."
       const appVersion = JSON.parse(JSON.stringify(packageJson)).version

@@ -60,12 +60,6 @@ export class AlertsComponent implements OnInit, OnDestroy {
   Banner(msg: string, action1: string | undefined = 'Close', action2: string | undefined = "Close") {
     // https://material.io/components/banners#usage  //@use "@material/banner/styles";
 
-    //console.log(`BANNER Called with ${msg}`)
-
-    /*if (emoj != null) {
-      this.emoji = emoj // REVIEW: Change to emoji is permanent, not temporary: OK?
-    }*/
-
     if (this.alertBanner == null) {
       console.log('REVIEW: AlertComponent.Banner() called BEFORE AlertComponent.ngInit!')
       this.alertBanner = this.document.querySelector('.mdc-banner')
@@ -117,7 +111,9 @@ export class AlertsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // REVIEW: or just use: toFixed(#)
+  // toFixed() would not substitute here - it controls decimal precision, not left-padding an
+  // integer's string form. This duplicates Utility.zeroFill() (shared/utility.ts) exactly;
+  // worth consolidating onto that one in a future cleanup rather than keeping both.
   zeroFill(integ: number, lngth: number) {
     var strg = integ.toString();
     while (strg.length < lngth)

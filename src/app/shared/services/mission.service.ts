@@ -56,7 +56,12 @@ export class MissionService implements OnInit {
        */
       // Was `throwError(() => {...})` - the rxjs creation function, which only BUILDS an
       // observable. Nothing subscribed, so this guard never fired and five components quietly
-      // ran their own MissionService for months (BUG-2). Throw for real.
+      // ran their own MissionService for months. Throw for real.
+      //
+      // #81 finding (real, open - see the roadmap list): RadioLogService and RangerService's
+      // own singleton constructors (radio-log.service.ts, ranger.service.ts) still use the
+      // exact broken `throwError(() => {...})` form this comment describes fixing here - the
+      // same latent no-op guard, not yet applied to either of them.
       const msg = `MissionService has already been provided. It is providedIn:'root' - do not list it in a component's providers.`
       this.log.error(msg, this.id)
       throw new Error(msg)
@@ -150,7 +155,8 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
           // pre-migration shape. See mission-migration.ts. The other entry point that can
           // introduce foreign settings is Restore mission - backup.service.ts migrates there too.
           // initMission() supplies the backfill source, so a stored object written before a
-          // field existed gains it rather than breaking the Settings page (BUG-3).
+          // field existed gains it rather than breaking the Settings page (see
+          // mission-migration.ts's own backfillMissingFields() comment).
           this.setMission(migrateMission(JSON.parse(localStorageMission), this.initMission()))
           this.log.verbose("Initialized App Settings from localstorage", this.id)
           needMission = false
@@ -165,8 +171,9 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       this.setMission(this.initMission())
     }
 
-    // REVIEW: Above comes up with an old version # (if loaded from localStorage), so do this after the above
-    // package.json has version: https://www.npmjs.com/package/standard-version: npm run release
+    // Deliberately AFTER the localStorage load above: a loaded settings object carries
+    // whatever version it was stamped with, and this always overwrites it with the app's own
+    // real, currently-running version. https://www.npmjs.com/package/standard-version
     let packageAsString = JSON.stringify(packageJson)
     let packageAsJson = JSON.parse(packageAsString)
     //this.version = packageAsJson.version
@@ -179,7 +186,9 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
     // publish settings to subscribers
     this.updateMission(this.settings)
 
-    // REVIEW: following forces garbage collection of package.json, for security? (would happen at end of constructor too)
+    // A no-op in practice - both locals go out of scope (and become GC-eligible) at the end
+    // of the constructor regardless. Harmless either way, so left as a belt-and-suspenders
+    // clear rather than removed.
     packageAsString = ''
     packageAsJson = null
 
@@ -230,7 +239,8 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
    *   populate Field Report Statuses
    *
    */
-  /** Factory defaults. Also the backfill source for migrateMission() - see BUG-3. */
+  /** Factory defaults. Also the backfill source for migrateMission() - see
+   * mission-migration.ts's own backfillMissingFields() comment. */
   public initMission(): MissionType { // settings: MissionType
     //original hardcoded defaults... not updated until form is submitted... Settings.component.ts' form doesn't allow editing of all values
     this.log.verbose("Initialize App Settings from hardcoded values", this.id)

@@ -128,7 +128,7 @@
                grid's id column already reads live, so this field reads using whatever term
                this mission actually calls a ranger's identifier instead of always "Callsign". -->
           <mat-label>{{ settings?.idFieldLabel || 'Callsign' }}</mat-label>
-          <!-- BUG-1 (2026-08-19): this carried BOTH [formControl]="callsignCtrl" and
+          <!-- Fixed 2026-08-19: this carried BOTH [formControl]="callsignCtrl" and
                formControlName="callsign". Only one directive can be the value accessor, so
                entryControlsForm.callsign stayed '' and every saved report lost its callsign
                while the autocomplete (which reads callsignCtrl) looked perfectly fine.

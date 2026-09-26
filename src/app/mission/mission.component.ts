@@ -100,7 +100,8 @@ const blankMission: MissionType = {
   styleUrls: ['./mission.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   // Deliberately NOT providing MissionService: it is providedIn:'root' and a second
-  // instance here would diverge from everyone else's. See BUG-2 in entry.component.ts.
+  // instance here would diverge from everyone else's - see entry.component.ts's own
+  // fixed-2026-08-19 note on the same historical mistake.
 })
 export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   private id = 'Mission Component'
@@ -151,7 +152,12 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   opPeriodEnd = signal(new Date())
   timePickerLabelStart = 'Operational Period Start Time'
   timePickerLabelEnd = 'Operational Period End Time'
-  imgDir = "./assets/imgs/"  //! NOTE: Hardcoded, not possible to edit & potential security risk?!
+  // Not user-editable - a bundled static asset path, not a secret or PII, so the earlier
+  // "potential security risk" framing here overstated it. customTooltip.ts (rangers/) still
+  // hardcodes this same path directly rather than reading it from here/settings - harmless
+  // today since both are always equal, but worth consolidating if imageDirectory is ever made
+  // genuinely configurable. See #81's roadmap list.
+  imgDir = "./assets/imgs/"
 
   /**
    * The editable working set behind the status/color grid, owned here and handed to
@@ -399,7 +405,12 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   }
 
   reloadPage() {
-    //REVIEW: Does this zap existing changes elsewhere on the page (used for reseting field statuses..)
+    // A hard reload does discard any unsaved state anywhere on the page - both current
+    // callers are safe: onBtnResetDefaults() calls this right after ResetDefaults() has
+    // already persisted, and onFormSubmit() calls this after updateMission() has already
+    // persisted AND settingsForm().reset(newMission) has already cleared the dirty flag
+    // (see onFormSubmit()'s own F29-23 comment). A future caller that reloads BEFORE saving
+    // would need its own confirmation - this method itself has none.
     this.log.verbose(`Reloading window!`, this.id)
     window.location.reload()
   }
@@ -415,7 +426,9 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
     this.log.verbose("onFormSubmit: Update Settings...", this.id)
     const newMission: MissionType = {
       ...this.missionModel(),
-      imageDirectory: this.imgDir,  //! SECURITY: BUGBUG: Hardcoded image directory: should this be confidential/encrypted for security?
+      // A bundled static asset path, not a secret - see imgDir's own comment above; not a
+      // confidentiality/encryption concern.
+      imageDirectory: this.imgDir,
     }
     this.missionService.updateMission(newMission)
     // F29-23: without this, hasUnsavedChanges() still reads true for the brief window before

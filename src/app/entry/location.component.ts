@@ -445,8 +445,6 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   ngOnInit(): void {
     this.log.info("ngOnInit", this.id)
 
-    // NOTE: gets called before ngOnInit, during parent's construction (via ngOnChanges too,
-    // if the input already had a non-default value at that point)
     this.newLocationToFormAndEmit(this.location)
 
     window.addEventListener('online', this.onOnline)
@@ -701,9 +699,9 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
       address = newLocation.address
       this.updateDerivedLocations(newLocation)
     } else {
-      // Async routine to geocode from lat/lng & update location.address
-      // REVIEW: Do this early in HOPES that the async geocoding routine will have returned by time we emit a new location... (though mini-map really only needs lat/long)
-
+      // Async routine to geocode from lat/lng & update location.address. Kicked off here
+      // (not awaited) rather than blocking the emit below - a slow geocode isn't blocking
+      // anything critical since the mini-map only needs lat/lng, not the address text.
       // DDToAddress (asynchroniously) calls updateDerivedLocations() too
       this.DDToAddress(newLocation)
     }
@@ -929,65 +927,20 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   // https://developer.what3words.com/tutorial/detecting-if-text-is-in-the-format-of-a-3-word-address
   // https://developer.what3words.com/tutorial/javascript
   // https://developer.what3words.com/tutorial/detecting-if-text-is-in-the-format-of-a-3-word-address
+  // #81 finding (real, open - see the roadmap list): this always reports "Unable to verify"
+  // below - the actual verification call was commented-out dead code (removed here) well
+  // before this pass, so nothing in this method has ever been able to succeed. The real,
+  // working what3words integration lives in shared/mapping/3words.ts and takes its key from
+  // settings - worth confirming whether this whole method is superseded/dead (its caller,
+  // onAddressChg(), still routes a 3-word-shaped address here) or needs reconnecting to it.
   chk3Words(tWords: string) {
     this.log.verbose("chk3Words", this.id)
-    // A commented-out jQuery $.ajax call to the w3w autosuggest endpoint used to sit
-    // here, carrying an API key. It was verbatim from what3words' own tutorial (London
-    // coordinates, clip-to-country=BE,GB), so the key was theirs rather than ours - but a
-    // key-shaped string in tracked source is a finding whoever reads the repo, and the
-    // snippet was dead anyway (jQuery is not a dependency). Removed; see
-    // PRIVATE-Roadmap.md Section 9d item 1b. The real integration lives in
-    // shared/mapping/3words.ts and takes its key from settings.
-
-    // No 3 word results outside these values allowed!!
-    // south_lat <= north_lat & west_lng <= east_lng
-    let south_lat = 46.0;
-    let north_lat = 49.0;
-    let west_lng = -124.0;
-    let east_lng = -120.0;
-    let errMsg = "";
-
-    // let tWords = document.getElementById("addresses")!.innerText;// as HTMLInputElement).value
     this.log.verbose('chk3Words - ' + tWords, this.id);
     if (tWords.length) {
-      // soemthing entered...
       this.log.verbose("3Words='" + tWords + "'", this.id);
-      //this.w3w.w3wAuto(tWords)
-      /* BUG:
-          this.w3w.w3wAuto.autosuggest(tWords, {
-            nFocusResults: 1,
-            //clipTo####: ["US"],
-            cliptoboundingbox: { south_lat, west_lng, north_lat, east_lng }, // Clip prevents ANY values outside region
-            focus: { lat: this.settings.defLat, lng: this.settings.deflng }, // Focus prioritizes words closer to this point
-            nResults: 1
-          })
-            .then((response: { suggestions: { words: any }[] }) => {
-              const verifiedWords = response.suggestions[0].words;
-              this.log.verbose("Verified Words='" + verifiedWords + "'", this.id);
-              if (tWords != verifiedWords) {
-                document.getElementById("addressLabel")!.textContent = " Verified as: " + verifiedWords; // as HTMLLabelElement
-              } else {
-                document.getElementById("addressLabel")!.textContent = " Verified.";
-              }
-              // this.w3w.GetLatlngFrom3Words(verifiedWords)
-              this.w3w.convertToCoordinates(verifiedWords).then((response: { coordinates: { lat: any; lng: any }; nearestPlace: string }) => {
-                //async call HAS returned!
-                this.updateCoords(response.coordinates.lat, response.coordinates.lng);
-                // NOTE: Not saving nearest place: too vague to be of value
-                document.getElementById("addressLabel")!.textContent += "; Near: " + response.nearestPlace; // as HTMLLabelElement
-              });
-            })
-            .catch(function (error: { code: string; message: string }) {
-              errMsg = "[code]=" + error.code + "; [message]=" + error.message + ".";
-              */
-
-      // TODO:       this.updateCoords(lat,lng)
-      errMsg = ""
-      this.log.info("Unable to verify 3 words entered: " + errMsg, this.id);
+      this.log.info("Unable to verify 3 words entered.", this.id);
       document.getElementById("addressLabel")!.textContent = "*** Not able to verify 3 words! ***"; // as HTMLLabelElement
-      //})
     }
-    // async call not returned yet
   }
 
   chkStreetAddress(addrText: string) {

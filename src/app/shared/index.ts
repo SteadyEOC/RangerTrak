@@ -26,6 +26,3 @@ export { hashString } from "./mapping/hash-color"
 export { radioLogStatusColor, locationCategoryColor, resolveCssColorForCanvas } from "./mapping/report-marker-status"
 export { formatReportTime } from "./mapping/report-time"
 export { computeExtent, ExtentPoint } from "./mapping/extent"
-
-// !BUG: Can't find @What3Words/API - need to install it?!
-// export { What3Words } from './mapping/3words'

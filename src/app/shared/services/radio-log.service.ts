@@ -59,9 +59,10 @@ export class RadioLogService {
   private radioLogSignal!: WritableSignal<RadioLogType>
   private radioLogReplay$ = new ReplaySubject<RadioLogType>(1)
 
-  // REVIEW: No need to enable subscription to selectedRadioLog as they are
-  // auto-saved on evey selection and user is single-threaded.
-  // Otherwise move to maps which THEN grab the new values.
+  // No subscription needed on selectedRadioLog: selections are auto-saved on every grid
+  // selection change and the user is single-threaded. Maps pull the current value via
+  // getSelectedRadioLogEntries() instead, whenever their own All/selected switch is flipped -
+  // confirmed still the actual, correct mechanism by the #76 e2e coverage in tools/e2e.js.
   private selectedRadioLog!: RadioLogType
 
   private missionSubscription!: Subscription
@@ -117,8 +118,10 @@ export class RadioLogService {
 
     this.log.info(`Got v.${this.radioLog.version} for event: ${this.radioLog.event} on  ${this.radioLog.date} with ${this.radioLog.numReport} Field Reports from localstorage`, this.id)
 
-    // REVIEW: bounds actually needs to be an Object, not getting done this a waitForAsync, right?!
-    this.recalcRadioLogBounds(this.radioLog)  // Should be extraneous...
+    // bounds is a plain, synchronous BoundsType (radio-log-entry.interface.ts) - no async
+    // involved. Likely extraneous most of the time (every mutation path already recalculates
+    // before saving), but cheap enough to keep as a defensive safety net on load.
+    this.recalcRadioLogBounds(this.radioLog)
     this.radioLogSignal = signal(this.radioLog)
     this.updateRadioLogAndPublish()
   }

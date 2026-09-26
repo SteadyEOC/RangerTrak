@@ -609,12 +609,6 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     return (`${days ? days + " days  " : ""} ${hours}:${minutes}:${seconds} `)
   }
 
-  //! BUG: JUST ROUNDS THE lat, not whatever is passed in!!!!!
-  // rounder = (params: { data: RadioLogEntryType }) => {
-  //   let val = Math.round(params. data.lat * 10000) / 10000.0
-  //   return val
-  // }
-
   isValidDate(d: any) {
     return d instanceof Date //&& !isNaN(d);
   }
@@ -909,6 +903,11 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     return true
   }
 
+  // #81 finding: named "_unused" and never called from anywhere, including the template -
+  // dead AG Grid tutorial demo scaffolding (fetches a public Olympics sample dataset, and
+  // `.subscribeOn(...)` below is an RxJS scheduler operator misused as a data callback, so
+  // this could never have worked as written). Left as-is here (comment-only pass) - a real
+  // candidate for outright deletion in a future cleanup.
   onBtnImportRadioLogFromJSON_unused() {
     alert(`onBtnImportFieldReports is unimplemented`)
 
@@ -921,7 +920,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // https://github.com/ag-grid/ag-grid/issues/2450
     this.http
       .get("https://raw.githubusercontent.com/ag-grid/ag-grid/master/grid-packages/ag-grid-docs/src/olympicWinnersSmall.json")
-      .subscribeOn((data: any[]) => {  // NOTE: subscribeOn() is a guess!!!
+      .subscribeOn((data: any[]) => {
         data.length = 10;
         data = data.map((row, index) => {
           return { ...row, id: index + 1 };

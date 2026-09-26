@@ -63,13 +63,12 @@ import { MiniMapLeafletComponent } from './mini-mapLeaflet.component'
   templateUrl: './entry.component.html',
   styleUrls: ['./entry.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
-  // BUG-2 (2026-08-19): this used to be
+  // Fixed 2026-08-19: this used to be
   //   providers: [RangerService, RadioLogService, MissionService]
   // All three are @Injectable({providedIn:'root'}). Re-declaring them here gave Entry its
   // OWN instances, so submitted reports went into a private RadioLogService while the
   // Reports page read the root one - which still held its startup-empty list. The page
   // looked empty until a full reload made every instance re-read localStorage.
-  //, TeamService
   // https://angular.io/guide/architecture-services#providing-services: 1 or multiple instances?!
   // per https://angular.io/guide/singleton-services
 })
@@ -247,7 +246,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     status: new SignalFormControl('')
   })
   // The one and only callsign control. It drives the mat-autocomplete's filtering AND is what
-  // gets saved - see BUG-1 in entry.component.html. Typed to string so .value needs no cast.
+  // gets saved - see the fixed-2026-08-19 note on the [formControl]/formControlName clash in
+  // entry.component.html. Typed to string so .value needs no cast.
   callsignCtrl = new FormControl<string>('', { nonNullable: true })
   //readonly imagePath = "'./assets/imgs/rangers/'" // not yet used by *.html
 
@@ -637,8 +637,10 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   /**
-   * Encrpyt reports before storing them?
-   * REVIEW: If so, do so in the read/writing service...not here
+   * Unused prototype - never wired to anything (its only call site is the commented-out
+   * block in ngOnInit() below). Real encryption-at-rest since answered this question
+   * differently than proposed here: it lives in the read/writing layer after all, but in
+   * record-store.ts (E-122 Phase 2b), not per-field like this hash experiment.
    *
    * @param str
    * @returns
@@ -840,8 +842,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.log.verbose("Resetting form...", this.id)
     this.resetAll()
 
-    // !BUG: Need to reset callsign too: otherwise filtered to just this one!
-    //this._filterRangers("")
+    // Rebuilds filteredRangers' pipeline from scratch (rather than re-filtering on the just-
+    // reset, now-empty callsignCtrl) - this is what un-narrows the autocomplete back to the
+    // full roster after resetAll() clears the callsign.
     this.initFilteredRangers()
 
     // After the reset values above have settled, not before - restores focus to callsign
@@ -857,7 +860,10 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    * some and forget the rest.
    */
   private resetAll() {
-    // !REVIEW: Should we reset locationParent to default location (from settings)?
+    // Deliberately does NOT reset locationParent to the mission default - see
+    // tryGpsAutoFill()'s own comment above: a ranger's phone doesn't usually teleport
+    // between consecutive reports, so carrying the last-known location forward is the
+    // intended behavior, not an oversight.
     this.entryModel.set({
       id: -2,
       location: this.locationParent,
@@ -903,8 +909,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.callImg && this.callInfo) {
       // An empty callsign is the normal state right after a reset (see resetAll()) - not an
       // "unknown" one. Routing it through getRanger() logged a false GetRanger error on
-      // every single submit, once callsignCtrl started actually being reset (BUG-1 fix,
-      // 2026-08-19) instead of being silently orphaned as it was before.
+      // every single submit, once callsignCtrl started actually being reset (the fixed-
+      // 2026-08-19 [formControl]/formControlName clash) instead of being silently orphaned
+      // as it was before.
       if (!callsign) {
         this.callImg.innerHTML = ''
         this.callInfo.innerHTML = ''
@@ -1017,13 +1024,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   onFormSubmit(): void {
     this.log.excessive(`Submit Form`, this.id)
 
-    // NOTE: Afterward, we will just reset the form. Otherwise (if reusing the form) create a deep copy of the form-model:
-    // result.entryDetailsForm = Object.assign({}, result.entryDetailsForm)
-
-    /* FUTURE: Allow keywords, or search Notes for semicolon delimited tokens?
-    get keywordsControls(): any {
-    return (<FormArray>this.entryDetailsForm.get('keywords')).controls
-    }   */
+    // FUTURE: Allow keywords, or search Notes for semicolon delimited tokens?
 
     let formDataJSON = JSON.stringify(this.mergedFormValue())
 
