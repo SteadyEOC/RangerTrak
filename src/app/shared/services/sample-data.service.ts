@@ -39,7 +39,7 @@ export const SAMPLE_SCENARIOS: ReadonlyArray<SampleScenarioOption> = [
   {
     id: 'grand-canyon',
     label: 'Grand Canyon, South Rim (default)',
-    hint: 'A missing-hiker search near the Bright Angel Trailhead and the Rim Trail.',
+    hint: 'An overdue hiker on the Bright Angel Trail, searched down the trail and along the rim.',
   },
   {
     id: 'vashon',
@@ -499,115 +499,151 @@ export class SampleDataService {
   // ── Scenario 2: Grand Canyon, South Rim ──────────────────────────────────────────────
 
   /**
-   * A missing-hiker search around the Bright Angel Trailhead / Rim Trail, Grand Canyon
-   * Village, South Rim. Coordinates are anchored on the trailhead itself (36.0578, -112.1434
-   * - checked against the maintainer's own reference point) and stay within roughly 2-3km of
-   * it, walking distance apart, never more than a few hundred meters below the rim - real
-   * points along the developed rim corridor, not the open canyon.
+   * An overdue day hiker on the Bright Angel Trail, Grand Canyon Village, South Rim.
    *
-   * Elevation-aware notes throughout (heat, water) - the one below-rim team's whole reason
-   * for existing is that the trail drops fast enough for temperature and hydration to become
-   * the actual story, not just scenery.
+   * 2026-09-25 (maintainer): rewritten so it reads well as a map. The first version crowded
+   * every team into about 1km around the trailhead, and several points were placed from memory
+   * and sat up to 500m off (the below-rim team's pins were on the rim, among buildings). Every
+   * coordinate in GC below now comes from OpenStreetMap - named features, and the OSM Bright
+   * Angel Trail geometry for the two tunnels, measured along the trail - checked against USGS
+   * terrain by the rangertrak.com session, whose storyboards and Bright Angel map are drawn
+   * from this data. Keep every point inside lat 36.050-36.107, lon -112.166 to -112.100: that
+   * is the frame of that map.
    *
-   * Coordinate confidence note (see this feature's own PR/report): the trailhead itself is
-   * trusted; Yavapai Point, Trailview Overlook, Lookout Studio, and the backcountry office
-   * are placed from general landmark knowledge, not a surveyed source - all comfortably
-   * within the 2-3km guardrail even allowing for some error.
+   * The story, one main team and three in supporting roles:
+   * - **Below-Rim** (main) follows the trail down, finds the hiker's hat past the second
+   *   tunnel, hears of a red pack heading down at the 1.5 Mile Resthouse, and finds the hiker
+   *   with heat exhaustion at the 3 Mile Resthouse - where the NPS really does stage heat cases.
+   * - **Medical** follows Below-Rim down as a precaution, treats at 3 Mile, and walks the
+   *   hiker out; Medic2 holds the trailhead with park EMS.
+   * - **Rim-West** and **Rim-East** hasty-search the rim out to Hopi and Mather Points.
+   *   Rim-East chases a phoned-in sighting at Yavapai Point that turns out to be someone else.
+   * - **Liaison1** (command staff) stays with the hiker's parents at the Backcountry
+   *   Information Center until they're reunited at the trailhead.
+   * It closes on the end-of-mission step: back up the mission and print the ICS-309.
    */
   private buildGrandCanyonScenario(): ScenarioData {
-    const CP = { lat: 36.0555, lng: -112.1459, address: 'Grand Canyon Village - Backcountry Information Center (approx.)' }
-    const TRAILHEAD = { lat: 36.0578, lng: -112.1434, address: 'Bright Angel Trailhead, Grand Canyon Village' }
+    // OpenStreetMap positions (lat, lng) - see the doc comment above.
+    const GC = {
+      trailhead: { lat: 36.0573, lng: -112.1436, address: 'Bright Angel Trailhead, Grand Canyon Village' },
+      kolb: { lat: 36.0580, lng: -112.1426, address: 'Rim Trail at Kolb Studio' },
+      verkamps: { lat: 36.0576, lng: -112.1357, address: 'Rim Trail at Verkamp\'s Visitor Center' },
+      geologyMuseum: { lat: 36.0653, lng: -112.1176, address: 'Rim Trail at the Yavapai Geology Museum' },
+      yavapai: { lat: 36.0660, lng: -112.1169, address: 'Yavapai Point' },
+      mather: { lat: 36.0617, lng: -112.1090, address: 'Mather Point' },
+      trailview: { lat: 36.0620, lng: -112.1468, address: 'Trailview Overlook' },
+      maricopa: { lat: 36.0704, lng: -112.1483, address: 'Maricopa Point' },
+      powell: { lat: 36.0729, lng: -112.1520, address: 'Powell Point' },
+      hopi: { lat: 36.0745, lng: -112.1549, address: 'Hopi Point' },
+      tunnel1: { lat: 36.0580, lng: -112.1465, address: 'Bright Angel Trail, first tunnel' },
+      tunnel2: { lat: 36.0593, lng: -112.1430, address: 'Bright Angel Trail, second tunnel' },
+      mile15: { lat: 36.0604, lng: -112.1393, address: 'Bright Angel Trail, 1.5 Mile Resthouse' },
+      mile3: { lat: 36.0657, lng: -112.1362, address: 'Bright Angel Trail, 3 Mile Resthouse' },
+    }
+    const CP = { lat: 36.0524, lng: -112.1437, address: 'Grand Canyon Village - Backcountry Information Center' }
+    const TRAILHEAD = GC.trailhead
 
     const rangers: RangerType[] = [
       { callsign: 'IC-Actual', fullName: 'Dusty "Mesa" Ridgewalker', phone: '928-555-0100', image: 'ic-actual.jpg', id: 'IC-1', team: 'Command', role: 'Incident Commander', note: 'Overall exercise command' },
       { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '928-555-0101', image: 'CmdPost.jpg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
       { callsign: 'OpsChief', fullName: 'Rusty Sagebrush', phone: '928-555-0110', image: 'ops-chief.jpg', id: 'OPS-1', team: 'Command', role: 'Operations Section Chief', note: 'Directs field teams' },
-      { callsign: 'PIO1', fullName: 'Sunny Vermillion', phone: '928-555-0113', image: 'pio.jpg', id: 'PIO-1', team: 'Command', role: 'Public Information Officer', note: 'Coordinates with NPS and press' },
+      { callsign: 'Liaison1', fullName: 'Sunny Vermillion', phone: '928-555-0113', image: 'pio.jpg', id: 'LNO-1', team: 'Command', role: 'Liaison Officer', note: 'Stays with the hiker\'s parents; point of contact for NPS' },
 
-      { callsign: 'Rim1', fullName: 'Wren Cliffside', phone: '928-555-0121', image: 'cert1.jpg', id: 'GC-11', team: 'Rim-West', role: 'Team Lead', note: 'Rim Trail, west toward Trailview Overlook' },
-      { callsign: 'Rim2', fullName: 'Talus Windham', phone: '928-555-0122', image: 'cert2.jpg', id: 'GC-12', team: 'Rim-West', role: 'Responder', note: 'Rim Trail, west toward Trailview Overlook' },
+      { callsign: 'Below1', fullName: 'Canyon Ash Deepgorge', phone: '928-555-0131', image: 'log-chief.jpg', id: 'GC-21', team: 'Below-Rim', role: 'Team Lead', note: 'Bright Angel Trail, down to the 3 Mile Resthouse' },
+      { callsign: 'Below2', fullName: 'Juniper Redrock', phone: '928-555-0132', image: 'cert3.jpg', id: 'GC-22', team: 'Below-Rim', role: 'Responder', note: 'Bright Angel Trail, down to the 3 Mile Resthouse' },
 
-      { callsign: 'Rim3', fullName: 'Mesa Longstride', phone: '928-555-0123', image: 'recon1.jpg', id: 'GC-13', team: 'Rim-East', role: 'Team Lead', note: 'Rim Trail, east toward Yavapai Point' },
-      { callsign: 'Rim4', fullName: 'Piper Overlook', phone: '928-555-0124', image: 'plan-chief.jpg', id: 'GC-14', team: 'Rim-East', role: 'Responder', note: 'Rim Trail, east toward Yavapai Point' },
+      { callsign: 'Medic1', fullName: 'Butte Ironwood', phone: '928-555-0133', image: 'mert1.jpg', id: 'GC-23', team: 'Medical', role: 'Team Lead', note: 'Follows Below-Rim down the trail' },
+      { callsign: 'Medic2', fullName: 'Dr. Sage Coyote', phone: '928-555-0134', image: 'medic1.jpg', id: 'GC-24', team: 'Medical', role: 'Medical', note: 'Holds the trailhead with park EMS' },
 
-      { callsign: 'Below1', fullName: 'Canyon Ash Deepgorge', phone: '928-555-0131', image: 'log-chief.jpg', id: 'GC-21', team: 'Below-Rim', role: 'Team Lead', note: 'Bright Angel Trail, first switchbacks below the rim' },
-      { callsign: 'Below2', fullName: 'Juniper Redrock', phone: '928-555-0132', image: 'cert3.jpg', id: 'GC-22', team: 'Below-Rim', role: 'Responder', note: 'Bright Angel Trail, first switchbacks below the rim' },
+      { callsign: 'Rim1', fullName: 'Wren Cliffside', phone: '928-555-0121', image: 'cert1.jpg', id: 'GC-11', team: 'Rim-West', role: 'Team Lead', note: 'Rim Trail west to Hopi Point' },
+      { callsign: 'Rim2', fullName: 'Talus Windham', phone: '928-555-0122', image: 'cert2.jpg', id: 'GC-12', team: 'Rim-West', role: 'Responder', note: 'Rim Trail west to Hopi Point' },
 
-      { callsign: 'Medic1', fullName: 'Butte Ironwood', phone: '928-555-0133', image: 'mert1.jpg', id: 'GC-23', team: 'Medical', role: 'Team Lead', note: 'Village sweep and heat-response support' },
-      { callsign: 'Medic2', fullName: 'Dr. Sage Coyote', phone: '928-555-0134', image: 'medic1.jpg', id: 'GC-24', team: 'Medical', role: 'Medical', note: 'Village sweep and heat-response support' },
+      { callsign: 'Rim3', fullName: 'Mesa Longstride', phone: '928-555-0123', image: 'recon1.jpg', id: 'GC-13', team: 'Rim-East', role: 'Team Lead', note: 'Rim Trail east to Mather Point' },
+      { callsign: 'Rim4', fullName: 'Piper Overlook', phone: '928-555-0124', image: 'plan-chief.jpg', id: 'GC-14', team: 'Rim-East', role: 'Responder', note: 'Rim Trail east to Mather Point' },
     ]
 
     const OPS = 'Rusty Sagebrush'
 
     const rows: Row[] = [
       // ── Command staff ──────────────────────────────────────────────────────────
-      { callsign: '!CmdPost', minutesAgo: 335, ...CP, statusIndex: 4, notes: 'Command post established, net open on primary.', source: 'Voice', operator: 'Sunny Vermillion' },
-      { callsign: 'IC-Actual', minutesAgo: 333, ...CP, statusIndex: 4, notes: 'Assuming command for the exercise.', source: 'Voice', operator: 'Dusty "Mesa" Ridgewalker' },
-      { callsign: 'OpsChief', minutesAgo: 330, ...CP, statusIndex: 4, notes: 'Ops section staffed, briefing field teams now.', source: 'Voice', operator: OPS },
-      { callsign: 'PIO1', minutesAgo: 324, ...CP, statusIndex: 4, notes: 'Coordinating with the NPS backcountry office, staging media away from the trailhead.', source: 'Voice', operator: 'Sunny Vermillion' },
+      { callsign: '!CmdPost', minutesAgo: 340, ...CP, statusIndex: 4, notes: 'Command post established at the Backcountry Information Center, net open on primary.', source: 'Voice', operator: OPS },
+      { callsign: 'IC-Actual', minutesAgo: 338, ...CP, statusIndex: 4, notes: 'Assuming command. Overdue day hiker, 19, started down Bright Angel at dawn with one liter of water, due back by 10:00.', source: 'Voice', operator: 'Dusty "Mesa" Ridgewalker' },
+      { callsign: 'OpsChief', minutesAgo: 334, ...CP, statusIndex: 4, notes: 'Assignments: Below-Rim takes the trail, Medical follows, Rim-West and Rim-East hasty-search the rim both ways.', source: 'Voice', operator: OPS },
+      { callsign: 'Liaison1', minutesAgo: 330, ...CP, statusIndex: 4, notes: 'With the hiker\'s parents. Description: red day pack, white sun hat, gray shirt. Phone goes to voicemail.', source: 'Voice', operator: 'Sunny Vermillion' },
 
-      // ── Team A: Rim1/Rim2 - Rim Trail west toward Trailview Overlook ──────────
-      { callsign: 'Rim1', minutesAgo: 300, ...TRAILHEAD, statusIndex: 4, notes: 'Team checking in near the last known point, starting west along the Rim Trail.', source: 'Voice', operator: OPS },
-      { callsign: 'Rim2', minutesAgo: 296, lat: 36.0571, lng: -112.1449, address: 'Rim Trail near Lookout Studio', statusIndex: 4, notes: 'Checked in at Lookout Studio, continuing west.', source: 'Voice', operator: OPS },
-      { callsign: 'Rim1', minutesAgo: 250, lat: 36.0577, lng: -112.1493, address: 'Rim Trail at Trailview Overlook (~1km west)', statusIndex: 1, notes: 'Location report: Trailview Overlook, no sign of the hiker, temperature climbing fast.', source: 'Voice', operator: OPS },
-      { callsign: 'Rim2', minutesAgo: 210, lat: 36.0577, lng: -112.1493, address: 'Rim Trail at Trailview Overlook', statusIndex: 0, notes: 'Rim Trail clear so far, heavy visitor traffic, checking side viewpoints.', source: 'Voice', operator: OPS },
-      { callsign: 'Rim1', minutesAgo: 140, lat: 36.0573, lng: -112.1470, address: 'Rim Trail, west segment', statusIndex: 5, notes: 'West rim segment complete, checking out.', source: 'Voice', operator: OPS },
-      { callsign: 'Rim2', minutesAgo: 96, lat: 36.0573, lng: -112.1470, address: 'Rim Trail, west segment', statusIndex: 3, notes: 'Requesting a water resupply and a shaded rest break, it is very hot out here.', source: 'Voice', operator: OPS },
-
-      // ── Team B: Rim3/Rim4 - Rim Trail east toward Yavapai Point ───────────────
-      { callsign: 'Rim3', minutesAgo: 292, ...TRAILHEAD, statusIndex: 0, notes: 'Checking in at the trailhead, heading east along the Rim Trail toward the village center.', source: 'Voice', operator: OPS },
-      { callsign: 'Rim4', minutesAgo: 270, lat: 36.0590, lng: -112.1370, address: 'Rim Trail near Verkamp\'s Visitor Center', statusIndex: 0, notes: 'Passing Verkamp\'s, Rim Trail crowded but clear.', source: 'Voice', operator: OPS },
+      // ── Below-Rim (main team): down Bright Angel Trail to the 3 Mile Resthouse ──
+      { callsign: 'Below1', minutesAgo: 322, ...TRAILHEAD, statusIndex: 4, notes: 'Below-Rim checked in at the trailhead, starting down with extra water.', source: 'Voice', operator: OPS },
+      { callsign: 'Below2', minutesAgo: 314, ...GC.tunnel1, statusIndex: 1, notes: 'Location report: first tunnel, trail busy, already noticeably warmer.', source: 'Voice', operator: OPS },
+      { callsign: 'Below1', minutesAgo: 302, ...GC.tunnel2, statusIndex: 2, notes: 'White sun hat matching the description beside the trail just past the second tunnel. Photographed and bagged.', source: 'Voice', operator: OPS },
+      { callsign: 'Below2', minutesAgo: 286, ...GC.mile15, statusIndex: 1, notes: 'Location report: 1.5 Mile Resthouse. Hikers coming up passed someone with a red pack heading down about an hour ago.', source: 'Voice', operator: OPS },
       {
-        callsign: 'Rim3', minutesAgo: 180, lat: 36.0616, lng: -112.1177, address: 'Rim Trail near Yavapai Point (~2.3km east)', statusIndex: 6,
-        notes: 'URGENT: a bystander reports seeing a hiker matching the description near Yavapai Point about twenty minutes ago, heading east.', source: 'Phone', operator: OPS,
-        generates213: true, replyRequested213: true, subject213: 'Possible sighting near Yavapai Point',
-        message213: 'A bystander at Yavapai Point reports seeing someone matching the missing hiker\'s description heading east along the Rim Trail roughly twenty minutes before this report. Continuing east to follow up; requesting any other teams in the area converge.',
+        callsign: 'Below1', minutesAgo: 258, ...GC.mile3, statusIndex: 6,
+        notes: 'URGENT: found the missing hiker at the 3 Mile Resthouse. Heat exhaustion, conscious but dizzy and out of water.', source: 'Voice', operator: OPS,
+        generates213: true, replyRequested213: true, subject213: 'Missing hiker found - heat exhaustion at 3 Mile Resthouse',
+        message213: 'Below-Rim has found the missing hiker at the 3 Mile Resthouse on Bright Angel Trail. Heat exhaustion: conscious and talking, dizzy, out of water. Cooling in the shade now. Requesting Medic1 continue down to us, and park EMS on standby at the trailhead.',
         recipients213: ['Incident Commander', 'Ops'],
       },
-      { callsign: 'Rim3', minutesAgo: 172, lat: 36.0616, lng: -112.1177, address: 'Rim Trail near Yavapai Point', statusIndex: 0, notes: 'Continuing east past Yavapai Point, following up on the reported sighting.', source: 'Voice', operator: OPS },
-      { callsign: 'Rim4', minutesAgo: 150, lat: 36.0605, lng: -112.1280, address: 'Rim Trail near the Yavapai Geology Museum', statusIndex: 5, notes: 'No further sign of the hiker past the geology museum, turning back. Checking out.', source: 'Voice', operator: OPS },
+      { callsign: 'Below2', minutesAgo: 252, ...GC.mile3, statusIndex: 0, notes: 'Hiker in the resthouse shade, cooling with wet cloths and sipping electrolytes.', source: 'Voice', operator: OPS },
+      { callsign: 'Below2', minutesAgo: 170, ...GC.mile15, statusIndex: 3, notes: 'Walk-out resting 20 minutes at 1.5 Mile. Team and hiker all need water and a break.', source: 'Voice', operator: OPS },
+      { callsign: 'Below1', minutesAgo: 124, ...GC.tunnel2, statusIndex: 1, notes: 'Location report: second tunnel, hiker moving well, about 30 minutes out.', source: 'Voice', operator: OPS },
+      { callsign: 'Below1', minutesAgo: 88, ...TRAILHEAD, statusIndex: 5, notes: 'Below-Rim back at the trailhead, hiker handed to park EMS. Checking out.', source: 'Voice', operator: OPS },
+      { callsign: 'Below2', minutesAgo: 86, ...TRAILHEAD, statusIndex: 5, notes: 'Checking out with Below1.', source: 'Voice', operator: OPS },
 
-      // ── Team C: Below1/Below2 - Bright Angel Trail, first switchbacks below rim ──
-      { callsign: 'Below2', minutesAgo: 288, ...TRAILHEAD, statusIndex: 4, notes: 'Team checking in at the trailhead, starting down Bright Angel Trail.', source: 'Voice', operator: OPS },
-      { callsign: 'Below1', minutesAgo: 260, lat: 36.0572, lng: -112.1428, address: 'Bright Angel Trail, first switchback below the rim', statusIndex: 1, notes: 'Location report: first switchback below the rim, noticeably warmer already.', source: 'Voice', operator: OPS },
-      { callsign: 'Below2', minutesAgo: 244, lat: 36.0565, lng: -112.1424, address: 'Bright Angel Trail, near the tunnel (~200m below rim)', statusIndex: 2, notes: 'Water cache marker found wedged in the rocks below the tunnel, photographed for assessment.', source: 'Voice', operator: OPS },
+      // ── Medical: Medic1 follows Below-Rim down, Medic2 holds the trailhead ──────
+      { callsign: 'Medic1', minutesAgo: 318, ...TRAILHEAD, statusIndex: 4, notes: 'Medical checked in at the trailhead with water, electrolytes and a trauma kit.', source: 'Voice', operator: OPS },
+      { callsign: 'Medic1', minutesAgo: 306, ...GC.tunnel1, statusIndex: 0, notes: 'Following Below-Rim down as a precaution, heat is building fast.', source: 'Voice', operator: OPS },
+      { callsign: 'Medic2', minutesAgo: 296, ...TRAILHEAD, statusIndex: 4, notes: 'Staged at the trailhead. Park EMS aware and on standby.', source: 'Voice', operator: OPS },
+      { callsign: 'Medic1', minutesAgo: 240, ...GC.mile3, statusIndex: 0, notes: 'On scene at 3 Mile. Hiker alert, vitals improving. Not a carry-out: plan a slow walk-out once cooled.', source: 'Voice', operator: OPS },
+      { callsign: 'Medic1', minutesAgo: 212, ...GC.mile3, statusIndex: 0, notes: 'Starting the walk-out with Below-Rim, resting at each resthouse.', source: 'Voice', operator: OPS },
+      { callsign: 'Medic1', minutesAgo: 90, ...TRAILHEAD, statusIndex: 5, notes: 'Walked out under their own power. Handed to park EMS. Checking out.', source: 'Voice', operator: OPS },
+      { callsign: 'Medic2', minutesAgo: 80, ...TRAILHEAD, statusIndex: 5, notes: 'Park EMS assessed the hiker and released them to their parents. Checking out.', source: 'Voice', operator: OPS },
+
+      // ── Rim-West: hasty search west along the Rim Trail to Hopi Point ──────────
+      { callsign: 'Rim1', minutesAgo: 320, ...TRAILHEAD, statusIndex: 4, notes: 'Rim-West checked in, hasty search west along the Rim Trail to Hopi Point.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim2', minutesAgo: 304, ...GC.trailview, statusIndex: 1, notes: 'Location report: Trailview Overlook, no sign. Showing the hiker\'s photo to visitors.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim1', minutesAgo: 282, ...GC.maricopa, statusIndex: 0, notes: 'Maricopa Point clear. Shuttle drivers on the Hermit Road route have the description.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim2', minutesAgo: 276, ...GC.maricopa, statusIndex: 3, notes: 'Requesting a water resupply at the Maricopa shuttle stop, it is very hot out here.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim1', minutesAgo: 262, ...GC.powell, statusIndex: 1, notes: 'Location report: Powell Point, no sign. Continuing to Hopi.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim2', minutesAgo: 244, ...GC.hopi, statusIndex: 5, notes: 'Copy hiker found. Rim-West standing down at Hopi Point, shuttling back. Checking out.', source: 'Voice', operator: OPS },
+
+      // ── Rim-East: hasty search east to Mather Point, chases a false sighting ───
+      { callsign: 'Rim3', minutesAgo: 318, ...GC.kolb, statusIndex: 4, notes: 'Rim-East checked in at Kolb Studio, heading east along the Rim Trail to Mather Point.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim4', minutesAgo: 302, ...GC.verkamps, statusIndex: 0, notes: 'Passing Verkamp\'s, Rim Trail crowded but clear.', source: 'Voice', operator: OPS },
       {
-        callsign: 'Below2', minutesAgo: 160, lat: 36.0565, lng: -112.1424, address: 'Bright Angel Trail, near the tunnel', statusIndex: 6,
-        notes: 'URGENT: one hiker showing signs of heat exhaustion just below the tunnel, conscious but unsteady.', source: 'Voice', operator: OPS,
-        generates213: true, replyRequested213: true, subject213: 'Possible heat exhaustion below Bright Angel Trailhead',
-        message213: 'One hiker showing signs of heat exhaustion just below the first tunnel on Bright Angel Trail. Conscious and responsive; requesting a ranger medic and extra water carried down as soon as possible.',
+        callsign: 'Rim3', minutesAgo: 280, ...GC.yavapai, statusIndex: 6,
+        notes: 'URGENT: a caller on the park line reports a young hiker with a red pack, looking unwell, at Yavapai Point.', source: 'Phone', operator: OPS,
+        generates213: true, replyRequested213: true, subject213: 'Possible sighting at Yavapai Point',
+        message213: 'A caller on the park line reports a young hiker with a red pack, looking unwell, at Yavapai Point a few minutes ago. Rim-East is diverting to check. Requesting other teams hold their assignments until we confirm.',
         recipients213: ['Incident Commander', 'Ops'],
       },
-      { callsign: 'Below1', minutesAgo: 152, lat: 36.0568, lng: -112.1429, address: 'Bright Angel Trail, near the tunnel', statusIndex: 0, notes: 'Shading the hiker and administering water while waiting on the medic team.', source: 'Voice', operator: OPS },
-      { callsign: 'Below2', minutesAgo: 60, lat: 36.0568, lng: -112.1429, address: 'Bright Angel Trail, near the tunnel', statusIndex: 5, notes: 'Hiker stabilized and walked back up under their own power. Team checking out.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim3', minutesAgo: 268, ...GC.geologyMuseum, statusIndex: 0, notes: 'Found the caller\'s hiker by the geology museum: a different person, fine, resting with family. Not our subject.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim4', minutesAgo: 254, ...GC.mather, statusIndex: 1, notes: 'Location report: Mather Point, end of our segment, no sign.', source: 'Voice', operator: OPS },
+      { callsign: 'Rim4', minutesAgo: 246, ...GC.mather, statusIndex: 5, notes: 'Copy hiker found. Rim-East standing down at Mather Point. Checking out.', source: 'Voice', operator: OPS },
 
-      // ── Team D: Medic1/Medic2 - village sweep, responds to the below-rim call ──
-      { callsign: 'Medic1', minutesAgo: 280, ...CP, statusIndex: 4, notes: 'Medical team checked in, staged at the backcountry office with water and supplies.', source: 'Voice', operator: OPS },
-      { callsign: 'Medic2', minutesAgo: 272, lat: 36.0567, lng: -112.1427, address: 'Grand Canyon Village, near El Tovar', statusIndex: 0, notes: 'Sweeping the village core for the missing hiker, no sign yet.', source: 'Voice', operator: OPS },
-      { callsign: 'Medic1', minutesAgo: 155, lat: 36.0568, lng: -112.1429, address: 'Bright Angel Trail, near the tunnel', statusIndex: 4, notes: 'Responding down to the below-rim heat exhaustion call with extra water.', source: 'Voice', operator: OPS },
-      { callsign: 'Medic1', minutesAgo: 140, lat: 36.0568, lng: -112.1429, address: 'Bright Angel Trail, near the tunnel', statusIndex: 0, notes: 'On scene, hiker alert and improving, continuing to monitor.', source: 'Voice', operator: OPS },
-      { callsign: 'Medic2', minutesAgo: 120, lat: 36.0571, lng: -112.1436, address: 'Grand Canyon Village, near Kolb Studio', statusIndex: 5, notes: 'Village sweep complete, no further leads, returning to the backcountry office.', source: 'Voice', operator: OPS },
-      { callsign: 'Medic1', minutesAgo: 90, lat: 36.0568, lng: -112.1429, address: 'Bright Angel Trail, near the tunnel', statusIndex: 5, notes: 'Patient walked out under their own power, medical response complete. Checking out.', source: 'Voice', operator: OPS },
+      // ── Liaison with the family ─────────────────────────────────────────────────
+      { callsign: 'Liaison1', minutesAgo: 250, ...CP, statusIndex: 0, notes: 'Parents told the hiker is found and talking. Keeping them here and fed until the walk-out.', source: 'Voice', operator: 'Sunny Vermillion' },
+      { callsign: 'Liaison1', minutesAgo: 84, ...TRAILHEAD, statusIndex: 0, notes: 'Parents reunited with the hiker at the trailhead.', source: 'Voice', operator: 'Sunny Vermillion' },
 
       // ── Wrap-up ────────────────────────────────────────────────────────────────
-      { callsign: 'IC-Actual', minutesAgo: 30, ...CP, statusIndex: 0, notes: 'Rim and below-rim segments swept, no outstanding hazards. Standing down field teams.', source: 'Voice', operator: 'Dusty "Mesa" Ridgewalker' },
-      { callsign: '!CmdPost', minutesAgo: 12, ...CP, statusIndex: 5, notes: 'Exercise complete, closing net.', source: 'Voice', operator: 'Sunny Vermillion' },
+      { callsign: 'IC-Actual', minutesAgo: 30, ...CP, statusIndex: 0, notes: 'All teams out and accounted for. Standing down.', source: 'Voice', operator: 'Dusty "Mesa" Ridgewalker' },
+      { callsign: '!CmdPost', minutesAgo: 18, ...CP, statusIndex: 0, notes: 'Mission backed up; ICS-309 printed for handoff.', source: 'Voice', operator: OPS },
+      { callsign: '!CmdPost', minutesAgo: 12, ...CP, statusIndex: 5, notes: 'Exercise complete, closing net.', source: 'Voice', operator: OPS },
     ]
 
     const locations: MissionLocationType[] = [
       {
         name: 'Last Known Point - Bright Angel Trailhead', type: 'Last Known Point',
-        ...TRAILHEAD, note: 'Missing hiker last seen starting down Bright Angel Trail.',
+        ...TRAILHEAD, note: 'Missing hiker last seen starting down Bright Angel Trail at dawn.',
       },
       {
         name: 'Search Staging Area - Backcountry Info Center', type: 'Staging Area',
-        ...CP, note: 'Marshalling point for search teams and the NPS backcountry liaison.',
+        ...CP, note: 'Command post, marshalling point for search teams, and where the family waits.',
       },
     ]
 
     return {
       event: SampleDataService.SAMPLE_EVENT_NAME,
-      eventNotes: 'Missing hiker last seen near the Bright Angel Trailhead',
+      eventNotes: 'Overdue day hiker last seen starting down the Bright Angel Trail',
       rangers, rows, locations, commandPost: CP,
     }
   }
