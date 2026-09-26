@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.4](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.3...v0.96.4) (2026-09-26)
+
+
+### Features
+
+* **map:** pick an icon per location category - building, vehicle, toilet and more (E-117) ([645d61c](https://github.com/SteadyEOC/RangerTrak/commit/645d61cfa00bb8b51c1783dc84502f400be83008))
+
+
+### Bug Fixes
+
+* **map:** only a real color reaches a location marker's markup ([4543fa7](https://github.com/SteadyEOC/RangerTrak/commit/4543fa7c28ece5e4233ac2bbf07c2b804ba8854d))
+
 ### [0.96.3](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.2...v0.96.3) (2026-09-26)
 
 
