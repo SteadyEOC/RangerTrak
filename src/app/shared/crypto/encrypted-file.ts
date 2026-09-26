@@ -119,7 +119,12 @@ export async function decryptJson(file: EncryptedFile, passphrase: string): Prom
   }
 }
 
-async function deriveKey(
+// Exported for shared/storage/record-encryption.ts (E-122 Phase 2b): it derives keys the
+// same way (PBKDF2-SHA256, non-extractable AES-GCM-256) for encryption at rest, and reuses
+// this rather than re-deciding the same parameters a second time. See that file's own doc
+// comment for what is different about the at-rest case (many small records, one salt per
+// device, a fresh IV per write rather than per file).
+export async function deriveKey(
   passphrase: string, salt: Uint8Array<ArrayBuffer>, iterations: number,
 ): Promise<CryptoKey> {
   const material = await crypto.subtle.importKey(
@@ -137,7 +142,8 @@ async function deriveKey(
  * spread exceeds the argument limit, and a mission backup with a photo-bearing roster gets
  * there easily - this only shows up on large real missions, never on a test fixture.
  */
-function toBase64(bytes: Uint8Array<ArrayBuffer>): string {
+// Exported for record-encryption.ts, same reasoning as deriveKey() above.
+export function toBase64(bytes: Uint8Array<ArrayBuffer>): string {
   const CHUNK = 0x8000
   let binary = ''
   for (let i = 0; i < bytes.length; i += CHUNK) {
@@ -149,7 +155,7 @@ function toBase64(bytes: Uint8Array<ArrayBuffer>): string {
 // Typed as Uint8Array<ArrayBuffer> rather than plain Uint8Array: since TS 5.7 the array is
 // generic over ArrayBufferLike, and BufferSource - which crypto.subtle takes - excludes
 // SharedArrayBuffer. The default parameterisation is not assignable.
-function fromBase64(b64: string): Uint8Array<ArrayBuffer> {
+export function fromBase64(b64: string): Uint8Array<ArrayBuffer> {
   const binary = atob(b64)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)

@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core'
 
+import {
+  ENCRYPTED_KEYS, ENCRYPTION_MARKER_KEY, EncryptionMarker, createEncryptionMarker,
+  decryptRecordValue, encryptRecordValue, isEncryptedEnvelope, isEncryptionMarker,
+  unlockWithPassphrase,
+} from './record-encryption'
+
 /**
  * E-122 Phase 2a: the async, IndexedDB-backed replacement for using `localStorage` directly
  * to hold the app's personal-data keys (roster, field reports, locations).
@@ -52,11 +58,22 @@ import { Injectable } from '@angular/core'
  * including `LogService` - is available yet. Plain `console.*` is used throughout, the same
  * as `main.ts` itself already does for the Angular/CDK version banner.
  *
- * PHASE 2b, NOT YET BUILT
- * -------------------------
- * Per-record AES-GCM encryption (opt-in, unlocked by a plain-DOM passphrase form in `main.ts`
- * before Angular boots) lands on top of this store later. Nothing here encrypts anything yet;
- * every value is stored exactly as the calling service's own `JSON.stringify()` produced it.
+ * PHASE 2b: OPT-IN ENCRYPTION AT REST
+ * --------------------------------------
+ * Built on top of this store rather than instead of it: the in-memory `Map` above is ALWAYS
+ * plaintext (nothing here changes for `RangerService`/`RadioLogService`, which still read and
+ * write plain JSON strings), and encryption is purely a property of what sits on either side
+ * of it. `load()` decrypts right after `idbGet()`; `drain()`/`migrateOne()` encrypt right
+ * before `idbPut()`. Only `ENCRYPTED_KEYS` (the roster and field reports - see
+ * `record-encryption.ts`) are ever touched; `locations` and every `localStorage`-only key stay
+ * in the clear, same as before.
+ *
+ * The derived key is a non-extractable `CryptoKey` held only in the `key` field below - never
+ * written anywhere, never logged. `main.ts` calls `checkEncryption()` before `load()` to learn
+ * whether a passphrase is needed at all (a plaintext marker record answers that without
+ * decrypting anything), then `unlock()` once the operator has typed it. See
+ * `shared/storage/unlock-form.ts` for the plain-DOM form that calls both, and
+ * `record-encryption.ts`'s own header comment for the marker/verifier/per-write-IV design.
  */
 
 // Exported for record-store.spec.ts only: it verifies migration/persistence by reading the
@@ -100,6 +117,197 @@ class RecordStoreImpl {
   private dbAvailable = true
   private openPromise?: Promise<void>
 
+  /**
+   * Set once `checkEncryption()` has read the plaintext marker record (E-122 Phase 2b).
+   * `undefined` means "no marker" - either encryption was never enabled, or it hasn't been
+   * checked yet this session.
+   */
+  private marker?: EncryptionMarker
+
+  /**
+   * The derived AES-GCM key for this session, non-extractable, held only here - never
+   * persisted, never logged. Set by `unlock()` (real passphrase, before boot),
+   * `enableEncryption()` (fresh key) or `verifyPassphrase()`'s caller assigning it back in
+   * (disable flow). `undefined` means every `ENCRYPTED_KEYS` read/write happens in the clear -
+   * true for a device that never enabled encryption, and briefly true again while a wrong
+   * passphrase is being retried at the lock screen.
+   */
+  private key?: CryptoKey
+
+  /**
+   * Reads (and caches) the plaintext encryption marker, WITHOUT touching `MIGRATED_KEYS` -
+   * called by `main.ts` before deciding whether to show the unlock form at all, and before
+   * `load()` runs (a locked device must not attempt to decrypt anything before the operator
+   * has typed a passphrase). Never throws: a marker this session cannot read is treated the
+   * same as no marker, so a corrupted marker record can never itself stop the app booting -
+   * see `main.ts`'s own comment on why nothing here is allowed to brick the app.
+   */
+  async checkEncryption(): Promise<boolean> {
+    await this.ensureDb()
+    if (!this.dbAvailable) { this.marker = undefined; return false }
+    try {
+      const raw = await this.idbGet(ENCRYPTION_MARKER_KEY)
+      if (raw === null) { this.marker = undefined; return false }
+      const parsed = JSON.parse(raw)
+      if (!isEncryptionMarker(parsed)) {
+        console.warn('RecordStore: the encryption marker record is not in a recognized shape; treating this device as unencrypted.')
+        this.marker = undefined
+        return false
+      }
+      this.marker = parsed
+      return true
+    } catch (e: any) {
+      console.warn(`RecordStore: could not read the encryption marker (${e?.message ?? e}); treating this device as unencrypted.`)
+      this.marker = undefined
+      return false
+    }
+  }
+
+  /** True once `checkEncryption()` has found a marker - independent of whether unlocked yet. */
+  isEncryptionEnabled(): boolean { return !!this.marker }
+
+  /** The session's derived key, or undefined if never unlocked (or encryption is off). */
+  getEncryptionKey(): CryptoKey | undefined { return this.key }
+
+  /**
+   * Derives a key from `passphrase` against the cached marker and checks it via the verifier.
+   * Never throws, never mutates state - `unlock()` below is the state-changing counterpart
+   * used at boot; this is also reused by the Disable flow (mission-advanced-options.component.ts),
+   * which needs the same verified key to hand to `RangerPhotoService` without unlock()'s
+   * side effect of arming `this.key` for a device that is about to stop being encrypted.
+   */
+  async verifyPassphrase(passphrase: string): Promise<CryptoKey | null> {
+    if (!this.marker) return null
+    return unlockWithPassphrase(this.marker, passphrase)
+  }
+
+  /**
+   * Called from the plain-DOM unlock form (`shared/storage/unlock-form.ts`) before `load()`.
+   * On a correct passphrase, arms `this.key` so `load()`'s decryption and every subsequent
+   * `drain()`'s encryption have a key to use, and returns true. On a wrong passphrase, leaves
+   * state untouched and returns false - the form re-prompts, with no retry lockout.
+   */
+  async unlock(passphrase: string): Promise<boolean> {
+    const key = await this.verifyPassphrase(passphrase)
+    if (!key) return false
+    this.key = key
+    return true
+  }
+
+  /**
+   * Mission > Data safety's "Enable" action. Requires the caller (the component) to have
+   * already gated this on a fresh backup and a twice-typed passphrase - this method only
+   * does the storage work: write a fresh marker, arm the key, and re-encrypt every
+   * `ENCRYPTED_KEYS` record already in the Map in place. Awaits `flush()` before returning, so
+   * the caller can report success only once every record has actually committed encrypted.
+   * Ranger photos are a separate service/database and are NOT touched here - the caller
+   * fetches `getEncryptionKey()` afterward and hands it to `RangerPhotoService.encryptAll()`.
+   */
+  async enableEncryption(passphrase: string): Promise<void> {
+    if (this.marker) throw new Error('Encryption is already enabled on this device.')
+    const { marker, key } = await createEncryptionMarker(passphrase)
+    this.marker = marker
+    this.key = key
+    // Routed through the same pending/drain() pipeline as any other key: drain() only
+    // encrypts keys in ENCRYPTED_KEYS, so the marker record itself (not a member of that
+    // list) always lands in the clear, same as reading/writing any other plain kv entry.
+    this.queueWrite(ENCRYPTION_MARKER_KEY, JSON.stringify(marker))
+    for (const k of ENCRYPTED_KEYS) {
+      if (this.map.has(k)) this.setItem(k, this.map.get(k)!)
+    }
+    await this.flush()
+  }
+
+  /**
+   * Mission > Data safety's "Disable" action. The caller has already verified the typed
+   * passphrase via `verifyPassphrase()` (so it can hand the same key to
+   * `RangerPhotoService.decryptAll()` first) - this method clears the key/marker BEFORE
+   * requeueing the ENCRYPTED_KEYS writes, so `drain()` (which decides whether to encrypt by
+   * checking `this.key` at the moment it actually runs, not when queued) writes them out in
+   * the clear. The in-memory Map was never anything but plaintext, so there is nothing to
+   * decrypt here - only a marker to delete and every record to re-persist unencrypted.
+   */
+  async disableEncryption(): Promise<void> {
+    if (!this.marker) throw new Error('Encryption is not enabled on this device.')
+    this.marker = undefined
+    this.key = undefined
+    this.queueWrite(ENCRYPTION_MARKER_KEY, null)
+    for (const k of ENCRYPTED_KEYS) {
+      if (this.map.has(k)) this.setItem(k, this.map.get(k)!)
+    }
+    await this.flush()
+  }
+
+  /**
+   * The lock screen's "Forgot it" flow (`unlock-form.ts`), run before Angular boots: deletes
+   * the encrypted records and the marker so a lost-forever passphrase cannot permanently brick
+   * the device - the user restores from a backup afterward (Mission > Danger zone). Deliberately
+   * narrow: `locations` and every `localStorage`-only key were never encrypted and are left
+   * alone, since a forgotten roster/report passphrase is no reason to also discard those.
+   * Ranger photos live in a separate database and are erased by the caller directly - this
+   * store has no reference to `RangerPhotoService`.
+   */
+  async eraseEncryptedRecords(): Promise<void> {
+    await this.ensureDb()
+    this.marker = undefined
+    this.key = undefined
+    for (const key of [...ENCRYPTED_KEYS, ENCRYPTION_MARKER_KEY]) {
+      this.map.delete(key)
+      if (this.dbAvailable) {
+        try {
+          await this.idbDelete(key)
+        } catch (e: any) {
+          console.error(`RecordStore: could not erase "${key}" (${e?.message ?? e}).`)
+        }
+      } else {
+        localStorage.removeItem(key)
+      }
+    }
+  }
+
+  /**
+   * Encrypts `plaintext` for `key` if (and only if) encryption is armed this session AND
+   * `key` is one of `ENCRYPTED_KEYS` - every other key (locations, the marker itself) passes
+   * through untouched. Shared by `drain()` and `migrateOne()` so both write paths agree.
+   */
+  private async encryptIfNeeded(key: string, plaintext: string): Promise<string> {
+    if (!this.key || !(ENCRYPTED_KEYS as readonly string[]).includes(key)) return plaintext
+    return JSON.stringify(await encryptRecordValue(this.key, plaintext))
+  }
+
+  /**
+   * Reverses encryptIfNeeded() for a value just read from IndexedDB. A record that isn't
+   * shaped like one of this app's own envelopes (isEncryptedEnvelope()) is assumed already
+   * plaintext and returned as-is - this covers both a device that never encrypted anything and
+   * `locations`/other non-`ENCRYPTED_KEYS` values, without needing to ask the marker first.
+   * Returns null - "treat this key as missing" - for an envelope this session cannot open
+   * (no key yet, wrong key, or corruption): logged, but never thrown, so one bad record can
+   * never stop the rest of the store (or the app) from loading. See main.ts's own comment on
+   * why nothing in this boot path is allowed to brick the app.
+   */
+  private async decryptIfNeeded(key: string, raw: string): Promise<string | null> {
+    if (!(ENCRYPTED_KEYS as readonly string[]).includes(key)) return raw
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      // Not JSON at all - can't be one of our envelopes either. Treat as already plaintext
+      // (matches this store's existing tolerance for whatever a caller's setItem() wrote).
+      return raw
+    }
+    if (!isEncryptedEnvelope(parsed)) return raw
+    if (!this.key) {
+      console.error(`RecordStore: "${key}" is encrypted but this session has no key; treating it as missing.`)
+      return null
+    }
+    try {
+      return await decryptRecordValue(this.key, parsed)
+    } catch (e: any) {
+      console.error(`RecordStore: could not decrypt "${key}" (${e?.message ?? e}); treating it as missing.`)
+      return null
+    }
+  }
+
   /** Resolves once `getItem()` is safe to trust for `MIGRATED_KEYS` - awaited by `main.ts`. */
   async load(): Promise<void> {
     await this.ensureDb()
@@ -124,6 +332,14 @@ class RecordStoreImpl {
         continue
       }
 
+      // E-122 Phase 2b: only a value that actually came from IndexedDB can be one of this
+      // app's own encrypted envelopes - the legacy-localStorage and fallback paths below are
+      // always plaintext (2a shipped months before 2b existed) and are deliberately left out
+      // of this call, see decryptIfNeeded()'s own comment.
+      if (value !== null) {
+        value = await this.decryptIfNeeded(key, value)
+      }
+
       if (value === null) {
         const legacy = localStorage.getItem(key)
         if (legacy !== null) {
@@ -136,7 +352,14 @@ class RecordStoreImpl {
         localStorage.removeItem(key)
         console.info(`RecordStore: removed a stale localStorage copy of "${key}".`)
       }
+      // E-122 Phase 2b: the explicit delete() (not just "skip the set()") matters if load()
+      // ever runs again against a Map that already holds an earlier value for this key - an
+      // undecryptable record must actually WIN over stale in-memory state, not be silently
+      // shadowed by it. Normal boot never hits this (main.ts calls load() once, against an
+      // empty Map), but "treated as missing" has to mean missing, not "whatever was already
+      // there."
       if (value !== null) this.map.set(key, value)
+      else this.map.delete(key)
     }
   }
 
@@ -151,9 +374,15 @@ class RecordStoreImpl {
    */
   private async migrateOne(key: string, legacyValue: string): Promise<string> {
     try {
-      await this.idbPut(key, legacyValue)
+      // E-122 Phase 2b: encrypted the same way drain() would, so a device that enabled
+      // encryption before every key had finished migrating (only plausible for a returning
+      // user restoring very old localStorage state) never writes this PII to IndexedDB in
+      // the clear. The read-back below compares against the STORED form, not legacyValue -
+      // it is verifying the write actually round-trips, not re-deriving plaintext.
+      const stored = await this.encryptIfNeeded(key, legacyValue)
+      await this.idbPut(key, stored)
       const readBack = await this.idbGet(key)
-      if (readBack !== legacyValue) {
+      if (readBack !== stored) {
         console.warn(`RecordStore: migrating "${key}" to IndexedDB read back different `
           + `content than was written; leaving localStorage untouched and will retry next load.`)
         return legacyValue
@@ -225,18 +454,21 @@ class RecordStoreImpl {
     await this.ensureDb()
 
     if (!this.dbAvailable) {
-      // Became unavailable between queueing and draining - never lose a write over it.
+      // Became unavailable between queueing and draining - never lose a write over it. Still
+      // encrypted if armed: this device may have enabled encryption in an earlier session
+      // (the marker is already in IndexedDB) and only lost IndexedDB access just now - a
+      // transient failure must not be the reason plaintext PII lands in localStorage.
       for (const [key, value] of entries) {
-        if (value === null) localStorage.removeItem(key)
-        else localStorage.setItem(key, value)
+        if (value === null) { localStorage.removeItem(key); continue }
+        localStorage.setItem(key, await this.encryptIfNeeded(key, value))
       }
       return
     }
 
     for (const [key, value] of entries) {
       try {
-        if (value === null) await this.idbDelete(key)
-        else await this.idbPut(key, value)
+        if (value === null) { await this.idbDelete(key); continue }
+        await this.idbPut(key, await this.encryptIfNeeded(key, value))
       } catch (e: any) {
         console.error(`RecordStore: failed to persist "${key}" to IndexedDB: ${e?.message ?? e}`)
       }
@@ -271,6 +503,8 @@ class RecordStoreImpl {
     this.writeChain = Promise.resolve()
     this.dbAvailable = true
     this.openPromise = undefined
+    this.marker = undefined
+    this.key = undefined
     // close() lets any transaction already in flight finish; it does not abort one.
     this.db?.close()
     this.db = undefined
@@ -393,6 +627,16 @@ export class RecordStore {
   removeItem(key: string): void { recordStore.removeItem(key) }
   load(): Promise<void> { return recordStore.load() }
   flush(): Promise<void> { return recordStore.flush() }
+
+  // E-122 Phase 2b: Mission > Data safety (mission-advanced-options.component.ts) is the one
+  // Angular consumer of the encryption surface, so it reaches it through this DI wrapper
+  // rather than importing the singleton directly - `main.ts`'s own unlock flow, which runs
+  // before Angular exists, still imports `recordStore` directly (see unlock-form.ts).
+  isEncryptionEnabled(): boolean { return recordStore.isEncryptionEnabled() }
+  getEncryptionKey(): CryptoKey | undefined { return recordStore.getEncryptionKey() }
+  verifyPassphrase(passphrase: string): Promise<CryptoKey | null> { return recordStore.verifyPassphrase(passphrase) }
+  enableEncryption(passphrase: string): Promise<void> { return recordStore.enableEncryption(passphrase) }
+  disableEncryption(): Promise<void> { return recordStore.disableEncryption() }
 }
 
 // Best-effort persistence on the way out. `pagehide` fires on tab close/navigation-away and

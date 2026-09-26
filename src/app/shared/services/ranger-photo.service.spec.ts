@@ -1,7 +1,27 @@
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
-import { RangerPhotoService } from './ranger-photo.service';
+import { RANGER_PHOTOS_DB_NAME, RangerPhotoService } from './ranger-photo.service';
+import { recordStore } from '../storage/record-store';
+
+/** Reads a value straight out of the photos object store, independent of RangerPhotoService's
+ *  own internals - so a bug in put()/loadAll() can't also fool the test that checks what is
+ *  actually persisted. Never creates the database (E-122 Phase 2a's lesson, see
+ *  record-store.spec.ts's own readRawFromIdb()). */
+function readPhotoStoreRaw(stem: string): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(RANGER_PHOTOS_DB_NAME);
+    req.onupgradeneeded = () => req.transaction!.abort();
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction('photos', 'readonly');
+      const getReq = tx.objectStore('photos').get(stem);
+      getReq.onsuccess = () => { db.close(); resolve(getReq.result); };
+      getReq.onerror = () => { db.close(); reject(getReq.error); };
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
 
 /**
  * Photos are operator data held on the device (D-35 / E-38). These pin the behavior that
@@ -120,5 +140,60 @@ describe('RangerPhotoService', () => {
     expect(unmatched).toEqual([]);
     // The id match wins - photoUrl() checks id before callsign for the same reason.
     expect(service.photoUrl({ id: 'ACS1' })).toContain('blob:');
+  });
+
+  // ── E-122 Phase 2b: photos encrypted under RecordStore's session key ──────
+  describe('encryption at rest', () => {
+    afterEach(async () => {
+      // recordStore is a module-level singleton (see record-store.ts's own doc comment) - it
+      // outlives this describe block otherwise and would leak an armed key into every spec
+      // file that runs after this one in the same Karma run.
+      await recordStore.resetForTests();
+    });
+
+    it('stores a newly-imported photo encrypted once RecordStore has a key', async () => {
+      await recordStore.enableEncryption('a device passphrase');
+
+      await service.importFiles([file('ENC1.jpg')], [{ callsign: 'ENC1' }]);
+
+      expect(service.photoUrl({ callsign: 'ENC1' })).toContain('blob:');
+      const raw = await readPhotoStoreRaw('ENC1');
+      expect(raw instanceof Blob).toBe(false);
+    });
+
+    it('a rebuilt service decrypts a photo stored encrypted, using the same session key', async () => {
+      await recordStore.enableEncryption('a device passphrase');
+      await service.importFiles([file('ENC2.jpg')], [{ callsign: 'ENC2' }]);
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers: [provideHttpClient()] });
+      const rebuilt = TestBed.inject(RangerPhotoService);
+      await rebuilt.whenReady();
+
+      expect(rebuilt.photoUrl({ callsign: 'ENC2' })).toContain('blob:');
+      await rebuilt.clear();
+    });
+
+    it('encryptAll() re-encrypts a photo that was stored before encryption was enabled', async () => {
+      await service.importFiles([file('ENC3.jpg')], [{ callsign: 'ENC3' }]);
+      expect(await readPhotoStoreRaw('ENC3') instanceof Blob).toBe(true);
+
+      await recordStore.enableEncryption('a device passphrase');
+      await service.encryptAll(recordStore.getEncryptionKey()!);
+
+      expect(await readPhotoStoreRaw('ENC3') instanceof Blob).toBe(false);
+      // Already-open object URLs are untouched - still readable in this same session.
+      expect(service.photoUrl({ callsign: 'ENC3' })).toContain('blob:');
+    });
+
+    it('decryptAll() reverses encryptAll(), leaving a plain Blob in the store again', async () => {
+      await recordStore.enableEncryption('a device passphrase');
+      await service.importFiles([file('ENC4.jpg')], [{ callsign: 'ENC4' }]);
+      expect(await readPhotoStoreRaw('ENC4') instanceof Blob).toBe(false);
+
+      await service.decryptAll(recordStore.getEncryptionKey()!);
+
+      expect(await readPhotoStoreRaw('ENC4') instanceof Blob).toBe(true);
+    });
   });
 });

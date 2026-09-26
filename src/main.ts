@@ -10,6 +10,10 @@ import { environment } from './environments/environment'
 // constructor's synchronous recordStore.getItem() already sees real data. See
 // shared/storage/record-store.ts's own doc comment for the full design.
 import { recordStore } from './app/shared/storage/record-store'
+// E-122 Phase 2b: a plain-DOM passphrase form (no Angular - see its own doc comment for why),
+// shown only when recordStore.checkEncryption() finds this device encrypted, BEFORE load()
+// runs. Locations/settings stay unencrypted regardless, so nothing here blocks on those.
+import { runUnlockGate } from './app/shared/storage/unlock-form'
 
 // NOTE: AG Grid's module registration deliberately does NOT happen here - importing
 // ag-grid-community from main.ts drags the whole grid bundle into the eager initial
@@ -25,6 +29,19 @@ console.info('Angular version', NG_VERSION.full);
 console.info('Angular CDK version', CDK_VERSION.full);
 
 async function bootstrap() {
+  try {
+    // Must run BEFORE load(): a locked device's roster/reports are encrypted envelopes, and
+    // load() has no passphrase to decrypt them with until this resolves. checkEncryption()
+    // itself never throws (see its own doc comment), so a device that was never encrypted, or
+    // whose marker this session cannot read, falls through to load() exactly as before.
+    if (await recordStore.checkEncryption()) {
+      await runUnlockGate()
+    }
+  } catch (err) {
+    // Belt and braces, same reasoning as the load() catch below: an unlock gate must never be
+    // the reason the app fails to boot.
+    console.error('Encryption check/unlock failed; continuing to boot.', err)
+  }
   try {
     await recordStore.load()
   } catch (err) {

@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core'
 
 import { LogService } from './log.service'
+// Direct import of the module-level singleton, not the RecordStore DI wrapper: this service's
+// own constructor runs from Angular DI, same as everything else here, but reading the session
+// key this way matches the "direct import for something DI can't reach yet" idiom
+// record-store.ts's own doc comment describes - main.ts's unlock flow runs before any injector
+// exists, and the key it derives has to be the SAME instance's key this service reads.
+import { recordStore } from '../storage/record-store'
+import { decryptPhoto, encryptPhoto } from '../storage/record-encryption'
 
 /**
  * Ranger photographs, stored on THIS device only.
@@ -29,7 +36,10 @@ import { LogService } from './log.service'
  * for both import matching and lookup - never id-only, or every existing bundle orphans.
  */
 
-const DB_NAME = 'rangertrak-photos'
+// Exported for unlock-form.ts's "Forgot it" flow (E-122 Phase 2b): erasing this whole database
+// directly is the equivalent of clear() with no service instance to call it on - main.ts runs
+// before Angular's injector exists. See that file's own comment.
+export const RANGER_PHOTOS_DB_NAME = 'rangertrak-photos'
 const DB_VERSION = 1
 const STORE = 'photos'
 /** Longest edge kept, in pixels. Renders at 40-60px; this leaves room for retina and zoom. */
@@ -39,6 +49,25 @@ const MAX_EDGE = 320
 export interface RangerPhotoIdentity {
   id?: string
   callsign?: string
+}
+
+/**
+ * E-122 Phase 2b: what an encrypted photo looks like in the `photos` object store, in place
+ * of the plain `Blob` stored there before. Not base64 - IndexedDB stores binary natively, so
+ * the IV and ciphertext travel as themselves; see record-encryption.ts's own comment on why
+ * that matters more here than for the small JSON strings RecordStore encrypts.
+ */
+interface EncryptedPhotoRecord {
+  encrypted: true
+  iv: Uint8Array<ArrayBuffer>
+  mime: string
+  data: ArrayBuffer
+}
+
+function isEncryptedPhotoRecord(value: unknown): value is EncryptedPhotoRecord {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  return v['encrypted'] === true && v['data'] instanceof ArrayBuffer && v['iv'] instanceof Uint8Array
 }
 
 @Injectable({ providedIn: 'root' })
@@ -144,7 +173,7 @@ export class RangerPhotoService {
   private open(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (typeof indexedDB === 'undefined') { reject(new Error('no IndexedDB')); return }
-      const req = indexedDB.open(DB_NAME, DB_VERSION)
+      const req = indexedDB.open(RANGER_PHOTOS_DB_NAME, DB_VERSION)
       req.onupgradeneeded = () => {
         const db = req.result
         if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE)
@@ -176,17 +205,107 @@ export class RangerPhotoService {
     })
   }
 
-  private put(callsign: string, blob: Blob) { return this.tx('readwrite', s => s.put(blob, callsign)) }
+  /**
+   * E-122 Phase 2b: encrypts under the session key when one is set (RecordStore's roster is
+   * encrypted, and this device has been unlocked), else stores the plain Blob exactly as
+   * before. `recordStore.getEncryptionKey()` is read fresh on every call rather than cached -
+   * it can go from unset to set (Enable) or vice versa (Disable) mid-session; see those flows
+   * in mission-advanced-options.component.ts, which handle the ALREADY-STORED photos via
+   * encryptAll()/decryptAll() below rather than this method.
+   */
+  private async put(callsign: string, blob: Blob) {
+    const key = recordStore.getEncryptionKey()
+    if (!key) return this.tx('readwrite', s => s.put(blob, callsign))
+    const record = await this.toEncryptedRecord(key, blob)
+    return this.tx('readwrite', s => s.put(record, callsign))
+  }
+
+  private async toEncryptedRecord(key: CryptoKey, blob: Blob): Promise<EncryptedPhotoRecord> {
+    const plaintext = await blob.arrayBuffer()
+    const { iv, ciphertext } = await encryptPhoto(key, plaintext)
+    return { encrypted: true, iv, mime: blob.type || 'application/octet-stream', data: ciphertext }
+  }
 
   private async loadAll(): Promise<void> {
     if (!this.db) return
     const keys = await this.tx<IDBValidKey[]>('readonly', s => s.getAllKeys())
-    const blobs = await this.tx<Blob[]>('readonly', s => s.getAll())
-    keys.forEach((k, i) => {
-      const blob = blobs[i]
-      if (blob) this.urls.set(String(k).toUpperCase(), URL.createObjectURL(blob))
-    })
+    const stored = await this.tx<unknown[]>('readonly', s => s.getAll())
+    for (let i = 0; i < keys.length; i++) {
+      const stem = String(keys[i]).toUpperCase()
+      const value = stored[i]
+      if (value instanceof Blob) {
+        this.urls.set(stem, URL.createObjectURL(value))
+        continue
+      }
+      if (!isEncryptedPhotoRecord(value)) continue
+      const key = recordStore.getEncryptionKey()
+      if (!key) {
+        // Same "treat as missing, never a boot failure" rule RecordStore.load() follows -
+        // this device is either still locked (shouldn't happen; main.ts unlocks before this
+        // service ever constructs) or this photo predates a key this session never got.
+        this.log.warn(`Photo "${stem}" is encrypted but no key is available this session; skipping.`, this.id)
+        continue
+      }
+      try {
+        const plaintext = await decryptPhoto(key, value.iv, value.data)
+        this.urls.set(stem, URL.createObjectURL(new Blob([plaintext], { type: value.mime })))
+      } catch (e: any) {
+        this.log.error(`Could not decrypt stored photo "${stem}": ${e?.message ?? e}`, this.id)
+      }
+    }
     if (this.urls.size) this.log.info(`Loaded ${this.urls.size} ranger photos from this device.`, this.id)
+  }
+
+  /**
+   * Re-encrypts every photo already on this device under `key` - the Enable half of Mission >
+   * Data safety, called right after `RecordStore.enableEncryption()` resolves (that call is
+   * what derives `key` in the first place). Reads back through the already-decrypted object
+   * URLs (`this.urls`) rather than re-opening IndexedDB, the same shortcut `allPhotoBlobs()`
+   * already takes and for the same reason: they are already the in-memory source of truth.
+   */
+  async encryptAll(key: CryptoKey): Promise<void> {
+    await this.ready
+    if (!this.db) return
+    for (const [stem, url] of this.urls) {
+      try {
+        const blob = await (await fetch(url)).blob()
+        const record = await this.toEncryptedRecord(key, blob)
+        await this.tx('readwrite', s => s.put(record, stem))
+      } catch (e: any) {
+        this.log.error(`Could not encrypt stored photo "${stem}": ${e?.message ?? e}`, this.id)
+      }
+    }
+    this.log.warn(`Encrypted ${this.urls.size} ranger photos on this device.`, this.id)
+  }
+
+  /**
+   * Reverses encryptAll(): decrypts every stored photo back to a plain Blob - the Disable half
+   * of Mission > Data safety. Called with the already-verified key
+   * (`RecordStore.verifyPassphrase()`) BEFORE `RecordStore.disableEncryption()` clears session
+   * state, since this method (unlike encryptAll()) has to read the CURRENTLY-encrypted bytes
+   * back out of IndexedDB rather than off an in-memory object URL - `this.urls` already holds
+   * plaintext object URLs regardless of what is on disk (loadAll() decrypts into them at
+   * startup), so re-reading raw IndexedDB is the only way to reach the still-encrypted form.
+   */
+  async decryptAll(key: CryptoKey): Promise<void> {
+    await this.ready
+    if (!this.db) return
+    const keys = await this.tx<IDBValidKey[]>('readonly', s => s.getAllKeys())
+    const stored = await this.tx<unknown[]>('readonly', s => s.getAll())
+    let count = 0
+    for (let i = 0; i < keys.length; i++) {
+      const stem = String(keys[i])
+      const value = stored[i]
+      if (!isEncryptedPhotoRecord(value)) continue
+      try {
+        const plaintext = await decryptPhoto(key, value.iv, value.data)
+        await this.tx('readwrite', s => s.put(new Blob([plaintext], { type: value.mime }), stem))
+        count++
+      } catch (e: any) {
+        this.log.error(`Could not decrypt stored photo "${stem}" while disabling encryption: ${e?.message ?? e}`, this.id)
+      }
+    }
+    this.log.warn(`Decrypted ${count} ranger photos on this device.`, this.id)
   }
 
   private revoke(callsign: string) {

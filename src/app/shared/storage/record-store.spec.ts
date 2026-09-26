@@ -1,4 +1,5 @@
 import { DB_NAME, MIGRATED_KEYS, recordStore, STORE } from './record-store';
+import { ENCRYPTION_MARKER_KEY } from './record-encryption';
 
 /**
  * E-122 Phase 2a. `recordStore` is a module-level singleton (see its own doc comment for why),
@@ -248,6 +249,168 @@ describe('RecordStore', () => {
         expect(localStorage.getItem(key)).withContext(`localStorage "${key}"`).toBeNull();
         expect(await readRawFromIdb(key)).withContext(`IndexedDB "${key}"`).toBe(values[key]);
       }
+    });
+  });
+
+  /**
+   * E-122 Phase 2b. Unlike the sections above, these exercise enableEncryption()/
+   * disableEncryption()/checkEncryption()/unlock() directly - the plain-DOM form in
+   * unlock-form.ts is a thin wrapper around unlock()/eraseEncryptedRecords() and is not
+   * itself re-tested here.
+   */
+  describe('encryption at rest (E-122 Phase 2b)', () => {
+    const PASS = 'correct horse battery staple';
+    const ROSTER = JSON.stringify({ schemaVersion: 1, rangers: [{ callsign: 'ENC1' }] });
+    const RADIO_LOG = JSON.stringify({ version: '1', logEntries: [{ id: 0, callsign: 'ENC1' }] });
+    const LOCATIONS = JSON.stringify({ schemaVersion: 1, locations: [{ name: 'Command Post' }] });
+
+    it('reports no encryption on a fresh device', async () => {
+      expect(await recordStore.checkEncryption()).toBe(false);
+      expect(recordStore.isEncryptionEnabled()).toBe(false);
+      expect(recordStore.getEncryptionKey()).toBeUndefined();
+    });
+
+    it('enableEncryption() arms a key and marks the device encrypted', async () => {
+      expect(recordStore.isEncryptionEnabled()).toBe(false);
+      await recordStore.enableEncryption(PASS);
+      expect(recordStore.isEncryptionEnabled()).toBe(true);
+      expect(recordStore.getEncryptionKey()).toBeDefined();
+    });
+
+    it('drain() writes a value that is NOT the plaintext once encryption is enabled', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      await recordStore.flush();
+
+      const raw = await readRawFromIdb('rangers');
+      expect(raw).not.toBeNull();
+      expect(raw).not.toBe(ROSTER);
+      expect(raw as string).not.toContain('ENC1');
+      // In memory - what every service actually reads - is still plaintext.
+      expect(recordStore.getItem('rangers')).toBe(ROSTER);
+    });
+
+    it('locations stay plaintext even while roster/radioLog are encrypted', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      recordStore.setItem('locations', LOCATIONS);
+      await recordStore.flush();
+
+      expect(await readRawFromIdb('locations')).toBe(LOCATIONS);
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+    });
+
+    it('verifyPassphrase() rejects the wrong passphrase without touching session state', async () => {
+      await recordStore.enableEncryption(PASS);
+      const keyBefore = recordStore.getEncryptionKey();
+
+      expect(await recordStore.verifyPassphrase('wrong passphrase')).toBeNull();
+      expect(recordStore.getEncryptionKey()).toBe(keyBefore);
+      expect(recordStore.isEncryptionEnabled()).toBe(true);
+    });
+
+    it('unlock() arms the key on the right passphrase and refuses the wrong one', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      await recordStore.flush();
+
+      // Simulate "next session": drop the in-memory key/marker, but keep IndexedDB, the way
+      // a page reload would (nothing here is persisted - see the key field's own comment).
+      (recordStore as any).key = undefined;
+      (recordStore as any).marker = undefined;
+
+      expect(await recordStore.checkEncryption()).toBe(true);
+      expect(await recordStore.unlock('wrong passphrase')).toBe(false);
+      expect(recordStore.getEncryptionKey()).toBeUndefined();
+
+      expect(await recordStore.unlock(PASS)).toBe(true);
+      expect(recordStore.getEncryptionKey()).toBeDefined();
+
+      // And now load() can actually decrypt what an earlier "session" encrypted.
+      await recordStore.load();
+      expect(recordStore.getItem('rangers')).toBe(ROSTER);
+    });
+
+    it('enable -> disable round trip leaves the data intact and unencrypted again', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      recordStore.setItem('radioLog', RADIO_LOG);
+      await recordStore.flush();
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+
+      const key = await recordStore.verifyPassphrase(PASS);
+      expect(key).not.toBeNull();
+      await recordStore.disableEncryption();
+      await recordStore.flush();
+
+      expect(recordStore.isEncryptionEnabled()).toBe(false);
+      expect(recordStore.getEncryptionKey()).toBeUndefined();
+      expect(await readRawFromIdb('rangers')).toBe(ROSTER);
+      expect(await readRawFromIdb('radioLog')).toBe(RADIO_LOG);
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull();
+      // In-memory reads never changed - the Map was always plaintext.
+      expect(recordStore.getItem('rangers')).toBe(ROSTER);
+    });
+
+    it('one corrupt encrypted record is treated as missing, not a load() failure', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      recordStore.setItem('radioLog', RADIO_LOG);
+      await recordStore.flush();
+
+      // Corrupt just the roster's stored ciphertext directly in IndexedDB.
+      const raw = JSON.parse((await readRawFromIdb('rangers'))!);
+      raw.ciphertext = btoa('not the real ciphertext at all');
+      await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME);
+        // Same rule as readRawFromIdb() above: never create the database from a test writer
+        // either - the store already exists here (enableEncryption()/flush() created it), so
+        // this should never actually fire, but aborting rather than creating keeps this
+        // reader/writer safe regardless of ordering.
+        req.onupgradeneeded = () => req.transaction!.abort();
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction(STORE, 'readwrite');
+          tx.objectStore(STORE).put(JSON.stringify(raw), 'rangers');
+          tx.oncomplete = () => { db.close(); resolve(); };
+          tx.onerror = () => { db.close(); reject(tx.error); };
+        };
+        req.onerror = () => reject(req.error);
+      });
+
+      (recordStore as any).key = undefined;
+      (recordStore as any).marker = undefined;
+      await recordStore.checkEncryption();
+      await recordStore.unlock(PASS);
+
+      await expectAsync(recordStore.load()).toBeResolved();
+      // The corrupt key is simply absent, not a thrown error - and the sibling key survives.
+      expect(recordStore.getItem('rangers')).toBeNull();
+      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG);
+    });
+
+    it('eraseEncryptedRecords() deletes the encrypted keys and the marker, leaving locations alone', async () => {
+      await recordStore.enableEncryption(PASS);
+      recordStore.setItem('rangers', ROSTER);
+      recordStore.setItem('locations', LOCATIONS);
+      await recordStore.flush();
+
+      await recordStore.eraseEncryptedRecords();
+
+      expect(recordStore.isEncryptionEnabled()).toBe(false);
+      expect(recordStore.getItem('rangers')).toBeNull();
+      expect(await readRawFromIdb('rangers')).toBeNull();
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull();
+      expect(await readRawFromIdb('locations')).toBe(LOCATIONS);
+    });
+
+    it('enableEncryption() throws if already enabled, rather than silently rotating the key', async () => {
+      await recordStore.enableEncryption(PASS);
+      await expectAsync(recordStore.enableEncryption('a second passphrase')).toBeRejected();
+    });
+
+    it('disableEncryption() throws if encryption is not enabled', async () => {
+      await expectAsync(recordStore.disableEncryption()).toBeRejected();
     });
   });
 });
