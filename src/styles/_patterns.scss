@@ -68,60 +68,54 @@
 // ── 5b. Action bar group (side-by-side bars) ─────────────────────────────────
 // Radio Log ask (maintainer, 2026-09-22): "on a wide screen the horizontal bars at the
 // bottom of the radio log are too wide, and could be next to one another saving vertical
-// room." Radio Log stacks THREE `.rt-action-bar`s (CSV export, Print ICS-309, Report
-// Packet) - each `position: sticky; bottom: 0` on its own, so all three pin to the SAME
-// viewport bottom and overlap one another rather than stacking, once more than one of them
-// is close enough to actually stick at once.
+// room." Radio Log lays out THREE sections here (CSV export, Print ICS-309, Report Packet).
 //
-// Wraps a run of `.rt-action-bar`s. Below laptop-up (D-33: <1024px) this stays a plain
-// block - children stack exactly as before, no visual change at all. At laptop-up and
-// wider it becomes a grid, so bars sit side by side only when there's genuinely room,
-// falling back to fewer columns rather than a fixed 3-across that would wrap mid-bar on a
-// narrower laptop. `minmax(38ch, 1fr)` is eyeballed against these three bars' real content,
-// not a measured value - the CSV bar (two selects + a checkbox + a button) is the widest of
+// Wraps a run of sections. Below laptop-up (D-33: <1024px) this stays a plain block -
+// children stack full width, one per row. At laptop-up and wider it becomes a grid, so
+// sections sit side by side only when there's genuinely room, falling back to fewer columns
+// rather than a fixed 3-across that would wrap mid-section on a narrower laptop.
+// `minmax(38ch, 1fr)` is eyeballed against these three sections' real content, not a
+// measured value - the CSV section (two selects + a checkbox + a button) is the widest of
 // the three, and 38ch is roughly where it stops wrapping to three rows at 1440px; revisit
-// this number if a future bar's own content changes that.
+// this number if a future section's own content changes that.
 //
-// The STICKY behavior moves up to the group, not the children: three sticky siblings each
-// independently pinned to `bottom: 0` is what caused the overlap above. Inside the group
-// the children fall back to `position: static` and give up their own border/shadow, so the
-// group reads as one band rather than three stacked slabs.
+// #237 (2026-09-26): each section used to be a plain `.rt-action-bar` div, and the group
+// itself was `position: sticky; bottom: 0` - three independently-sticky bars pinned to the
+// SAME viewport bottom is what the grid layout above was built to stop from overlapping, and
+// the children gave up their own border/shadow so the group read as one seamless band. That
+// seamlessness is exactly what a user filed as confusing ("Print ICS-309 log doesn't show as
+// a title, but just a random string floating") - nothing set the three sections apart. They
+// are real `<mat-card appearance="outlined" class="rt-mission-card">`s now (see
+// radio-log.component.html), each with its own border, rounded corners and a
+// `<mat-card-title>` - the same treatment Mission's own cards use. The group dropped its
+// sticky/bottom-pinned behavior along with that: three full cards (title + content each)
+// permanently docked across the bottom of a phone screen would swallow most of the viewport,
+// which a slim single-line action bar never did. `gap: 0 var(--rt-gap)` (row-gap 0) matches
+// `.mission__grid`'s own reasoning: vertical spacing between stacked cards comes from
+// `.rt-mission-card`'s own `margin-bottom`, not a second gap on top of it; the column-gap
+// still separates cards sitting side by side at laptop-up.
 //
 // Rangers deliberately does NOT use this yet (D4, 2026-09-22 scoping): its first action bar
 // alone already holds seven controls, and halving its width would only make it taller, not
 // more usable. Don't "finish the job" by wrapping Rangers' bars in this without re-checking
 // that reasoning first.
 .rt-action-bar-group {
-  display   : block;
-  margin    : 1.5em 0 0;
-  position  : sticky;
-  bottom    : 0;
-  z-index   : 10;
-  background: var(--rt-surface);
-  border-top: 1px solid var(--rt-line-strong);
-  box-shadow: 0 -2px 12px rgb(0 0 0 / 8%);
+  display: block;
+  margin : 1.5em 0 0;
 
   @include bp.laptop-up {
     display               : grid;
     grid-template-columns : repeat(auto-fit, minmax(38ch, 1fr));
-    gap                   : var(--rt-gap);
+    gap                   : 0 var(--rt-gap);
   }
 
-  // The group now owns the sticky/border/shadow treatment above - a child keeping its own
-  // copy would double the border and shadow inside the band.
+  // A bare `.rt-action-bar` can still land in here without losing its own sticky/border/
+  // shadow reset, in case a future section reuses the older pattern - only `.rt-mission-card`
+  // sections (the current radio-log content) are meant to keep their own border in this group.
   .rt-action-bar {
     position  : static;
     margin    : 0;
     border-top: none;
-    box-shadow: none;
-  }
-
-  // Belt-and-braces: radio-log.component.scss already hides the whole #reportsgrid block
-  // (grid + every action bar + the danger zone) under @media print, which this group sits
-  // inside of - but a sticky position with a border/shadow has no business surviving onto
-  // paper even if that containment ever changes, so it's turned off here too.
-  @media print {
-    position  : static;
     box-shadow: none;
   }
 }
