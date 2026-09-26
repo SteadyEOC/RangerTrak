@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.6](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.5...v0.96.6) (2026-09-26)
+
+
+### Features
+
+* **storage:** opt-in Device encryption at rest for the roster, field reports and ranger photos (Mission > Data safety). A passphrase is asked for on each open; a forgotten passphrase is unrecoverable - erase and restore from backup. This protects a lost/stolen device or a shared browser, not an unlocked app: there is no auto-lock. Locations and settings stay in the clear. (E-122 Phase 2b) ([9e2b013](https://github.com/SteadyEOC/RangerTrak/commit/9e2b013b5d519dead1e522ac2c898e41aa744d8c), [57b4981](https://github.com/SteadyEOC/RangerTrak/commit/57b49814e112b07edd8eaef4cdd26cee44715f8a))
+
+
+### Bug Fixes
+
+* **storage:** crash-safe order when turning device encryption off, so a crash partway through disabling it can no longer strand encrypted records with no marker and no way to unlock them (E-122 Phase 2b) ([2f3c45a](https://github.com/SteadyEOC/RangerTrak/commit/2f3c45a6ca6074ef5755be6d897a776f646a7b96))
+
+
+### Chores
+
+* **assets:** delete 39 unused ranger clipart images (1.2 MB) ([77299db](https://github.com/SteadyEOC/RangerTrak/commit/77299db))
+
 ### [0.96.5](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.4...v0.96.5) (2026-09-26)
 
 
