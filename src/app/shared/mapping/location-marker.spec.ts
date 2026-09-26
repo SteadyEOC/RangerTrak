@@ -1,5 +1,5 @@
 import { LocationCategoryType, LOCATION_ICON_OPTIONS, LocationIconId } from '../services'
-import { locationMarkerSvg, resolveLocationIcon } from './location-marker'
+import { locationMarkerSvg, resolveLocationIcon, safeMarkerColor } from './location-marker'
 
 describe('resolveLocationIcon', () => {
   it('prefers an explicit icon over a name match', () => {
@@ -77,5 +77,18 @@ describe('locationMarkerSvg', () => {
     const unknown = 'some-future-icon' as LocationIconId
     const svg = locationMarkerSvg(unknown, '#1565C0')
     expect(svg).toBe(locationMarkerSvg('pin', '#1565C0'))
+  })
+
+  describe('safeMarkerColor', () => {
+    it('passes hex, named and rgb()/hsl() colors through unchanged', () => {
+      ['#1565C0', '#abc', 'teal', 'rgb(10, 20, 30)', 'hsl(120 50% 40%)'].forEach(c =>
+        expect(safeMarkerColor(c)).withContext(c).toBe(c))
+    })
+
+    it('replaces anything that could break out of the attribute with grey', () => {
+      ['red"/><image href=x onerror=alert(1)>', 'url(javascript:x)', '', 'red; fill: blue'].forEach(c =>
+        expect(safeMarkerColor(c)).withContext(c).toBe('#757575'))
+      expect(locationMarkerSvg('pin', '"><script>')).not.toContain('<script>')
+    })
   })
 })

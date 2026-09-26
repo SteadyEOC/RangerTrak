@@ -164,5 +164,24 @@ export function resolveLocationIcon(
  */
 export function locationMarkerSvg(icon: LocationIconId, color: string): string {
   const draw = SHAPES[icon] ?? SHAPES['pin']
-  return `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="white" stroke-width="1" stroke-linejoin="round">${draw(color)}</svg>`
+  return `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="white" stroke-width="1" stroke-linejoin="round">${draw(safeMarkerColor(color))}</svg>`
+}
+
+/** Used in place of any color that fails safeMarkerColor()'s check. */
+const FALLBACK_MARKER_COLOR = '#757575'
+
+/**
+ * `color` comes from the mission's own settings, which can arrive in someone else's backup
+ * or Mission Zip, and it is interpolated straight into markup that callers render as trusted
+ * HTML (Leaflet's divIcon, MapLibre's marker element, and two `bypassSecurityTrustHtml`
+ * previews). So only a hex color, a plain named color, or an rgb()/hsl() function of digits
+ * gets through - nothing that could close the attribute. Anything else draws grey rather than
+ * failing, so a location always still appears on the map.
+ */
+export function safeMarkerColor(color: string): string {
+  const c = (color ?? '').trim()
+  return /^#[0-9a-f]{3,8}$/i.test(c)
+    || /^[a-z]{3,30}$/i.test(c)
+    || /^(rgb|hsl)a?\([\d\s.,%/]+\)$/i.test(c)
+    ? c : FALLBACK_MARKER_COLOR
 }
