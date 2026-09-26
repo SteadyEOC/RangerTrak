@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.5](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.4...v0.96.5) (2026-09-26)
+
+
+### Features
+
+* **storage:** roster, reports and locations move to IndexedDB (E-122 Phase 2a) ([e1abf36](https://github.com/SteadyEOC/RangerTrak/commit/e1abf36d6d368dd9f37d38a51d93054ab62f3804))
+
 ### [0.96.4](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.3...v0.96.4) (2026-09-26)
 
 
