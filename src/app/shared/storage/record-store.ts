@@ -242,7 +242,8 @@ class RecordStoreImpl {
     const failures = await this.flushReportingFailures()
     if (failures.size) {
       throw new Error(`encryption is on, but ${[...failures].join(', ')} could not be `
-        + `re-encrypted yet; try Enable again to finish.`)
+        + `re-encrypted yet; it will be the next time it changes, or turn encryption off and `
+        + `on again to retry now.`)
     }
   }
 

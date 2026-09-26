@@ -286,7 +286,7 @@ export class RangerPhotoService {
     this.log.warn(`Encrypted ${this.urls.size - failures.length} ranger photos on this device.`, this.id)
     if (failures.length) {
       throw new Error(`could not encrypt ${failures.length} photo(s) (${failures.join(', ')}); `
-        + `they remain unencrypted on this device. Try Enable again.`)
+        + `they remain unencrypted on this device. Turn encryption off and on again to retry.`)
     }
   }
 

@@ -120,17 +120,35 @@ export class MissionAdvancedOptionsComponent {
       return
     }
 
+    // A record that failed to re-encrypt can still leave encryption ON (the marker is down
+    // first), so collect errors and carry on to the photos rather than skipping them; only a
+    // failure that left encryption OFF means nothing happened.
+    const errors: string[] = []
     try {
       await this.recordStore.enableEncryption(passphrase)
+    } catch (error: any) {
+      if (!this.encryptionEnabled()) {
+        this.log.error(`onBtnEnableEncryption: failed: ${error.message}`, this.id)
+        alert(`Could not turn on encryption: ${error.message}`)
+        return
+      }
+      errors.push(error.message)
+    }
+    try {
       const key = this.recordStore.getEncryptionKey()
       if (key) await this.rangerPhotoService.encryptAll(key)
-      this.log.warn('Device encryption turned on: roster, field reports and photos are now encrypted at rest.', this.id)
-      alert('Device encryption is on. You will be asked for this passphrase on your next visit '
-        + 'and after every app update.')
     } catch (error: any) {
-      this.log.error(`onBtnEnableEncryption: failed: ${error.message}`, this.id)
-      alert(`Could not turn on encryption: ${error.message}`)
+      errors.push(error.message)
     }
+
+    if (errors.length) {
+      this.log.error(`onBtnEnableEncryption: on, with errors: ${errors.join(' | ')}`, this.id)
+      alert(`Device encryption is on, but not everything was encrypted yet:\n\n${errors.join('\n\n')}`)
+      return
+    }
+    this.log.warn('Device encryption turned on: roster, field reports and photos are now encrypted at rest.', this.id)
+    alert('Device encryption is on. You will be asked for this passphrase on your next visit '
+      + 'and after every app update.')
   }
 
   /**
