@@ -294,7 +294,7 @@ export function MaidenheadToDD(locator: string): { lat: number; lng: number } | 
 
 /** True if `text` looks like a Maidenhead grid locator - checked ahead of the street-
  * address fallback in location.component.ts's onAddressChg(), the same way Plus Codes
- * and What3Words are already detected there. */
+ * already are there. */
 export function isMaidenhead(text: string): boolean {
   return MAIDENHEAD_PATTERN.test(text)
 }

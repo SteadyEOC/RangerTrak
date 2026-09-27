@@ -39,7 +39,6 @@ import { MATERIAL_IMPORTS } from '../material-imports'
 // below for where this outranks the mission's own preferredSystems() default.
 const LAST_COORDINATE_FORMAT_KEY = 'lastCoordinateFormat'
 
-//! import { What3Words} from '../shared/'
 /*
 https://stackoverflow.com/questions/43270564/dividing-a-form-into-multiple-components-with-validation
 https://www.digitalocean.com/community/tutorials/how-to-build-nested-model-driven-forms-in-angular-2
@@ -68,14 +67,14 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   // derived-output block below can be told "a fresh report started" independently of
   // whether the position itself also changed - a scribe entering several reports from the
   // same spot keeps the coordinates but shouldn't keep seeing the PREVIOUS report's derived
-  // Address/+Codes/What3Words text as if it belonged to the new one.
+  // Address/+Codes text as if it belonged to the new one.
   @Input() formGeneration = 0
 
   // E-48(1): starts false so the block stays hidden until a derivation has actually
   // completed for the current report - set true at the end of updateDerivedLocations()
   // below, reset to false in ngOnChanges whenever formGeneration bumps (submit/reset). This
   // is what stops a fresh report from briefly showing the PREVIOUS report's derived
-  // Address/+Codes/What3Words text before its own position has resolved.
+  // Address/+Codes text before its own position has resolved.
   showDerived = signal(false)
 
   // Raised live 2026-08-30: street-address geocoding (chkStreetAddress(), below) needs the
@@ -379,8 +378,6 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
       || (this.utmForm.northing().touched() && this.utmForm.northing().invalid())
   }
 
-  //!w3w = new What3Words()
-
   faInfoCircle = faInfoCircle
   faMapMarkedAlt = faMapMarkedAlt
   mdiAccount: string = mdiAccount
@@ -406,7 +403,7 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
     this.log.info("======== Constructor() ============", this.id)
 
     // https://angular.io/tutorial/toh-pt4#call-it-in-ngoninit states subscribes should happen in OnInit()
-    // Settings only needed for Check PCode & What3Words...
+    // Settings only needed for Check PCode...
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
         this.settings = newMission
@@ -715,7 +712,7 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
 
   /**
    * Update labels with derived locations
-   * REVIEW: Should LocationType also store PCode/What3Words addresses?
+   * REVIEW: Should LocationType also store derived PCode addresses?
    *
    * @param location
    */
@@ -761,8 +758,8 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   }
 
   /**
-   * Sprint H: Maidenhead grid locators typed into the shared address/Plus-Code/
-   * What3Words field, detected the same way those two already are - checked by
+   * Sprint H: Maidenhead grid locators typed into the shared address/Plus-Code
+   * field, detected the same way Plus Codes already are - checked by
    * onAddressChg() before the street-address fallback. No dedicated input field: a
    * 4-6 character token has no natural sub-component split the way DD/DDM/DMS do.
    */
@@ -907,41 +904,19 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
     if (newAddress.includes("+")) {
       this.log.verbose("Got PCode: " + newAddress, this.id)
       this.chkPCodes(newAddress)
+    } else if (isMaidenhead(newAddress)) {
+      this.log.verbose("Got Maidenhead grid locator: " + newAddress, this.id)
+      this.chkMaidenhead(newAddress)
     } else {
-      let tWords = newAddress.split(".")
-      if (tWords.length == 3) {
-        this.log.verbose("Got What 3 Words: " + newAddress, this.id)
-        this.chk3Words(newAddress)
-      } else if (isMaidenhead(newAddress)) {
-        this.log.verbose("Got Maidenhead grid locator: " + newAddress, this.id)
-        this.chkMaidenhead(newAddress)
-      } else {
-        this.chkStreetAddress(newAddress)
-      }
+      // A what3words-shaped "a.b.c" address used to be routed to a check that could only
+      // ever say "Unable to verify" - removed 2026-09-26 with the unused what3words code;
+      // Help's FAQ explains it is shelved. Such text is tried as a street address now.
+      this.chkStreetAddress(newAddress)
     }
   }
 
   //----------------------------------------------------------------------------------------
   // Address stuff
-
-  // https://developer.what3words.com/tutorial/detecting-if-text-is-in-the-format-of-a-3-word-address
-  // https://developer.what3words.com/tutorial/javascript
-  // https://developer.what3words.com/tutorial/detecting-if-text-is-in-the-format-of-a-3-word-address
-  // #81 finding (real, open - see the roadmap list): this always reports "Unable to verify"
-  // below - the actual verification call was commented-out dead code (removed here) well
-  // before this pass, so nothing in this method has ever been able to succeed. The real,
-  // working what3words integration lives in shared/mapping/3words.ts and takes its key from
-  // settings - worth confirming whether this whole method is superseded/dead (its caller,
-  // onAddressChg(), still routes a 3-word-shaped address here) or needs reconnecting to it.
-  chk3Words(tWords: string) {
-    this.log.verbose("chk3Words", this.id)
-    this.log.verbose('chk3Words - ' + tWords, this.id);
-    if (tWords.length) {
-      this.log.verbose("3Words='" + tWords + "'", this.id);
-      this.log.info("Unable to verify 3 words entered.", this.id);
-      document.getElementById("addressLabel")!.textContent = "*** Not able to verify 3 words! ***"; // as HTMLLabelElement
-    }
-  }
 
   chkStreetAddress(addrText: string) {
     this.log.verbose("Got street address to check: " + addrText, this.id)

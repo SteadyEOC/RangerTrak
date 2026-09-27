@@ -1,14 +1,14 @@
 /**
  * something else already has declared Location, so we use LocationType
  *
- * TODO: We could also store derived pCode & What3Words.
+ * TODO: We could also store a derived pCode.
  * (We do store them if they were the 'original' user provided location)
  */
 export interface LocationType {
   lat: number,
   lng: number,
   address: string,
-  derivedFromAddress: boolean  // REVIEW: Maybe should be an enum: DD, streetAddress, PCode, or What3Words?
+  derivedFromAddress: boolean  // REVIEW: Maybe should be an enum: DD, streetAddress, PCode, or Maidenhead?
 }
 
 export const undefinedAddressFlag = 'NO_LOCATION_SET_YET'
