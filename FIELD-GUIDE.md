@@ -293,6 +293,19 @@ single incident.
 **Handing over.** Press **Back up mission** on **Settings** and give the file to the
 incoming operator, who restores it on their device.
 
+**Reports from rangers' own phones.** A device is set up as either the **full app** (the
+command post) or **field mode** (a ranger's own phone: Entry, After Action and Help only,
+chosen once on a new device and not reversible from inside the app). RangerTrak never sends a
+report over the network by itself. Every report saves on the phone straight away. **Send my
+reports** bundles them into one file and opens the phone's share sheet, and the ranger picks
+the route: email or a messaging app over cell data or WiFi, or AirDrop / Nearby Share to a
+station device nearby. At the command post, **Load Report Packet** on the Radio Log page
+merges it, skipping reports it already has. With no data path, read the report over the radio
+as always. Do the same for anything urgent, because the phone gets no receipt. Install the
+app on each phone from rangertrak.org **before** heading out. **Command Post Server** is not a
+third mode. It is an option on the command post's app that shows a read-only copy of the log
+to anyone on the station's WiFi; phones cannot send reports through it.
+
 **Noting things for the debrief.** When you notice something to fix or improve later, such as
 a relay point out of range or a form field that slows you down, press **AAR note** at the
 top of any page. Type a line, choose whether it is about the incident or about RangerTrak, and
