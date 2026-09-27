@@ -4,6 +4,7 @@ import {
   RadioLogService, RadioLogType, RadioLogEntryType, LogService, RangerService, RangerType,
   MissionService, MissionLocationService, MissionLocationType
 } from './'
+import { DEFAULT_OP_PERIOD_HOURS } from './mission-migration'
 import { recordStore } from '../storage/record-store'
 import { setActiveDemoScenario } from '../mapping/demo-map'
 
@@ -217,6 +218,10 @@ export class SampleDataService {
     // Settings first, then rangers, then reports - the same ordering (and for the same
     // reason) as BackupService.importMission(): replaceAllRadioLog() recalculates
     // bounds and needs current settings already in place.
+    // A named op period that starts just before the first report (blog session, 2026-09-27:
+    // the header read "Op period —", which made the demo and its screenshots look unfinished).
+    const oldestMinutes = Math.max(0, ...data.rows.map(r => r.minutesAgo))
+    const opPeriodStart = new Date(Date.now() - (oldestMinutes + 5) * 60 * 1000)
     this.missionService.updateMission({
       ...this.missionService.settings,
       mission: SampleDataService.sampleMissionId(),
@@ -224,6 +229,9 @@ export class SampleDataService {
       eventNotes: data.eventNotes,
       defLat: data.commandPost.lat,
       defLng: data.commandPost.lng,
+      opPeriod: 'Op 1',
+      opPeriodStart,
+      opPeriodEnd: new Date(opPeriodStart.getTime() + DEFAULT_OP_PERIOD_HOURS * 60 * 60 * 1000),
     })
     this.rangerService.replaceAllRangers(data.rangers)
     const radioLog = this.assembleRadioLog(data.rows, data.rangers, data.event)

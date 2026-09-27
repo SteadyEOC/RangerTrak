@@ -158,6 +158,18 @@ describe('SampleDataService', () => {
       expect(missionService.settings.defLng).toBeCloseTo(-112.15, 1);
     });
 
+    it('names the op period and starts it before the first report', async () => {
+      const missionService = TestBed.inject(MissionService);
+      const radioLogService = TestBed.inject(RadioLogService);
+      await TestBed.inject(SampleDataService).loadSampleMission();
+
+      const settings = missionService.settings;
+      const first = Math.min(...radioLogService.getCurrentRadioLog().logEntries.map(r => new Date(r.date).getTime()));
+      expect(settings.opPeriod).toBe('Op 1');
+      expect(new Date(settings.opPeriodStart).getTime()).toBeLessThan(first);
+      expect(new Date(settings.opPeriodEnd).getTime()).toBeGreaterThan(Date.now());
+    });
+
     it('stamps a computed, current-month mission ID rather than a fixed string', async () => {
       const sampleData = TestBed.inject(SampleDataService);
       const missionService = TestBed.inject(MissionService);
