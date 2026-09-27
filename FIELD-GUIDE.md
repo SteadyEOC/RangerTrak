@@ -20,7 +20,7 @@ long as you like.
 
 | Page | What it's for |
 | --- | --- |
-| **Home** | Enter a radio log entry: who called in, where they are, their status, and any notes. This is where you spend the mission. |
+| **Home** | Enter a radio log entry (also called a field report): who called in, where they are, their status, and any notes. This is where you spend the mission. |
 | **Reports** | Every report so far, in a sortable, filterable table. Select rows here to focus the maps on just those reports. |
 | **Rangers** | Your roster — call signs, names, contact details, teams. |
 | **Map (Leaflet)** | Full-page map using standard online road maps. Best detail, anywhere in the world, but needs Internet. |
