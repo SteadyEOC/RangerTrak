@@ -29,7 +29,7 @@ describe('MissionFieldReportStatusesComponent', () => {
   });
 
   describe('isStatusInUse (E-73)', () => {
-    it('is false when no field report carries the status', () => {
+    it('is false when no radio log entry carries the status', () => {
       radioLogService.replaceAllRadioLog({
         version: '1', date: new Date(), event: '', numReport: 0, maxId: 0, filter: '',
         logEntries: [],
@@ -38,7 +38,7 @@ describe('MissionFieldReportStatusesComponent', () => {
       expect(component.isStatusInUse('Normal')).toBe(false);
     });
 
-    it('is true when a field report carries the exact status name', () => {
+    it('is true when a radio log entry carries the exact status name', () => {
       radioLogService.replaceAllRadioLog({
         version: '1', date: new Date(), event: '', numReport: 1, maxId: 1, filter: '',
         logEntries: [{

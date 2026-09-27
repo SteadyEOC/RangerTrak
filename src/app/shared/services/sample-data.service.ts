@@ -100,10 +100,10 @@ type ScenarioData = {
 }
 
 /**
- * A ready-made demonstration mission: a roster and a few hours of field reports/messages,
+ * A ready-made demonstration mission: a roster and a few hours of radio log entries/messages,
  * offered as a small choice of scenarios (SAMPLE_SCENARIOS) rather than one fixed place.
  *
- * A virgin instance is genuinely empty - no field reports, so the Reports grid says
+ * A virgin instance is genuinely empty - no radio log entries, so the Reports grid says
  * "No Rows To Show" and both maps open on a blank basemap with nothing plotted. That
  * makes it impossible to show the product to anyone, or to eyeball a UI change,
  * without first hand-entering reports one at a time.
@@ -112,7 +112,7 @@ type ScenarioData = {
  * scattered random points within ~0.001 degrees of the default coordinate with joke
  * notes, useful for load-testing the grid but useless for a demo since every marker
  * landed in one indistinguishable clump. It was removed 2026-08-25 as a dead control
- * (E-94) once its only caller, the Field Reports "fake report generator," was removed
+ * (E-94) once its only caller, the Radio Log entries "fake report generator," was removed
  * too. The data here is hand-authored and fixed: recognizable real-world locations,
  * every status represented so the grid's color coding is visible, and plausible
  * dispatch-log notes.
@@ -189,7 +189,7 @@ export class SampleDataService {
 
   /**
    * True when this looks like a virgin instance worth offering sample data for:
-   * no field reports have ever been entered. The ranger roster is deliberately not
+   * no radio log entries have ever been entered. The ranger roster is deliberately not
    * part of the test - RangerService seeds a hardcoded roster on first run, so it is
    * never empty and would make this always false.
    */
@@ -198,7 +198,7 @@ export class SampleDataService {
   }
 
   /**
-   * Replaces the roster, all field reports, and the Locations list with the chosen sample
+   * Replaces the roster, all radio log entries, and the Locations list with the chosen sample
    * scenario, and names the mission/event so nobody mistakes demo data for real mission data.
    *
    * Destructive by design - the caller is responsible for confirming with the user.
@@ -232,7 +232,7 @@ export class SampleDataService {
 
     this.log.warn(
       `Loaded sample mission "${scenario}": ${data.rangers.length} rangers, `
-      + `${radioLog.numReport} field reports, ${data.locations.length} locations. This is DEMO data.`,
+      + `${radioLog.numReport} radio log entries, ${data.locations.length} locations. This is DEMO data.`,
       this.id)
 
     // E-124: marks this demo as the loaded mission, so the Alternative map may fetch its
@@ -385,7 +385,7 @@ export class SampleDataService {
   private statusNames(): string[] {
     const configured = this.missionService.settings?.radioLogStatuses
     if (!configured?.length) {
-      this.log.error(`No field report statuses configured; sample reports will have an empty status.`, this.id)
+      this.log.error(`No radio log entry statuses configured; sample reports will have an empty status.`, this.id)
       return ['']
     }
     return configured.map(s => s.status)

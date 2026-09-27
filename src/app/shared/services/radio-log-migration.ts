@@ -9,7 +9,7 @@ import { RadioLogType } from './radio-log-entry.interface'
  * Reports -> Radio Log (0.75.0).
  *
  * Mirrors `mission-migration.ts` and `ranger-migration.ts` - same shape, same conventions,
- * same purity rules. Field reports had **no migration machinery at all** before this: the
+ * same purity rules. Radio log entries had **no migration machinery at all** before this: the
  * load path was a bare `JSON.parse()`, so an object written by an older build was simply used
  * as-is and hoped for.
  *

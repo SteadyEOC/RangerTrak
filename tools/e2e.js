@@ -853,7 +853,7 @@ async function checkEvidenceLocation() {
 }
 
 /**
- * Messages page (ICS-309/213 IA restructuring, scoped and built 2026-08-27): a field report
+ * Messages page (ICS-309/213 IA restructuring, scoped and built 2026-08-27): a radio log entry
  * with "Also generate an ICS-213" checked should show up here, in full, with a working
  * Print as ICS-213 button - not just render an empty page.
  */
@@ -1322,7 +1322,7 @@ async function checkLocationDdDdmDmsSync() {
 }
 
 async function checkFieldReportsPhoneLayout() {
-  console.log('\nField Reports: phone width shows cards not the grid, tablet-up shows the grid not cards (Sprint F carve-out)')
+  console.log('\nRadio Log: phone width shows cards not the grid, tablet-up shows the grid not cards (Sprint F carve-out)')
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true })
   await goto('/radio-log')
   const phone = await evaluate(`(() => ({
@@ -2146,7 +2146,7 @@ async function checkMissionUnsavedChangesGuard() {
  * later checks (status colour contrast among them) see the list they expect.
  */
 async function checkMissionAddRowsPersist() {
-  console.log('\nMission: "Add new row" on Field Report Statuses and Location Categories persists')
+  console.log('\nMission: "Add new row" on Radio Log Statuses and Location Categories persists')
   await goto('/mission')
   const saved = await evaluate(`localStorage.getItem('appSettings')`)
   const counts = () => evaluate(`(() => {
@@ -2156,7 +2156,7 @@ async function checkMissionAddRowsPersist() {
   const before = await counts()
 
   for (const [title, key, label] of [
-    ['Add a new Field Report Status', 'statuses', 'status'],
+    ['Add a new Radio Log Status', 'statuses', 'status'],
     ['Add a new Location category', 'types', 'location category'],
   ]) {
     await goto('/mission')
@@ -2408,7 +2408,7 @@ async function checkSampleMissionLoads() {
   check('sample mission seeds 12 rangers', seeded.rangerCount, 12)
   check('...including an Incident Commander', seeded.roles.includes('Incident Commander'), true)
   check('...and at least one Section Chief', seeded.roles.some(r => (r || '').includes('Section Chief')), true)
-  check('sample mission seeds field reports', seeded.reportCount > 20, true)
+  check('sample mission seeds radio log entries', seeded.reportCount > 20, true)
   check('sample mission includes 2 ICS-213 messages', seeded.messages, 2)
   check('every sample report has an operator stamped', seeded.operatorsSet, true)
 

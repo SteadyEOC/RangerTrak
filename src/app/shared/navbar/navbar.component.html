@@ -111,11 +111,11 @@
         title="Detailed worldwide map (Leaflet + OpenStreetMap) by default, with a switch to try the bundled MapLibre + PMTiles alternative engine.">Map</a>
     </li>
     <li><a [routerLink]="['/radio-log']" routerLinkActive="active" (click)="closeNav()"
-        title="The chronological log of every field report - who, where, when, what.">Radio Log</a></li>
-    <!-- New 2026-08-27: ICS-213 messages (field reports with "Also generate an ICS-213"
+        title="The chronological log of every radio log entry - who, where, when, what.">Radio Log</a></li>
+    <!-- New 2026-08-27: ICS-213 messages (radio log entries with "Also generate an ICS-213"
          checked) - a distinct, filtered view, not just Radio Log under another name. -->
     <li><a [routerLink]="['/messages']" routerLinkActive="active" (click)="closeNav()"
-        title="ICS-213 general messages generated from field reports.">Messages</a></li>
+        title="ICS-213 general messages generated from radio log entries.">Messages</a></li>
     <li><a [routerLink]="['/rangers']" routerLinkActive="active" (click)="closeNav()">Rangers</a></li>
     <li><a [routerLink]="['/mission']" routerLinkActive="active" (click)="closeNav()">Mission</a></li>
     }

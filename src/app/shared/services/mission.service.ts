@@ -236,7 +236,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
   }
 
   /**
-   *   populate Field Report Statuses
+   *   populate Radio Log Statuses
    *
    */
   /** Factory defaults. Also the backfill source for migrateMission() - see
@@ -339,7 +339,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
   }
 
   /**
-  * rewrite field reports to localStorage & notify observers
+  * rewrite radio log entries to localStorage & notify observers
   */
   public updateMission(newMission: MissionType) {
     // Do any needed sanity/validation here

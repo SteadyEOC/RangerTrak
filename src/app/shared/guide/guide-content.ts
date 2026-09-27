@@ -106,7 +106,7 @@ const YOUR_DATA: GuideTab = {
         'Clearing site data clears the mission. Back up mission, on the Mission page, guards against this.',
         'Especially on iPhone and iPad, every browser can clear a site\'s data after about a week unused, and storage protection is not reliable there (nor in Safari on a Mac). Install RangerTrak and back up the mission.',
         'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.',
-        'The roster, field reports and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).'
+        'The roster, radio log entries and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).'
       ]
     }
   ]
@@ -115,14 +115,14 @@ const YOUR_DATA: GuideTab = {
 export const GUIDE_CONTENT: Record<string, GuideEntry> = {
 
   '/': {
-    screen: 'Field Report Entry',
+    screen: 'Radio Log Entry',
     tabs: [
       {
         label: 'This page',
         blocks: [
           {
             heading: 'About RangerTrak',
-            text: 'RangerTrak is a free, open-source app for logging field reports during a Search & Rescue, CERT, or other volunteer emergency-response incident - the kind of radio check-ins ("I\'m at grid B4, all clear") a scribe would otherwise write on a paper log. It runs entirely in this browser, on this device, with no server, account, or internet connection required. A SteadyEOC project; see github.com/SteadyEOC/RangerTrak to learn more, report a problem, or contribute.'
+            text: 'RangerTrak is a free, open-source app for keeping the radio log during a Search & Rescue, CERT, or other volunteer emergency-response incident - the kind of radio check-ins ("I\'m at grid B4, all clear") a scribe would otherwise write on a paper log. It runs entirely in this browser, on this device, with no server, account, or internet connection required. A SteadyEOC project; see github.com/SteadyEOC/RangerTrak to learn more, report a problem, or contribute.'
           },
           {
             heading: 'The four questions',
@@ -254,7 +254,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
         blocks: [
           {
             heading: 'What shows up here',
-            text: 'Only field reports with "Also generate an ICS-213" checked on Entry - not every report, and not the same list as Radio Log.'
+            text: 'Only radio log entries with "Also generate an ICS-213" checked on Entry - not every report, and not the same list as Radio Log.'
           },
           {
             heading: 'Reading one',
@@ -283,7 +283,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           {
             heading: 'Loading a roster',
             bullets: [
-              'Import roster replaces the whole roster from a JSON file, or MERGES rangers in from a setup file (a .zip built on the Setup files page). Field reports and settings are left alone either way. Each entry needs a UNIQUE ID — a callsign is optional.',
+              'Import roster replaces the whole roster from a JSON file, or MERGES rangers in from a setup file (a .zip built on the Setup files page). Radio log entries and settings are left alone either way. Each entry needs a UNIQUE ID — a callsign is optional.',
               'Export roster writes that file back out. Do it before importing if you want to keep the roster you already have.',
               'JSON round-trips: it can be imported back in. Export CSV is for Excel and cannot.',
               'Photos are kept on this device only, never uploaded and never in the repo. Name each file after the ranger\'s id or callsign - any common image format works (JPG, PNG, GIF, WEBP, etc.).'
@@ -295,7 +295,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Moving a whole mission',
-            text: 'To move the roster, settings and field reports together, use Back up mission/Restore mission on the Mission page. Import/Export roster here moves only the roster. To hand a coordinator a starting point for a NEW device before a mission begins - any combination of roster, photos, locations and settings, no field reports - use the Setup files page instead.'
+            text: 'To move the roster, settings and radio log entries together, use Back up mission/Restore mission on the Mission page. Import/Export roster here moves only the roster. To hand a coordinator a starting point for a NEW device before a mission begins - any combination of roster, photos, locations and settings, no radio log entries - use the Setup files page instead.'
           },
           {
             heading: 'Tactical call signs',
@@ -339,7 +339,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             bullets: [
               'Set the mission name and operational period — both feed the header and every printed ICS form.',
               'Load or update the roster on the Rangers page.',
-              'Clear out the previous exercise’s field reports from the Radio Log page.',
+              'Clear out the previous exercise’s radio log entries from the Radio Log page.',
               'Or reset everything at once from the Danger zone at the bottom of this page.'
             ]
           },
@@ -354,7 +354,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           {
             heading: 'Backup and advanced options',
             bullets: [
-              'Back up mission (Data safety card) downloads settings, rangers and field reports as one file — the way to back up a mission or move it to another device. Restore mission, in the Danger zone below, round-trips it back in.',
+              'Back up mission (Data safety card) downloads settings, rangers and radio log entries as one file — the way to back up a mission or move it to another device. Restore mission, in the Danger zone below, round-trips it back in.',
               'Load sample mission and Reset mission to defaults are also in the Danger zone — each replaces data already on this device and cannot be undone.'
             ]
           },
@@ -386,7 +386,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           {
             heading: 'What is shown',
             bullets: [
-              'All field reports for all rangers, by default.',
+              'All radio log entries for all rangers, by default.',
               'If rows are selected on the Radio Log page, the switch below the map isolates just those.',
               'Nearby reports group into clusters — click a cluster to zoom in.',
               // F29-7/8 (2026-08-29): MapLibre's markers only got per-ranger COLOUR this
@@ -442,7 +442,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
         blocks: [
           {
             heading: 'What a setup file is - and is not',
-            text: 'A pre-mission PROVISIONING file for setting up a device: any combination of this device\'s current roster (with ranger photos), locations, and mission settings, bundled into one file - check only the categories you want to hand off. It has no field reports, because it is built before a mission has any. That makes it a different artifact from the Mission page\'s "Back up mission," which IS a mid/post-mission backup and always includes field reports - export setup files to hand a coordinator a starting point, back up a mission to protect or move one already in progress.'
+            text: 'A pre-mission PROVISIONING file for setting up a device: any combination of this device\'s current roster (with ranger photos), locations, and mission settings, bundled into one file - check only the categories you want to hand off. It has no radio log entries, because it is built before a mission has any. That makes it a different artifact from the Mission page\'s "Back up mission," which IS a mid/post-mission backup and always includes radio log entries - export setup files to hand a coordinator a starting point, back up a mission to protect or move one already in progress.'
           },
           {
             heading: 'Loading merges, it does not replace',
@@ -450,7 +450,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Rangers and locations in a loaded file MERGE into what is already on this device - a row that matches an existing one is updated, everything else already here is kept.',
               'Mission settings, when a file carries them, are applied wholesale, the same as always.',
               'No photo already stored on this device is cleared first - one only changes if a loaded file replaces it.',
-              'Field reports already on this device are never touched.',
+              'Radio log entries already on this device are never touched.',
               'Pick several files at once to apply them together, in filename order, after one confirmation.'
             ]
           },

@@ -62,7 +62,7 @@ export class MissionAdvancedOptionsComponent {
 
   // ── E-122 Phase 2b: device encryption ──────────────────────────────────
 
-  /** Whether this device currently encrypts the roster and field reports at rest. */
+  /** Whether this device currently encrypts the roster and radio log entries at rest. */
   encryptionEnabled(): boolean {
     return this.recordStore.isEncryptionEnabled()
   }
@@ -98,7 +98,7 @@ export class MissionAdvancedOptionsComponent {
     }
 
     if (!confirm(`Turn on device encryption?\n\n`
-      + `This encrypts the roster, field reports and ranger photos stored on THIS device. `
+      + `This encrypts the roster, radio log entries and ranger photos stored on THIS device. `
       + `You will set a passphrase next.\n\n`
       + `If you forget it, this data is gone for good - there is no reset, no support `
       + `address, and no way to recover it. It only protects a lost or stolen device or a `
@@ -146,7 +146,7 @@ export class MissionAdvancedOptionsComponent {
       alert(`Device encryption is on, but not everything was encrypted yet:\n\n${errors.join('\n\n')}`)
       return
     }
-    this.log.warn('Device encryption turned on: roster, field reports and photos are now encrypted at rest.', this.id)
+    this.log.warn('Device encryption turned on: roster, radio log entries and photos are now encrypted at rest.', this.id)
     alert('Device encryption is on. You will be asked for this passphrase on your next visit '
       + 'and after every app update.')
   }
@@ -160,7 +160,7 @@ export class MissionAdvancedOptionsComponent {
     if (!this.encryptionEnabled()) return
 
     if (!confirm(`Turn off device encryption?\n\n`
-      + `The roster, field reports and ranger photos on this device go back to being stored `
+      + `The roster, radio log entries and ranger photos on this device go back to being stored `
       + `unencrypted, exactly as before.`)) {
       this.log.verbose('onBtnDisableEncryption: user cancelled.', this.id)
       return
@@ -185,7 +185,7 @@ export class MissionAdvancedOptionsComponent {
       // RangerPhotoService.decryptAll()'s own comment on why the order matters here.
       await this.rangerPhotoService.decryptAll(key)
       await this.recordStore.disableEncryption()
-      this.log.warn('Device encryption turned off: roster, field reports and photos are stored unencrypted again.', this.id)
+      this.log.warn('Device encryption turned off: roster, radio log entries and photos are stored unencrypted again.', this.id)
       alert('Device encryption is off.')
     } catch (error: any) {
       this.log.error(`onBtnDisableEncryption: failed: ${error.message}`, this.id)
@@ -194,7 +194,7 @@ export class MissionAdvancedOptionsComponent {
   }
 
   /**
-   * Downloads the current mission (settings + rangers + field reports) as a
+   * Downloads the current mission (settings + rangers + radio log entries) as a
    * single JSON file. See PRIVATE-Roadmap.md Section 8/R3.
    */
   onBtnExportMission() {
@@ -243,7 +243,7 @@ export class MissionAdvancedOptionsComponent {
 
   /**
    * Handles a file picked via the "Restore mission" <input type="file">.
-   * Destructive - replaces current settings/rangers/field reports entirely -
+   * Destructive - replaces current settings/rangers/radio log entries entirely -
    * so this confirms with the user before applying.
    */
   onImportFileSelected(event: Event) {
@@ -263,10 +263,10 @@ export class MissionAdvancedOptionsComponent {
       .then(async payload => {
         const summary = `Mission "${payload.settings.mission || '(unnamed)'}" backed up `
           + `${payload.exportedAt}, with ${payload.rangers.length} rangers and `
-          + `${payload.radioLog.logEntries.length} field reports.`
+          + `${payload.radioLog.logEntries.length} radio log entries.`
 
         if (!confirm(`Restore this mission?\n\n${summary}\n\n`
-          + `This REPLACES all current settings, rangers, and field reports on this device. `
+          + `This REPLACES all current settings, rangers, and radio log entries on this device. `
           + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
           this.log.verbose('onImportFileSelected: user cancelled restore.', this.id)
           return
@@ -296,7 +296,7 @@ export class MissionAdvancedOptionsComponent {
   }
 
   /**
-   * Loads the built-in demonstration mission. Destructive - replaces rangers, field reports,
+   * Loads the built-in demonstration mission. Destructive - replaces rangers, radio log entries,
    * and Locations - so it confirms first, matching onImportFileSelected().
    */
   async onBtnLoadSampleData(): Promise<void> {
@@ -304,7 +304,7 @@ export class MissionAdvancedOptionsComponent {
     const label = this.sampleScenarios.find(s => s.id === scenario)?.label ?? scenario
 
     if (!confirm(`Load the "${label}" sample mission?\n\n`
-      + `This REPLACES all rangers, field reports and locations currently on this device with `
+      + `This REPLACES all rangers, radio log entries and locations currently on this device with `
       + `demonstration data, renames the mission to make that obvious, and moves the mission's `
       + `default location to the demo's command post.\n\n`
       + `This cannot be undone - back up the current mission first if you want to keep it.`)) {

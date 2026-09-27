@@ -63,7 +63,7 @@
          component's own doc comment. -->
     <h3 class="mission__subhead">Mission backup</h3>
     <p class="mission__note">
-      Backs up this device&rsquo;s entire mission &mdash; settings, rangers and field reports
+      Backs up this device&rsquo;s entire mission &mdash; settings, rangers and radio log entries
       &mdash; to a single file, so it survives clearing browser storage or a move to another
       device.
     </p>
@@ -79,24 +79,24 @@
       Back up mission
     </button>
 
-    <!-- E-122 Phase 2b: opt-in encryption at rest. The roster, field reports and ranger
+    <!-- E-122 Phase 2b: opt-in encryption at rest. The roster, radio log entries and ranger
          photos - the same data Mission backup's warning above names - can be encrypted on
          THIS device with a passphrase, rather than only on their way out in a backup file. -->
     <h3 class="mission__subhead">Device encryption</h3>
     @if (encryptionEnabled()) {
     <p class="mission__status mission__status--ok">
       <mat-icon aria-hidden="true">lock</mat-icon>
-      The roster, field reports and ranger photos on this device are encrypted. You will be
+      The roster, radio log entries and ranger photos on this device are encrypted. You will be
       asked for the passphrase on your next visit and after every app update.
     </p>
     <button matButton="outlined" type="button" (click)="onBtnDisableEncryption()"
-      title="Decrypt the roster, field reports and ranger photos on this device">
+      title="Decrypt the roster, radio log entries and ranger photos on this device">
       <mat-icon>lock_open</mat-icon>
       Turn off device encryption
     </button>
     } @else {
     <p class="mission__note">
-      Encrypts the roster, field reports and ranger photos stored on this device with a
+      Encrypts the roster, radio log entries and ranger photos stored on this device with a
       passphrase you choose. It protects a lost or stolen device or a shared browser - it does
       not protect the app while it is open and unlocked, the same as any lock screen.
     </p>
@@ -106,7 +106,7 @@
       on, so there is always a way back.
     </p>
     <button matButton="outlined" type="button" (click)="onBtnEnableEncryption()"
-      title="Encrypt the roster, field reports and ranger photos on this device with a passphrase">
+      title="Encrypt the roster, radio log entries and ranger photos on this device with a passphrase">
       <mat-icon>lock</mat-icon>
       Turn on device encryption
     </button>
@@ -166,14 +166,14 @@
 
       <button matButton="outlined" type="button" class="mission__danger-button"
         (click)="onBtnLoadSampleData()"
-        title="Replace rangers, field reports and locations with a demonstration mission">
+        title="Replace rangers, radio log entries and locations with a demonstration mission">
         Load sample mission &mdash; replaces rangers and reports
       </button>
     </div>
 
     <p class="mission__note mission__sample-note">
       Each demo scenario loads a roster of 12 units, four field teams walking their own
-      trails, two mission objectives (Locations), and a few dozen field reports and messages
+      trails, two mission objectives (Locations), and a few dozen radio log entries and messages
       spanning the last several hours &mdash; useful for demonstrating RangerTrak, or for
       seeing how a screen looks with realistic data on a brand-new install.
     </p>

@@ -27,7 +27,7 @@ describe('MapLibreComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('reads the current field report count on init', () => {
+  it('reads the current radio log entry count on init', () => {
     expect(component.numAllRows()).toBeGreaterThanOrEqual(0);
   });
 

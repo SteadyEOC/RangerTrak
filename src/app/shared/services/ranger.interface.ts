@@ -9,7 +9,7 @@
 // conflating them is the mistake this comment exists to prevent:
 //
 //   uid      - internal surrogate key. App-minted, always present, never shown, never edited.
-//              THIS is what field reports join on.
+//              THIS is what radio log entries join on.
 //   id       - the real-world credential (REW-0038 / TEW-1003). Issued by the incident at
 //              check-in, NOT by this app. May legitimately be blank.
 //   callsign - radio terminology. What a scribe hears and types. May be blank; plenty of

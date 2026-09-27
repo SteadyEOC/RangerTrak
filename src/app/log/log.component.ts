@@ -18,7 +18,7 @@ import { LogLevel, LogService, LogType } from '../shared/services/'
  * `innerHTML` by hand, which fixed three separate problems at once:
  *
  *  - **Injection.** Entry text went into `innerHTML` unescaped, and log messages carry
- *    free-text ranger notes and serialized field reports - so a note containing markup
+ *    free-text ranger notes and serialized radio log entries - so a note containing markup
  *    executed. Interpolation escapes automatically.
  *  - **Performance.** Every new entry cleared the panel and re-rendered *every* entry, so
  *    cost grew quadratically over a session. `@for` with a stable `track` now updates only
@@ -105,7 +105,7 @@ export class LogComponent {
    * Downloads the whole log as CSV.
    *
    * Confirms first, because the log is not sanitized: it contains whatever was logged,
-   * which includes serialized field reports, resolved street addresses and call signs.
+   * which includes serialized radio log entries, resolved street addresses and call signs.
    * Same treatment as the roster export on the Rangers page.
    *
    * FUTURE: offer "full log" and "redacted log" exports, the latter stripping personal
@@ -115,7 +115,7 @@ export class LogComponent {
     if (!Utility.getConfirmation(
       `Save the event log to a file?\n\n`
       + `The log is a raw diagnostic record and MAY CONTAIN CONFIDENTIAL INFORMATION - `
-      + `field report details, street addresses and call signs among them - and is NOT `
+      + `radio log entry details, street addresses and call signs among them - and is NOT `
       + `encrypted.\n\n`
       + `Share it only with people who need it to diagnose a problem, and delete it `
       + `afterwards.`)) {

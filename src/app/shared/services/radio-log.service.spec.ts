@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { RadioLogService } from './radio-log.service';
 import { RadioLogType, RadioLogEntryType } from './radio-log-entry.interface';
 import { RangerService } from './ranger.service';
-// E-122 Phase 2a: field reports now live behind RecordStore, not localStorage directly - see
+// E-122 Phase 2a: radio log entries now live behind RecordStore, not localStorage directly - see
 // that module's own doc comment. resetForTests() is this suite's equivalent of the
 // localStorage.clear() it used to rely on for isolation between specs.
 import { recordStore } from '../storage/record-store';

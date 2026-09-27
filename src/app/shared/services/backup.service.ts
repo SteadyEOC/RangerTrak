@@ -38,7 +38,7 @@ export type MissionExport = {
 export const MISSION_EXPORT_SCHEMA_VERSION = 1
 
 /**
- * Exports/imports a full mission (settings + rangers + field reports) as a
+ * Exports/imports a full mission (settings + rangers + radio log entries) as a
  * single JSON file, so a mission survives clearing browser storage and can
  * move between devices/browsers. PRIVATE-Roadmap.md Section 8/R3.
  */
@@ -129,7 +129,7 @@ export class BackupService {
 
   /**
    * Validates and applies a MissionExport, replacing current settings,
-   * rangers, and field reports. Throws on structurally invalid input rather
+   * rangers, and radio log entries. Throws on structurally invalid input rather
    * than silently partially-applying a corrupt import.
    *
    * E-122 Phase 2a: `async` now, and the last thing this does is await `recordStore.flush()`.

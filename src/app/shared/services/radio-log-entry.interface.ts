@@ -3,7 +3,7 @@ import { LocationType } from './location.interface'
 // 2026-08-31: renamed from field-report.interface.ts / FieldReportType / FieldReportsType /
 // FieldReportStatusType / FieldReportSource / fieldReportArray, a naming holdover from before
 // the page itself was renamed Reports -> Radio Log (0.75.0's ICS-309/213 restructuring) -
-// "Field Report" had become an inconsistent second name for the same thing the rest of the
+// "Radio Log entry" had become an inconsistent second name for the same thing the rest of the
 // app calls a Radio Log entry. Includes the persisted-shape property name (`logEntries`,
 // below) and the localStorage key (`radio-log.service.ts`'s `storageLocalName`) this time,
 // not just type names - the app has no real users yet ([[no-real-users-yet-rename-freely]]),
@@ -71,7 +71,7 @@ export type RadioLogType = {
 }
 
 /**
- * Data to store for each field report
+ * Data to store for each radio log entry
  *
  * E-41 phase 1 (2026-08-26): five fields added for ICS-309/213 support - data collection
  * only, per the maintainer's own explicit scoping ("does not want export/reporting logic
@@ -186,7 +186,7 @@ export type RadioLogEntryType = {
 }
 
 /**
- * Field Reports can be tagged with a status. These can have color & associated icons & can be edited by the user.
+ * Radio Log entries can be tagged with a status. These can have color & associated icons & can be edited by the user.
  * ? FUTURE: Consider replacing "Color" with "CSS_Style" to allow more options?
  */
 export type RadioLogStatusType = {

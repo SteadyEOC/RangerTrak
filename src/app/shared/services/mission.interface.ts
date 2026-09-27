@@ -2,7 +2,7 @@ import { RadioLogStatusType } from './radio-log-entry.interface'
 import { LocationCategoryType } from './mission-location.interface'
 
 /**
- * This has 'all' event data (aside from Rangers & Field Reports)
+ * This has 'all' event data (aside from Rangers & Radio Log entries)
  * for readily serialization/dehydration
  */
 export type MissionType = {

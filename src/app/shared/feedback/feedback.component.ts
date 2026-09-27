@@ -21,7 +21,7 @@ const GITHUB_ISSUE_URL = 'https://github.com/SteadyEOC/RangerTrak/issues/new'
  * No mailto fallback here: RangerTrak@steadyeoc.com is offered elsewhere (Help > About/
  * Feedback), and the direct GitHub link already covers "reach us on GitHub two ways."
  *
- * Deliberately never reads mission data (settings, rangers, field reports) - the message
+ * Deliberately never reads mission data (settings, rangers, radio log entries) - the message
  * and optional contact field are the only things sent, both typed by hand.
  */
 @Component({

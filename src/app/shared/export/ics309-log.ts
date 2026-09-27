@@ -1,7 +1,7 @@
 import { RadioLogEntryType } from '../services/radio-log-entry.interface'
 
 /**
- * Shapes field reports into an ICS-309 (Communications Log) structure - the DATA, not a
+ * Shapes radio log entries into an ICS-309 (Communications Log) structure - the DATA, not a
  * rendering. E-31/E-41 phase 3, second of four pieces (see the roadmap's 2026-08-26
  * rescoping).
  *

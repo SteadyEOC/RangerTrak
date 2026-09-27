@@ -26,7 +26,7 @@ import { ColorEditor } from '../../color-editor.component'
  * on Save, mirroring the field-report-statuses grid exactly.
  *
  * No "renaming a category in use" lock (contrast MissionFieldReportStatusesComponent's
- * `isStatusInUse()`): field reports accumulate in bulk over a mission and status renames were
+ * `isStatusInUse()`): radio log entries accumulate in bulk over a mission and status renames were
  * a reported real hazard (E-73); Locations are placed one at a time and this same protection
  * hasn't been asked for here. Add later if it turns out to matter in practice.
  *

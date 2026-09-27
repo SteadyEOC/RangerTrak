@@ -3,7 +3,7 @@
  * ship - renamed from "Facilities" to "Locations" per the maintainer's own live wording.
  * Teams is still deferred; this covers named, fixed points on the map for a mission -
  * Command Post, Staging Area, Ranger First Aid, and whatever else a mission needs, none of
- * which are rangers and none of which are field reports.
+ * which are rangers and none of which are radio log entries.
  *
  * Scoped PER-MISSION, same as RangerType - there is no operational-period partitioning
  * anywhere in this app today (opPeriod/opPeriodStart/opPeriodEnd are plain display fields on

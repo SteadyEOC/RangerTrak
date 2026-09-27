@@ -58,7 +58,7 @@ difference between a working tool and a blank screen.
 
 ## ✨ What it does
 
-- **Works offline.** Field reports, the roster, the Radio Log, coordinate conversion and
+- **Works offline.** Entering reports, the roster, the Radio Log, coordinate conversion and
   mission backups all stay on the device and need no connection.
 - **Locations however the field reads them out:** lat/long in three notations, MGRS, UTM,
   Maidenhead and Plus Codes, all converted on-device. Street addresses work too, but need
@@ -66,7 +66,7 @@ difference between a working tool and a blank screen.
 - **Two map engines on one page:** Leaflet over online road and topo maps, with areas
   saveable for offline use, and MapLibre + PMTiles with a bundled offline basemap. Each
   ranger gets a distinct marker and a trail.
-- **ICS paperwork:** a printable ICS-309 comms log, and ICS-213 messages generated from field reports.
+- **ICS paperwork:** a printable ICS-309 comms log, and ICS-213 messages generated from radio log entries.
 - **Roster, statuses, mission and operational period**, all configurable per mission.
 - **Backup, export and demo data:** spreadsheets, whole-mission backups (optionally
   passphrase-encrypted), and demo scenarios for training.

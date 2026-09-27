@@ -32,7 +32,7 @@ import { recordStore } from '../shared/storage/record-store'
  *
  * Deliberately its OWN route (`/prep`), not folded into Rangers' existing Import/Export roster
  * controls - those already do one clear job (roster + photos only) and this does a related but
- * distinct one (any of settings/roster/locations, no field reports, meant for a mission that
+ * distinct one (any of settings/roster/locations, no radio log entries, meant for a mission that
  * has not started yet). The two ARE the same style ("Setup files") and share an icon family so
  * an operator learns to associate them, but stay separate controls so neither one's own confirm
  * dialog has to describe what the other one does.
@@ -238,7 +238,7 @@ export class PrepComponent {
       + `No photo already stored on this device is cleared first - one only changes if a `
       + `file here replaces it.\n\n`
       + `Across all files: up to ${rangersTotal} ranger row(s), ${locationsTotal} location `
-      + `row(s), ${photosTotal} photo(s). There are no field reports in a Setup file, so `
+      + `row(s), ${photosTotal} photo(s). There are no radio log entries in a Setup file, so `
       + `nothing already logged is touched.`)) {
       this.log.verbose('onBtnApplyQueue: user cancelled.', this.id)
       return

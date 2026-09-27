@@ -34,7 +34,7 @@ describe('BackupService', () => {
   });
 
   describe('buildExportPayload', () => {
-    it('bundles current settings, rangers, and field reports with a schema version', () => {
+    it('bundles current settings, rangers, and radio log entries with a schema version', () => {
       const settings = TestBed.inject(MissionService);
       const rangers = TestBed.inject(RangerService);
       const radioLogService = TestBed.inject(RadioLogService);

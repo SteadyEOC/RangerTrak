@@ -81,7 +81,7 @@ export const DEFAULT_RADIO_LOG_STATUSES: ReadonlyArray<RadioLogStatusType> = [
 
 /**
  * E-103 starter list, for initMission() - the maintainer's own suggested routine ICS
- * positions, editable per-mission via Settings > Field Report Recipients. Additive-only field
+ * positions, editable per-mission via Settings > Radio Log entry Recipients. Additive-only field
  * (see MissionType.recipientOptions213's own comment) - backfillMissingFields hands this to
  * any returning user whose stored settings predate the field, same as DEFAULT_RADIO_LOG_STATUSES.
  */

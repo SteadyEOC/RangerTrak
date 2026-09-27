@@ -48,7 +48,7 @@
       <div class="rt-action-bar-group">
         <mat-card appearance="outlined" class="rt-mission-card">
           <mat-card-header>
-            <mat-card-title>Export field reports</mat-card-title>
+            <mat-card-title>Export radio log entries</mat-card-title>
             <mat-card-subtitle>
               {{ selectedRows() }} selected
               @if (selectedRows() > 0) {
@@ -141,7 +141,7 @@
           <mat-card-content>
             <div class="rt-action-bar__buttons">
               <button matButton="outlined" type="button" (click)="onBtnBuildReportPacket()"
-                title="Package every field report on THIS device into one file for another device to merge in">
+                title="Package every radio log entry on THIS device into one file for another device to merge in">
                 <mat-icon>archive</mat-icon>
                 Build Report Packet
               </button>
@@ -194,14 +194,14 @@
             }
           </article>
         } @empty {
-          <p>No field reports yet.</p>
+          <p>No radio log entries yet.</p>
         }
       </div>
     }
 
     <!-- ══ 6. DANGER ZONE ══ Material-M3 pass, 2026-08-26: was a <rangertrak-section
          summary="Advanced"> styled identically to the "Tips" block that used to sit right
-         above it - so an unrecoverable wipe of every field report looked exactly like
+         above it - so an unrecoverable wipe of every radio log entry looked exactly like
          reading material. Fenced now, same `.rt-danger-zone` treatment Mission's own
          destructive controls got.
          F29-18 (2026-08-30): collapsed behind ExpandableSectionComponent so a stray click
@@ -221,7 +221,7 @@
         <div class="rt-danger-zone__actions">
           <button matButton="outlined" type="button" class="reports__danger-button"
             (click)="onBtnClearRadioLog()">
-            Delete all field reports
+            Delete all radio log entries
           </button>
         </div>
       </div>

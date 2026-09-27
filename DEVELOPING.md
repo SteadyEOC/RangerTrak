@@ -156,7 +156,7 @@ repository.** Keep them outside the working tree; promote individual images in o
 reviewing them, with a descriptive filename.
 
 This is not fussiness about repo tidiness. A screenshot of this app in real use contains
-whatever was on screen: field reports, which can hold personal information about missing
+whatever was on screen: radio log entries, which can hold personal information about missing
 persons; the roster, which pairs legal names with phone numbers and photos; and whatever
 browser chrome was captured with it — bookmarks, other tabs, account avatars. A capture taken while
 configuring hosting can contain an API token in plaintext. All of those have turned up in

@@ -17,7 +17,7 @@ import { rehydrateDateFields } from './json-dates'
 // is unresolvable to the compiler ("no suitable injection token") - the same reason
 // rangers.component.ts imports RangerPhotoService directly instead of via './'.
 import { RangerService } from './ranger.service'
-// E-122 Phase 2a: field reports are PII, and now live behind RecordStore (in-memory +
+// E-122 Phase 2a: radio log entries are PII, and now live behind RecordStore (in-memory +
 // IndexedDB) rather than directly in localStorage. Direct import, same reasoning as the
 // RangerService import above.
 import { recordStore } from '../storage/record-store'
@@ -115,7 +115,7 @@ export class RadioLogService {
 
     this.radioLog = this.loadRadioLogFromLocalStorage()
 
-    this.log.info(`Got v.${this.radioLog.version} for event: ${this.radioLog.event} on  ${this.radioLog.date} with ${this.radioLog.numReport} Field Reports from localstorage`, this.id)
+    this.log.info(`Got v.${this.radioLog.version} for event: ${this.radioLog.event} on  ${this.radioLog.date} with ${this.radioLog.numReport} Radio Log entries from localstorage`, this.id)
 
     // bounds is a plain, synchronous BoundsType (radio-log-entry.interface.ts) - no async
     // involved. Likely extraneous most of the time (every mutation path already recalculates
@@ -138,17 +138,17 @@ export class RadioLogService {
    * @returns
    */
   private loadRadioLogFromLocalStorage(): RadioLogType {
-    // E-122 Phase 2a: through RecordStore now, not localStorage directly - field reports can
+    // E-122 Phase 2a: through RecordStore now, not localStorage directly - radio log entries can
     // carry missing-person PII (ARCHITECTURE.md "Encryption: exports today, storage later").
     // Synchronous to this caller, same as localStorage.getItem() was.
     let localStorageFieldReports = recordStore.getItem(this.storageLocalName)
 
     if (localStorageFieldReports == null) {
-      this.log.warn(`No Field Reports found in Local Storage. Will rebuild from defaults.`, this.id)
+      this.log.warn(`No Radio Log entries found in Local Storage. Will rebuild from defaults.`, this.id)
       return this.initEmptyRadioLog()
     }
     else if (localStorageFieldReports.indexOf("version") <= 0) {
-      this.log.error(`Field Reports in Local Storage appear corrupted (no version #) & will be stored in Local Storage with key: '${this.storageLocalName}-BAD'. Will rebuild from defaults.`, this.id)
+      this.log.error(`Radio Log entries in Local Storage appear corrupted (no version #) & will be stored in Local Storage with key: '${this.storageLocalName}-BAD'. Will rebuild from defaults.`, this.id)
       recordStore.setItem(this.storageLocalName + '-BAD', localStorageFieldReports)
       return this.initEmptyRadioLog()
     } else {
@@ -483,7 +483,7 @@ export class RadioLogService {
    * @returns
    */
   recalcRadioLogBounds(reports: RadioLogType) {
-    this.log.verbose(`recalcRadioLogBounds got ${reports.logEntries.length} field reports`, this.id)
+    this.log.verbose(`recalcRadioLogBounds got ${reports.logEntries.length} radio log entries`, this.id)
 
     if (!this.settings) {
       this.log.error('this.settings is undefined', this.id)
@@ -524,7 +524,7 @@ export class RadioLogService {
       east = Math.round(east * 10 ** 4) / 10 ** 4
       west = Math.round(west * 10 ** 4) / 10 ** 4
     } else {
-      // no field reports yet! Rely on broadening processing below
+      // no radio log entries yet! Rely on broadening processing below
       north = this.settings.defLat
       west = this.settings.defLng
       south = this.settings.defLat

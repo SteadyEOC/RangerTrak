@@ -40,7 +40,7 @@ export class myUnusedPipe implements PipeTransform {
 
 // 2026-08-31: renamed from field-reports.component.ts / FieldReportsComponent - this file
 // (and radio-log.service.ts/radio-log-entry.interface.ts alongside it) used to keep the
-// original "Field Report" name deliberately, on the theory that renaming everywhere would be
+// original "Radio Log entry" name deliberately, on the theory that renaming everywhere would be
 // "pure churn" once only the page's own display label changed (0.75.0's ICS-309/213
 // restructuring, Reports -> Radio Log). Revisited and reversed: the class/file/service names
 // had become the exact stale-second-name problem the rest of that restructuring existed to
@@ -63,7 +63,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
   private id = 'Radio Log'
   title = 'Radio Log — ICS-309'
-  pageDescr = `Every field report, in one grid - who, where, when, and what they said.`
+  pageDescr = `Every radio log entry, in one grid - who, where, when, and what they said.`
 
   private radioLogSubscription!: Subscription
 
@@ -393,8 +393,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         console.log(newReport)
         this.gotNewRadioLog(newReport)
       },
-      error: (e) => this.log.error('Field Reports Subscription got:' + e, this.id),
-      complete: () => this.log.info('Field Reports Subscription complete', this.id)
+      error: (e) => this.log.error('Radio Log entries Subscription got:' + e, this.id),
+      complete: () => this.log.info('Radio Log entries Subscription complete', this.id)
     })
 
     if (this.gridApi) {
@@ -537,7 +537,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
   /**
    * E-122 Phase 2a: awaits `recordStore.flush()` first - see RangersComponent.reloadPage()'s
-   * own doc comment for the full reasoning (field reports now persist to IndexedDB async).
+   * own doc comment for the full reasoning (radio log entries now persist to IndexedDB async).
    */
   async reloadPage() {
     this.log.verbose(`Reloading window!`, this.id)
@@ -547,7 +547,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
 
   gotNewRadioLog(newReports: RadioLogType) {
-    this.log.verbose(`New collection of ${newReports.numReport} Field Reports observed.`, this.id)
+    this.log.verbose(`New collection of ${newReports.numReport} Radio Log entries observed.`, this.id)
 
     this.radioLog = newReports
     this.radioLogEntries.set(newReports.logEntries)
@@ -677,7 +677,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * E-114 Phase 1: builds a Report Packet of every field report currently on this device and
+   * E-114 Phase 1: builds a Report Packet of every radio log entry currently on this device and
    * hands it off via the OS share sheet (Web Share API) where supported, falling back to a
    * plain download everywhere else - same fallback shape D-34 already established for the
    * File System Access API. `operator` is left blank: this page (unlike Entry) has no "who is
@@ -692,7 +692,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // not worth taking for the sake of avoiding one service method).
     const built = this.radioLogService.buildReportPacketText('')
     if (!built) {
-      alert('There are no field reports on this device to package.')
+      alert('There are no radio log entries on this device to package.')
       return
     }
     const { text, filename, count } = built
@@ -863,7 +863,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
   onBtnClearRadioLog() {
     if (Utility.getConfirmation('REALLY delete all FieldReports in LocalStorage?')) {
-      this.log.info("Removing all field reports from local storage...", this.id)
+      this.log.info("Removing all radio log entries from local storage...", this.id)
       this.radioLogService.deleteAllRadioLogEntries()
       this.refreshGrid()
       this.reloadPage()
@@ -877,7 +877,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    * "should happen automatically".
    */
   private onCellEdited() {
-    this.log.verbose(`Field report edited in grid; saving.`, this.id)
+    this.log.verbose(`Radio log entry edited in grid; saving.`, this.id)
     this.radioLogService.saveEditedRadioLog()
   }
 

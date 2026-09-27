@@ -3,7 +3,7 @@ import { BoundsType } from '../services/radio-log-entry.interface'
 /**
  * "Zoom to Extent" (maintainer ask, 2026-09-22): unlike the init-time fit in
  * `recalcRadioLogBounds()` (radio-log.service.ts), which always covers the WHOLE log, this is
- * a re-runnable fit over whatever is actually drawn right now - the displayed field reports
+ * a re-runnable fit over whatever is actually drawn right now - the displayed radio log entries
  * (honoring the All/selected switch), their evidence markers, and mission Location pins. Both
  * map engines call this with their own current point set; see `onBtnZoomToExtent()` in
  * mapLeaflet.component.ts and mapLibre.component.ts.

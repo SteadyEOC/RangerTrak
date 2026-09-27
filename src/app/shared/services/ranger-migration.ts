@@ -6,7 +6,7 @@ import { RangerType } from './ranger.interface'
  *
  * Mirrors `mission-migration.ts` deliberately - same shape, same conventions, same purity
  * rules - rather than inventing a second way to do this. Settings has had real migration
- * machinery since Sprint E; rangers and field reports had **none at all** (both were bare
+ * machinery since Sprint E; rangers and radio log entries had **none at all** (both were bare
  * `JSON.parse()` calls), which is the gap this closes.
  *
  * Maintainer, 2026-08-26: *"there are no existing reports. no need for back fill at this
@@ -307,7 +307,7 @@ export type RangerMergeResult = {
  * credentials are the stronger signal, callsigns are the more casually reused of the two - but
  * the collision is reported in `ambiguous` so a human can look at it, not silently resolved.
  *
- * **On overwrite**: keeps the EXISTING row's `uid` (field reports already join on it - keeping
+ * **On overwrite**: keeps the EXISTING row's `uid` (radio log entries already join on it - keeping
  * the incoming file's own freshly-minted uid would orphan them) and replaces every other field
  * with the incoming record's values. The existing array's order is preserved - an overwritten
  * row is updated in place, never moved to the end, so a coordinator's grid does not reshuffle

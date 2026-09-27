@@ -20,7 +20,7 @@ import { activeDemoScenario, clearActiveDemoScenario } from '../mapping/demo-map
  *   - 12 rangers total, split 4 fixed-post command staff + 4 field teams of 2.
  *   - Each of the 4 field teams (grouped by RangerType.team, which is unique per track -
  *     see the service's own comment on why this differs from the more descriptive `role`
- *     field) has at least 3 field reports, forming a trail.
+ *     field) has at least 3 radio log entries, forming a trail.
  *   - Exactly 2 mission Locations (the "objectives").
  *   - Exactly 2 ICS-213 messages (`generates213`).
  *   - Every configured status appears on at least one report.

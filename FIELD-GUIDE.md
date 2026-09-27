@@ -20,7 +20,7 @@ long as you like.
 
 | Page | What it's for |
 | --- | --- |
-| **Home** | Enter a field report: who called in, where they are, their status, and any notes. This is where you spend the mission. |
+| **Home** | Enter a radio log entry: who called in, where they are, their status, and any notes. This is where you spend the mission. |
 | **Reports** | Every report so far, in a sortable, filterable table. Select rows here to focus the maps on just those reports. |
 | **Rangers** | Your roster — call signs, names, contact details, teams. |
 | **Map (Leaflet)** | Full-page map using standard online road maps. Best detail, anywhere in the world, but needs Internet. |
@@ -169,7 +169,7 @@ and end, and the default coordinates for your area. The default location is wher
 new reports start from, so getting it right saves work all mission.
 
 **5. Check your statuses.**
-Still in **Settings**, review the field report statuses and their colours. These drive the
+Still in **Settings**, review the radio log entry statuses and their colours. These drive the
 colour coding on the Reports table. Rename them to match your agency's terminology now,
 not mid-mission.
 
@@ -319,7 +319,7 @@ group:
 1. **Settings** → *Advanced Options* → **Reset Settings**, then re-enter what you want.
 2. **Rangers** → *Advanced* → **Delete Rangers**. Note that a default roster is loaded
    automatically in its place; edit or replace it as needed, then **Save Rangers**.
-3. **Reports** → *Advanced* → **Delete ALL Field Reports from local storage**.
+3. **Reports** → *Advanced* → **Delete ALL Radio Log entries from local storage**.
 
 Switching to a different browser or a different device also gives you a completely fresh
 environment — RangerTrak's data is per-browser, so Firefox knows nothing about what you did
@@ -389,14 +389,14 @@ That cuts both ways:
 The roster is the sensitive part: names, personal phone numbers, photos, and call signs that
 tie back to publicly searchable licence records. It is stored unencrypted on the device,
 unless you turn on **device encryption** (Mission → Data safety → Device encryption), which
-also covers field reports and ranger photos and needs a passphrase you choose — see below.
+also covers radio log entries and ranger photos and needs a passphrase you choose — see below.
 **The same applies to log exports regardless** — the log is a raw diagnostic record and can
 quote report details and addresses verbatim, and is never encrypted.
 
 ### Encrypting the roster and reports on this device
 
 Mission → Data safety has a **Device encryption** toggle. Turned on, it encrypts the roster,
-field reports and ranger photos stored in this browser with a passphrase you choose — so a
+radio log entries and ranger photos stored in this browser with a passphrase you choose — so a
 lost or stolen device, or someone else's hands on a shared command-post laptop, doesn't hand
 over the roster in the clear. It does **not** protect the app while it is open and unlocked,
 the same as any lock screen wouldn't.

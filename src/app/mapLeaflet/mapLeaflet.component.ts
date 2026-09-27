@@ -169,7 +169,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // collapsing them into a cluster bubble would hide the exact thing a scribe opened the map
   // to find. `locations` is cached from the subscription below and redrawn in full on every
   // change, same "redraw from scratch" reasoning displayMarkers() already documents for
-  // field reports - cheap enough at the count a mission's own location list ever reaches.
+  // radio log entries - cheap enough at the count a mission's own location list ever reaches.
   private locationsLayer = L.layerGroup()
   private locations: MissionLocationType[] = []
   private locationsSubscription!: Subscription
@@ -1051,7 +1051,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // "Manually dropped markers" were never built (the setting was removed 2026-09-26); the
     // need is served by Locations (ADR D-49), in their own locationsLayer, untouched here.
     if (!this.displayedRadioLogEntries) {
-      this.log.error(`displayAllMarkers did not find field reports to display`, this.id)
+      this.log.error(`displayAllMarkers did not find radio log entries to display`, this.id)
       return
     }
 
@@ -1108,7 +1108,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
   /**
    * ADR D-49: redraws every Location marker from scratch, same "clear and rebuild" approach
-   * displayMarkers() uses for field reports - cheap at the count a mission's own location
+   * displayMarkers() uses for radio log entries - cheap at the count a mission's own location
    * list reaches, and simpler than diffing which locations changed.
    *
    * Guarded on `this.lMap`: the locations subscription (constructor) can fire before the map

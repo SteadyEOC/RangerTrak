@@ -9,7 +9,7 @@ import { themeQuartz } from 'ag-grid-community'
  * browser resolves.
  *
  * Replaces the classic ag-theme-alpine.css path (Sprint F) - see styles.scss and the
- * three grid components (Field Reports, Rangers, Settings field-report statuses).
+ * three grid components (Radio Log entries, Rangers, Settings field-report statuses).
  */
 export const rangertrakGridTheme = themeQuartz.withParams({
   // Without this, AG Grid defaults browserColorScheme to 'light' and sets

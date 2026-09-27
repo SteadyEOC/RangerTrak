@@ -255,7 +255,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
         this.refreshMarkers()
         this.refreshEvidenceMarkers()
       },
-      error: (e) => this.log.error('MapLibreComponent field reports subscription error: ' + e, 'MapLibreComponent')
+      error: (e) => this.log.error('MapLibreComponent radio log entries subscription error: ' + e, 'MapLibreComponent')
     })
   }
 
@@ -904,7 +904,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /**
    * ADR D-49: redraws every Location marker from scratch - same "clear and rebuild" approach
-   * refreshMarkers() takes for field reports, cheap at the count a mission's own location
+   * refreshMarkers() takes for radio log entries, cheap at the count a mission's own location
    * list reaches. Guarded on `this.map`: the locations subscription (constructor) can fire
    * before the map exists (ReplaySubject(1) replays synchronously) - see its own comment.
    */

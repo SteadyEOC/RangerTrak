@@ -581,7 +581,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     // displayedRadioLogEntries for THIS map - it stays permanently []. Worth confirming
     // whether the Entry mini-map is meant to show any prior check-in markers at all today.
     if (!this.displayedRadioLogEntries) {
-      this.log.error(`displayMarkers did not find field reports to display`, this.id)
+      this.log.error(`displayMarkers did not find radio log entries to display`, this.id)
     }
     this.log.verbose(`displayMarkers: all ${this.displayedRadioLogEntries.length} of 'em`, this.id)
     this.displayedRadioLogEntries.forEach(i => {

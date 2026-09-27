@@ -8,7 +8,7 @@ import {
 
 /**
  * E-122 Phase 2a: the async, IndexedDB-backed replacement for using `localStorage` directly
- * to hold the app's personal-data keys (roster, field reports, locations).
+ * to hold the app's personal-data keys (roster, radio log entries, locations).
  *
  * THE PROBLEM THIS SOLVES
  * ------------------------
@@ -64,7 +64,7 @@ import {
  * plaintext (nothing here changes for `RangerService`/`RadioLogService`, which still read and
  * write plain JSON strings), and encryption is purely a property of what sits on either side
  * of it. `load()` decrypts right after `idbGet()`; `drain()`/`migrateOne()` encrypt right
- * before `idbPut()`. Only `ENCRYPTED_KEYS` (the roster and field reports - see
+ * before `idbPut()`. Only `ENCRYPTED_KEYS` (the roster and radio log entries - see
  * `record-encryption.ts`) are ever touched; `locations` and every `localStorage`-only key stay
  * in the clear, same as before.
  *

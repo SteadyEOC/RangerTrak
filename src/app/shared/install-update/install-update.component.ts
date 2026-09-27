@@ -34,7 +34,7 @@ import { RecordStore } from '../storage/record-store'
  * go into the footer though?" `position: sticky; bottom: 0` on the footer's own instance
  * settles into normal flow once the real footer is reached and pins to the viewport bottom
  * otherwise - the same guarantee the old top banner made (visible regardless of scroll, so
- * a scribe deep in a tall Field Reports/Log page still sees it), without a second,
+ * a scribe deep in a tall Radio Log entries/Log page still sees it), without a second,
  * update-only instance living outside the footer. Because it's the footer's own instance
  * rather than a dedicated urgent-only one, it shows the install offer too, not just
  * update-ready - a small extra visibility win, not something asked for on its own.

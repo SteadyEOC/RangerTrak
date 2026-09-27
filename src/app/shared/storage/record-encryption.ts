@@ -1,7 +1,7 @@
 import { PBKDF2_ITERATIONS, deriveKey, fromBase64, toBase64 } from '../crypto/encrypted-file'
 
 /**
- * E-122 Phase 2b: the encryption primitives `RecordStore` (roster/field reports) and
+ * E-122 Phase 2b: the encryption primitives `RecordStore` (roster/radio log entries) and
  * `RangerPhotoService` (photos) both build on. Deliberately thin - the actual AES-GCM/PBKDF2
  * choices already live in `shared/crypto/encrypted-file.ts` (Phase 1, encrypted exports) and
  * are reused here rather than re-decided, so "how this app encrypts something" has one
@@ -41,7 +41,7 @@ export const ENCRYPTION_MARKER_KEY = '__encryption'
 
 /**
  * The only RecordStore keys Phase 2b ever encrypts (maintainer's decision, 2026-09-26): the
- * roster and field reports carry the concentrated PII risk. `locations` and every
+ * roster and radio log entries carry the concentrated PII risk. `locations` and every
  * localStorage-only key (settings, UI prefs) stay in the clear - see ARCHITECTURE.md's
  * "Encryption: exports today, storage later".
  */

@@ -296,7 +296,7 @@ describe('ranger-migration (ADR D-42)', () => {
       // Order preserved - the overwritten row stays at index 0, not moved to the end.
       expect(result.rangers[0].callsign).toBe('A1-renamed');
       expect(result.rangers[0].fullName).toBe('New Name');
-      expect(result.rangers[0].uid).withContext('existing uid kept - field reports join on it').toBe('u-a1');
+      expect(result.rangers[0].uid).withContext('existing uid kept - radio log entries join on it').toBe('u-a1');
       expect(result.rangers[1].callsign).toBe('B1');
       expect(result.overwritten).toEqual([{ callsign: 'A1-renamed', id: 'REW-1' }]);
       expect(result.added).toEqual([]);

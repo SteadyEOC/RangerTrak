@@ -77,7 +77,7 @@ export class RangerService implements OnInit {
     // that offered these 18 as an opt-in starter set - it only ever appended (never deduped),
     // so a second press or a press on top of a real roster produced duplicate callsigns, and
     // it offered nothing "Load sample data" (SampleDataService) doesn't already do better: a
-    // full, replace-not-append demo roster with real field reports. loadHardcodedRangers()
+    // full, replace-not-append demo roster with real radio log entries. loadHardcodedRangers()
     // itself stays - ranger.service.spec.ts uses it as a quick way to seed a test roster.
     if (this.rangers.length === 0) {
       this.log.verbose(`First run on this browser (or roster was emptied): starting blank. Load a real roster via Import roster or Restore mission.`, this.id)
@@ -255,7 +255,7 @@ export class RangerService implements OnInit {
    * callsign, or an `id`/`rew` credential normalizeRangerIds() can canonicalize. D-42: a
    * callsign alone is no longer required, since plenty of CERT/MERT responders are not
    * ham-licensed - but a row with none of the three is a name with nothing to attribute a
-   * field report to, worse than no row at all.
+   * radio log entry to, worse than no row at all.
    *
    * Missing optional fields are filled with empty strings rather than left undefined, so
    * the grid and the CSV export do not render "undefined" to an operator.
@@ -295,7 +295,7 @@ export class RangerService implements OnInit {
       const id = String(entry.id ?? entry.rew ?? '').trim()
       if (!callsign && !id) {
         throw new Error(
-          `Entry ${i + 1} has no callsign and no id/rew - there is nothing to attribute a field report to.`)
+          `Entry ${i + 1} has no callsign and no id/rew - there is nothing to attribute a radio log entry to.`)
       }
       return {
         callsign,
@@ -323,7 +323,7 @@ export class RangerService implements OnInit {
   /**
    * Non-fatal problems worth showing someone before they commit to an import.
    *
-   * Duplicate callsigns are the interesting case. Callsign is the key every field report
+   * Duplicate callsigns are the interesting case. Callsign is the key every radio log entry
    * joins on, so duplicates are genuinely ambiguous - but refusing a 286-entry roster over
    * one repeated row is the wrong trade when a team is trying to get set up. Report it and
    * let them decide.
@@ -354,7 +354,7 @@ export class RangerService implements OnInit {
       warnings.push(
         `${duplicateCallsigns.length} duplicate callsign${duplicateCallsigns.length > 1 ? 's' : ''}: `
         + `${duplicateCallsigns.slice(0, 5).join(', ')}${duplicateCallsigns.length > 5 ? '...' : ''}. `
-        + `Field reports filed against these cannot tell the rows apart.`)
+        + `Radio log entries filed against these cannot tell the rows apart.`)
     }
 
     // D-42: `id` is the displayed, searchable credential (REW-####/TEW-####, or a regional
@@ -374,7 +374,7 @@ export class RangerService implements OnInit {
       warnings.push(
         `${duplicateIds.length} duplicate id${duplicateIds.length > 1 ? 's' : ''}: `
         + `${duplicateIds.slice(0, 5).join(', ')}${duplicateIds.length > 5 ? '...' : ''}. `
-        + `Field reports filed against these cannot be told apart.`)
+        + `Radio log entries filed against these cannot be told apart.`)
     }
 
     const nameless = rangers.filter(r => !r.fullName.trim()).length

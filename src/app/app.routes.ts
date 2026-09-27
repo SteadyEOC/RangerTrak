@@ -54,7 +54,7 @@ export const APP_ROUTES: Routes = [
     loadComponent: () => import('./radio-log/radio-log.component').then(m => m.RadioLogComponent),
     canActivate: [fieldModeGuard],
   },
-  // New 2026-08-27: ICS-213 messages (field reports with generates213 set), list + detail
+  // New 2026-08-27: ICS-213 messages (radio log entries with generates213 set), list + detail
   // view rather than a second grid - see the roadmap's ICS-309/213 scoping note.
   {
     path: 'messages',

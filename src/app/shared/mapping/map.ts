@@ -118,8 +118,8 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
         next: (newReport) => {
           this.gotNewRadioLog(newReport)
         },
-        error: (e) => this.log.error('(Abstract) Field Reports Subscription got:' + e, this.id),
-        complete: () => this.log.info('(Abstract) Field Reports Subscription complete', this.id)
+        error: (e) => this.log.error('(Abstract) Radio Log entries Subscription got:' + e, this.id),
+        complete: () => this.log.info('(Abstract) Radio Log entries Subscription complete', this.id)
       })
   }
 
@@ -232,7 +232,7 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
   //   this.log.error(`(Abstract) refreshMap() is unimplemented!`, this.id)
   // }
 
-  // ------------------------------------  Field Reports  ---------------------------------------
+  // ------------------------------------  Radio Log entries  ---------------------------------------
 
   /**
    * Refresh the row counts shown beside the all/selected control.
@@ -263,7 +263,7 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
 
 
   gotNewRadioLog(newReports: RadioLogType) {
-    this.log.verbose(`(Abstract) gotNewRadioLog(): New collection of ${newReports.numReport} Field Reports observed.`, this.id)
+    this.log.verbose(`(Abstract) gotNewRadioLog(): New collection of ${newReports.numReport} Radio Log entries observed.`, this.id)
 
     this.numAllRows.set(newReports.numReport)
     this.radioLog = newReports
@@ -290,14 +290,14 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
    */
   onSwitchSelectedRadioLog() {
     if (!this.radioLog) {
-      this.log.error(`(Abstract) onSwitchSelectedRadioLog(): Field Reports not yet set`, this.id)
+      this.log.error(`(Abstract) onSwitchSelectedRadioLog(): Radio Log entries not yet set`, this.id)
       return
     }
 
     this.showingSelectedOnly = !this.showingSelectedOnly
     this.updateRadioLog()
 
-    this.log.verbose(`(Abstract) onSwitchSelectedRadioLog(): displaying ${this.displayedRadioLogEntries.length} ${this.showingSelectedOnly ? 'SELECTED' : 'ALL'} field reports`, this.id)
+    this.log.verbose(`(Abstract) onSwitchSelectedRadioLog(): displaying ${this.displayedRadioLogEntries.length} ${this.showingSelectedOnly ? 'SELECTED' : 'ALL'} radio log entries`, this.id)
 
     this.refreshMap()
   }
@@ -316,7 +316,7 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
     }
 
     if (!this.displayedRadioLogEntries) {
-      this.log.error(`(Abstract) displayMarkers() BUT No Field Reports received yet!`, this.id)
+      this.log.error(`(Abstract) displayMarkers() BUT No Radio Log entries received yet!`, this.id)
       return
     }
 

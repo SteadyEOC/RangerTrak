@@ -13,7 +13,7 @@ import {
 } from '../shared/services'
 
 /**
- * ICS-213 general messages - field reports with "Also generate an ICS-213" checked
+ * ICS-213 general messages - radio log entries with "Also generate an ICS-213" checked
  * (`generates213`), scoped 2026-08-27 as part of the ICS-309/213 IA restructuring (see the
  * roadmap's own scoping note for the full reasoning).
  *
@@ -47,7 +47,7 @@ import {
 export class MessagesComponent implements OnInit, OnDestroy {
   private id = 'Messages'
   title = 'Messages — ICS-213s'
-  pageDescr = 'ICS-213 general messages generated from field reports.'
+  pageDescr = 'ICS-213 general messages generated from radio log entries.'
 
   messages = signal<RadioLogEntryType[]>([])
   selectedId = signal<number | null>(null)
@@ -95,7 +95,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
         }
         this.log.verbose(`Received ${filtered.length} ICS-213 message(s) of ${reports.logEntries?.length ?? 0} reports.`, this.id)
       },
-      error: (e) => this.log.error('Field reports subscription got: ' + e, this.id),
+      error: (e) => this.log.error('Radio log entries subscription got: ' + e, this.id),
     })
   }
 

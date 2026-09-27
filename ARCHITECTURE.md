@@ -118,7 +118,7 @@ several decisions: **coordinates always, addresses when connected.**
 
 A permanent principle follows from this: **no API key is ever required for core function.**
 Any key-requiring capability must be optional, must degrade honestly, and must never block
-entering and mapping field reports. The current architecture satisfies this on every core
+entering and mapping radio log entries. The current architecture satisfies this on every core
 path — coordinates, Plus Codes, both map engines, Nominatim, and export/import are all
 keyless.
 
@@ -191,9 +191,9 @@ into a smudge and the pin ring closes up.
 
 **Phase 1 shipped in 0.94.0: a mission backup can be encrypted on its way out.** The roster is
 the sensitive part (legal names, personal phone numbers, photos, and call signs that resolve
-to public licence records), and field reports can contain PII about missing persons.
+to public licence records), and radio log entries can contain PII about missing persons.
 
-**Phase 2a (E-122) moved where "at rest" lives.** The roster, field reports and locations -
+**Phase 2a (E-122) moved where "at rest" lives.** The roster, radio log entries and locations -
 `RangerService`, `RadioLogService`, `MissionLocationService` - live in IndexedDB
 (`shared/storage/record-store.ts`, database `rangertrak-records`) behind `RecordStore`, a
 synchronous in-memory cache over an async IndexedDB store, instead of directly in
@@ -201,7 +201,7 @@ synchronous in-memory cache over an async IndexedDB store, instead of directly i
 `localStorage` - they hold no roster PII. That move was storage only, not encryption; it paid
 for the async write path Phase 2b below needed.
 
-**Phase 2b (opt-in, shipped): the roster and field reports can now be encrypted at rest, on
+**Phase 2b (opt-in, shipped): the roster and radio log entries can now be encrypted at rest, on
 this device.** Mission → Data safety → **Device encryption** turns it on with a passphrase.
 Turned on, `RecordStore` encrypts `rangers`/`radioLog`/`radioLog-BAD` (AES-GCM-256, a fresh IV
 per write) right before each IndexedDB write and decrypts right after each read - the
@@ -293,7 +293,7 @@ actually defends against here is narrow, and worth being honest about:
   is the one explicitly designed to move between devices. The roster and log CSV exports are
   **not** covered yet — encrypting those turns a spreadsheet-openable file into an opaque
   blob, which is a different UX question, and the backup already contains that data.
-- **Phase 2a — ✅ moved the roster, field reports and locations off `localStorage` onto
+- **Phase 2a — ✅ moved the roster, radio log entries and locations off `localStorage` onto
   IndexedDB** (`RecordStore`, see above) - unencrypted still, but the storage refactor
   encryption needed was now done.
 - **Phase 2b — ✅ opt-in encryption at rest**, tied to the IndexedDB migration so the async

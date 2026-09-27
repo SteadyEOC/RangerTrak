@@ -4,7 +4,7 @@ import { RadioLogEntryType } from '../services/radio-log-entry.interface'
 /**
  * E-114 Report Packet, Phase 1 (2026-08-31, Private Roadmap.md's E-114 §2/§2a/§2b). A queued,
  * store-and-forward artifact: a device (typically a remote ranger's own phone, running in
- * "lite mode" - E-114 §1a) bundles whatever field reports it has filed into one small file,
+ * "lite mode" - E-114 §1a) bundles whatever radio log entries it has filed into one small file,
  * which the main station later merges in via `RadioLogService.mergeIncomingEntries()`
  * (E-114 Phase 0) - the SAME merge function whether the packet arrives by email attachment,
  * a messaging app, a thumb drive, or read back over voice and re-typed (in which case there is

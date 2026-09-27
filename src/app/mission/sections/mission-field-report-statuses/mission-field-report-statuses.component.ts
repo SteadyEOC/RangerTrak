@@ -16,7 +16,7 @@ import {
 import { ColorEditor } from '../../color-editor.component'
 
 /**
- * The Field Report status/color ag-Grid editor. Sprint C split out of the 429-line
+ * The Radio Log entry status/color ag-Grid editor. Sprint C split out of the 429-line
  * mission.component template - see mission.component.ts for the rest.
  *
  * `rowData` is the same array reference the parent's `settings.radioLogStatuses` (and
@@ -42,7 +42,7 @@ import { ColorEditor } from '../../color-editor.component'
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class MissionFieldReportStatusesComponent implements OnChanges {
-  private id = 'Mission Field Report Statuses Component'
+  private id = 'Mission Radio Log Statuses Component'
 
   @Input({ required: true }) rowData: RadioLogStatusType[] = []
 
@@ -80,7 +80,7 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
       headerName: "Status", field: "status", flex: 50,
       editable: (params: { data: RadioLogStatusType }) => !this.isStatusInUse(params.data.status),
       cellStyle: (params: { value: string; }) => {
-        // Same fill+ink resolution as the Field Reports grid - see field-reports.component.ts.
+        // Same fill+ink resolution as the Radio Log entries grid - see field-reports.component.ts.
         const stat = this.rowData.find(el => el.status == params.value)
         const stored = stat ? stat.color : '#A3A3A3'
         const style: Record<string, string> = {
@@ -97,7 +97,7 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
       },
       tooltipValueGetter: (params: any) =>
         this.isStatusInUse(params.value)
-          ? `"${params.value}" is used on at least one field report this mission and can't be renamed. Add a new status instead.`
+          ? `"${params.value}" is used on at least one radio log entry this mission and can't be renamed. Add a new status instead.`
           : undefined,
     },
     {
@@ -132,7 +132,7 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
     ensureAgGridRegistered()
   }
 
-  /** E-73: true if any field report in the current mission carries this exact status name. */
+  /** E-73: true if any radio log entry in the current mission carries this exact status name. */
   isStatusInUse(status: string): boolean {
     return this.radioLogService.getCurrentRadioLog().logEntries
       .some(report => report.status === status)

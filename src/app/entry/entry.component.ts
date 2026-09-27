@@ -180,7 +180,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly sourceOptions = RADIO_LOG_ENTRY_SOURCES
 
   private id = 'Entry Form'
-  title = 'Field Report Entry'
+  title = 'Radio Log Entry'
   pageDescr = `Enter data associated with ranger's name, location, status for tracking on maps & spreadsheets`
 
   // REVIEW: do async auto-subscriptions from the HTML side instead?
@@ -437,8 +437,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /**
    * Raised live 2026-08-30: "makes it REAL easy to do a demo/try it out." True only on a
-   * genuinely untouched install - all three: no rangers imported, no field reports (which
-   * covers Messages too, a message is a field report with generates213 set - there is no
+   * genuinely untouched install - all three: no rangers imported, no radio log entries (which
+   * covers Messages too, a message is a radio log entry with generates213 set - there is no
    * way to have a message without a report), and no mission name set yet. Any one of those
    * being real means there is something a demo-data load could clobber, so the button
    * disappears the moment any of them stops being true.

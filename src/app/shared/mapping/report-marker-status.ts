@@ -1,7 +1,7 @@
 import { RadioLogStatusType, LocationCategoryType, statusColorValue } from '../services'
 
 /**
- * Resolves a field report's configured status color for use as a marker "shadow" (a
+ * Resolves a radio log entry's configured status color for use as a marker "shadow" (a
  * colored halo behind the ranger's own shape+color marker, so a scribe can read urgency
  * at a glance without opening the popup) - raised live, 2026-08-26. Reuses the same
  * `statusColorValue()` indirection the Entry radios and the grids already use, so a marker's

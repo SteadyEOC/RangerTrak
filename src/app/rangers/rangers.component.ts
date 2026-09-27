@@ -58,12 +58,12 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   public rangers = signal<RangerType[]>([])
 
   private radioLogSubscription!: Subscription
-  // "Not checked in" column: the most recent field report date per ranger, keyed
+  // "Not checked in" column: the most recent radio log entry date per ranger, keyed
   // `rangerUid || callsign` - same join key drawTrails()/displayMarkers() use (ADR D-42
   // phase 5). Read by lastContactCellRenderer/lastContactValueGetter below, not a signal -
   // ag-grid's cellRenderer/valueGetter are plain functions re-invoked on refreshCells(),
   // so this only needs to be current when the grid actually redraws, not push its own
-  // change detection. Deliberately recomputed only when field reports change (grid refresh
+  // change detection. Deliberately recomputed only when radio log entries change (grid refresh
   // triggered below), not on a setInterval - same "computed once when this method runs, not
   // a live-updating clock" choice mapLeaflet.component.ts's drawTrails() elapsed-time
   // readout already made, for the same reason: it goes stale until the next redraw rather
@@ -132,7 +132,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     // getRowHeight: (params) => 25
     //},
 
-    // E-104 (2026-08-25): same content-based sizing as the Field Reports grid - see
+    // E-104 (2026-08-25): same content-based sizing as the Radio Log entries grid - see
     // field-reports.component.ts for the full reasoning. On this grid the symptom was
     // `ID` and `Notes` holding "(none set)" and "-" in ~290px columns while `Call Sign`
     // and `Full Name` were squeezed.
@@ -194,7 +194,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     // Same #c0392b as the map's UNASSIGNED_MARKER (ranger-icon.ts) so the two read as one
     // signal, not two different warnings, wherever an operator sees either.
     if (!params.data.id?.trim()) {
-      return `<span aria-hidden title="No id set - not checked in yet, or no credential on file. Field reports from this ranger can't be attributed by id until one is." style="color:#c0392b;font-weight:700"> ⚠ (none set)</span>`
+      return `<span aria-hidden title="No id set - not checked in yet, or no credential on file. Radio log entries from this ranger can't be attributed by id until one is." style="color:#c0392b;font-weight:700"> ⚠ (none set)</span>`
     }
     return `<span aria-hidden> ${params.data.id}</span>`
   }
@@ -219,7 +219,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /** Sortable underlying value for the "Last Contact" column - epoch ms, or null for a
-   * ranger with no field report on file yet ("not checked in"). */
+   * ranger with no radio log entry on file yet ("not checked in"). */
   lastContactValueGetter = (params: { data: RangerType }) => {
     return this.lastContactFor(params.data)?.getTime() ?? null
   }
@@ -229,7 +229,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   lastContactCellRenderer = (params: { data: RangerType }) => {
     const last = this.lastContactFor(params.data)
     if (!last) {
-      return `<span aria-hidden title="No field report received yet from this ranger." `
+      return `<span aria-hidden title="No radio log entry received yet from this ranger." `
         + `style="color:#c0392b;font-weight:700">`
         + `<i class="material-icons" aria-hidden="true" `
         + `style="font-size:18px;width:18px;height:18px;vertical-align:text-bottom;">phone_disabled</i>`
@@ -332,10 +332,10 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (reports) => {
         this.lastContactByKey = RangersComponent.buildLastContactByKey(reports.logEntries)
         this.refreshGrid()
-        this.log.verbose('Received new Field Reports via subscription.', this.id)
+        this.log.verbose('Received new Radio Log entries via subscription.', this.id)
       },
-      error: (e) => this.log.error('Field Reports Subscription got:' + e, this.id),
-      complete: () => this.log.info('Field Reports Subscription complete', this.id)
+      error: (e) => this.log.error('Radio Log entries Subscription got:' + e, this.id),
+      complete: () => this.log.info('Radio Log entries Subscription complete', this.id)
     })
 
     this.log.verbose(`ngInit: ${this.rangers().length} Rangers retrieved from Local Storage`, this.id)
@@ -412,7 +412,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     const label = this.sampleScenarios.find(s => s.id === scenario)?.label ?? scenario
 
     if (!confirm(`Load the "${label}" sample mission?\n\n`
-      + `This REPLACES all rangers, field reports and locations currently on this device with `
+      + `This REPLACES all rangers, radio log entries and locations currently on this device with `
       + `demonstration data, renames the mission to make that obvious, and moves the mission's `
       + `default location to the demo's command post.\n\n`
       + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
@@ -443,7 +443,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     if (Utility.getConfirmation(
       `Delete all ${count} rangers from this browser?\n\n`
       + `The roster will be empty until you import one or add station callsigns. `
-      + `Field reports already filed are not deleted, but they will refer to callsigns `
+      + `Radio log entries already filed are not deleted, but they will refer to callsigns `
       + `that are no longer in the roster.\n\n`
       + `Export the roster first if you might want it back.`)) {
       this.log.info("Removing all rangers from local storage...", this.id)
@@ -468,7 +468,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // Roster import / export (JSON)
   //
   // The roster is the one thing a team must bring with them, and until now the only way
-  // in was Restore mission - which also replaces settings and every field report. That is
+  // in was Restore mission - which also replaces settings and every radio log entry. That is
   // the wrong tool for "here is our roster": it discards the work already on the device.
   // These two do the roster and nothing else.
 
@@ -520,7 +520,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       + `  ${merge.added.length} new, ${merge.overwritten.length} updated\n\n`
       + (warnings.length ? `Note:\n  - ${warnings.join('\n  - ')}\n\n` : '')
       + `This MERGES into the current roster of ${current} - a matching row is updated, `
-      + `everything else already here is kept. Field reports and settings are not affected.\n\n`
+      + `everything else already here is kept. Radio log entries and settings are not affected.\n\n`
       + (otherCategories.length
         ? `This file also carries ${otherCategories.join(' and ')} - Import roster does not `
         + `apply those; use the Setup files page (/prep) for the whole file.\n\n`
@@ -642,7 +642,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Handles a file picked via "Import roster". Replaces the roster only; field reports
+   * Handles a file picked via "Import roster". Replaces the roster only; radio log entries
    * and settings are untouched, which is the whole point of it being separate from
    * Restore mission.
    */
@@ -689,7 +689,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
         `Import ${incoming.length} rangers from "${file.name}"?\n\n`
         + (warnings.length ? `Note:\n  - ${warnings.join('\n  - ')}\n\n` : '')
         + `This REPLACES the current roster of ${current}. `
-        + `Field reports and settings are not affected.\n\n`
+        + `Radio log entries and settings are not affected.\n\n`
         + `Tip: use "Export roster (JSON)" first if you want to keep the current one.`)) {
         this.log.verbose('onRosterFileSelected: user cancelled import.', this.id)
         return

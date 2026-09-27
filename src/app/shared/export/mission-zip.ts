@@ -21,7 +21,7 @@ import { RangerType } from '../services/ranger.interface'
  * Deliberately NOT the same shape as `BackupService.MissionExport` (see the roadmap's own
  * "Mission Zip is NOT the same artifact as the existing mission export"): that one is a
  * mid/post-mission *backup* (user-facing: "Mission backup"/"Mission restore") and always
- * carries field reports; this one is a *template* taken before a mission has any, so it never
+ * carries radio log entries; this one is a *template* taken before a mission has any, so it never
  * does. Two schemas, sharing only the ranger/mission types themselves - not sharing one schema
  * with a nullable `fieldReports` field, which would make "is this a backup or a template?" a
  * runtime guess instead of the file's own shape.
