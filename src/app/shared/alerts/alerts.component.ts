@@ -10,6 +10,7 @@ import { MDCBanner } from '@material/banner'
 
 import { MissionService, MissionType } from '../services'
 import { LogService } from '../services/log.service'
+import { Utility } from '../utility'
 
 // NOTE: Could have long running service worker push a notification if desired: https://angular.io/guide/service-worker-notifications
 
@@ -98,7 +99,7 @@ export class AlertsComponent implements OnInit, OnDestroy {
   dbug(msg: string, alerts: boolean) {
     var dt = new Date();
     var dbugLog = document.getElementById("dbugLog")
-    var time = this.zeroFill(dt.getHours(), 2) + ":" + this.zeroFill(dt.getMinutes(), 2) + ":" + this.zeroFill(dt.getSeconds(), 2) + ":" + this.zeroFill(dt.getMilliseconds(), 4);
+    var time = Utility.zeroFill(dt.getHours(), 2) + ":" + Utility.zeroFill(dt.getMinutes(), 2) + ":" + Utility.zeroFill(dt.getSeconds(), 2) + ":" + Utility.zeroFill(dt.getMilliseconds(), 4);
     if (dbugLog) {
       var dbugMsg = time + "-  &nbsp;&nbsp;" + msg + "<br>" + dbugLog.innerHTML;
       dbugLog.innerHTML = dbugMsg;
@@ -109,16 +110,6 @@ export class AlertsComponent implements OnInit, OnDestroy {
       //document.getElementById('#alerts').html("<strong>Alert!</strong> "+time + "-  &nbsp;&nbsp;" + msg);
       //document.getElementById('#alerts').fadeIn().delay(2500).fadeOut();
     }
-  }
-
-  // toFixed() would not substitute here - it controls decimal precision, not left-padding an
-  // integer's string form. This duplicates Utility.zeroFill() (shared/utility.ts) exactly;
-  // worth consolidating onto that one in a future cleanup rather than keeping both.
-  zeroFill(integ: number, lngth: number) {
-    var strg = integ.toString();
-    while (strg.length < lngth)
-      strg = "0" + strg;
-    return strg;
   }
 
   ngOnDestroy() {

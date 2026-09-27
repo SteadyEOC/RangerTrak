@@ -340,8 +340,6 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // set rowData to null or undefined to show loading panel by default
     rowData: null,
   }
-  private backupRowData: any[] = []
-  private rowData: any[] = []
 
   constructor(
     private radioLogService: RadioLogService,
@@ -901,33 +899,6 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // An edited coordinate is no longer whatever the address geocoded to.
     report.location.derivedFromAddress = false
     return true
-  }
-
-  // #81 finding: named "_unused" and never called from anywhere, including the template -
-  // dead AG Grid tutorial demo scaffolding (fetches a public Olympics sample dataset, and
-  // `.subscribeOn(...)` below is an RxJS scheduler operator misused as a data callback, so
-  // this could never have worked as written). Left as-is here (comment-only pass) - a real
-  // candidate for outright deletion in a future cleanup.
-  onBtnImportRadioLogFromJSON_unused() {
-    alert(`onBtnImportFieldReports is unimplemented`)
-
-    // TODO: look at: https://www.npmjs.com/package/fs-browsers
-
-    // TODO: https://blog.ag-grid.com/refresh-grid-after-data-change/
-    // https://stackblitz.com/edit/ag-grid-angular-hello-world-n3aceq?file=src%2Fapp%2Fapp.component.ts
-    // https://www.ag-grid.com/javascript-data-grid/immutable-data/
-
-    // https://github.com/ag-grid/ag-grid/issues/2450
-    this.http
-      .get("https://raw.githubusercontent.com/ag-grid/ag-grid/master/grid-packages/ag-grid-docs/src/olympicWinnersSmall.json")
-      .subscribeOn((data: any[]) => {
-        data.length = 10;
-        data = data.map((row, index) => {
-          return { ...row, id: index + 1 };
-        })
-        this.backupRowData = data
-        this.rowData = data
-      })
   }
 
   /**

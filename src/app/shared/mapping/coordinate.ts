@@ -374,14 +374,6 @@ export function AddressToDD(newAddress: string) {
 */
 
 
-// #81 finding (confirmed dead - see the roadmap list): unused anywhere in src/, duplicates a
-// function in the Utility class, and returns a google.maps.LatLng despite Google Maps having
-// been removed from this app. Left as-is here (comment-only pass); a safe delete candidate.
-export function strToLatLng_Unused(str: string) {
-  const latlngStr = str.split(",", 2);
-  return new google.maps.LatLng(parseFloat(latlngStr[0]), parseFloat(latlngStr[1]))
-}
-
 // Coord is a lat or lng in decimal degrees
 class Coord_Unused {
   constructor(public coord: number) {

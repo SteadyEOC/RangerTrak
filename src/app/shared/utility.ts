@@ -214,61 +214,6 @@ export class Utility {
   }
   */
 
-  /**
-     * from https://css-tricks.com/switch-font-color-for-different-backgrounds-with-css/
-     * https://codepen.io/facundocorradini/pen/LBVvyq
-     *
-     *  The challenge:
-     *  1) Set text to either black or white depending on the element background perceived lightness (luma)
-     *  2) Set a border as a darker variation of the base color to improve button visibility, ONLY if background luma is really high
-     *  3) Automatically generate a secondary, 60º rotated hue color
-     *
-     */
-  calcContrastingColor(mainColor: string): { textColor: string, borderColor: string } {
-    let red = 200
-    let green = 60
-    let blue = 255
-
-    /* theme color variables to use in RGB declarations */
-
-    // threshold at which colors are considered "light". From 0 to 1, recommended 0.5 - 0.6
-    let threshold = 0.5
-
-    // threshold at which a darker border will be applied: from from 0 to 1, recommended 0.8+
-    let border_threshold = 0.8;
-
-    // background for the base class
-    let background = `rgb(${red}, ${green}, ${blue})`
-
-    // Calc perceived brightness using the sRGB Luma method
-    let lightness = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255
-
-
-    // 1) Any lightness value above the threshold will be considered "light", therefore apply a black text color. Any below will be considered dark, and use white color.
-    // This results from appying either a sub-zero (negative) or a higher-than-100 lightness value, which are capped to 0 and 100 respectively, to a HSL declaration
-    let textColor = `BUG, incomplete!`
-
-
-    //  2) sets the border as a 50% darker shade of the base color, ONLY if background color luma is higher than the border threshold.
-    // To achieve this I use the same sub-zero or higher-than-max technique, only this time using the Alpha value from an RGBA declaration.
-    // This results in a border that's either fully transparent or fully opaque
-
-    let border_alpha = (lightness - border_threshold) * 100
-
-    let borderColor = `rgba(${red - 50}, ${green - 50}, ${blue - 50}, ${border_alpha})`
-
-
-    // Alternative calc using the W3C luma method
-    lightness = (red * 0.299 + green * 0.587 + blue * 0.114) / 255
-    let w3c = { r: red * 0.299, g: green * 0.587, b: blue * 0.114 }
-
-    // 3) sets the background color as a 60º rotated hue
-    //let secondary = filter: hue - rotate(60deg)
-
-    return { textColor, borderColor }
-  }
-
-
   //https://convertingcolors.com/blog/article/convert_hex_to_rgb_with_javascript.html
   // https://stackoverflow.com/questions/9585973/javascript-regular-expression-for-rgb-values
 
