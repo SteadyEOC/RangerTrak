@@ -1,34 +1,43 @@
-<h2>Locations</h2>
-
-@if (locations().length === 0) {
-<p class="rt-locations-list__empty">
-  No Locations placed yet - use the Add Location button on the Map page to place one.
-</p>
-} @else {
-<table class="rt-locations-list">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Category</th>
-      <th>Coordinates</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (loc of locations(); track loc.uid) {
-    <tr>
-      <td>{{ loc.name }}</td>
-      <td>
-        <span class="rt-locations-list__marker" [innerHTML]="markerFor(loc.type)"></span>
-        {{ loc.type }}
-      </td>
-      <td>{{ loc.lat.toFixed(5) }}, {{ loc.lng.toFixed(5) }}</td>
-      <td class="rt-locations-list__actions">
-        <button matButton type="button" (click)="onEdit(loc)">Edit</button>
-        <button matButton type="button" (click)="onDelete(loc)">Delete</button>
-      </td>
-    </tr>
+<!-- Card treatment (2026-09-26): this section was a bare heading, grid and native button
+     sitting on the page between the Mission page's outlined cards - raised live as
+     inconsistent section backgrounds/borders. Same structure as mission-recipients213's
+     card. type="button" matters: the page wraps every section in its Save form. -->
+<mat-card appearance="outlined" class="rt-mission-card">
+  <mat-card-header>
+    <mat-card-title>Locations</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (locations().length === 0) {
+    <p class="rt-locations-list__empty">
+      No Locations placed yet - use the Add Location button on the Map page to place one.
+    </p>
+    } @else {
+    <table class="rt-locations-list">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Coordinates</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (loc of locations(); track loc.uid) {
+        <tr>
+          <td>{{ loc.name }}</td>
+          <td>
+            <span class="rt-locations-list__marker" [innerHTML]="markerFor(loc.type)"></span>
+            {{ loc.type }}
+          </td>
+          <td>{{ loc.lat.toFixed(5) }}, {{ loc.lng.toFixed(5) }}</td>
+          <td class="rt-locations-list__actions">
+            <button matButton type="button" (click)="onEdit(loc)">Edit</button>
+            <button matButton type="button" (click)="onDelete(loc)">Delete</button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
     }
-  </tbody>
-</table>
-}
+  </mat-card-content>
+</mat-card>

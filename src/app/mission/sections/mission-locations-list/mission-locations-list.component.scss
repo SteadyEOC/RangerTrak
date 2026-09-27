@@ -1,7 +1,7 @@
-@use "../../../../styles/section" as section;
-
-h2 {
-  @include section.section-header;
+// A grid item of Mission's two-column .mission__grid, like the other section cards: the
+// card itself, not this host element, is what the grid lays out.
+:host {
+  display: contents;
 }
 
 .rt-locations-list__empty {

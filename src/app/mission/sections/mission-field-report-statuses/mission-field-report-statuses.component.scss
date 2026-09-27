@@ -1,4 +1,8 @@
-@use "../../../../styles/section" as section;
+// A grid item of Mission's two-column .mission__grid, like the other section cards: the
+// card itself, not this host element, is what the grid lays out.
+:host {
+  display: contents;
+}
 // E-65: `width: 400px` was a hard floor, so on a 390px phone this grid pushed the whole
 // Settings page's layout viewport out to ~417px rather than scrolling inside itself. The
 // Rangers grid is the reference for the intended behavior ("reachable, not broken,
@@ -10,15 +14,4 @@ ag-grid-angular {
   height   : 400px;
   width    : 400px;
   max-width: 100%;
-}
-
-// E-52 / ADR D-39: was this same six-times-duplicated h1,h2,h3 block with !important on
-// every declaration. h2 is a section head here, h3 is a subhead inside one - they now get
-// visibly different treatments from the shared spec instead of one identical rule.
-h2 {
-  @include section.section-header;
-}
-
-h3 {
-  @include section.subsection-header;
 }

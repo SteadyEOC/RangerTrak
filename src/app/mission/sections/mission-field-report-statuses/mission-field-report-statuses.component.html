@@ -1,6 +1,13 @@
-<!-- ======================================= -->
+<!-- Card treatment (2026-09-26): this section was a bare heading, grid and native button
+     sitting on the page between the Mission page's outlined cards - raised live as
+     inconsistent section backgrounds/borders. Same structure as mission-recipients213's
+     card. type="button" matters: the page wraps every section in its Save form. -->
 <!-- FUTURE: Consider replacing "Color" with "CSS_Style" to allow more options? -->
-<h2>Field Report Statuses</h2>
+<mat-card appearance="outlined" class="rt-mission-card">
+  <mat-card-header>
+    <mat-card-title>Field Report Statuses</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
 <!-- E-73: was a static warning paragraph next to an always-editable grid ("don't edit
      status names if they've already been used") - a rule stated in prose, never enforced.
      The Status column itself is now conditionally read-only per row (see
@@ -8,12 +15,13 @@
      tooltip and a dimmed, not-allowed cursor on the cells it applies to, so the warning
      doesn't need saying twice. New statuses can still be added anytime. -->
 
-<ag-grid-angular (gridReady)="onGridReady($event)" [gridOptions]="gridOptions"
-  [defaultColDef]="defaultColDef" [tooltipShowDelay]="500" [rowData]="rowData" [columnDefs]="columnDefs">
-</ag-grid-angular>
-
-<button (click)="onBtnAddFRStatus()" title="Add a new Field Report Status">
-  Add new row
-</button>
-<br />
-<br />
+    <ag-grid-angular (gridReady)="onGridReady($event)" [gridOptions]="gridOptions"
+      [defaultColDef]="defaultColDef" [tooltipShowDelay]="500" [rowData]="rowData" [columnDefs]="columnDefs">
+    </ag-grid-angular>
+  </mat-card-content>
+  <mat-card-actions>
+    <button matButton type="button" (click)="onBtnAddFRStatus()" title="Add a new Field Report Status">
+      Add new row
+    </button>
+  </mat-card-actions>
+</mat-card>

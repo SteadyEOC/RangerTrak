@@ -1,13 +1,21 @@
-<h2>Location Categories</h2>
-<p>Categories available when placing a Location on the map (Command Post, Staging Area, ...).
-  Each draws with its own icon and color.</p>
-
-<ag-grid-angular (gridReady)="onGridReady($event)" [gridOptions]="gridOptions"
-  [defaultColDef]="defaultColDef" [tooltipShowDelay]="500" [rowData]="rowData" [columnDefs]="columnDefs">
-</ag-grid-angular>
-
-<button (click)="onBtnAddLocationType()" title="Add a new Location category">
-  Add new row
-</button>
-<br />
-<br />
+<!-- Card treatment (2026-09-26): this section was a bare heading, grid and native button
+     sitting on the page between the Mission page's outlined cards - raised live as
+     inconsistent section backgrounds/borders. Same structure as mission-recipients213's
+     card. type="button" matters: the page wraps every section in its Save form. -->
+<mat-card appearance="outlined" class="rt-mission-card">
+  <mat-card-header>
+    <mat-card-title>Location Categories</mat-card-title>
+    <mat-card-subtitle>Categories available when placing a Location on the map (Command Post,
+      Staging Area, ...). Each draws with its own icon and color.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <ag-grid-angular (gridReady)="onGridReady($event)" [gridOptions]="gridOptions"
+      [defaultColDef]="defaultColDef" [tooltipShowDelay]="500" [rowData]="rowData" [columnDefs]="columnDefs">
+    </ag-grid-angular>
+  </mat-card-content>
+  <mat-card-actions>
+    <button matButton type="button" (click)="onBtnAddLocationType()" title="Add a new Location category">
+      Add new row
+    </button>
+  </mat-card-actions>
+</mat-card>

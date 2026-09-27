@@ -1,4 +1,8 @@
-@use "../../../../styles/section" as section;
+// A grid item of Mission's two-column .mission__grid, like the other section cards: the
+// card itself, not this host element, is what the grid lays out.
+:host {
+  display: contents;
+}
 
 // Same E-65 phone-width fix as MissionFieldReportStatusesComponent's own copy of this rule -
 // see that file's comment for the full reasoning.
@@ -6,8 +10,4 @@ ag-grid-angular {
   height   : 300px;
   width    : 400px;
   max-width: 100%;
-}
-
-h2 {
-  @include section.section-header;
 }

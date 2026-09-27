@@ -3,8 +3,9 @@ import { ColDef, GridOptions } from 'ag-grid-community'
 
 import { CommonModule } from '@angular/common'
 import {
-  ChangeDetectionStrategy, Component, Input, OnChanges, SimpleChanges
+  ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges
 } from '@angular/core'
+import { MATERIAL_IMPORTS } from '../../../material-imports'
 
 import { ensureAgGridRegistered } from '../../../shared/ag-grid-setup'
 import { rangertrakGridTheme } from '../../../shared/ag-grid-theme'
@@ -35,7 +36,7 @@ import { ColorEditor } from '../../color-editor.component'
 @Component({
   selector: 'rangertrak-mission-field-report-statuses',
   standalone: true,
-  imports: [CommonModule, AgGridModule],
+  imports: [CommonModule, AgGridModule, ...MATERIAL_IMPORTS],
   templateUrl: './mission-field-report-statuses.component.html',
   styleUrls: ['./mission-field-report-statuses.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -44,6 +45,15 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
   private id = 'Mission Field Report Statuses Component'
 
   @Input({ required: true }) rowData: RadioLogStatusType[] = []
+
+  /**
+   * Asks the Mission page to save and reload (its onFormSubmit()), which is what makes an
+   * added row persist and show up. Until 2026-09-26 this happened by accident: the button had
+   * no `type`, so inside Mission's form every click ALSO submitted it. The card rework gave
+   * the button `type="button"`, which would have silently lost every added row - so the save
+   * is explicit now, with the same result users already saw.
+   */
+  @Output() rowAdded = new EventEmitter<void>()
 
   private gridApi: any
   private gridColumnApi: any
@@ -162,9 +172,7 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
 
   onBtnAddFRStatus() {
     this.rowData.push({ status: 'New Status', color: '', icon: '' })
-    this.refreshStatusGrid()
-    this.log.verbose(`Reloading window!`, this.id)
-    window.location.reload()
+    this.rowAdded.emit()
   }
 
   refreshStatusGrid() {

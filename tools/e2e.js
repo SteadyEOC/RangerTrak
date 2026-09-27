@@ -2138,6 +2138,38 @@ async function checkMissionUnsavedChangesGuard() {
   check('leaving a CLEAN Mission form triggers no dialog', dialogs.length, dialogsBeforeClean)
 }
 
+/**
+ * 2026-09-26 card rework: Mission's two "Add new row" buttons only ever persisted a row
+ * because, lacking a `type`, each click also submitted Mission's Save form. The cards gave
+ * them `type="button"` and an explicit rowAdded -> onFormSubmit() save instead; this proves
+ * a row added from each grid survives the reload. Restores the saved settings afterwards so
+ * later checks (status colour contrast among them) see the list they expect.
+ */
+async function checkMissionAddRowsPersist() {
+  console.log('\nMission: "Add new row" on Field Report Statuses and Location Categories persists')
+  await goto('/mission')
+  const saved = await evaluate(`localStorage.getItem('appSettings')`)
+  const counts = () => evaluate(`(() => {
+    const s = JSON.parse(localStorage.getItem('appSettings') || '{}')
+    return { statuses: (s.radioLogStatuses || []).length, types: (s.locationTypes || []).length }
+  })()`)
+  const before = await counts()
+
+  for (const [title, key, label] of [
+    ['Add a new Field Report Status', 'statuses', 'status'],
+    ['Add a new Location category', 'types', 'location category'],
+  ]) {
+    await goto('/mission')
+    await evaluate(`document.querySelector('button[title="${title}"]')?.click()`)
+    await sleep(3000) // the save reloads the page
+    const after = await counts()
+    check(`an added ${label} row is still there after the save reload`, after[key], before[key] + 1)
+  }
+
+  await evaluate(`localStorage.setItem('appSettings', ${JSON.stringify(saved)})`)
+  await goto('/mission')
+}
+
 async function checkMissionRoundTrip(downloads) {
   console.log('\nMission backup -> wipe all storage -> restore: the disaster path')
   await goto('/mission')
@@ -2511,6 +2543,7 @@ async function main() {
       await checkDerivedValuesDoNotCarryOver() // also submits, same reason
       await checkMissionFormSave()
       await checkMissionUnsavedChangesGuard()
+      await checkMissionAddRowsPersist()
       await checkStatusColorMigration()
       await checkStatusColorsBothSchemes()
 

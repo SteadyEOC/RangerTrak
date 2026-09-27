@@ -58,10 +58,10 @@
 
       <rangertrak-mission-maps-section [form]="settingsForm"></rangertrak-mission-maps-section>
 
-      <rangertrak-mission-field-report-statuses [rowData]="rowData()">
+      <rangertrak-mission-field-report-statuses [rowData]="rowData()" (rowAdded)="onFormSubmit()">
       </rangertrak-mission-field-report-statuses>
 
-      <rangertrak-mission-location-types [rowData]="locationTypesRowData()">
+      <rangertrak-mission-location-types [rowData]="locationTypesRowData()" (rowAdded)="onFormSubmit()">
       </rangertrak-mission-location-types>
 
       <rangertrak-mission-locations-list></rangertrak-mission-locations-list>
