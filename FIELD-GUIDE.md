@@ -302,7 +302,7 @@ the route: email or a messaging app over cell data or WiFi, or AirDrop / Nearby 
 station device nearby. At the command post, **Load Report Packet** on the Radio Log page
 merges it, skipping reports it already has. With no data path, read the report over the radio
 as always. Do the same for anything urgent, because the phone gets no receipt. Install the
-app on each phone from rangertrak.org **before** heading out. **Command Post Server** is not a
+app on each phone from rangertrak.org **before** heading out. **RangerTrak Board** is not a
 third mode. It is an option on the command post's app that shows a read-only copy of the log
 to anyone on the station's WiFi; phones cannot send reports through it.
 

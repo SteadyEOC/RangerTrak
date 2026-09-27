@@ -97,7 +97,7 @@ const YOUR_DATA: GuideTab = {
   blocks: [
     {
       heading: 'Where it lives',
-      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login. Your mission stays on this device. When online, the app fetches map images and looks up addresses for report locations automatically. Sending feedback, and turning on Command Post Server publishing yourself (on the Mission page, off by default), only happen if you choose to. See "Command Post Server" on the Mission page for exactly what that sends and to whom, and https://rangertrak.com/privacy.html for the full privacy policy.'
+      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login. Your mission stays on this device. When online, the app fetches map images and looks up addresses for report locations automatically. Sending feedback, and turning on RangerTrak Board publishing yourself (on the Mission page, off by default), only happen if you choose to. See "RangerTrak Board" on the Mission page for exactly what that sends and to whom, and https://rangertrak.com/privacy.html for the full privacy policy.'
     },
     {
       heading: 'What that means',
@@ -387,12 +387,12 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             ]
           },
           {
-            heading: 'Command Post Server (optional)',
+            heading: 'RangerTrak Board (optional)',
             text: 'Lets other people on the SAME WiFi or hotspot read the live comms log from their own phone, tablet or laptop — a read-only view, on a separate small server, not a way to edit this mission from another device. Off by default; this device\'s own copy is exactly the same either way, whether it\'s on or off.',
             bullets: [
-              '1. Someone runs the server — on a laptop at the command post, not a phone (phones can\'t run it, only supply the WiFi). It prints its own address on startup, e.g. https://192.168.1.5:8080 — that\'s the "whose WiFi" part: it\'s always the command-post laptop\'s own network, and the address is whatever that laptop\'s network gives it, not something you choose.',
+              '1. Someone runs the RangerTrak Board program on a laptop at the command post. It is a small Node.js program in the RangerTrak source code (tools/command-post-server.js), started with npm run command-post. Not a phone (phones can\'t run it, only supply the WiFi). It prints its own address on startup, e.g. https://192.168.1.5:8080 — that\'s the "whose WiFi" part: it\'s always the command-post laptop\'s own network, and the address is whatever that laptop\'s network gives it, not something you choose.',
               '2. On EVERY device that will publish to it or view it — including this one — open that address directly in the browser once. It will warn "Your connection is not private" — expected, the same warning most home routers show, since this is a private server with no public certificate. Click Advanced, then Proceed. Needed once per device; skipping this step is the #1 reason publishing silently does nothing.',
-              '3. On THIS device (the one actually filing reports), turn the "Publish to Command Post Server" toggle on below — the "Server address" field only appears once it\'s on — then paste that exact address into it. Reports start publishing there automatically from then on, every time one is filed or edited.',
+              '3. On THIS device (the one actually filing reports), turn the "Publish to RangerTrak Board" toggle on below — the "Server address" field only appears once it\'s on — then paste that exact address into it. Reports start publishing there automatically from then on, every time one is filed or edited.',
               '4. Give viewers the SAME address with /view added — e.g. https://192.168.1.5:8080/view — and make sure they\'re joined to the SAME WiFi/hotspot as the command-post laptop (and have done step 2 on their own device). They\'ll see a live, auto-refreshing table (time, callsign, status, message), each with their own filter and sort, independent of everyone else looking at it.',
               'The roster never goes with it — only report content. Full names, phone numbers and photos stay on this device; a viewer only ever sees a callsign, same as anyone standing at the map.',
               'If the server isn\'t reachable (not running yet, wrong address, step 2 skipped, or you\'re off that WiFi), publishing just fails quietly in the background — this device keeps working exactly as normal either way.',

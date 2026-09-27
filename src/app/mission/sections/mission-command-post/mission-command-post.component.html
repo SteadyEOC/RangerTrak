@@ -1,22 +1,22 @@
 <mat-card appearance="outlined" class="rt-mission-card">
   <mat-card-header>
-    <mat-card-title>Command Post Server</mat-card-title>
+    <mat-card-title>RangerTrak Board</mat-card-title>
     <mat-card-subtitle>Let nearby devices read the live comms log over this laptop's WiFi.</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     <!-- Simplified 2026-08-31 ("that server section explanation is long and technical.
          simplify it & move anything long to the guide") - the detailed walkthrough (why a
          phone can't host, the router-warning analogy, step-by-step setup) already lives in
-         full in the Guide drawer (guide-content.ts's own "Command Post Server" entry) and is
+         full in the Guide drawer (guide-content.ts's own "RangerTrak Board" entry) and is
          not duplicated here - this stays just long enough to act on, not to explain. -->
     @if (isPhone()) {
       <div class="warn mission-command-post__phone-note">
-        This device can publish to a Command Post Server, but can't run one - that needs a
+        This device can publish to RangerTrak Board, but can't run it - that needs a
         laptop.
       </div>
     }
     <p class="mission__note">
-      Needs a laptop running the server - see the Guide for setup. Off by default; your own
+      Needs a laptop running the RangerTrak Board program - see the Guide for setup. Off by default; your own
       copy of the mission is unaffected either way.
     </p>
     <div class="warn">
@@ -30,7 +30,7 @@
          checkbox/toggle (angular/components#32072). -->
     <mat-slide-toggle [checked]="form.commandPostEnabled().value()"
       (change)="form.commandPostEnabled().value.set($event.checked)">
-      Publish to Command Post Server
+      Publish to RangerTrak Board
     </mat-slide-toggle>
 
     @if (form.commandPostEnabled().value()) {

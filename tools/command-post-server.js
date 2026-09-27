@@ -333,8 +333,8 @@ function printLanUrls(addresses) {
   const primaryUrl = `https://${addresses[0] || 'localhost'}:${PORT}`;
 
   console.log('');
-  console.log('RangerTrak Command Post Server');
-  console.log('==============================');
+  console.log('RangerTrak Board');
+  console.log('================');
   console.log(`Serving ${ROOT}`);
   console.log('');
   console.log('Give teams this address to view the live comms log:');
