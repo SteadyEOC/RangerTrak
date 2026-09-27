@@ -408,6 +408,13 @@ export default {
     if (!asset.ok) {
       return asset
     }
+    // E-128 (2026-09-27): wrangler.jsonc's `not_found_handling: "single-page-application"`
+    // answers a map file that does not exist with index.html and a 200, which this handler
+    // then sliced into a 206 of HTML bytes - seen live for the removed world-vashon.pmtiles.
+    // A map file is never HTML, so that is a 404.
+    if ((asset.headers.get('Content-Type') ?? '').startsWith('text/html')) {
+      return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } })
+    }
 
     // --- Range requests vs. `cache.enabled` (wrangler.jsonc) -----------------------------
     // Confirmed against Cloudflare's own docs, not guessed: when Workers Caching is on,

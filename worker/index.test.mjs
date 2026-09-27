@@ -115,6 +115,16 @@ test('a 206 partial response is never cacheable, even though the full-file 200 i
   assert.equal(res.headers.get('Cache-Control'), 'no-store')
 })
 
+test('E-128: a map file that does not exist is a 404, not the SPA fallback page sliced into a 206', async () => {
+  // The asset store's single-page-application fallback: index.html, 200, for any missing path.
+  const env = { ASSETS: { fetch: async () => new Response('<!DOCTYPE html><html></html>', {
+    status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }) } }
+  const res = await worker.fetch(new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles', {
+    headers: { Range: 'bytes=0-99' },
+  }), env)
+  assert.equal(res.status, 404)
+})
+
 test('the full-file (no Range) response stays long-cacheable, for Cloudflare to slice from', async () => {
   const env = { ASSETS: { fetch: async () => new Response(new Uint8Array([1, 2, 3, 4, 5]), { status: 200 }) } }
   const res = await worker.fetch(new Request('https://rangertrak.org/assets/maps/world-z5-20260926.pmtiles'), env)
