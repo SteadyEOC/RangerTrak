@@ -44,7 +44,6 @@ export class MissionService implements OnInit {
   constructor(@Optional() @SkipSelf() existingService: MissionService,
     private log: LogService
   ) {
-    //! REVIEW: Gets called twice!!
     this.log.verbose(`======== constructor() ============`, this.id);
 
     if (existingService) {
@@ -56,12 +55,8 @@ export class MissionService implements OnInit {
        */
       // Was `throwError(() => {...})` - the rxjs creation function, which only BUILDS an
       // observable. Nothing subscribed, so this guard never fired and five components quietly
-      // ran their own MissionService for months. Throw for real.
-      //
-      // #81 finding (real, open - see the roadmap list): RadioLogService and RangerService's
-      // own singleton constructors (radio-log.service.ts, ranger.service.ts) still use the
-      // exact broken `throwError(() => {...})` form this comment describes fixing here - the
-      // same latent no-op guard, not yet applied to either of them.
+      // ran their own MissionService for months. Throw for real. (RadioLogService and
+      // RangerService got the same fix in ecdfd09.)
       const msg = `MissionService has already been provided. It is providedIn:'root' - do not list it in a component's providers.`
       this.log.error(msg, this.id)
       throw new Error(msg)

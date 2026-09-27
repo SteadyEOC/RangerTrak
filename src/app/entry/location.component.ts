@@ -712,7 +712,7 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
 
   /**
    * Update labels with derived locations
-   * REVIEW: Should LocationType also store derived PCode addresses?
+   * Derived Plus Codes are not stored on LocationType: they are recomputed from lat/lng (#81).
    *
    * @param location
    */

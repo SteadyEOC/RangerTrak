@@ -105,7 +105,8 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
 
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
-        // REVIEW: Any new settings just ripple thru, or does anything need pushing?!
+        // Stored, not pushed: settings are only edited on the Mission page, and a map page is
+        // rebuilt from them on every visit, so nothing on the map needs redrawing here (#81).
         this.settings = newMission
         this.log.excessive('(Abstract) Received new Settings via subscription.', this.id)
       },
@@ -131,7 +132,8 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
 
     if (!this.settings) {
       this.log.error(`(Abstract) this.settings not yet established in ngOnInit()`, this.id)
-      // REVIEW: Can initMap run OK w/ defaults, but w/o settings?
+      // Should not happen: MissionService replays its current settings (defaults on a fresh
+      // install) synchronously in the constructor's subscribe. The map then centres on 0,0 (#81).
     } else {
       this.center = { lat: this.settings.defLat, lng: this.settings.defLng }
       this.mouseLatLng.set(this.center)

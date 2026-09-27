@@ -8,7 +8,7 @@ export interface LocationType {
   lat: number,
   lng: number,
   address: string,
-  derivedFromAddress: boolean  // REVIEW: Maybe should be an enum: DD, streetAddress, PCode, or Maidenhead?
+  derivedFromAddress: boolean  // Stays a boolean (#81): which notation was typed is not needed downstream
 }
 
 export const undefinedAddressFlag = 'NO_LOCATION_SET_YET'

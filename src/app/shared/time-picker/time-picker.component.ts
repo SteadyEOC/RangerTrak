@@ -112,8 +112,6 @@ export class TimePickerComponent implements OnInit, OnChanges {
   public touchUi = false
   public enableMeridian = false // 24 hr clock
 
-  minDate!: null | Date // dayjs.Dayjs
-  maxDate!: null | Date // dayjs.Dayjs
   public stepHour = 1
   public stepMinute = 1
   public stepSecond = 1
@@ -122,17 +120,13 @@ export class TimePickerComponent implements OnInit, OnChanges {
   hideTime = false
   //dateCtrl = new FormControl(new Date()) //TODO: Still need to grab the result during submit...!
 
-  defaultOpPeriod = 10 // hours
-
   constructor(
     private log: LogService,
     @Inject(DOCUMENT) private document: Document) {
     this.log.excessive(`======== Constructor() ============`, this.id)
-
-    // REVIEW: min/max are hardcoded here rather than configurable - see TODO below.
-    // TODO: These should get passed in
-    this._setMinDate(10) // no times early than 10 hours ago
-    this._setMaxDate(1)  // no times later than 1 hours from now
+    // #81 (2026-09-27): a 10-hours-back / 1-hour-ahead min/max was "set" here, but minDate was
+    // never assigned, so it was a no-op, and nothing bound it. Removed: any time can be entered,
+    // which back-filling a paper log after a long operational period needs.
   }
 
   ngOnInit(): void {
@@ -359,33 +353,9 @@ export class TimePickerComponent implements OnInit, OnChanges {
     }
   }
 
-  toggleMinDate(evt: any) {
-    if (evt.checked) {
-      this._setMinDate();
-    } else {
-      this.minDate = null;
-    }
-  }
-
-  toggleMaxDate(evt: any) {
-    if (evt.checked) {
-      this._setMaxDate();
-    } else {
-      this.maxDate = null;
-    }
-  }
 
   // closePicker() {
   //   this timePicker.cancel();
   // }
 
-  private _setMinDate(hours: number = this.defaultOpPeriod) {
-    //const now = Date.now() //dayjs();
-    this.minDate?.setMilliseconds(Date.now() - hours * 60 * 60 * 1000)
-  }
-
-  private _setMaxDate(hours: number = this.defaultOpPeriod) {
-    //const now = Date.now() //dayjs();
-    this.minDate?.setMilliseconds(Date.now() + hours * 60 * 60 * 1000)
-  }
 }

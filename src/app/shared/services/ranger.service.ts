@@ -41,7 +41,8 @@ export class RangerService implements OnInit {
 
 
   // https://angular.io/guide/architecture-services#providing-services: singleton or multiple service instances?!
-  //! REVIEW: Field & Ranger Services BOTH call constructors twice!!
+  // #81 (2026-09-27): these used to be constructed twice because Entry re-listed them in its own
+  // `providers` (fixed 2026-08-19). The guard below now throws if that ever happens again.
   constructor(
     @Optional() @SkipSelf() existingService: RangerService,
     private httpClient: HttpClient,
@@ -62,7 +63,6 @@ export class RangerService implements OnInit {
       throw new Error(msg)
     }
     this.log.verbose("======== Constructor() ============", this.id)
-    // REVIEW: this.log.verbose(`Constructor call stack: ${new Error().stack}`, this.id)
 
     this.LoadRangersFromLocalStorage()
     this.log.verbose(`Got ${this.rangers.length} from Local Storage`, this.id)

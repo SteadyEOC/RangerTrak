@@ -411,7 +411,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // area for offline use - giving this engine a real offline story to compare against
     // the PMTiles map, rather than the previously-unused `leaflet.offline` import.
     const tiles = tileLayerOffline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 21,  // REVIEW: put into settings?
+      maxZoom: 21,  // Past OSM's native 19 Leaflet just enlarges tiles; not worth a setting (#81)
       minZoom: 3,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     })

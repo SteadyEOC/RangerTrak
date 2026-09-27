@@ -75,7 +75,8 @@ export class RadioLogService {
   private boundsMargin = 0.0025
 
   // https://angular.io/guide/architecture-services#providing-services: singleton or multiple service instances?!
-  //! REVIEW: Field & Ranger Services BOTH call constructors twice!!
+  // #81 (2026-09-27): these used to be constructed twice because Entry re-listed them in its own
+  // `providers` (fixed 2026-08-19). The guard below now throws if that ever happens again.
   constructor(
     private missionService: MissionService,
     private rangerService: RangerService,
@@ -99,7 +100,6 @@ export class RadioLogService {
     }
 
     this.log.verbose("======== Constructor() ============", this.id)
-    //! REVIEW: this.log.verbose(`Constructor call stack (NOT an error: why called twice?): ${new Error().stack}`, this.id)
 
     // Subscribe to Settings BEFORE loading reports: MissionService replays its current
     // value synchronously, so this populates this.settings first - initEmptyRadioLog()

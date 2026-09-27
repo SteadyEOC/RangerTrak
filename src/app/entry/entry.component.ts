@@ -183,7 +183,6 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   title = 'Radio Log Entry'
   pageDescr = `Enter data associated with ranger's name, location, status for tracking on maps & spreadsheets`
 
-  // REVIEW: do async auto-subscriptions from the HTML side instead?
   private rangersSubscription!: Subscription
   public rangers: RangerType[] = []
   filteredRangers!: Observable<RangerType[]>
@@ -310,8 +309,6 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // E-48(1): bumped on every reset (see resetAll() below) so LocationComponent can tell
   // "a fresh report started" apart from "the position changed" - see its own comment.
   formGeneration = 0
-
-  minDate = new Date()
 
   submitInfo: HTMLElement | null = null
   callImg: HTMLElement | null = null
