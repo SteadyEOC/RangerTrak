@@ -18,6 +18,7 @@ import { ThemePalette } from '@angular/material/core'
 import { MatSnackBar } from '@angular/material/snack-bar'
 
 // Specific paths, not the '../shared/' barrel - see the note in location.component.ts.
+import { isAiGeneratedPhoto, withAiBadge } from '../shared/ai-photo'
 import { Utility } from '../shared/utility'
 import { AlertsComponent } from '../shared/alerts/alerts.component'
 import { PageComponent } from '../shared/page/page.component'
@@ -936,7 +937,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
           ? `${this.settings.imageDirectory}rangers/${ranger.image}`
           : `${this.settings.imageDirectory}rangers/androgynous.svg`)
 
-      this.callImg.innerHTML = `<img style="height:60px; margin-bottom:-15px;" alt="Photo of ${ranger.fullName || ranger.callsign}" src="${src}"/>`
+      this.callImg.innerHTML = withAiBadge(
+        `<img style="height:60px; margin-bottom:-15px;" alt="Photo of ${ranger.fullName || ranger.callsign}" src="${src}"/>`,
+        isAiGeneratedPhoto(ranger.image, !!localPhoto))
       this.callInfo.innerHTML = `<span class="enter__Callsign-info">${ranger.fullName}<br> ${ranger.phone}<br>${ranger.id ? ranger.id : "No id - not checked in"}</span>`
 
     } else {

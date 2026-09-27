@@ -1,5 +1,6 @@
 import { ColDef, GridOptions } from 'ag-grid-community'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
+import { isAiGeneratedPhoto, withAiBadge } from '../shared/ai-photo'
 //import { TooltipModule } from 'ng2-tooltip-directive'
 import { Subscription } from 'rxjs'
 
@@ -165,8 +166,10 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // Step 3 matters: before it, a ranger with no photo rendered a broken-image icon.
   imageCellRenderer = (params: { data: RangerType }) => {
     const src = this.photoSrc(params.data)
-    return `<img class="licenseImg" style="height:40px; width:40px;" alt="Photo of ${params.data.fullName || params.data.callsign}"
+    const img = `<img class="licenseImg" style="height:40px; width:40px;" alt="Photo of ${params.data.fullName || params.data.callsign}"
       src="${src}">`
+    // The demo roster's AI-generated faces carry a small "AI" badge (shared/ai-photo.ts).
+    return withAiBadge(img, isAiGeneratedPhoto(params.data.image, !!this.photos.photoUrl(params.data)))
   }
 
   /** Shared by the renderers above - see the resolution order there. */

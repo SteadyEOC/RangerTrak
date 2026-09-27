@@ -228,3 +228,38 @@
 @for $i from 1 through 7 {
   .rt-elapsed--#{$i} { background: var(--rt-elapsed-#{$i}); }
 }
+
+
+// ── AI-generated demo photo label (2026-09-26) ───────────────────────────────
+// A small, dim "AI" chip in the corner of the demo roster's AI-generated faces - see
+// shared/ai-photo.ts. Global because the photos are built as HTML strings for AG Grid cells
+// and innerHTML. White on a translucent dark chip reads on any photo, in either scheme; it
+// sits ON the image, so the page background never matters.
+.rt-ai-photo {
+  position      : relative;
+  display       : inline-block;
+  line-height   : 0;
+  vertical-align: middle;
+}
+
+.rt-ai-badge {
+  position      : absolute;
+  right         : 1px;
+  bottom        : 1px;
+  padding       : 1px 2px;
+  border-radius : 2px;
+  background    : rgb(0 0 0 / 55%);
+  color         : #fff;
+  font-size     : 8px;
+  font-weight   : 600;
+  line-height   : 1;
+  letter-spacing: 0.02em;
+  opacity       : 0.85;
+  pointer-events: auto;
+}
+
+.rt-ai-caption {
+  display  : block;
+  font-size: 0.8em;
+  opacity  : 0.8;
+}
