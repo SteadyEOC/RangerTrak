@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.8](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.7...v0.96.8) (2026-09-27)
+
+
+### Features
+
+* **map:** E-124 split the offline map into a world base plus per-demo street detail ([a3ac280](https://github.com/SteadyEOC/RangerTrak/commit/a3ac280adc4bd375be8d46abe3b8cf10d8da25c0))
+* **rangers:** label the demo roster's AI-generated photos ([023890a](https://github.com/SteadyEOC/RangerTrak/commit/023890ab9840756a7c16eb3f8b2756688f4a284f))
+
+
+### Bug Fixes
+
+* **links:** point dead steadyeoc.com links at rangertrak.com (E-120) ([9e77261](https://github.com/SteadyEOC/RangerTrak/commit/9e772610983e995361b82db4420c8367322d5967))
+* **mission:** card treatment for statuses, location categories and locations ([7ec718a](https://github.com/SteadyEOC/RangerTrak/commit/7ec718ab591174df774d8ec66760ac4e41a4bfec))
+* **services:** singleton guards in RadioLogService and RangerService actually throw ([ecdfd09](https://github.com/SteadyEOC/RangerTrak/commit/ecdfd09ea9483af4e9b8c960bacfb796a07a65fe))
+* **worker:** E-128 a missing .pmtiles file is a 404, not index.html in a 206 ([5432dd4](https://github.com/SteadyEOC/RangerTrak/commit/5432dd40a93c489c62f769aff66ddd02c9b07c2f))
+
 ### [0.96.7](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.6...v0.96.7) (2026-09-26)
 
 
