@@ -4,6 +4,8 @@ import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, inject, s
 import { Router, RouterLink } from '@angular/router'
 import { MatButtonModule } from '@angular/material/button'
 import { MatIconModule } from '@angular/material/icon'
+import { MatDialog } from '@angular/material/dialog'
+import { MatSnackBar } from '@angular/material/snack-bar'
 
 import {
   ClockService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService,
@@ -12,6 +14,7 @@ import {
 import { Utility } from '../'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
 import { GuideService } from '../guide/guide.service'
+import { AarNoteDialogComponent, AarNoteDialogData } from '../aar-note/aar-note-dialog.component'
 
 /**
  * HaaderComponent
@@ -44,6 +47,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly guide = inject(GuideService)
   readonly readiness = inject(MissionReadinessService)
   readonly offlineBasemap = inject(OfflineBasemapService)
+  private readonly dialog = inject(MatDialog)
+  private readonly snackBar = inject(MatSnackBar)
 
   private id = 'Header component'
 
@@ -295,6 +300,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
     this.welcomePanel.show()
     this.router.navigateByUrl('/')
+  }
+
+  /** E-116: opens the capture dialog; after a save, a snackbar offers the After Action page. */
+  onAarNote(): void {
+    const data: AarNoteDialogData = { page: (this.parentTitle ?? '').trim() }
+    this.dialog.open(AarNoteDialogComponent, { data, autoFocus: 'first-tabbable' })
+      .afterClosed().subscribe(saved => {
+        if (!saved) return
+        this.snackBar.open('Noted for the after-action review', 'View', { duration: 4000 })
+          .onAction().subscribe(() => this.router.navigate(['/after-action']))
+      })
   }
 
   ngOnDestroy() {

@@ -6,6 +6,7 @@ import { BackupService, MissionExport } from './backup.service';
 import { RadioLogService } from './radio-log.service';
 import { RangerService } from './ranger.service';
 import { MissionService } from './mission.service';
+import { AarNoteService } from './aar-note.service';
 // E-122 Phase 2a: the roster (and radio log) now live behind RecordStore, not localStorage
 // directly - see that module's own doc comment.
 import { recordStore } from '../storage/record-store';
@@ -269,6 +270,31 @@ describe('BackupService', () => {
       // exception a plain `expect(() => ...).toThrow()` can catch.
       await expectAsync(backup.importMission({ mission: 'nope' } as any)).toBeRejected();
       expect(settings.settings.mission).toBe(missionBefore);
+    });
+  });
+  describe('After Action notes (E-116)', () => {
+    it('carries notes through a backup and restore', async () => {
+      const notes = TestBed.inject(AarNoteService);
+      const backup = TestBed.inject(BackupService);
+      notes.addNote('Relay point out of range', 'incident', 'Map');
+
+      const payload = JSON.parse(JSON.stringify(backup.buildExportPayload()));
+      expect(payload.aarNotes.length).toBe(1);
+
+      notes.deleteAllNotes();
+      await backup.importMission(payload);
+      expect(notes.notes().map(n => n.text)).toEqual(['Relay point out of range']);
+    });
+
+    it('restores a backup made before notes existed, with none', async () => {
+      const notes = TestBed.inject(AarNoteService);
+      const backup = TestBed.inject(BackupService);
+      const payload = JSON.parse(JSON.stringify(backup.buildExportPayload()));
+      delete payload.aarNotes;
+
+      notes.addNote('left over from another mission', 'incident', 'Entry');
+      await backup.importMission(payload);
+      expect(notes.notes()).toEqual([]);
     });
   });
 });

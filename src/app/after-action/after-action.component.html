@@ -1,0 +1,120 @@
+<rangertrak-page [title]="title" [description]="pageDescr">
+  <div class="rt-aar">
+    @if (notes.notes().length === 0) {
+    <p class="rt-aar__empty" data-testid="aar-empty">
+      No notes yet. Whenever you notice something to fix or improve later, press
+      <strong>AAR note</strong> at the top of any page. It takes one line, and you stay where you were.
+      The notes collect here for the after-action review.
+    </p>
+    } @else {
+    <div class="rt-aar__toolbar">
+      <mat-button-toggle-group [value]="filter()" (change)="filter.set($event.value)" aria-label="Show notes about">
+        <mat-button-toggle value="all">All ({{ notes.notes().length }})</mat-button-toggle>
+        <mat-button-toggle value="incident">{{ aboutLabels.incident }} ({{ incidentNotes().length }})</mat-button-toggle>
+        <mat-button-toggle value="app">{{ aboutLabels.app }} ({{ appNotes().length }})</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <span class="rt-aar__spacer"></span>
+      <button matButton="outlined" type="button" (click)="onPrint()" [disabled]="incidentNotes().length === 0"
+        title="Print the notes about this incident as an improvement-plan table">
+        <mat-icon>print</mat-icon> Print
+      </button>
+      <button matButton="outlined" type="button" (click)="onExportCsv()"
+        title="Download every note as a spreadsheet (CSV)">
+        <mat-icon>download</mat-icon> Export
+      </button>
+    </div>
+
+    <ul class="rt-aar__list" data-testid="aar-list">
+      @for (n of shown(); track n.uid) {
+      <li>
+        <mat-card appearance="outlined" class="rt-aar__note" data-testid="aar-item">
+          <div class="rt-aar__meta">
+            {{ formatTime(n.createdAt) }}@if (n.page) {<span> · on {{ n.page }}</span>}
+          </div>
+
+          <mat-form-field appearance="outline" class="rt-aar__wide">
+            <mat-label>Observation</mat-label>
+            <textarea matInput rows="2" [ngModel]="n.text" (change)="onFieldChange(n, 'text', $any($event.target).value)"
+              data-testid="aar-item-text"></textarea>
+          </mat-form-field>
+
+          <div class="rt-aar__fields">
+            <mat-form-field appearance="outline">
+              <mat-label>About</mat-label>
+              <mat-select [value]="n.about" (selectionChange)="onFieldChange(n, 'about', $event.value)">
+                <mat-option value="incident">{{ aboutLabels.incident }}</mat-option>
+                <mat-option value="app">{{ aboutLabels.app }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Area</mat-label>
+              <input matInput [ngModel]="n.area" (change)="onFieldChange(n, 'area', $any($event.target).value)"
+                placeholder="e.g. Communications" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Owner</mat-label>
+              <input matInput [ngModel]="n.owner" (change)="onFieldChange(n, 'owner', $any($event.target).value)" />
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="rt-aar__wide">
+            <mat-label>Recommendation</mat-label>
+            <textarea matInput rows="2" [ngModel]="n.recommendation"
+              (change)="onFieldChange(n, 'recommendation', $any($event.target).value)"
+              data-testid="aar-item-recommendation"></textarea>
+          </mat-form-field>
+
+          <div class="rt-aar__actions">
+            <button matButton type="button" (click)="onDelete(n)" title="Delete this note">
+              <mat-icon>delete</mat-icon> Delete
+            </button>
+          </div>
+        </mat-card>
+      </li>
+      }
+    </ul>
+
+    @if (appNotes().length) {
+    <mat-card appearance="outlined" class="rt-aar__section">
+      <mat-card-header><mat-card-title>Notes about RangerTrak</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <p>Send the {{ appNotes().length }} note(s) about the app to its developers. The Feedback form opens
+          with them filled in so you can edit or remove anything first. It becomes a public GitHub issue, so
+          take out names and places.</p>
+        <button matButton="outlined" type="button" (click)="onSendAppNotes()">
+          <mat-icon>send</mat-icon> Review and send
+        </button>
+      </mat-card-content>
+    </mat-card>
+    }
+
+    <mat-card appearance="outlined" class="rt-aar__section">
+      <mat-card-header><mat-card-title>Delete notes</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <p>Notes stay on this device until you delete them. Deleting the radio log or loading a demo leaves
+          them alone; Restore mission replaces them with the backup's.</p>
+        <button matButton="outlined" type="button" class="rt-aar__danger" (click)="onDeleteAll()">
+          Delete all notes
+        </button>
+      </mat-card-content>
+    </mat-card>
+    }
+  </div>
+
+  <!-- Print only: an improvement-plan table of the incident notes, oldest first. -->
+  <section class="rt-aar-print" aria-hidden="true">
+    <h1>After-action notes{{ missionName() ? ': ' + missionName() : '' }}</h1>
+    <table>
+      <thead>
+        <tr><th>Observation</th><th>Area</th><th>Recommendation</th><th>Owner</th><th>Noted at</th></tr>
+      </thead>
+      <tbody>
+        @for (n of incidentNotes(); track n.uid) {
+        <tr><td>{{ n.text }}</td><td>{{ n.area }}</td><td>{{ n.recommendation }}</td><td>{{ n.owner }}</td>
+          <td>{{ formatTime(n.createdAt) }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</rangertrak-page>

@@ -293,6 +293,14 @@ single incident.
 **Handing over.** Press **Back up mission** on **Settings** and give the file to the
 incoming operator, who restores it on their device.
 
+**Noting things for the debrief.** When you notice something to fix or improve later, such as
+a relay point out of range or a form field that slows you down, press **AAR note** at the
+top of any page. Type a line, choose whether it is about the incident or about RangerTrak, and
+save. You stay on the page you were on. After the mission, the **After Action** page lists the
+notes. Add an area, a recommendation and an owner to each, then print the incident notes as
+an improvement-plan table or export them all as a spreadsheet. Notes are in the mission
+backup, and device encryption covers them.
+
 ---
 
 ## What's on each screen
@@ -396,7 +404,7 @@ quote report details and addresses verbatim, and is never encrypted.
 ### Encrypting the roster and reports on this device
 
 Mission → Data safety has a **Device encryption** toggle. Turned on, it encrypts the roster,
-radio log entries and ranger photos stored in this browser with a passphrase you choose — so a
+radio log entries, after-action notes and ranger photos stored in this browser with a passphrase you choose — so a
 lost or stolen device, or someone else's hands on a shared command-post laptop, doesn't hand
 over the roster in the clear. It does **not** protect the app while it is open and unlocked,
 the same as any lock screen wouldn't.

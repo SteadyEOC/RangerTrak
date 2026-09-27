@@ -89,6 +89,11 @@ export const APP_ROUTES: Routes = [
     canDeactivate: [unsavedChangesGuard],
     canActivate: [fieldModeGuard],
   },
+  // E-116: no fieldModeGuard - a field-mode phone captures notes from the header too.
+  {
+    path: 'after-action',
+    loadComponent: () => import('./after-action/after-action.component').then(m => m.AfterActionComponent),
+  },
   {
     path: 'log',
     loadComponent: () => import('./log/log.component').then(m => m.LogComponent),

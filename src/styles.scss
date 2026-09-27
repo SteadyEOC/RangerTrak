@@ -184,7 +184,8 @@ rangertrak-footer {
 // log alone: the app's navbar, banners, page header and footer are hidden only while that
 // print is running. Global because those elements live outside the Radio Log component.
 @media print {
-  body.rt-print-309 {
+  body.rt-print-309,
+  body.rt-print-aar {
     rangertrak-navbar,
     rangertrak-stale-origin-notice,
     rangertrak-install-update,

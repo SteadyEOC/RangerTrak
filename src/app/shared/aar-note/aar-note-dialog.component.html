@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Note for the after-action review</h2>
+
+<div mat-dialog-content class="rt-aar-dialog">
+  <p class="rt-aar-dialog__hint">Something to fix or improve later. You can add a recommendation and an
+    owner on the After Action page.</p>
+
+  <mat-form-field appearance="outline">
+    <mat-label>What did you notice?</mat-label>
+    <textarea matInput [ngModel]="text()" (ngModelChange)="text.set($event)" rows="4"
+      data-testid="aar-note-text" cdkFocusInitial></textarea>
+  </mat-form-field>
+
+  <div class="rt-aar-dialog__about">
+    <span id="rt-aar-about-label">About</span>
+    <mat-button-toggle-group [value]="about()" (change)="about.set($event.value)"
+      aria-labelledby="rt-aar-about-label" data-testid="aar-note-about">
+      <mat-button-toggle value="incident">{{ aboutLabels.incident }}</mat-button-toggle>
+      <mat-button-toggle value="app">{{ aboutLabels.app }}</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button matButton type="button" (click)="onCancel()">Cancel</button>
+  <button matButton="filled" type="button" [disabled]="!text().trim()" (click)="onSave()"
+    data-testid="aar-note-save">Save note</button>
+</div>

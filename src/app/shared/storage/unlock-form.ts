@@ -41,7 +41,7 @@ export function runUnlockGate(): Promise<void> {
       <form class="rt-unlock__card" novalidate>
         <h1 class="rt-unlock__title">RangerTrak is locked</h1>
         <p class="rt-unlock__text">
-          This device&rsquo;s roster and radio log entries are encrypted. Enter the passphrase to
+          This device&rsquo;s roster, radio log entries and after-action notes are encrypted. Enter the passphrase to
           unlock them.
         </p>
         <label class="rt-unlock__label" for="rt-unlock-passphrase">Passphrase</label>
@@ -93,7 +93,7 @@ export function runUnlockGate(): Promise<void> {
     forgotBtn.addEventListener('click', () => {
       const confirmed = confirm(
         'Erase this device’s mission data?\n\n'
-        + 'This deletes the roster, radio log entries and ranger photos stored on THIS device - '
+        + 'This deletes the roster, radio log entries, after-action notes and ranger photos stored on THIS device - '
         + 'not any backup file you have elsewhere. There is no undo.\n\n'
         + 'Afterward, restore a backup from Mission > Danger zone if you have one.')
       if (!confirmed) return

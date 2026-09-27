@@ -98,7 +98,7 @@ export class MissionAdvancedOptionsComponent {
     }
 
     if (!confirm(`Turn on device encryption?\n\n`
-      + `This encrypts the roster, radio log entries and ranger photos stored on THIS device. `
+      + `This encrypts the roster, radio log entries, after-action notes and ranger photos stored on THIS device. `
       + `You will set a passphrase next.\n\n`
       + `If you forget it, this data is gone for good - there is no reset, no support `
       + `address, and no way to recover it. It only protects a lost or stolen device or a `
@@ -160,7 +160,7 @@ export class MissionAdvancedOptionsComponent {
     if (!this.encryptionEnabled()) return
 
     if (!confirm(`Turn off device encryption?\n\n`
-      + `The roster, radio log entries and ranger photos on this device go back to being stored `
+      + `The roster, radio log entries, after-action notes and ranger photos on this device go back to being stored `
       + `unencrypted, exactly as before.`)) {
       this.log.verbose('onBtnDisableEncryption: user cancelled.', this.id)
       return

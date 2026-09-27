@@ -375,7 +375,7 @@ function makeFixtures(dir) {
 
 // ── the checks ───────────────────────────────────────────────────────────────
 
-const ROUTES = ['/', '/map', '/radio-log', '/messages', '/rangers', '/mission', '/help', '/log', '/prep']
+const ROUTES = ['/', '/map', '/radio-log', '/messages', '/rangers', '/mission', '/help', '/log', '/prep', '/after-action']
 
 async function checkRoutesRender() {
   console.log('\nEvery route renders, with no console errors')
@@ -2213,6 +2213,78 @@ async function checkEntryUsesNewMissionDefault() {
  * folder's expect.json is checked; the check labels name the release, so a failure says whose
  * backup broke.
  */
+/**
+ * E-116: an After Action note is captured from the header on any page, without leaving it, and
+ * reviewed on /after-action. Captures one note on Entry (about the incident) and one on Rangers
+ * (about RangerTrak), then checks both are listed, an edit survives a reload, and Delete all
+ * empties the page. Each assertion reads real storage or the rendered page, so a missing button,
+ * a dialog that does not save, or an edit that is not persisted each turns a check red.
+ */
+async function checkAarNotes() {
+  console.log('\nE-116: After Action notes - capture from the header on two pages, review, edit, delete')
+  await goto('/')
+  await idbRemoveRaw('aarNotes')
+
+  const capture = (text, aboutApp) => evaluate(`(async () => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const btn = document.querySelector('[data-testid="aar-note"]');
+    if (!btn) return 'no header button';
+    btn.click();
+    await sleep(600);
+    const ta = document.querySelector('[data-testid="aar-note-text"]');
+    if (!ta) return 'no dialog';
+    const focused = document.activeElement === ta;
+    Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, ${JSON.stringify(text)});
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    if (${aboutApp}) {
+      const app = [...document.querySelectorAll('[data-testid="aar-note-about"] button')]
+        .find(b => b.textContent.includes('RangerTrak'));
+      app && app.click();
+    }
+    await sleep(200);
+    document.querySelector('[data-testid="aar-note-save"]').click();
+    await sleep(600);
+    return { focused, path: location.pathname, dialogOpen: !!document.querySelector('[data-testid="aar-note-text"]') };
+  })()`)
+
+  const first = await capture('E2E relay point out of range', false)
+  check('the dialog opens from the header with the text field focused', first.focused, true)
+  check('saving closes the dialog and stays on Entry', { path: first.path, open: first.dialogOpen }, { path: '/', open: false })
+
+  await goto('/rangers')
+  await capture('E2E MGRS field slow to type', true)
+
+  const stored = JSON.parse((await idbGetRaw('aarNotes')) || '{}').notes || []
+  check('both notes reached storage', stored.map(n => n.text),
+    ['E2E relay point out of range', 'E2E MGRS field slow to type'])
+  check('each note records the page and the about choice', stored.map(n => [n.page, n.about]),
+    [['Radio Log Entry', 'incident'], ['Rangers & Teams', 'app']])
+
+  await goto('/after-action')
+  const listed = await evaluate(`[...document.querySelectorAll('[data-testid="aar-item-text"]')].map(t => t.value)`)
+  check('/after-action lists both notes, newest first', listed,
+    ['E2E MGRS field slow to type', 'E2E relay point out of range'])
+
+  await evaluate(`(async () => {
+    const ta = document.querySelectorAll('[data-testid="aar-item-recommendation"]')[1];
+    Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, 'Add a relay on the ridge');
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    ta.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 800));
+  })()`)
+  await goto('/after-action')
+  const rec = await evaluate(`document.querySelectorAll('[data-testid="aar-item-recommendation"]')[1]?.value`)
+  check('an edited recommendation survives a reload', rec, 'Add a relay on the ridge')
+
+  await evaluate(`(async () => {
+    const del = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Delete all notes');
+    del && del.click();
+    await new Promise(r => setTimeout(r, 600));
+  })()`)
+  const empty = await evaluate(`!!document.querySelector('[data-testid="aar-empty"]')`)
+  check('Delete all notes empties the page', empty, true)
+}
+
 async function checkBackupFixturesRestore() {
   console.log('\nE-126: every release\'s fixture backup restores into this build')
   const root = path.join(__dirname, 'backup-fixtures')
@@ -2635,6 +2707,7 @@ async function main() {
       await checkMissionFormSave()
       await checkMissionUnsavedChangesGuard()
       await checkMissionAddRowsPersist()
+      await checkAarNotes()
       await checkEntryUsesNewMissionDefault()
       await checkStatusColorMigration()
       await checkStatusColorsBothSchemes()

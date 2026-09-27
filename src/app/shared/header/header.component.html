@@ -59,6 +59,13 @@
          <rangertrak-section> blocks ("Instructions", "Tips", "Privacy & data handling",
          "Grid Menu Keyboard interaction") sitting permanently below each page's grid or
          form. Rendered only where there is something to read. -->
+    <!-- E-116: capture an After Action note from any page without leaving it. -->
+    <button matButton="outlined" type="button" class="header__guide" (click)="onAarNote()"
+      data-testid="aar-note"
+      title="Note something to fix or improve later, for the after-action review">
+      <mat-icon>edit_note</mat-icon>
+      AAR note
+    </button>
     @if (guide.available()) {
     <button matButton="outlined" type="button" class="header__guide" (click)="guide.toggle()"
       [attr.aria-expanded]="guide.isOpen()"

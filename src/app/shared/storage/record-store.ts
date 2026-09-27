@@ -89,7 +89,9 @@ export const STORE = 'kv'
  * the exact same raw field-report PII the primary key does - leaving it behind in
  * `localStorage` while its sibling moves would defeat the point.
  */
-export const MIGRATED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'locations'] as const
+// 'aarNotes' (E-116, 2026-09-27): After Action notes. Never lived in localStorage, so there is
+// nothing to migrate; listed so load() reads it from IndexedDB like the others.
+export const MIGRATED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'locations', 'aarNotes'] as const
 
 /**
  * The real implementation, and the module-level singleton this file exports as `recordStore`.

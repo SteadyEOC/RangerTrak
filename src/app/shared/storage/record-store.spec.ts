@@ -260,6 +260,7 @@ describe('RecordStore', () => {
         radioLog: JSON.stringify({ version: '1', logEntries: [{ id: 0, callsign: 'RETURNING1' }] }),
         'radioLog-BAD': '{"garbage": true}',
         locations: JSON.stringify({ schemaVersion: 1, locations: [{ name: 'Command Post' }] }),
+        aarNotes: JSON.stringify({ schemaVersion: 1, notes: [{ uid: 'n1', text: 'Relay out of range' }] }),
       };
       for (const key of MIGRATED_KEYS) localStorage.setItem(key, values[key]);
 

@@ -86,17 +86,17 @@
     @if (encryptionEnabled()) {
     <p class="mission__status mission__status--ok">
       <mat-icon aria-hidden="true">lock</mat-icon>
-      The roster, radio log entries and ranger photos on this device are encrypted. You will be
+      The roster, radio log entries, after-action notes and ranger photos on this device are encrypted. You will be
       asked for the passphrase on your next visit and after every app update.
     </p>
     <button matButton="outlined" type="button" (click)="onBtnDisableEncryption()"
-      title="Decrypt the roster, radio log entries and ranger photos on this device">
+      title="Decrypt the roster, radio log entries, after-action notes and ranger photos on this device">
       <mat-icon>lock_open</mat-icon>
       Turn off device encryption
     </button>
     } @else {
     <p class="mission__note">
-      Encrypts the roster, radio log entries and ranger photos stored on this device with a
+      Encrypts the roster, radio log entries, after-action notes and ranger photos stored on this device with a
       passphrase you choose. It protects a lost or stolen device or a shared browser - it does
       not protect the app while it is open and unlocked, the same as any lock screen.
     </p>
@@ -106,7 +106,7 @@
       on, so there is always a way back.
     </p>
     <button matButton="outlined" type="button" (click)="onBtnEnableEncryption()"
-      title="Encrypt the roster, radio log entries and ranger photos on this device with a passphrase">
+      title="Encrypt the roster, radio log entries, after-action notes and ranger photos on this device with a passphrase">
       <mat-icon>lock</mat-icon>
       Turn on device encryption
     </button>

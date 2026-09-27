@@ -106,7 +106,7 @@ const YOUR_DATA: GuideTab = {
         'Clearing site data clears the mission. Back up mission, on the Mission page, guards against this.',
         'Especially on iPhone and iPad, every browser can clear a site\'s data after about a week unused, and storage protection is not reliable there (nor in Safari on a Mac). Install RangerTrak and back up the mission.',
         'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.',
-        'The roster, radio log entries and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).'
+        'The roster, radio log entries, after-action notes and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).'
       ]
     }
   ]
@@ -263,6 +263,34 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           {
             heading: 'Printing',
             text: 'Print as ICS-213 fills FEMA’s own real ICS-213 form and downloads it as a PDF, ready to hand off or file. Subject comes from the report\'s own Subject field, and Approved by is the operator who filed the report. The Reply section is left blank for the recipient to fill in.'
+          }
+        ]
+      },
+      YOUR_DATA
+    ]
+  },
+
+  '/after-action': {
+    screen: 'After Action',
+    tabs: [
+      {
+        label: 'This page',
+        blocks: [
+          {
+            heading: 'Where notes come from',
+            text: 'AAR note, at the top of every page, records something to fix or improve later in one line, without leaving the page. The note remembers which page it was taken on and when.'
+          },
+          {
+            heading: 'At the debrief',
+            text: 'Give each note an area (for example Communications or Logistics), a recommendation and an owner. Changes save as soon as you leave a field. Filter to see only the notes about the incident, or only the ones about RangerTrak.'
+          },
+          {
+            heading: 'Printing and exporting',
+            text: 'Print gives an improvement-plan table of the incident notes: observation, area, recommendation, owner and time. Export downloads every note as a spreadsheet (CSV).'
+          },
+          {
+            heading: 'Notes about RangerTrak',
+            text: 'Review and send opens Help > Feedback with those notes filled in. Nothing is sent until you press Submit there, and it becomes a public GitHub issue, so take out names and places first.'
           }
         ]
       },

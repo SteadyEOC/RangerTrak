@@ -4,6 +4,7 @@ export { CustomPmtilesService, StoredPmtilesFile } from "./custom-pmtiles.servic
 export { CommandPostPublishService, CommandPostMission, CommandPostReport } from "./command-post-publish.service"
 export { RangerService } from "./ranger.service"
 export { MissionLocationService } from "./mission-location.service"
+export { AarNoteService } from "./aar-note.service"
 export { RadioLogService } from "./radio-log.service"
 export { LogService } from "./log.service"
 export { GlobalErrorHandler } from "./global-error-handler"
@@ -28,6 +29,7 @@ export { LocationType, undefinedAddressFlag, undefinedLocation } from "./locatio
 export { LogLevel, LogLevelNames, LogType, LogHeadings } from "./log.interface"
 export { RangerType, UnknownRanger } from "./ranger.interface"
 export { MissionType } from "./mission.interface"
+export { AarNoteType, AarNoteAbout, AAR_NOTE_ABOUT_LABELS } from "./aar-note.interface"
 export {
   LocationCategoryType, MissionLocationType, LocationIconId, LOCATION_ICON_OPTIONS
 } from "./mission-location.interface"

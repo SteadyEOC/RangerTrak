@@ -45,7 +45,10 @@ export const ENCRYPTION_MARKER_KEY = '__encryption'
  * localStorage-only key (settings, UI prefs) stay in the clear - see ARCHITECTURE.md's
  * "Encryption: exports today, storage later".
  */
-export const ENCRYPTED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD'] as const
+// 'aarNotes' added 2026-09-27 (E-116): a debrief note can name people and places, so it is
+// covered with the roster. A device that turned encryption on earlier reads its first plaintext
+// note fine (load() decides per record) and encrypts it on the next write.
+export const ENCRYPTED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'aarNotes'] as const
 
 const VERIFIER_PLAINTEXT = 'rangertrak-encryption-verifier-v1'
 const SALT_BYTES = 16

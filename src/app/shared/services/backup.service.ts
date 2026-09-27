@@ -4,12 +4,13 @@ import { EncryptedFile, decryptJson, encryptJson, isEncryptedFile } from '../cry
 import * as packageJson from '../../../../package.json'
 import {
   RadioLogType, RadioLogService, LogService, RangerService, RangerType, MissionService,
-  MissionType, MissionLocationService, MissionLocationType
+  MissionType, MissionLocationService, MissionLocationType, AarNoteService, AarNoteType
 } from './'
 import { migrateMission } from './mission-migration'
 import { normalizeRangerIds } from './ranger-migration'
 import { migrateRadioLog } from './radio-log-migration'
 import { normalizeLocationUids } from './mission-location-migration'
+import { migrateAarNotes } from './aar-note-migration'
 import { recordStore } from '../storage/record-store'
 import { clearActiveDemoScenario } from '../mapping/demo-map'
 
@@ -24,6 +25,9 @@ import { clearActiveDemoScenario } from '../mapping/demo-map'
  * buildExportPayload() - "optional" here means "a pre-D-49 export file may lack it," not
  * "a caller may omit it going forward." importMission() defaults a missing one to `[]` so an
  * older export still imports cleanly rather than being rejected outright.
+ *
+ * `aarNotes` (E-116, 2026-09-27): the same rule. Additive and optional, so no schema bump: a
+ * backup from before After Action notes restores with none.
  */
 export type MissionExport = {
   schemaVersion: number,
@@ -33,6 +37,7 @@ export type MissionExport = {
   rangers: RangerType[],
   radioLog: Omit<RadioLogType, 'bounds'>,
   locations?: MissionLocationType[],
+  aarNotes?: AarNoteType[],
 }
 
 export const MISSION_EXPORT_SCHEMA_VERSION = 1
@@ -63,6 +68,7 @@ export class BackupService {
     private rangerService: RangerService,
     private radioLogService: RadioLogService,
     private locationService: MissionLocationService,
+    private aarNoteService: AarNoteService,
     private log: LogService,
   ) { }
 
@@ -86,6 +92,7 @@ export class BackupService {
       rangers: this.rangerService.rangers,
       radioLog: fieldReportsSansBounds,
       locations: this.locationService.getCurrentLocations(),
+      aarNotes: this.aarNoteService.getCurrentNotes(),
     }
   }
 
@@ -168,6 +175,7 @@ export class BackupService {
     // Missing on a pre-D-49 export (2026-08-30) - defaults to an empty list rather than
     // rejecting the import, same tolerance every other additive field in this app gets.
     this.locationService.replaceAllLocations(normalizeLocationUids(payload.locations ?? []))
+    this.aarNoteService.replaceAllNotes(migrateAarNotes(payload.aarNotes ?? []).notes)
 
     this.log.warn(`Imported mission from export dated ${payload.exportedAt} (schema v${payload.schemaVersion}, app v${payload.appVersion})`, this.id)
 

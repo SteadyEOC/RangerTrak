@@ -33,7 +33,7 @@ export type StoredLocations = {
  * why minted at all versus a real-world credential (locations have no such credential to
  * preserve - there is nothing here for this app to avoid inventing).
  */
-function newLocationUid(): string {
+export function newLocationUid(): string {
   const c: Crypto | undefined = typeof crypto !== 'undefined' ? crypto : undefined
 
   if (typeof c?.randomUUID === 'function') {

@@ -21,7 +21,11 @@ const GITHUB_ISSUE_URL = 'https://github.com/SteadyEOC/RangerTrak/issues/new'
  * No mailto fallback here: RangerTrak@steadyeoc.com is offered elsewhere (Help > About/
  * Feedback), and the direct GitHub link already covers "reach us on GitHub two ways."
  *
- * Deliberately never reads mission data (settings, rangers, radio log entries) - the message
+ * The one exception (E-116): the After Action page can pass a draft of its notes about
+ * RangerTrak through router navigation state. It lands in the message box for the user to edit,
+ * and is only sent if they press Submit.
+ *
+ * Otherwise never reads mission data (settings, rangers, radio log entries) - the message
  * and optional contact field are the only things sent, both typed by hand.
  */
 @Component({
@@ -35,7 +39,9 @@ const GITHUB_ISSUE_URL = 'https://github.com/SteadyEOC/RangerTrak/issues/new'
 export class FeedbackComponent {
   private id = 'Feedback Component'
 
-  message = ''
+  // E-116: a draft handed over by the After Action page's "Review and send" (router state).
+  message = typeof history !== 'undefined' && typeof history.state?.feedbackDraft === 'string'
+    ? history.state.feedbackDraft : ''
   contact = ''
 
   status = signal<'idle' | 'sending' | 'success' | 'error'>('idle')
