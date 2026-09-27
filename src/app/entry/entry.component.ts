@@ -341,7 +341,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
         this.settings = newMission
-        // REVIEW: If new Default Location, do we switch to that, or any currenlty in 'use'?
+        // Decided by the maintainer 2026-09-26: Mission is its own screen, so a changed
+        // default location shows up the next time Entry opens - which this already does,
+        // since Entry is rebuilt on every visit (no route reuse) and starts from
+        // undefinedLocation. Within one visit, a location already in use is kept. Guarded by
+        // tools/e2e.js checkEntryUsesNewMissionDefault().
         if (JSON.stringify(this.locationParent) === JSON.stringify(undefinedLocation)) {
           // Local location has yet to be set
 

@@ -2170,6 +2170,42 @@ async function checkMissionAddRowsPersist() {
   await goto('/mission')
 }
 
+/**
+ * Maintainer decision, 2026-09-26: after the mission's default location is changed and saved
+ * on Mission, returning to Entry shows the new default. Restores the saved settings after.
+ */
+async function checkEntryUsesNewMissionDefault() {
+  console.log('\nEntry: opens on the mission default location saved on Mission')
+  await goto('/mission')
+  const saved = await evaluate(`localStorage.getItem('appSettings')`)
+  const edited = await evaluate(`(() => {
+    const byLabel = text => [...document.querySelectorAll('mat-form-field')]
+      .find(f => f.querySelector('mat-label')?.textContent.trim() === text)?.querySelector('input')
+    const set = (el, v) => {
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, String(v))
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+    const lat = byLabel('Default latitude'), lng = byLabel('Default longitude')
+    if (!lat || !lng) return false
+    set(lat, 36.1234); set(lng, -112.4321)
+    document.querySelector('[data-testid="mission-save"]').click()
+    return true
+  })()`)
+  check('Mission default latitude/longitude fields found', edited, true)
+  await sleep(3000) // Save reloads the page
+
+  await goto('/')
+  await sleep(1500)
+  const shown = await evaluate(`({
+    latI: document.getElementById('enter__Where-latI')?.value,
+    latF: document.getElementById('enter__Where-latF')?.value,
+  })`)
+  check('Entry shows the newly saved default latitude', `${shown.latI}.${shown.latF}`, '36.1234')
+
+  await evaluate(`localStorage.setItem('appSettings', ${JSON.stringify(saved)})`)
+  await goto('/')
+}
+
 async function checkMissionRoundTrip(downloads) {
   console.log('\nMission backup -> wipe all storage -> restore: the disaster path')
   await goto('/mission')
@@ -2544,6 +2580,7 @@ async function main() {
       await checkMissionFormSave()
       await checkMissionUnsavedChangesGuard()
       await checkMissionAddRowsPersist()
+      await checkEntryUsesNewMissionDefault()
       await checkStatusColorMigration()
       await checkStatusColorsBothSchemes()
 
