@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.96.9](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.8...v0.96.9) (2026-09-27)
+
+
+### Features
+
+* **aar:** E-116 After Action notes - capture from any page, review at the debrief ([aab4067](https://github.com/SteadyEOC/RangerTrak/commit/aab40678486cea9ea0974f83d8bc7560a36ceec4))
+
 ### [0.96.8](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.7...v0.96.8) (2026-09-27)
 
 
