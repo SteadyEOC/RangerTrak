@@ -18,7 +18,10 @@
          merged into "Start here" (one onboarding checklist), FAQ moved up next to About,
          "After mission" split out of "Your data", and "Log" renamed "Feedback" (it now also
          carries the feedback form, moved on from About). -->
-    <mat-tab-group class="help-tabs" mat-stretch-tabs="false" animationDuration="0ms">
+    <!-- E-124: `/help?tab=data#map-file-help` opens a named tab and scrolls to a section -
+         see HelpComponent.TAB_KEYS for the names, in the same order as these tabs. -->
+    <mat-tab-group class="help-tabs" mat-stretch-tabs="false" animationDuration="0ms"
+      [selectedIndex]="selectedIndex()" (selectedIndexChange)="selectedIndex.set($event)">
       <mat-tab label="Start here">
         <rangertrak-help-start></rangertrak-help-start>
       </mat-tab>

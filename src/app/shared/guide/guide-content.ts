@@ -413,7 +413,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               // Corrected 2026-09-14: this used to say there was "no in-app way" to add MapLibre
               // coverage, but "Load a custom .pmtiles file…" (CustomPmtilesService) has existed
               // since 2026-08-27.
-              'The MapLibre + PMTiles engine needs no network at all. A low-detail world map is built into the app everywhere, with real street-level detail in the Vashon Island demo area today. If you have a .pmtiles map file for your own area, press "Load a custom .pmtiles file…" below that map to add real detail there too — it then works offline the same way.',
+              'The MapLibre + PMTiles engine needs no network at all. A low-detail world map is built into the app everywhere, with real street-level detail in each demo area while that demo is loaded. If you have a .pmtiles map file for your own area, press "Load a custom .pmtiles file…" below that map to add real detail there too — it then works offline the same way.',
               'A coordinator can build that map file ahead of time with a free command-line tool — see "For coordinators: make your own offline map file" in the printed Field Guide for the steps.'
             ]
           },
@@ -421,7 +421,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             heading: 'Choosing an engine',
             bullets: [
               'Leaflet (shown by default) — best detail, anywhere in the world. Needs Internet for areas you have not saved.',
-              'MapLibre + PMTiles (the switch below the map) — map data ships inside the app, so it works with no connection at all: a low-detail world map everywhere, plus real detail in the Vashon Island demo area or wherever you load a map file for your own area.'
+              'MapLibre + PMTiles (the switch below the map) — map data ships inside the app, so it works with no connection at all: a low-detail world map everywhere, plus real detail in a loaded demo area or wherever you load a map file for your own area.'
             ]
           },
           {

@@ -5,6 +5,7 @@ import {
   MissionService, MissionLocationService, MissionLocationType
 } from './'
 import { recordStore } from '../storage/record-store'
+import { setActiveDemoScenario } from '../mapping/demo-map'
 
 /**
  * A named demonstration mission a user can pick, so "load the sample mission" isn't limited
@@ -233,6 +234,10 @@ export class SampleDataService {
       `Loaded sample mission "${scenario}": ${data.rangers.length} rangers, `
       + `${radioLog.numReport} field reports, ${data.locations.length} locations. This is DEMO data.`,
       this.id)
+
+    // E-124: marks this demo as the loaded mission, so the Alternative map may fetch its
+    // street-detail file (and evicts the previous demo's). See shared/mapping/demo-map.ts.
+    setActiveDemoScenario(scenario)
 
     // E-122 Phase 2a: every caller (mission-advanced-options.component.ts,
     // entry.component.ts) reloads the page right after this resolves - rangers/radioLog/

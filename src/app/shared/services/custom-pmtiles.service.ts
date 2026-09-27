@@ -4,7 +4,7 @@ import { LogService } from './log.service'
 
 /**
  * A scribe-supplied `.pmtiles` file, stored on THIS device only, for MapLibre to use in
- * place of the bundled `vashon.pmtiles` extract.
+ * place of the bundled world base (and any demo's street detail).
  *
  * Raised in the roadmap's own "New backlog items, 2026-08-27": MapLibre's only offline
  * coverage is that one bundled file - unlike Leaflet's `leaflet.offline`, which fetches and
@@ -71,14 +71,14 @@ export class CustomPmtilesService {
     this.log.info(`Stored custom PMTiles file "${file.name}" (${(blob.size / 1_048_576).toFixed(1)} MB).`, this.id)
   }
 
-  /** Forgets the stored file. The bundled vashon.pmtiles is unaffected - it's a build asset,
+  /** Forgets the stored file. The bundled map files are unaffected - it's a build asset,
    *  not something this service manages. */
   async clear(): Promise<void> {
     await this.ready
     if (!this.db) { this.active.set(null); return }
     await this.tx('readwrite', s => s.delete(KEY))
     this.active.set(null)
-    this.log.warn('Cleared the custom PMTiles file. Maps will use the bundled Vashon extract again.', this.id)
+    this.log.warn('Cleared the custom PMTiles file. Maps will use the bundled map again.', this.id)
   }
 
   // ── internals ────────────────────────────────────────────────────────

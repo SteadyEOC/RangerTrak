@@ -94,7 +94,7 @@ test('.pmtiles requests still pass through the existing Range shim, unaffected b
       fetch: async () => new Response(assetBody, { status: 200 }),
     },
   }
-  const rangeReq = new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles', {
+  const rangeReq = new Request('https://rangertrak.org/assets/maps/world-z5-20260926.pmtiles', {
     headers: { Range: 'bytes=1-3' },
   })
   const res = await worker.fetch(rangeReq, env)
@@ -107,7 +107,7 @@ test('a 206 partial response is never cacheable, even though the full-file 200 i
   // never stores a Worker-returned 206) - see the comment above the Range-handling code
   // in worker/index.js and "Abuse and cost hardening" item 5 in DEPLOYING.md.
   const env = { ASSETS: { fetch: async () => new Response(new Uint8Array([1, 2, 3, 4, 5]), { status: 200 }) } }
-  const rangeReq = new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles', {
+  const rangeReq = new Request('https://rangertrak.org/assets/maps/world-z5-20260926.pmtiles', {
     headers: { Range: 'bytes=1-3' },
   })
   const res = await worker.fetch(rangeReq, env)
@@ -117,7 +117,7 @@ test('a 206 partial response is never cacheable, even though the full-file 200 i
 
 test('the full-file (no Range) response stays long-cacheable, for Cloudflare to slice from', async () => {
   const env = { ASSETS: { fetch: async () => new Response(new Uint8Array([1, 2, 3, 4, 5]), { status: 200 }) } }
-  const res = await worker.fetch(new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles'), env)
+  const res = await worker.fetch(new Request('https://rangertrak.org/assets/maps/world-z5-20260926.pmtiles'), env)
   assert.equal(res.status, 200)
   assert.match(res.headers.get('Cache-Control'), /immutable/)
 })
@@ -300,7 +300,7 @@ test('null JSON body does not crash the honeypot/message extraction', async () =
 // --- /assets/maps/*.pmtiles: hotlink protection -----------------------------------------
 
 function pmtilesReq(headers = {}) {
-  return new Request('https://rangertrak.org/assets/maps/world-vashon.pmtiles', { headers })
+  return new Request('https://rangertrak.org/assets/maps/world-z5-20260926.pmtiles', { headers })
 }
 
 function assetsEnv() {

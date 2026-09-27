@@ -1,7 +1,8 @@
 import { Subscription } from 'rxjs'
 
-import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core'
+import { ChangeDetectionStrategy, Component, OnDestroy, signal } from '@angular/core'
 import { CommonModule } from '@angular/common'
+import { ActivatedRoute } from '@angular/router'
 import { MatTabsModule } from '@angular/material/tabs'
 
 import { PageComponent } from '../../shared/page/page.component'
@@ -61,10 +62,28 @@ export class HelpComponent implements OnDestroy {
   private settings!: MissionType
   public version = ''
 
+  /** `?tab=` names, in tab order (help.component.html). E-124 added this so the map page's
+   *  "How?" link can land on "Your data" instead of always "Start here". */
+  static readonly TAB_KEYS = ['start', 'about', 'faq', 'data', 'after', 'feedback'] as const
+  public selectedIndex = signal(0)
+
   constructor(
     private log: LogService,
-    private missionService: MissionService
+    private missionService: MissionService,
+    route: ActivatedRoute,
   ) {
+    const tab = route.snapshot.queryParamMap.get('tab')
+    const index = HelpComponent.TAB_KEYS.indexOf(tab as typeof HelpComponent.TAB_KEYS[number])
+    if (index >= 0) {
+      this.selectedIndex.set(index)
+    }
+    // The router's own anchorScrolling runs before the chosen tab's content exists, so the
+    // fragment is scrolled to here, once the tab has rendered.
+    const fragment = route.snapshot.fragment
+    if (fragment) {
+      setTimeout(() => document.getElementById(fragment)?.scrollIntoView())
+    }
+
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
         this.settings = newMission

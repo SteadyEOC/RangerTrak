@@ -11,6 +11,7 @@ import { normalizeRangerIds } from './ranger-migration'
 import { migrateRadioLog } from './radio-log-migration'
 import { normalizeLocationUids } from './mission-location-migration'
 import { recordStore } from '../storage/record-store'
+import { clearActiveDemoScenario } from '../mapping/demo-map'
 
 /**
  * A full mission backup: everything needed to restore the app to its
@@ -144,6 +145,8 @@ export class BackupService {
    */
   async importMission(payload: MissionExport): Promise<void> {
     this.validatePayload(payload)
+    // E-124: a restored mission is not a demo, so its street-detail map file is evicted.
+    clearActiveDemoScenario()
 
     // Settings first: RadioLogService.recalcRadioLogBounds() (called inside
     // replaceAllRadioLog()) requires settings to already be current, and

@@ -2,9 +2,9 @@
   @if (customPmtiles.active(); as custom) {
     Using the custom map file <strong>{{ custom.name }}</strong> loaded on this device.
   } @else {
-    A low-detail world map is bundled everywhere, with street-level detail only in the
-    Vashon Island demo area today. Load your own coverage below if you have a
-    <code>.pmtiles</code> file for your area.
+    A low-detail world map works everywhere. Street-level detail comes with each demo
+    mission while it is loaded, or from a <code>.pmtiles</code> map file for your own area
+    that you load below.
   }
 </div>
 
@@ -24,59 +24,124 @@
     <div id="map-status">Click map to copy coordinates</div>
   </div>
 </div>
-<br />
+<!-- Card treatment matches Radio Log's bottom sections (commit e12f718) and Mission's own
+     cards - `<mat-card appearance="outlined" class="rt-mission-card">` with a real
+     `<mat-card-title>`, grouped side by side at laptop-up via `.rt-action-bar-group`
+     (styles/_patterns.scss), stacked full-width below that. Raised live 2026-09-26: the
+     controls below the map used to be a flat run of text/toggles/buttons with no visual
+     grouping - the same "just floats there" problem #237 already fixed for Radio Log. -->
+<div class="rt-action-bar-group">
+  <mat-card appearance="outlined" class="rt-mission-card">
+    <mat-card-header>
+      <mat-card-title>Show on map</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      Field reports to show: All ({{numAllRows()}})
+      <!-- data-testid, not a class - same reason mapEngineSwitch/zoomToExtent below carry one
+           (tools/e2e.js#76 needs a stable hook, and this repo has already been burned by e2e
+           selectors hanging off styling classes). -->
+      <mat-slide-toggle data-testid="allSelectedSwitch" (change)="onSwitchSelectedRadioLog()">
+        Just those ({{numSelectedRows()}}) selected on the Radio Log page
+      </mat-slide-toggle>
 
-Field reports to show: All ({{numAllRows()}})
-<!-- data-testid, not a class - same reason mapEngineSwitch/zoomToExtent above carry one
-     (tools/e2e.js#76 needs a stable hook, and this repo has already been burned by e2e
-     selectors hanging off styling classes). -->
-<mat-slide-toggle data-testid="allSelectedSwitch" (change)="onSwitchSelectedRadioLog()">
-  Just those ({{numSelectedRows()}}) selected on the Radio Log page
-</mat-slide-toggle>
+      <div class="map-hillshade-toggle">
+        <mat-slide-toggle [checked]="hillshadeVisible()" (change)="onToggleHillshade($event)">
+          Show terrain relief (hillshade)
+        </mat-slide-toggle>
+      </div>
 
-<div class="map-hillshade-toggle">
-  <mat-slide-toggle [checked]="hillshadeVisible()" (change)="onToggleHillshade($event)">
-    Show terrain relief (hillshade)
-  </mat-slide-toggle>
+      <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Raised in the roadmap's own "New backlog items, 2026-08-27": PMTiles has no per-tile
+       "save this area" equivalent to Leaflet's leaflet.offline (it's one archive covering a
+       fixed region), so a scribe with their own coverage loads the whole file here instead. -->
+  <mat-card appearance="outlined" class="rt-mission-card">
+    <mat-card-header>
+      <mat-card-title>Offline map</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="map-custom-pmtiles">
+        <button matButton="outlined" type="button" (click)="customPmtilesFileInput.click()">
+          <mat-icon>upload_file</mat-icon>
+          {{ customPmtiles.active() ? 'Load a different .pmtiles file…' : 'Load a custom .pmtiles file…' }}
+        </button>
+        <input #customPmtilesFileInput type="file" accept=".pmtiles" (change)="onCustomPmtilesFileSelected($event)" hidden />
+
+        @if (customPmtiles.active()) {
+          <button matButton="outlined" type="button" (click)="onBtnClearCustomPmtiles()">
+            <mat-icon>restore</mat-icon>
+            Use bundled map instead
+          </button>
+        }
+      </div>
+
+      <!-- E-124 split (2026-09-26): "no detailed map here" and the copy-the-command helper
+           for cutting a map file for the current view. -->
+      @if (showNoDetailNotice()) {
+        <div class="rt-alert map-no-detail-notice" role="status">
+          <div class="rt-alert__body">
+            No detailed offline map for this area. Switch to the standard map, or add a map
+            file for your area
+            (<a routerLink="/help" [queryParams]="{tab: 'data'}" fragment="map-file-help">How?</a>).
+          </div>
+          <button matButton="outlined" type="button" (click)="dismissNoDetailNotice()"
+            aria-label="Dismiss">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      }
+
+      <rangertrak-expandable-section summary="Get a map file for this area">
+        <p>
+          This command cuts a small offline map file for what the main map currently shows,
+          using the free <code>pmtiles</code> tool (see Help for the full steps):
+        </p>
+        <div class="map-copy-command">
+          <code>{{ extractCommandForView() }}</code>
+          <button matButton="outlined" type="button" (click)="onBtnCopyExtractCommand()">
+            <mat-icon>content_copy</mat-icon>
+            {{ commandCopied() ? 'Copied!' : 'Copy command' }}
+          </button>
+        </div>
+        <p>
+          Get the <code>pmtiles</code> tool from
+          <a href="https://github.com/protomaps/go-pmtiles/releases" target="_blank" rel="noopener">its
+            release page</a>, and replace the date in the command with a recent one from
+          <a href="https://maps.protomaps.com/builds" target="_blank" rel="noopener">maps.protomaps.com/builds</a>.
+        </p>
+      </rangertrak-expandable-section>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="rt-mission-card">
+    <mat-card-header>
+      <mat-card-title>Map tools</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="rt-action-bar__buttons">
+        <!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now
+             (reports honoring the All/selected switch, evidence markers, Location pins) - not
+             the once-at-load fit to the whole log. data-testid, not a class - tools/e2e.js
+             needs a stable hook and this repo has already been burned by e2e selectors
+             hanging off styling classes. -->
+        <button matButton="outlined" type="button" (click)="onBtnZoomToExtent()"
+          data-testid="zoomToExtent" title="Zoom out until every report, evidence marker and location now shown fits on screen">
+          <mat-icon>zoom_out_map</mat-icon>
+          Zoom to Extent
+        </button>
+
+        <!-- ADR D-49: arms the next plain map click to place a Location there instead of
+             copying coordinates - see placingLocation's own comment (mapLibre.component.ts)
+             for why this is one-shot rather than a persistent mode. -->
+        <button matButton="outlined" type="button" (click)="onToggleAddLocation()"
+          [attr.aria-pressed]="placingLocation()">
+          <mat-icon>add_location</mat-icon>
+          {{ placingLocation() ? 'Click the map to place it…' : 'Add Location' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
 </div>
-
-<!-- Raised in the roadmap's own "New backlog items, 2026-08-27": PMTiles has no per-tile
-     "save this area" equivalent to Leaflet's leaflet.offline (it's one archive covering a
-     fixed region), so a scribe with their own coverage loads the whole file here instead. -->
-<div class="map-custom-pmtiles">
-  <button matButton="outlined" type="button" (click)="customPmtilesFileInput.click()">
-    <mat-icon>upload_file</mat-icon>
-    {{ customPmtiles.active() ? 'Load a different .pmtiles file…' : 'Load a custom .pmtiles file…' }}
-  </button>
-  <input #customPmtilesFileInput type="file" accept=".pmtiles" (change)="onCustomPmtilesFileSelected($event)" hidden />
-
-  @if (customPmtiles.active()) {
-    <button matButton="outlined" type="button" (click)="onBtnClearCustomPmtiles()">
-      <mat-icon>restore</mat-icon>
-      Use bundled map instead
-    </button>
-  }
-</div>
-
-<br />
-<!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now (reports
-     honoring the All/selected switch, evidence markers, Location pins) - not the once-at-load
-     fit to the whole log. data-testid, not a class - tools/e2e.js needs a stable hook and
-     this repo has already been burned by e2e selectors hanging off styling classes. -->
-<button matButton="outlined" type="button" (click)="onBtnZoomToExtent()"
-  data-testid="zoomToExtent" title="Zoom out until every report, evidence marker and location now shown fits on screen">
-  <mat-icon>zoom_out_map</mat-icon>
-  Zoom to Extent
-</button>
-
-<!-- ADR D-49: arms the next plain map click to place a Location there instead of copying
-     coordinates - see placingLocation's own comment (mapLibre.component.ts) for why this is
-     one-shot rather than a persistent mode. -->
-<button matButton="outlined" type="button" (click)="onToggleAddLocation()"
-  [attr.aria-pressed]="placingLocation()">
-  <mat-icon>add_location</mat-icon>
-  {{ placingLocation() ? 'Click the map to place it…' : 'Add Location' }}
-</button>
-
-<ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
 

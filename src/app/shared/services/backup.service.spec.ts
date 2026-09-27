@@ -9,6 +9,7 @@ import { MissionService } from './mission.service';
 // E-122 Phase 2a: the roster (and radio log) now live behind RecordStore, not localStorage
 // directly - see that module's own doc comment.
 import { recordStore } from '../storage/record-store';
+import { activeDemoScenario, setActiveDemoScenario } from '../mapping/demo-map';
 
 /**
  * Covers PRIVATE-Roadmap.md Section 8/R3 and the Section 12 step 7 DoD literally:
@@ -123,6 +124,13 @@ describe('BackupService', () => {
       expect(storedRangers.some((r: any) => r.callsign === 'RT1')).toBeTrue();
       const storedSettings = JSON.parse(localStorage.getItem('appSettings')!);
       expect(storedSettings.mission).toBe('Roundtrip Mission');
+    });
+
+    it('E-124: a restored mission is not a demo - the demo marker is cleared', async () => {
+      const backup = TestBed.inject(BackupService);
+      setActiveDemoScenario('grand-canyon');
+      await backup.importMission(backup.buildExportPayload());
+      expect(activeDemoScenario()).toBeNull();
     });
 
     it('recalculates real map bounds after import rather than restoring stale/absent bounds', () => {

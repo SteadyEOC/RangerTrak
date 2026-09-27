@@ -1,6 +1,8 @@
 import { Injectable, signal } from '@angular/core'
 
-import { DEFAULT_PMTILES_URL, PMTILES_WARM_CACHE_NAME as CACHE_NAME } from '../mapping/pmtiles-config'
+import { pruneWarmCache, wantedPmtilesUrls } from '../mapping/demo-map'
+import { PMTILES_WARM_CACHE_NAME as CACHE_NAME } from '../mapping/pmtiles-config'
+import { CustomPmtilesService } from './custom-pmtiles.service'
 import { LogService } from './log.service'
 
 /** Reset on every chunk received, not a fixed total deadline - a real 15-20 MB archive over
@@ -23,8 +25,12 @@ const BASE_BACKOFF_MS = 2_000
  * Vashon archive this now warms. Hardened here against the failure modes that actually
  * matter for a coordinator prepping a device before losing signal:
  *
- * - **Already warmed:** `cache.match()` first - a hit means this exact `DEFAULT_PMTILES_URL`
- *   is already cached, so nothing more happens. Cache Storage matches by URL, not content,
+ * - **E-124 split (2026-09-26): a wanted SET, not one URL.** The world base, plus the loaded
+ *   demo's street-detail file when a demo is the mission (see `wantedPmtilesUrls()`,
+ *   shared/mapping/demo-map.ts). Each is warmed separately; afterwards every other entry in
+ *   the cache is pruned - a replaced demo's file, and the pre-split `world-vashon.pmtiles`.
+ * - **Already warmed:** `cache.match()` first - a hit means that exact URL is already
+ *   cached, so it is not fetched again. Cache Storage matches by URL, not content,
  *   so replacing the archive again later needs a new URL (see `pmtiles-config.ts`) or this
  *   check would wrongly call an old cached copy "current."
  * - **A stalled connection that never errors or completes:** an `AbortController` reset on
@@ -55,7 +61,7 @@ export class OfflineBasemapService {
    *  warmed/not-warmed line instead. */
   readonly downloadProgress = signal<number | null>(null)
 
-  constructor(private log: LogService) { }
+  constructor(private log: LogService, private customPmtiles: CustomPmtilesService) { }
 
   /**
    * `userInitiated`: true when this call IS the deliberate "open the alternative map" action
@@ -76,12 +82,18 @@ export class OfflineBasemapService {
 
     this.warming = true
     try {
+      await this.customPmtiles.whenReady()
+      const wanted = wantedPmtilesUrls({ customActive: !!this.customPmtiles.active() })
       const cache = await caches.open(CACHE_NAME)
-      const existing = await cache.match(DEFAULT_PMTILES_URL)
-      if (existing) {
-        return
+      for (const url of wanted) {
+        if (!await cache.match(url)) {
+          await this.downloadWithRetry(cache, url)
+        }
       }
-      await this.downloadWithRetry(cache)
+      const pruned = await pruneWarmCache(wanted)
+      if (pruned) {
+        this.log.info(`Removed ${pruned} map file(s) this device no longer needs from the offline cache.`, this.id)
+      }
     } catch (err) {
       this.log.warn(`warm(): ${err}`, this.id)
     } finally {
@@ -90,15 +102,15 @@ export class OfflineBasemapService {
     }
   }
 
-  private async downloadWithRetry(cache: Cache): Promise<void> {
+  private async downloadWithRetry(cache: Cache, url: string): Promise<void> {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
-        await this.downloadOnce(cache)
+        await this.downloadOnce(cache, url)
         return
       } catch (err) {
         this.log.warn(`Offline-map warm attempt ${attempt}/${MAX_ATTEMPTS} failed: ${err}`, this.id)
         if (attempt === MAX_ATTEMPTS) {
-          this.armOnlineRetry(cache)
+          this.armOnlineRetry(cache, url)
           return
         }
         await this.delay(BASE_BACKOFF_MS * 2 ** (attempt - 1))
@@ -109,7 +121,7 @@ export class OfflineBasemapService {
   /** Final fallback once MAX_ATTEMPTS is exhausted: wait for the browser to report it's back
    *  online, then run the whole retry ladder again - covers a coordinator who loses signal
    *  mid-download and never reopens the page. Only one listener at a time. */
-  private armOnlineRetry(cache: Cache): void {
+  private armOnlineRetry(cache: Cache, url: string): void {
     if (this.onlineRetryArmed || typeof window === 'undefined') {
       return
     }
@@ -117,7 +129,7 @@ export class OfflineBasemapService {
     const handler = () => {
       window.removeEventListener('online', handler)
       this.onlineRetryArmed = false
-      this.downloadWithRetry(cache).catch(err =>
+      this.downloadWithRetry(cache, url).catch(err =>
         this.log.warn(`Offline-map warm retry after 'online' failed: ${err}`, this.id))
     }
     window.addEventListener('online', handler)
@@ -133,7 +145,7 @@ export class OfflineBasemapService {
    * possible, AND it's what makes the stall timeout possible (a `fetch()` promise alone only
    * ever tells you headers arrived, not that the body is still moving).
    */
-  private async downloadOnce(cache: Cache): Promise<void> {
+  private async downloadOnce(cache: Cache, url: string): Promise<void> {
     const controller = new AbortController()
     let stallTimer: ReturnType<typeof setTimeout>
     const resetStallTimer = () => {
@@ -143,7 +155,7 @@ export class OfflineBasemapService {
     resetStallTimer()
 
     try {
-      const res = await fetch(DEFAULT_PMTILES_URL, { cache: 'no-store', signal: controller.signal })
+      const res = await fetch(url, { cache: 'no-store', signal: controller.signal })
       resetStallTimer()
       if (!res.ok || !res.body) {
         throw new Error(`Bad response: ${res.status}`)
@@ -171,9 +183,9 @@ export class OfflineBasemapService {
       // class's own doc comment for why a partial entry would be worse than no entry.
       const body = new Blob(chunks as BlobPart[])
       const headers = new Headers(res.headers)
-      await cache.put(DEFAULT_PMTILES_URL, new Response(body, { status: res.status, statusText: res.statusText, headers }))
+      await cache.put(url, new Response(body, { status: res.status, statusText: res.statusText, headers }))
       this.downloadProgress.set(100)
-      this.log.info(`Warmed the offline basemap cache (${received} bytes).`, this.id)
+      this.log.info(`Warmed the offline map cache with ${url} (${received} bytes).`, this.id)
     } finally {
       clearTimeout(stallTimer!)
     }

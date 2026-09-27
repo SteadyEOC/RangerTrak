@@ -1,5 +1,6 @@
 import { Subscription } from 'rxjs'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN } from '../shared/overdue'
+import { clearActiveDemoScenario } from '../shared/mapping/demo-map'
 
 /**
  * Milliseconds for a value that is *typed* Date but may really be an ISO string from a JSON
@@ -401,6 +402,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   onBtnResetDefaults() {
     this.log.verbose(`onBtnResetDefaults: Reset Mission.`, this.id)
     this.settings = this.missionService.ResetDefaults()
+    clearActiveDemoScenario() // E-124: evicts a demo's street-detail map file
     this.reloadPage()
   }
 

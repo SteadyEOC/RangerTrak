@@ -24,7 +24,7 @@ long as you like.
 | **Reports** | Every report so far, in a sortable, filterable table. Select rows here to focus the maps on just those reports. |
 | **Rangers** | Your roster — call signs, names, contact details, teams. |
 | **Map (Leaflet)** | Full-page map using standard online road maps. Best detail, anywhere in the world, but needs Internet. |
-| **Map (MapLibre+PMTiles)** | Full-page map using map data built into the app. Works with no Internet at all: a low-detail world map everywhere, plus real street-level detail in the Vashon Island demo area (or wherever you load your own map file — see step 6 below). |
+| **Map (MapLibre+PMTiles)** | Full-page map using map data built into the app. Works with no Internet at all: a low-detail world map everywhere, plus real street-level detail in each demo area while that demo is loaded, and wherever you load your own map file (see step 6 below). |
 | **Settings** | Mission name, operating period, expected check-in interval, default location, status labels and colours, backup and restore. |
 | **Log** | A running record of what the app did, including warnings and crashes. Export it when reporting a problem. |
 
@@ -190,7 +190,7 @@ Both engines live on the one **Map** page now, switched with the toggle above th
 > ### For coordinators: make your own offline map file
 >
 > The Alternative map's built-in world view is low detail. If your operating area needs
-> real street-level detail beyond the Vashon Island demo, you can cut a small map file for
+> real street-level detail outside the demo areas, you can cut a small map file for
 > it yourself ahead of time, using a free tool — no account, no payment:
 >
 > 1. Download the free `pmtiles` command-line tool for your computer (Windows, Mac, or
@@ -356,7 +356,7 @@ complete enough — addresses can be filled in afterwards.
 | Exporting and importing missions | ✅ Works |
 | Coordinate entry and conversion | ✅ Works |
 | **Map — Leaflet (the default engine)** | ⚠️ Only the areas you saved in advance |
-| **Map — Backup switch (MapLibre + PMTiles)** | ✅ Works everywhere at low detail; street-level detail *only where you loaded a map file, or the Vashon Island demo area* |
+| **Map — Backup switch (MapLibre + PMTiles)** | ✅ Works everywhere at low detail; street-level detail *only where you loaded a map file, or in a loaded demo's area* |
 | Address lookup (typing an address to get coordinates) | ❌ Needs Internet |
 | Reverse lookup (coordinates to a street address) | ❌ Needs Internet |
 
@@ -463,7 +463,7 @@ your agency's policy on handling participant information.
 
 **Want to see it populated?** On **Settings**, under *Advanced Options*, press
 **Load Sample Mission**. This fills the app with a demonstration roster and about thirty
-reports across Vashon Island — useful for training, demonstrating to others, or just
+reports in the demo area you pick (Grand Canyon by default) — useful for training, demonstrating to others, or just
 seeing what a busy mission looks like.
 
 > This **replaces** your current roster and reports. Export first if you have anything you
@@ -473,10 +473,11 @@ seeing what a busy mission looks like.
 
 - **Roster edits are not saved automatically.** Press **Save Rangers** on the Rangers page,
   or your changes are lost on reload.
-- **The Alternative map's built-in detail covers Vashon Island only.** Everywhere else you
-  get a low-detail world map with your report markers on it — correct positions, no
-  streets — unless you load your own map file for that area (see "For coordinators: make
-  your own offline map file" above). Broader built-in coverage is planned.
+- **The Alternative map's built-in street detail covers the demo areas only**, and only
+  while that demo is loaded. Everywhere else you get a low-detail world map with your report
+  markers on it — correct positions, no streets — unless you load your own map file for that
+  area (see "For coordinators: make your own offline map file" above). The map says so when
+  you zoom in where it has no detail.
 - **Report selection resets** when you reload the page or move between pages.
 
 If something looks wrong, check the **Log** page — it records what the app did and any

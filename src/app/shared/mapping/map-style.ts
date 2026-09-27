@@ -1,4 +1,4 @@
-import { addProtocol, setWorkerUrl, type StyleSpecification } from 'maplibre-gl'
+import { addProtocol, setWorkerUrl, type LayerSpecification, type StyleSpecification } from 'maplibre-gl'
 import { FileSource, PMTiles, Protocol, ResolvedValueCache } from 'pmtiles'
 
 import { CacheFirstSource } from './cache-first-source'
@@ -31,6 +31,9 @@ let maplibreInitialized = false
 // two Protocol instances would each keep their own `tiles` map, and only the one actually
 // wired via addProtocol() ever gets asked to resolve a `pmtiles://` URL.
 let pmtilesProtocol: Protocol | undefined
+// E-124: demo detail archives already registered, so a second map instance (the overview
+// thumbnail) or a remount does not replace a warm PMTiles instance with a cold one.
+const registeredDetailUrls = new Set<string>()
 
 /**
  * One-time global MapLibre setup: points it at the worker bundle we ship, and registers
@@ -114,6 +117,35 @@ export function registerCustomPmtilesSource(file: File): string {
 }
 
 /**
+ * E-124: registers a demo's street-detail archive exactly the way registerPmtilesProtocol()
+ * registers the world base - a `CacheFirstSource` over the same warm cache, with
+ * `ResolvedValueCache` (see that function's comment on key matching and cache poisoning; the
+ * key is the same unresolved URL string `buildPmtilesStyle()` embeds). Idempotent.
+ */
+export function registerDetailPmtilesSource(url: string): void {
+  if (!pmtilesProtocol) {
+    registerPmtilesProtocol()
+  }
+  if (registeredDetailUrls.has(url)) {
+    return
+  }
+  pmtilesProtocol!.add(new PMTiles(new CacheFirstSource(url, PMTILES_WARM_CACHE_NAME), new ResolvedValueCache()))
+  registeredDetailUrls.add(url)
+}
+
+/** The five data layers, for one vector source. Drawn once for the base and, when a demo is
+ *  loaded, once more for its detail source on top. */
+function dataLayers(source: string, idPrefix: string): LayerSpecification[] {
+  return [
+    { id: `${idPrefix}earth`, type: 'fill', source, 'source-layer': 'earth', paint: { 'fill-color': '#f2e9d8' } },
+    { id: `${idPrefix}water`, type: 'fill', source, 'source-layer': 'water', paint: { 'fill-color': '#8ec6ec' } },
+    { id: `${idPrefix}landuse`, type: 'fill', source, 'source-layer': 'landuse', paint: { 'fill-color': '#c8e6c0' } },
+    { id: `${idPrefix}roads`, type: 'line', source, 'source-layer': 'roads', paint: { 'line-color': '#888', 'line-width': 1 } },
+    { id: `${idPrefix}buildings`, type: 'fill', source, 'source-layer': 'buildings', paint: { 'fill-color': '#c0a080' } },
+  ]
+}
+
+/**
  * Builds a MapLibre style pointed at the bundled PMTiles basemap. No text-label glyphs
  * in v1 (see PRIVATE-Roadmap.md) - earth/water/roads/buildings/landuse render with
  * color/shape distinction only.
@@ -123,23 +155,23 @@ export function registerCustomPmtilesSource(file: File): string {
  * filled and reads as the same grey as the background, which made a working map look
  * "blank" even though tiles were loading and other layers were rendering correctly.
  */
-export function buildPmtilesStyle(pmtilesUrl: string = DEFAULT_PMTILES_URL): StyleSpecification {
-  return {
+export function buildPmtilesStyle(pmtilesUrl: string = DEFAULT_PMTILES_URL, detailUrl?: string): StyleSpecification {
+  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  const style: StyleSpecification = {
     version: 8,
     sources: {
-      basemap: {
-        type: 'vector',
-        url: 'pmtiles://' + pmtilesUrl,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }
+      basemap: { type: 'vector', url: 'pmtiles://' + pmtilesUrl, attribution }
     },
     layers: [
       { id: 'bg', type: 'background', paint: { 'background-color': '#e0e0e0' } },
-      { id: 'earth', type: 'fill', source: 'basemap', 'source-layer': 'earth', paint: { 'fill-color': '#f2e9d8' } },
-      { id: 'water', type: 'fill', source: 'basemap', 'source-layer': 'water', paint: { 'fill-color': '#8ec6ec' } },
-      { id: 'landuse', type: 'fill', source: 'basemap', 'source-layer': 'landuse', paint: { 'fill-color': '#c8e6c0' } },
-      { id: 'roads', type: 'line', source: 'basemap', 'source-layer': 'roads', paint: { 'line-color': '#888', 'line-width': 1 } },
-      { id: 'buildings', type: 'fill', source: 'basemap', 'source-layer': 'buildings', paint: { 'fill-color': '#c0a080' } }
+      ...dataLayers('basemap', ''),
     ]
   }
+  // E-124: a loaded demo's z6-15 street detail, drawn over the z0-5 world base. Outside the
+  // demo's box the detail source has no tiles, so the base simply overzooms there.
+  if (detailUrl) {
+    style.sources['detail'] = { type: 'vector', url: 'pmtiles://' + detailUrl, attribution }
+    style.layers.push(...dataLayers('detail', 'detail-'))
+  }
+  return style
 }

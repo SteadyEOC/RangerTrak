@@ -107,7 +107,7 @@ actually shipped.
   the programmatic Cache API (`caches.default`), which still requires the Worker to run to
   consult it.
 - **No hotlink protection.** Any site, or any script, could point at
-  `rangertrak.org/assets/maps/world-vashon.pmtiles` directly.
+  `rangertrak.org/assets/maps/*.pmtiles` directly.
 - Nothing was implemented for a hosted regional-map path (it didn't exist), so there was
   no R2 exposure to audit yet.
 
@@ -511,7 +511,7 @@ Run in a **real browser**, not headless — see the service worker note below.
 - [ ] `curl -sI https://<host>/index.html` returns **200, not 307** — see
       `html_handling` above. A 307 here means no offline support and no update
       detection, silently.
-- [ ] `curl -sI -H 'Range: bytes=0-99' https://<host>/assets/maps/world-vashon.pmtiles`
+- [ ] `curl -sI -H 'Range: bytes=0-99' https://<host>/assets/maps/world-z5-20260926.pmtiles`
       returns **206** with a `Content-Range` header.
 
 If any of these is missing, [src/\_headers](src/_headers) is not being honored — stop and
@@ -522,8 +522,9 @@ fix that before trusting the update flow, because its failure is silent.
 every intermediate cache (browsers, Cloudflare's edge once `cache.enabled` is warm) that
 the bytes at this exact URL will never change for a year, so don't even bother
 revalidating. That is only true because the filename is content-addressed by convention
-(`vashon.pmtiles` → `world-vashon.pmtiles` when the maps agent swapped in the merged
-world+Vashon extract, 2026-09-14). Overwriting `world-vashon.pmtiles` in place with
+(`vashon.pmtiles` → `world-vashon.pmtiles` on 2026-09-14, then the E-124 split into
+`world-z5-<build>.pmtiles` + `demo-<scenario>-<build>.pmtiles` on 2026-09-26 - the build date
+is in the name). Overwriting any of them in place with
 different bytes on a future deploy would leave every browser and edge cache that already
 fetched it serving stale map data for up to a year, with no error and nothing failing —
 the same silent-staleness shape as the `www`/`index.html` traps elsewhere in this

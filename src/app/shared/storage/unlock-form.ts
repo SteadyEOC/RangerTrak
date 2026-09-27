@@ -1,4 +1,5 @@
 import { recordStore } from './record-store'
+import { clearActiveDemoScenario } from '../mapping/demo-map'
 import { RANGER_PHOTOS_DB_NAME } from '../services/ranger-photo.service'
 
 /**
@@ -98,6 +99,7 @@ export function runUnlockGate(): Promise<void> {
       if (!confirmed) return
 
       forgotBtn.disabled = true
+      clearActiveDemoScenario() // E-124: nothing left on the device is a demo
       Promise.all([recordStore.eraseEncryptedRecords(), eraseRangerPhotosDb()])
         .catch(err => {
           // Still proceed to boot: an empty, unlocked device beats a permanently stuck one.

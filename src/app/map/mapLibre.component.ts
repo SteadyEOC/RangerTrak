@@ -10,16 +10,22 @@ import { Subscription } from 'rxjs'
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common'
 import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Inject, Input, OnDestroy, OnInit,
-  TemplateRef, ViewChild, signal
+  TemplateRef, ViewChild, computed, signal
 } from '@angular/core'
+import { RouterLink } from '@angular/router'
 import { MatButtonModule } from '@angular/material/button'
+import { MatCardModule } from '@angular/material/card'
 import { MatDialog } from '@angular/material/dialog'
 import { MatIconModule } from '@angular/material/icon'
 import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle'
 
 import {
-  buildPmtilesStyle, DEFAULT_PMTILES_URL, registerCustomPmtilesSource, registerPmtilesProtocol
+  buildPmtilesStyle, DEFAULT_PMTILES_URL, registerCustomPmtilesSource, registerDetailPmtilesSource,
+  registerPmtilesProtocol
 } from '../shared/mapping/map-style'
+import { activeDemoDetailMap, isInsideBbox } from '../shared/mapping/demo-map'
+import type { DemoDetailMap } from '../shared/mapping/pmtiles-config'
+import { ExpandableSectionComponent } from '../shared/expandable-section/expandable-section.component'
 import {
   radioLogStatusColor, locationCategoryColor, resolveCssColorForCanvas
 } from '../shared/mapping/report-marker-status'
@@ -54,6 +60,10 @@ import { LocationDialogComponent } from './location-dialog/location-dialog.compo
 
 const REPORTS_SOURCE_ID = 'field-reports'
 
+/** Highest zoom the bundled world base carries - past it, only a demo's detail file or the
+ *  scribe's own map file adds anything (E-124). */
+const WORLD_BASE_MAX_ZOOM = 5
+
 // Small local helper, deliberately not imported from mapLeaflet.component.ts's own copy -
 // that file eagerly imports 'leaflet', and this component is its own separate lazy chunk
 // (E-64/E-115 bundle discipline) that must never pull Leaflet in just to format a byte count.
@@ -71,7 +81,8 @@ function formatBytes(bytes: number): string {
 @Component({
   selector: 'rangertrak-mapLibre',
   standalone: true,
-  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatIconModule],
+  imports: [NgTemplateOutlet, RouterLink, MatSlideToggleModule, MatButtonModule, MatCardModule, MatIconModule,
+    ExpandableSectionComponent],
   templateUrl: './mapLibre.component.html',
   styleUrls: ['./mapLibre.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -166,7 +177,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   // from the archive, sustained offline) surfaces as a permanent gray tile again rather
   // than retrying forever; this is a bounded safety net, not a guarantee.
   private readonly retriedTileKeysByMap = new Map<MaplibreMap, Set<string>>()
-  private readonly pendingTileRetriesByMap = new Map<MaplibreMap, { z: number, x: number, y: number }[]>()
+  private readonly pendingTileRetriesByMap = new Map<MaplibreMap, { sourceId: string, z: number, x: number, y: number }[]>()
   private readonly retryDebounceTimersByMap = new Map<MaplibreMap, ReturnType<typeof setTimeout>>()
   private static readonly retryDebounceMs = 300
 
@@ -176,6 +187,37 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   // background the way it did before (a tester loading e.g. Manchester used to land on
   // Vashon with nothing rendered until they manually panned/zoomed away).
   private customArchiveBounds?: [minLon: number, minLat: number, maxLon: number, maxLat: number]
+
+  // E-124: the loaded demo's street-detail file, when a demo is the mission and no custom
+  // file is in use - resolved once in initMaps(), like customArchiveBounds above.
+  private demoDetail?: DemoDetailMap
+
+  // E-124 "no detailed map here" notice and the copy-the-command helper. Set from MapLibre's
+  // own 'moveend' (zoneless app - see numAllRows' comment for why these are signals).
+  private viewCenter = signal<{ lng: number, lat: number } | null>(null)
+  private viewBounds = signal<[west: number, south: number, east: number, north: number] | null>(null)
+  private noDetailDismissed = signal(false)
+  public commandCopied = signal(false)
+  private commandCopiedTimer?: ReturnType<typeof setTimeout>
+
+  /** Zoomed in past the world base, and the view centre is in no detail file's coverage.
+   *  Dismissable for the rest of this visit to the page. */
+  public showNoDetailNotice = computed(() => {
+    const center = this.viewCenter()
+    if (!center || this.noDetailDismissed() || this.zoomDisplay() <= WORLD_BASE_MAX_ZOOM) {
+      return false
+    }
+    const coverage = [this.demoDetail?.bbox, this.customArchiveBounds].filter(b => !!b)
+    return !coverage.some(b => isInsideBbox(center.lng, center.lat, b!))
+  })
+
+  /** The `pmtiles extract` command for what the main map shows now. `YYYYMMDD` stays literal
+   *  on purpose - the template tells the reader to replace it with a current build date. */
+  public extractCommandForView = computed(() => {
+    const b = this.viewBounds()
+    const bbox = b ? b.map(n => n.toFixed(4)).join(',') : 'WEST,SOUTH,EAST,NORTH'
+    return `pmtiles extract https://build.protomaps.com/YYYYMMDD.pmtiles my-area.pmtiles --bbox=${bbox} --maxzoom=15`
+  })
 
   constructor(
     private missionService: MissionService,
@@ -236,10 +278,14 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   private async initMaps(): Promise<void> {
     await this.customPmtiles.whenReady()
     await this.loadCustomArchiveBounds()
+    this.demoDetail = activeDemoDetailMap({ customActive: !!this.customPmtiles.active() })
+    if (this.demoDetail) {
+      registerDetailPmtilesSource(this.demoDetail.url)
+    }
 
     this.map = new MaplibreMap({
       container: this.mapContainer.nativeElement,
-      style: buildPmtilesStyle(this.resolvePmtilesUrl()),
+      style: buildPmtilesStyle(this.resolvePmtilesUrl(), this.demoDetail?.url),
       center: [this.settings.defLng, this.settings.defLat],
       zoom: this.settings.maplibre.defZoom,
       // NOT the fix for the "adjacent tiles stay gray after a fast zoom-out" bug - kept only
@@ -280,12 +326,13 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       // `ev.tile` is only present when this error came from a tile load rejecting (see
       // this constructor's retriedTileKeysByMap comment above) - style/validation errors
       // don't carry one, and this safety net has nothing to retry for those.
-      if (ev?.sourceId === 'basemap' && ev.tile?.tileID?.canonical) {
-        this.scheduleTileRetry(this.map, ev.tile.tileID.canonical)
+      if (MapLibreComponent.isVectorSource(ev?.sourceId) && ev.tile?.tileID?.canonical) {
+        this.scheduleTileRetry(this.map, ev.sourceId, ev.tile.tileID.canonical)
       }
     })
 
     this.map.on('load', () => {
+      this.updateViewSignals()
       this.addHillshadeLayer()
       this.addReportsSource()
       this.refreshMarkers()
@@ -303,6 +350,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     })
 
     this.map.on('zoomend', () => { this.zoomDisplay.set(Math.round(this.map.getZoom())) })
+    this.map.on('moveend', () => this.updateViewSignals())
 
     // Mirrors LmapComponent's own readout. `mousemove` fires continuously - if this ever
     // causes jank, throttle it - but Leaflet's own mousemove-driven readout does the same
@@ -320,7 +368,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   private initOverviewMap(): void {
     this.overviewMap = new MaplibreMap({
       container: this.overviewContainer.nativeElement,
-      style: buildPmtilesStyle(this.resolvePmtilesUrl()),
+      style: buildPmtilesStyle(this.resolvePmtilesUrl(), this.demoDetail?.url),
       center: [this.settings.defLng, this.settings.defLat],
       zoom: this.settings.maplibre.overviewMinZoom,
       interactive: false,
@@ -337,8 +385,8 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     // Map instance with its own tile manager, so it needs its own listener and its own
     // per-map retry bookkeeping (see retriedTileKeysByMap's doc comment on why).
     this.overviewMap.on('error', (ev: any) => {
-      if (ev?.sourceId === 'basemap' && ev.tile?.tileID?.canonical) {
-        this.scheduleTileRetry(this.overviewMap!, ev.tile.tileID.canonical)
+      if (MapLibreComponent.isVectorSource(ev?.sourceId) && ev.tile?.tileID?.canonical) {
+        this.scheduleTileRetry(this.overviewMap!, ev.sourceId, ev.tile.tileID.canonical)
       }
     })
 
@@ -374,7 +422,33 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     return Math.min(Math.max(num, min), max)
   }
 
-  /** The bundled vashon.pmtiles URL, unless a scribe has loaded their own coverage - see
+  /** The two PMTiles-backed sources the tile-retry safety net covers (E-124 added `detail`). */
+  private static isVectorSource(sourceId: unknown): sourceId is 'basemap' | 'detail' {
+    return sourceId === 'basemap' || sourceId === 'detail'
+  }
+
+  private updateViewSignals(): void {
+    const c = this.map.getCenter()
+    const b = this.map.getBounds()
+    this.viewCenter.set({ lng: c.lng, lat: c.lat })
+    this.viewBounds.set([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()])
+  }
+
+  dismissNoDetailNotice(): void {
+    this.noDetailDismissed.set(true)
+  }
+
+  onBtnCopyExtractCommand(): void {
+    navigator.clipboard.writeText(this.extractCommandForView())
+      .then(() => {
+        this.commandCopied.set(true)
+        clearTimeout(this.commandCopiedTimer)
+        this.commandCopiedTimer = setTimeout(() => this.commandCopied.set(false), 2000)
+      })
+      .catch(err => this.log.error(`onBtnCopyExtractCommand: not copied to clipboard: ${err}`, 'MapLibreComponent'))
+  }
+
+  /** The bundled world base URL, unless a scribe has loaded their own coverage - see
    *  CustomPmtilesService's own doc comment for why PMTiles (one archive per region, no
    *  per-tile store) needs this rather than Leaflet's live "save this area" control. */
   private resolvePmtilesUrl(): string {
@@ -459,7 +533,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async onBtnClearCustomPmtiles(): Promise<void> {
-    if (!confirm('Stop using the custom offline map and go back to the bundled Vashon extract?')) {
+    if (!confirm('Stop using the custom offline map and go back to the bundled map?')) {
       return
     }
     await this.customPmtiles.clear()
@@ -531,19 +605,20 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
    * animation frame or two, and `refreshTiles()` takes an array, so one call per burst is
    * both cheaper and less startling than a flurry of individual reloads.
    */
-  private scheduleTileRetry(map: MaplibreMap, canonical: { z: number, x: number, y: number, key: string }): void {
+  private scheduleTileRetry(map: MaplibreMap, sourceId: string, canonical: { z: number, x: number, y: number, key: string }): void {
     let retriedKeys = this.retriedTileKeysByMap.get(map)
     if (!retriedKeys) {
       retriedKeys = new Set<string>()
       this.retriedTileKeysByMap.set(map, retriedKeys)
     }
-    if (retriedKeys.has(canonical.key)) {
+    const retryKey = `${sourceId}/${canonical.key}`
+    if (retriedKeys.has(retryKey)) {
       return
     }
-    retriedKeys.add(canonical.key)
+    retriedKeys.add(retryKey)
 
     const pending = this.pendingTileRetriesByMap.get(map) ?? []
-    pending.push({ z: canonical.z, x: canonical.x, y: canonical.y })
+    pending.push({ sourceId, z: canonical.z, x: canonical.x, y: canonical.y })
     this.pendingTileRetriesByMap.set(map, pending)
 
     clearTimeout(this.retryDebounceTimersByMap.get(map))
@@ -553,8 +628,10 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!tileIds.length) {
         return
       }
-      this.log.info(`Retrying ${tileIds.length} basemap tile(s) that failed to load.`, 'MapLibreComponent')
-      map.refreshTiles('basemap', tileIds)
+      this.log.info(`Retrying ${tileIds.length} map tile(s) that failed to load.`, 'MapLibreComponent')
+      for (const sourceId of new Set(tileIds.map(t => t.sourceId))) {
+        map.refreshTiles(sourceId, tileIds.filter(t => t.sourceId === sourceId).map(({ z, x, y }) => ({ z, x, y })))
+      }
     }, MapLibreComponent.retryDebounceMs))
   }
 
@@ -952,6 +1029,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     this.locationsSubscription?.unsubscribe()
     this.locationMarkers.forEach(m => m.remove())
     this.retryDebounceTimersByMap.forEach(t => clearTimeout(t))
+    clearTimeout(this.commandCopiedTimer)
     this.overviewMap?.remove()
     this.map?.remove()
   }

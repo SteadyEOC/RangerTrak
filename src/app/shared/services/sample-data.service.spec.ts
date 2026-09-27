@@ -9,6 +9,7 @@ import { MissionLocationService } from './mission-location.service';
 // E-122 Phase 2a: rangers/radioLog/locations now live behind RecordStore, not localStorage
 // directly - see that module's own doc comment.
 import { recordStore } from '../storage/record-store';
+import { activeDemoScenario, clearActiveDemoScenario } from '../mapping/demo-map';
 
 /**
  * F-scenarios (2026-09-14): SampleDataService went from one fixed "Vashon Island" mission to
@@ -131,6 +132,13 @@ describe('SampleDataService', () => {
   });
 
   describe('loadSampleMission (general)', () => {
+    it('E-124: marks the loaded scenario as the active demo, so its map detail may load', async () => {
+      clearActiveDemoScenario();
+      await TestBed.inject(SampleDataService).loadSampleMission('vashon');
+      expect(activeDemoScenario()).toBe('vashon');
+      clearActiveDemoScenario();
+    });
+
     it('defaults to the Grand Canyon scenario when called with no argument', async () => {
       const sampleData = TestBed.inject(SampleDataService);
       const missionService = TestBed.inject(MissionService);

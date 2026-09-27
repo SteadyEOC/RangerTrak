@@ -73,6 +73,32 @@
   file after the ranger's id or callsign - any common image format works.
 </p>
 
+<!-- E-124: the map page's "no detailed map here" notice links here
+     (/help?tab=data#map-file-help). Jargon-free on purpose - read mid-mission. -->
+<h3 id="map-file-help">Make a map file for your area</h3>
+
+<p>
+  The <span class="ui">Alternative map</span> on the <a routerLink="/map">Map</a> page shows the
+  whole world in low detail. For street-level detail where you work, make a map file for your
+  area once, while you have a good connection, and load it onto each device.
+</p>
+
+<ol>
+  <li>Get the free <code>pmtiles</code> tool from
+    <a href="https://github.com/protomaps/go-pmtiles/releases" target="_blank" rel="noopener">its
+      release page</a> (pick the file for your computer).</li>
+  <li>On the Map page, turn on <span class="ui">Use MapLibre + PMTiles Map</span> and move the
+    map so it shows your area. Open
+    <span class="ui">Get a map file for this area</span> and press
+    <span class="ui">Copy command</span>.</li>
+  <li>Paste the command into a terminal (Command Prompt on Windows) and replace
+    <code>YYYYMMDD</code> with a recent date from
+    <a href="https://maps.protomaps.com/builds" target="_blank" rel="noopener">maps.protomaps.com/builds</a>.
+    Run it. It saves <code>my-area.pmtiles</code>, usually a few megabytes for a town.</li>
+  <li>Back on the Map page, press <span class="ui">Load a custom .pmtiles file…</span> and pick
+    that file. Do this on every device that needs the map.</li>
+</ol>
+
 <h3>Starting a device over</h3>
 
 <p>

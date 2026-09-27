@@ -74,6 +74,27 @@ mat-slide-toggle {
   margin: 0.5rem 0;
 }
 
+// E-124: the "no detailed map here" notice sits inside the Offline map card, not over the map.
+.map-no-detail-notice {
+  margin: 0.5rem 0;
+}
+
+// The copy-the-command row. The command is long and must never force the page wider than a
+// phone (D-33) - it wraps anywhere rather than scrolling the whole card sideways.
+.map-copy-command {
+  display    : flex;
+  align-items: center;
+  flex-wrap  : wrap;
+  gap        : var(--rt-gap);
+  margin     : 0.5rem 0;
+
+  code {
+    flex      : 1 1 20rem;
+    min-width : 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 // ADR D-49: the Location marker element is a plain `document.createElement('div')`
 // (mapLibre.component.ts's refreshLocationMarkers()), not part of an Angular template - it
 // never gets this component's view-encapsulation attribute, so a plain (non-::ng-deep) rule

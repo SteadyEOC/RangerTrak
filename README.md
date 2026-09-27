@@ -102,7 +102,7 @@ Known gaps worth stating plainly:
   or pops up, and the times refresh when a screen redraws rather than ticking.
 - There is no **geo-fence** — nothing warns that a ranger is outside an expected area.
 - The bundled offline map covers the **whole world at low detail**, with street-level detail
-  only for the demo area. Your own area needs saving on the street map beforehand, or a
+  only in a demo's area while that demo is loaded. Your own area needs saving on the street map beforehand, or a
   `.pmtiles` file loading for it.
 - **What3Words** is not wired up, and would be the only coordinate format needing a key and a
   network call — every other one is computed on-device.

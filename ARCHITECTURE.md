@@ -19,9 +19,9 @@ E-64) with a toggle between them — the table below used to show them as separa
 |                      | Leaflet (`LmapComponent`)                                     | MapLibre + PMTiles (`MapLibreComponent`)                              |
 | -------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | Mini-map component   | `MiniMapLeafletComponent`                                       | `MiniMapComponent`                                                      |
-| Basemap source       | OpenStreetMap/OpenTopoMap tile servers, over the network        | `src/assets/maps/world-vashon.pmtiles`, bundled in the app, or a scribe-loaded custom `.pmtiles` file |
+| Basemap source       | OpenStreetMap/OpenTopoMap tile servers, over the network        | `src/assets/maps/world-z5-<build>.pmtiles`, bundled in the app, plus a loaded demo's `demo-<scenario>-<build>.pmtiles`, or a scribe-loaded custom `.pmtiles` file |
 | Works offline        | Only for areas already viewed or explicitly saved               | **Yes, everywhere** — but only the bundled/loaded archive's own zoom range renders real detail; see the caching caveat below |
-| Coverage             | Anywhere in the world                                           | Low-detail (z0–5) worldwide background always; street-level detail in the bundled demo area (Vashon Island), or wherever a scribe loads their own `.pmtiles` file (2026-09-14, offline map coverage scoping) |
+| Coverage             | Anywhere in the world                                           | Low-detail (z0–5) worldwide background always; street-level detail in a demo's area while that demo is loaded (E-124, 2026-09-26), or wherever a scribe loads their own `.pmtiles` file |
 | Bundle cost          | ~150 kB                                                         | ~950 kB (lazy chunk, loaded with `/map`)                                |
 | Clustering           | `leaflet.markercluster`                                         | Native GeoJSON clustering                                               |
 | Offline tile caching | `leaflet.offline` — "Save this area for offline use" control (OpenTopoMap only; OSM's own policy forbids bulk saving) | Not needed for the bundled/background layer; a scribe-loaded custom file (`CustomPmtilesService`, Map page's "Load a custom .pmtiles file…") replaces coverage outright instead |
@@ -50,9 +50,9 @@ than Leaflet, so switching would make the page heavier, not lighter — but sinc
 mini-map is wrapped in `@defer (on idle)` (see `entry.component.html`), neither engine is
 in the initial download, and neither blocks the form from painting.
 
-The cost of switching is street-level detail: the bundled archive only has that for Vashon
-Island (plus a low-res world background everywhere else, added 2026-09-14), so an operator
-working outside Vashon would get a background-only map where Leaflet would have shown real
+The cost of switching is street-level detail: the bundled files only have that for the demo
+areas, and only while that demo is loaded (plus a low-res world background everywhere), so an
+operator working anywhere real would get a background-only map where Leaflet would have shown real
 streets given a network — unless a scribe-loaded custom `.pmtiles` file already covers that
 area (Map page's "Load a custom .pmtiles file…"). Widening the BUNDLED default further is
 tracked as the planned in-app region-download manager (Phase 2 of the offline map coverage
@@ -75,8 +75,9 @@ wired up for real) specifically so the comparison is fair.
 
 ### Planned: downloadable map regions
 
-The bundled default (`world-vashon.pmtiles`, since 2026-09-14) is a low-res world
-background plus one high-detail pilot area (Vashon). Broader detailed coverage means
+The bundled default is a low-res world background (`world-z5-<build>.pmtiles`) plus one small
+street-detail file per demo scenario, fetched only while that demo is loaded and the
+Alternative map is open (E-124, 2026-09-26; built by `tools/build-demo-maps.sh`). Broader detailed coverage means
 letting users download regions for their own area, and the approach is already settled
 from prior art rather than open for invention:
 

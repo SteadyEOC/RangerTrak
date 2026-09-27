@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core'
 
-import { DEFAULT_PMTILES_URL } from '../mapping/pmtiles-config'
+import { wantedPmtilesUrls } from '../mapping/demo-map'
+import { CustomPmtilesService } from './custom-pmtiles.service'
 import { LogService, RangerService, MissionService, StoragePersistenceService } from './'
 
 export type ReadinessLevel = 'red' | 'amber' | 'green'
@@ -58,6 +59,7 @@ export class MissionReadinessService {
     private missionService: MissionService,
     private rangerService: RangerService,
     private storagePersistenceService: StoragePersistenceService,
+    private customPmtiles: CustomPmtilesService,
     private log: LogService,
   ) {
     this.missionService.getMissionObserver().subscribe({
@@ -86,9 +88,12 @@ export class MissionReadinessService {
       this.offlineTilesSaved.set(false)
     }
 
+    // E-124: "warmed" means EVERY map file this device should hold - the world base, plus
+    // the loaded demo's street-detail file when a demo is the mission - not just the base.
     try {
-      const match = await caches.match(DEFAULT_PMTILES_URL)
-      this.bundledMapWarmed.set(!!match)
+      const wanted = wantedPmtilesUrls({ customActive: !!this.customPmtiles.active() })
+      const matches = await Promise.all(wanted.map(url => caches.match(url)))
+      this.bundledMapWarmed.set(matches.every(m => !!m))
     } catch (e) {
       this.log.warn(`caches.match() failed: ${e}`, this.id)
       this.bundledMapWarmed.set(false)
