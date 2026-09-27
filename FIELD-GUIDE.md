@@ -20,12 +20,11 @@ long as you like.
 
 | Page | What it's for |
 | --- | --- |
-| **Home** | Enter a radio log entry (also called a field report): who called in, where they are, their status, and any notes. This is where you spend the mission. |
-| **Reports** | Every report so far, in a sortable, filterable table. Select rows here to focus the maps on just those reports. |
+| **Entry** | Enter a radio log entry (also called a field report): who called in, where they are, their status, and any notes. This is where you spend the mission. |
+| **Radio Log** | Every report so far, in a sortable, filterable table. Select rows here to focus the maps on just those reports. |
 | **Rangers** | Your roster — call signs, names, contact details, teams. |
-| **Map (Leaflet)** | Full-page map using standard online road maps. Best detail, anywhere in the world, but needs Internet. |
-| **Map (MapLibre+PMTiles)** | Full-page map using map data built into the app. Works with no Internet at all: a low-detail world map everywhere, plus real street-level detail in each demo area while that demo is loaded, and wherever you load your own map file (see step 6 below). |
-| **Settings** | Mission name, operating period, expected check-in interval, default location, status labels and colours, backup and restore. |
+| **Map** | Leaflet by default, using standard online road maps — best detail, anywhere in the world, but needs Internet. An on-page switch tries the Alternative engine (MapLibre) instead: map data built into the app, works with no Internet at all — a low-detail world map everywhere, plus real street-level detail in each demo area while that demo is loaded, and wherever you load your own map file (see step 6 below). |
+| **Mission** | Mission name, operating period, expected check-in interval, default location, status labels and colours, backup and restore. |
 | **Log** | A running record of what the app did, including warnings and crashes. Export it when reporting a problem. |
 
 ### Who it's for
@@ -34,12 +33,12 @@ RangerTrak is built for teams reachable only by **voice radio** — CERT, ACS/AR
 wildland-fire operations — where field members carry no networked device. Three roles:
 
 1. **Scribe / net control (command post).** Sets up the mission and operating period once,
-   maintains the roster, then spends the incident on the Home screen transcribing reports
+   maintains the roster, then spends the incident on the Entry screen transcribing reports
    radioed in: who, where, when, status, notes. **This is the primary user** — the app is
    designed around their speed and accuracy.
 2. **Field ranger / team.** Never touches the app. They are a voice on the radio.
    RangerTrak's job is to make their spoken location fast and unambiguous to write down.
-3. **Analyst / Incident Commander.** Uses the Reports table and maps during the incident to
+3. **Analyst / Incident Commander.** Uses the Radio Log table and maps during the incident to
    see coverage and status, and exports afterwards for the after-action record.
 
 ### Spotting a team that has gone quiet
@@ -164,13 +163,13 @@ save themselves, but edits typed into the grid are *not* saved until you press *
 edits**, under the grid.
 
 **4. Set up the mission.**
-On the **Settings** page, fill in the mission and event names, the operating period start
+On the **Mission** page, fill in the mission and event names, the operating period start
 and end, and the default coordinates for your area. The default location is where maps and
 new reports start from, so getting it right saves work all mission.
 
 **5. Check your statuses.**
-Still in **Settings**, review the radio log entry statuses and their colours. These drive the
-colour coding on the Reports table. Rename them to match your agency's terminology now,
+Still in **Mission**, review the radio log entry statuses and their colours. These drive the
+colour coding on the Radio Log table. Rename them to match your agency's terminology now,
 not mid-mission.
 
 **6. Prime the maps — the step people forget.**
@@ -219,7 +218,7 @@ Both engines live on the one **Map** page now, switched with the toggle above th
 > Map data from this tool carries the same OpenStreetMap attribution the app already shows.
 
 **7. Take a backup.**
-On **Settings**, press **Back up mission**. This writes a single file containing your
+On **Mission**, press **Back up mission**. This writes a single file containing your
 settings, roster, and any reports. Keep it somewhere safe — a USB stick, another device.
 If the browser data is ever lost, **Restore mission** restores everything.
 
@@ -240,15 +239,15 @@ Setup is infrequent and considered; entry is repetitive and time-critical — th
 may do both, but they're different modes of working. See the in-app Help page for more on
 the distinction.
 
-**Entering a report.** On the **Home** page, pick the call sign, set the location, choose a
+**Entering a report.** On the **Entry** page, pick the call sign, set the location, choose a
 status, add notes, and submit. Reports save to the device immediately.
 
 **Setting a location.** You can enter coordinates directly, or type an address and let
-RangerTrak look it up. The small "Current Location" map right on the Home page is the
+RangerTrak look it up. The small "Current Location" map right on the Entry page is the
 fastest way — click anywhere on it and that position is set immediately, no typing or
 pasting needed (it's also copied to your clipboard, in case you want it elsewhere too).
-The full Map and Alternative Map pages don't set the location this way; clicking them copies
-the coordinates under your cursor so you can paste them into Home yourself.
+The **Map** page doesn't set the location this way, in either engine; clicking it copies
+the coordinate under your cursor so you can paste it into Entry yourself.
 
 RangerTrak accepts a position in whichever format it was called in over the radio. A
 small switcher above the coordinate fields picks which one is active - type into that one,
@@ -270,9 +269,9 @@ see the same position however else it's expressed:
 > 100–200m in the western US — worth knowing if a position looks slightly wrong
 > compared to what you see on the map.
 
-Every format is always available from Home's own switcher, so an unexpected radio
-call in a format your mission doesn't usually use is never a problem. **Settings → Location
-Defaults** only picks which format Home opens on by default for this mission - a convenience
+Every format is always available from Entry's own switcher, so an unexpected radio
+call in a format your mission doesn't usually use is never a problem. **Mission → Location
+defaults** only picks which format Entry opens on by default for this mission - a convenience
 for a team that mostly works in one format, not a restriction on what you can enter. Don't
 see a coordinate system your team actually uses (e.g. PLSS Township/Range/Section, or
 another country's national grid)? Open an issue on
@@ -286,11 +285,11 @@ what decides what gets added next.
 together, they are grouped into a numbered circle; zoom in to separate them. Click a marker
 for detail.
 
-**Focusing on a subset.** Select rows on the **Reports** page, then switch to a map — you
-can show just the selected reports instead of everything. Useful for a single team or a
+**Focusing on a subset.** Select rows on the **Radio Log** page, then switch to the **Map**
+page — you can show just the selected reports instead of everything. Useful for a single team or a
 single incident.
 
-**Handing over.** Press **Back up mission** on **Settings** and give the file to the
+**Handing over.** Press **Back up mission** on **Mission** and give the file to the
 incoming operator, who restores it on their device.
 
 **Reports from rangers' own phones.** A device is set up as either the **full app** (the
@@ -337,10 +336,10 @@ group:
 
 > ⚠️ **Export first.** This is irreversible, and there is no undo.
 
-1. **Settings** → *Advanced Options* → **Reset Settings**, then re-enter what you want.
-2. **Rangers** → *Advanced* → **Delete Rangers**. Note that a default roster is loaded
-   automatically in its place; edit or replace it as needed, then **Save Rangers**.
-3. **Reports** → *Advanced* → **Delete ALL Radio Log entries from local storage**.
+1. **Mission** → *Danger zone* → **Reset mission to defaults**, then re-enter what you want.
+2. **Rangers** → *Danger zone* → **Delete all rangers**. Note that a default roster is loaded
+   automatically in its place; edit or replace it as needed, then **Save edits**.
+3. **Radio Log** → *Danger zone* → **Delete all radio log entries**.
 
 Switching to a different browser or a different device also gives you a completely fresh
 environment — RangerTrak's data is per-browser, so Firefox knows nothing about what you did
@@ -373,7 +372,7 @@ complete enough — addresses can be filled in afterwards.
 | Feature | Without Internet |
 | --- | --- |
 | Entering and saving reports | ✅ Works |
-| Roster, Reports table, Settings, Log | ✅ Works |
+| Roster, Radio Log table, Mission, Log | ✅ Works |
 | Exporting and importing missions | ✅ Works |
 | Coordinate entry and conversion | ✅ Works |
 | **Map — Leaflet (the default engine)** | ⚠️ Only the areas you saved in advance |
@@ -482,8 +481,9 @@ your agency's policy on handling participant information.
 
 ## Trying it out, and known rough edges
 
-**Want to see it populated?** On **Settings**, under *Advanced Options*, press
-**Load Sample Mission**. This fills the app with a demonstration roster and about thirty
+**Want to see it populated?** On a brand-new device, the Entry page's welcome panel offers
+**Load Demo Data**. Otherwise, on **Mission** → *Danger zone*, pick a **Demo scenario** and
+press **Load sample mission**. This fills the app with a demonstration roster and about thirty
 reports in the demo area you pick (Grand Canyon by default) — useful for training, demonstrating to others, or just
 seeing what a busy mission looks like.
 
@@ -492,7 +492,7 @@ seeing what a busy mission looks like.
 
 **Rough edges to be aware of:**
 
-- **Roster edits are not saved automatically.** Press **Save Rangers** on the Rangers page,
+- **Roster edits are not saved automatically.** Press **Save edits** on the Rangers page,
   or your changes are lost on reload.
 - **The Alternative map's built-in street detail covers the demo areas only**, and only
   while that demo is loaded. Everywhere else you get a low-detail world map with your report
