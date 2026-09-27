@@ -29,8 +29,11 @@ import { StatusKey } from './status-color'
  * 3 - rename the legacy `google` settings block to `maplibre` (E-70).
  * 4 - drop `w3wLocale` and `defPlusCode`, both dead controls removed from MissionType
  *     during the E-84 audit's cleanup (E-89/E-90).
+ * 5 - drop `allowManualPinDrops` (2026-09-26): its checkbox did nothing - the pin-drop
+ *     branch was an unimplemented stub - and Locations (D-49) cover the need. Kept as an
+ *     idea on the roadmap (E-127, with geofencing).
  */
-export const MISSION_SCHEMA_VERSION = 4
+export const MISSION_SCHEMA_VERSION = 5
 
 /**
  * Default length of an operational period, in hours. Used in two places that must agree:
@@ -135,6 +138,9 @@ export function migrateMission(raw: MissionType, defaults?: MissionType): Missio
     if (version < 4) {
       settings = dropDeadLocationFields(settings)
     }
+    if (version < 5) {
+      settings = dropManualPinDrops(settings)
+    }
     settings = { ...settings, schemaVersion: MISSION_SCHEMA_VERSION }
   }
 
@@ -226,6 +232,14 @@ function renameGoogleToMaplibre(settings: MissionType): MissionType {
 function dropDeadLocationFields(settings: MissionType): MissionType {
   const raw = settings as unknown as Record<string, unknown>
   const { w3wLocale, defPlusCode, ...rest } = raw
+  return rest as unknown as MissionType
+}
+
+/** v4 -> v5. Same shape as dropDeadLocationFields() above: backfillMissingFields() is
+ *  additive only, so without this the removed field would stay in stored settings forever. */
+function dropManualPinDrops(settings: MissionType): MissionType {
+  const raw = settings as unknown as Record<string, unknown>
+  const { allowManualPinDrops, ...rest } = raw
   return rest as unknown as MissionType
 }
 

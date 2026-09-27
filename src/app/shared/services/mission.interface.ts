@@ -27,7 +27,6 @@ export type MissionType = {
 
   defLat: number,
   defLng: number,
-  allowManualPinDrops: boolean,
 
   // Per-mission coordinate system visibility (Sprint H). Each independently gates a
   // block in location.component.html; Entry's own "Show all systems" checkbox

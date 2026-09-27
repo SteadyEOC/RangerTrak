@@ -1048,10 +1048,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   override displayMarkers() {
     super.displayMarkers()
 
-    // "Manually dropped markers" (the concern this comment used to raise) were never actually
-    // built - onMouseClick()'s `allowManualPinDrops` branch (shared/mapping/map.ts) is still an
-    // unimplemented stub - and the real need it anticipated is now served by Locations (ADR
-    // D-49), which lives in its own separate locationsLayer and isn't touched by this redraw.
+    // "Manually dropped markers" were never built (the setting was removed 2026-09-26); the
+    // need is served by Locations (ADR D-49), in their own locationsLayer, untouched here.
     if (!this.displayedRadioLogEntries) {
       this.log.error(`displayAllMarkers did not find field reports to display`, this.id)
       return
@@ -1426,19 +1424,6 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       //_map.addLayer(markerCluster);
 
       _marker.addTo(this.lMap)
-
-      _marker.addEventListener('click', this.addManualMarkerEvent);
-    }
-  }
-
-  override addManualMarkerEvent(event: any) {
-    this.log.warn(`Got Marker Click!!!! event= ${JSON.stringify(event)}`, this.id)
-    if (this.settings!.allowManualPinDrops) {
-      if (event.latLng) {
-        this.addMarker(event.latLng.lat, event.latLng.lng, `Manual Marker dropped ${event.latLng.lat}, ${event.latLng.lng} at ${Date()}`)
-      } else {
-        this.log.error(`addMarker FAILED`, this.id)
-      }
     }
   }
 

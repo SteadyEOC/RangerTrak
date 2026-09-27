@@ -678,9 +678,6 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     this.myMarkerCluster.clearLayers()
     //    throw new Error('Method not implemented.')
   }
-  addManualMarkerEvent(event: any): void {
-    //throw new Error('Method not implemented.')
-  }
 
   // E-64/E-70 blocker (see LmapComponent.ngOnDestroy() for the full explanation): this
   // class had the same gap - declared OnDestroy, never defined it, so the Leaflet instance

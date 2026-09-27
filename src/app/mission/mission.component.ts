@@ -65,7 +65,7 @@ const blankMission: MissionType = {
   mission: '', event: '', eventNotes: '', opPeriod: '',
   opPeriodStart: new Date(0), opPeriodEnd: new Date(0),
   application: '', version: '', debugMode: false,
-  defLat: 0, defLng: 0, allowManualPinDrops: false,
+  defLat: 0, defLng: 0,
   googleGeocodingApiKey: '',
   showDD: true, showDDM: true, showDMS: true, showMGRS: true, showUTM: true, showMaidenhead: true,
   maplibre: { defZoom: 15, markerScheme: '', overviewDifference: 5, overviewMinZoom: 5, overviewMaxZoom: 16 },

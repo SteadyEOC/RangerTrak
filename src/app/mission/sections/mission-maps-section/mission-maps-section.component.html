@@ -5,18 +5,8 @@
   </mat-card-header>
   <mat-card-content>
 
-    <!-- Material-M3 pass: `mat-checkbox` bound through the FieldState's own WritableSignal
-         rather than `[formField]` - Signal Forms' formField directive cannot act as the
-         value accessor for a Material checkbox (angular/components#32072). Same approach as
-         the coordinate-system checklist in mission-location-section. -->
-    <mat-checkbox [checked]="form.allowManualPinDrops().value()"
-      (change)="form.allowManualPinDrops().value.set($event.checked)">
-      Clicking a map drops a new marker
-    </mat-checkbox>
-    <p class="mission__note">
-      These markers are not saved. By default, clicking a Leaflet map copies the lat/long to
-      the clipboard instead.
-    </p>
+    <!-- 2026-09-26: the "Clicking a map drops a new marker" checkbox was removed - it did
+         nothing (schema v5, mission-migration.ts). Clicking a map copies its coordinates. -->
 
     <!-- D-31: "Leaflet"/"Alternative Map", not "online"/"offline" - Leaflet is also usable
          offline once tiles are saved for the area, so neither engine is "the offline one".

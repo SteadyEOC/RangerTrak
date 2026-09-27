@@ -275,7 +275,6 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
 
       defLat: 47.4472,
       defLng: -122.4627,  // Vashon EOC!
-      allowManualPinDrops: false,
       googleGeocodingApiKey: '',
 
       showDD: true,

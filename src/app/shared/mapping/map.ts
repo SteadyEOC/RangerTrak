@@ -190,13 +190,8 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
   }
 
   /**
-  * Store Lat/Lng in Clipboard
-  *! REVIEW: AND/ OR (do both?!)
-  *! Or use this event to create a new marker?!
-  *
-  *! Review: Alternative approach: Use event listeners:
-  * https://developers.google.com/maps/documentation/javascript/examples/event-click-lat lng
-  * https://developers.google.com/maps/documentation/javascript/events#EventProperties
+  * Copies the clicked point's lat/lng to the clipboard. (A "drop a marker here" mode was
+  * never built; its setting was removed 2026-09-26 - E-127 keeps the idea.)
   *
   * @param ev
   */
@@ -208,29 +203,24 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
       return
     }
 
-    if (this.settings.allowManualPinDrops) {
-      // Put coordinates into a new non-permanent marker & drop on to map
-      this.log.error(`(Abstract) onMouseClick() to create markers not implemented yet!`, this.id)
-    } else {
-      // Put coordinates into clipboard
-      let latlng = this.map.mouseEventToLatLng(ev)
-      let coords = `${Math.round(latlng.lat * 10000) / 10000}, ${Math.round(latlng.lng * 10000) / 10000}`
-      navigator.clipboard.writeText(coords)
-        .then(() => {
-          let status = document.getElementById('map-status')
-          if (status) {
-            status.innerText = `${coords} copied to clipboard`
-            //status.style.visibility = "visible"
-            Utility.resetMaterialFadeAnimation(status)
-          } else {
-            this.log.info(`(Abstract) onMouseClick Entry__Minimap-status not found!`, this.id)
-          }
-          this.log.excessive(`(Abstract) ${coords} copied to clipboard`, this.id)
-        })
-        .catch(err => {
-          this.log.error(`(Abstract) onMouseClick latlng NOT copied to clipboard, error: ${err}`, this.id)
-        })
-    }
+    // Put coordinates into clipboard
+    let latlng = this.map.mouseEventToLatLng(ev)
+    let coords = `${Math.round(latlng.lat * 10000) / 10000}, ${Math.round(latlng.lng * 10000) / 10000}`
+    navigator.clipboard.writeText(coords)
+      .then(() => {
+        let status = document.getElementById('map-status')
+        if (status) {
+          status.innerText = `${coords} copied to clipboard`
+          //status.style.visibility = "visible"
+          Utility.resetMaterialFadeAnimation(status)
+        } else {
+          this.log.info(`(Abstract) onMouseClick Entry__Minimap-status not found!`, this.id)
+        }
+        this.log.excessive(`(Abstract) ${coords} copied to clipboard`, this.id)
+      })
+      .catch(err => {
+        this.log.error(`(Abstract) onMouseClick latlng NOT copied to clipboard, error: ${err}`, this.id)
+      })
   }
 
   clamp(num: number, min: number, max: number) {
@@ -317,7 +307,6 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
   abstract addMarker(lat: number, lng: number, title: string): void
   abstract hideMarkers(): void
   abstract clearMarkers(): void
-  abstract addManualMarkerEvent(event: any): void
 
   displayMarkers() {
     this.log.verbose(`(Abstract) displayMarkers()`, this.id)

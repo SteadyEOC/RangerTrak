@@ -193,6 +193,21 @@ describe('migrateMission', () => {
     })
   })
 
+  describe('drop allowManualPinDrops (schemaVersion 4 -> 5, 2026-09-26)', () => {
+    it('removes the field and leaves every other field exactly as it was', () => {
+      const stored = { ...v0Settings(), schemaVersion: 4, allowManualPinDrops: true } as unknown as Record<string, unknown>
+
+      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<string, unknown>
+
+      expect('allowManualPinDrops' in out).toBe(false)
+      expect(out['schemaVersion']).toBe(5)
+      for (const key of Object.keys(stored)) {
+        if (key === 'allowManualPinDrops' || key === 'schemaVersion') continue
+        expect(out[key]).withContext(key).toEqual(stored[key])
+      }
+    })
+  })
+
   describe('drop dead w3wLocale/defPlusCode fields (E-89/E-90, schemaVersion 3 -> 4)', () => {
     it('removes both dead fields from a returning user\'s stored object', () => {
       const stored = {
