@@ -126,6 +126,18 @@ describe('BackupService', () => {
       expect(storedSettings.mission).toBe('Roundtrip Mission');
     });
 
+    it('E-126: restoring an older-format backup (settings schema v4) migrates it on the way in', async () => {
+      const backup = TestBed.inject(BackupService);
+      const missionService = TestBed.inject(MissionService);
+      const exported = backup.buildExportPayload();
+      const old = { ...exported, settings: { ...exported.settings, schemaVersion: 4, allowManualPinDrops: true } as any };
+
+      await backup.importMission(old);
+
+      expect(missionService.settings.schemaVersion).toBe(5);
+      expect('allowManualPinDrops' in missionService.settings).toBe(false);
+    });
+
     it('E-124: a restored mission is not a demo - the demo marker is cleared', async () => {
       const backup = TestBed.inject(BackupService);
       setActiveDemoScenario('grand-canyon');

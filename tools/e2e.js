@@ -2206,6 +2206,61 @@ async function checkEntryUsesNewMissionDefault() {
   await goto('/')
 }
 
+/**
+ * E-126, the 1.0.0-rc.1 gate: every release's fixture backup (tools/backup-fixtures/, made
+ * by tools/make-backup-fixture.js on the day that release was tagged) must still restore into
+ * THIS build, plain and encrypted, through the real Restore control. Each value in the
+ * folder's expect.json is checked; the check labels name the release, so a failure says whose
+ * backup broke.
+ */
+async function checkBackupFixturesRestore() {
+  console.log('\nE-126: every release\'s fixture backup restores into this build')
+  const root = path.join(__dirname, 'backup-fixtures')
+  const releases = fs.readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).sort()
+  check('at least one release fixture exists', releases.length > 0, true)
+
+  for (const release of releases) {
+    const expected = JSON.parse(fs.readFileSync(path.join(root, release, 'expect.json'), 'utf8'))
+    for (const [file, answers] of [
+      ['backup.json', [true, true]], // confirm the restore, then the "restored" alert
+      ['backup-encrypted.json', [expected.passphrase, true, true]], // passphrase first
+    ]) {
+      const label = `${release}/${file}`
+      await goto('/mission')
+      await evaluate(`localStorage.clear()`)
+      await idbClearAll()
+      await goto('/mission')
+      queueDialogs(...answers)
+      await setFileInput('#importMissionFile', path.join(root, release, file))
+      await sleep(2500) // the restore reloads the page
+
+      const rangersRaw = await pollUntil(
+        () => idbGetRaw('rangers'),
+        raw => (JSON.parse(raw || '{"rangers":[]}').rangers || []).length > 0)
+      const rangers = JSON.parse(rangersRaw || '{"rangers":[]}').rangers || []
+      const radioLog = JSON.parse((await idbGetRaw('radioLog')) || '{}')
+      const locRaw = JSON.parse((await idbGetRaw('locations')) || '{}')
+      const locations = Array.isArray(locRaw) ? locRaw : (locRaw.locations || [])
+      const settings = await evaluate(`JSON.parse(localStorage.getItem('appSettings') || '{}')`)
+      const entries = radioLog.logEntries || []
+
+      check(`${label}: mission name`, settings.mission, expected.mission)
+      check(`${label}: roster size`, rangers.length, expected.rangers)
+      check(`${label}: a named ranger came back`, rangers.some(r => r.callsign === expected.sampleRangerCallsign), true)
+      check(`${label}: radio log size`, entries.length, expected.radioLogEntries)
+      check(`${label}: a sample report came back`, entries.some(e =>
+        e.callsign === expected.sampleEntry.callsign && e.status === expected.sampleEntry.status), true)
+      check(`${label}: Location count`, locations.length, expected.locations)
+      check(`${label}: a named Location came back`, locations.some(l => l.name === expected.sampleLocationName), true)
+    }
+  }
+
+  // Leave a clean, unencrypted, empty device for whatever runs next.
+  await evaluate(`localStorage.clear()`)
+  await idbClearAll()
+  await goto('/mission')
+}
+
 async function checkMissionRoundTrip(downloads) {
   console.log('\nMission backup -> wipe all storage -> restore: the disaster path')
   await goto('/mission')
@@ -2602,6 +2657,7 @@ async function main() {
       await checkMissionWithPersistedSettings()
       if (FULL) {
         await checkMissionRoundTrip(downloads)
+        await checkBackupFixturesRestore()
         await checkReportPacketRoundTrip(downloads)
         await checkSampleMissionLoads()
         await checkDeviceEncryption()
