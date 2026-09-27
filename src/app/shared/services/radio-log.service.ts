@@ -102,15 +102,12 @@ export class RadioLogService {
     //! REVIEW: this.log.verbose(`Constructor call stack (NOT an error: why called twice?): ${new Error().stack}`, this.id)
 
     // Subscribe to Settings BEFORE loading reports: MissionService replays its current
-    // value synchronously, so this populates this.settings first. Loading first meant a
-    // fresh install built its empty RadioLog with version '0' (initEmptyRadioLog
-    // falls back when settings are missing), which then failed the version check below
-    // and logged a bogus "does NOT match" error on every virgin start.
+    // value synchronously, so this populates this.settings first - initEmptyRadioLog()
+    // stamps the new log with the current app version from it.
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
         this.settings = newMission
         this.log.excessive('Received new Settings via subscription.', this.id)
-        this.checkRadioLogVersion()
       },
       error: (e) => this.log.error('Settings Subscription got:' + e, this.id),
       complete: () => this.log.info('Settings Subscription complete', this.id)
@@ -129,30 +126,11 @@ export class RadioLogService {
   }
 
 
-  /**
-   * Compares the app version stamped on the stored radio log against the currently
-   * running app version.
-   *
-   * Investigated 2026-08-31 (roadmap backlog item, "latent gap: the check never actually
-   * fires on startup"): true, but NOT fixed here on purpose. `version` is the raw app
-   * version string (`package.json`), which changes on every single deploy - since "no
-   * upgrade logic implemented yet" (this function's own log line already says so), a
-   * mismatch is the NORMAL state after any release, for every returning user, not a real
-   * anomaly. Making this run on the guaranteed-to-mismatch startup path would turn a silent
-   * no-op into a `log.error` on nearly every session - worse than today's gap, not better.
-   * Left wired only from the settings subscription's `next` (a live mid-session settings
-   * change, comparatively rare) until this compares against something meaningful - a real
-   * schema/data version, not the app's own release string.
-   */
-  private checkRadioLogVersion(): void {
-    if (!this.radioLog || !this.settings) { return }
-
-    if (this.radioLog.version == this.settings.version) {
-      this.log.excessive('Application version matches version used to store Field Reports.', this.id)
-    } else {
-      this.log.error(`Application version ${this.settings.version} does NOT match version used to store Field Reports: ${this.radioLog.version}. No upgrade logic implemented yet...`, this.id)
-    }
-  }
+  // 2026-09-27: checkRadioLogVersion() removed. It compared the app RELEASE string stamped on
+  // the stored log with the running release - a mismatch after every deploy, so it could only
+  // ever log a false error (and, wired to the settings subscription, did so on a mid-session
+  // settings change). The real data version is `schemaVersion`, migrated on every load by
+  // migrateRadioLog() (radio-log-migration.ts, ADR D-42).
 
   /**
    * Load any existing radio log from browser's Local Storage

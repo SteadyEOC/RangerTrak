@@ -61,8 +61,10 @@ export class AlertsComponent implements OnInit, OnDestroy {
   Banner(msg: string, action1: string | undefined = 'Close', action2: string | undefined = "Close") {
     // https://material.io/components/banners#usage  //@use "@material/banner/styles";
 
+    // Called before ngOnInit found the banner (or it wasn't rendered yet): look it up now.
+    // #81 (2026-09-27): this used to console.log a REVIEW line - the lazy lookup is the
+    // intended fallback, not an anomaly.
     if (this.alertBanner == null) {
-      console.log('REVIEW: AlertComponent.Banner() called BEFORE AlertComponent.ngInit!')
       this.alertBanner = this.document.querySelector('.mdc-banner')
     }
 

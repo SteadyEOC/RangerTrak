@@ -39,7 +39,7 @@ import { RouterLink } from '@angular/router'
 import { PageComponent } from '../shared/page/page.component'
 import {
   RadioLogStatusType, LocationCategoryType, LogService, MissionReadinessService,
-  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, MissionService, MissionType
+  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, MissionService, MissionType
 } from '../shared/services/'
 import { InstallUpdateComponent } from '../shared/install-update/install-update.component'
 import { HasUnsavedChanges } from '../shared/guards/unsaved-changes.guard'
@@ -153,12 +153,8 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   opPeriodEnd = signal(new Date())
   timePickerLabelStart = 'Operational Period Start Time'
   timePickerLabelEnd = 'Operational Period End Time'
-  // Not user-editable - a bundled static asset path, not a secret or PII, so the earlier
-  // "potential security risk" framing here overstated it. customTooltip.ts (rangers/) still
-  // hardcodes this same path directly rather than reading it from here/settings - harmless
-  // today since both are always equal, but worth consolidating if imageDirectory is ever made
-  // genuinely configurable. See #81's roadmap list.
-  imgDir = "./assets/imgs/"
+  // Not user-editable - a bundled static asset path (see BUNDLED_IMAGE_DIRECTORY).
+  imgDir = BUNDLED_IMAGE_DIRECTORY
 
   /**
    * The editable working set behind the status/color grid, owned here and handed to

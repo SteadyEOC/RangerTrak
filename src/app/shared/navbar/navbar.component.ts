@@ -9,7 +9,6 @@ import { MDCTopAppBar } from '@material/top-app-bar'
 // import { MatButtonModule } from '@angular/material/button'
 import { subscribeOn } from 'rxjs';
 import { FieldModeService, LogService, MissionService, MissionType, Skin, SKINS, SkinService, ThemeService } from '../services';
-import { Utility } from '../utility';
 //https://material.io/components/app-bars-top/web#regular-top-app-bar
 
 @Component({
@@ -66,18 +65,11 @@ export class NavbarComponent implements OnInit {
       (event) => {
         // https://angular.io/api/router/NavigationStart
         if (event instanceof NavigationStart) {
-          // REVIEW: This seems to help page get properly loaded????
-          Utility.sleep(100)
+          // #81 (2026-09-27): an un-awaited Utility.sleep(100) used to sit here ("seems to
+          // help page get properly loaded") - an unawaited promise delays nothing, so it was
+          // removed, with a never-taken `if (false)` reload block below it.
           this.isNavigating.set(true)
           this.navOpen.set(false)
-
-          if (false) {
-            //if (this.recycled++ < 3) {
-
-            Utility.sleep(100)
-            this.log.verbose(`Reloading window!`, this.id)
-            window.location.reload()
-          }
         }
         if (event instanceof NavigationEnd) {
           this.isNavigating.set(false)

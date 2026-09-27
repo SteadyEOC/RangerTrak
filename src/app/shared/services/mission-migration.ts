@@ -43,6 +43,13 @@ export const MISSION_SCHEMA_VERSION = 5
 export const DEFAULT_OP_PERIOD_HOURS = 12
 
 /**
+ * Where the bundled images (ranger photos under `rangers/`) are served from. A static asset
+ * path, not a secret or PII. One constant (#81, 2026-09-27) for MissionService's default,
+ * MissionComponent's save, and the Rangers photo tooltip, which each hard-coded it.
+ */
+export const BUNDLED_IMAGE_DIRECTORY = './assets/imgs/'
+
+/**
  * The status colors as shipped before v1, paired with the semantic key each becomes.
  *
  * Matched on BOTH status name and color, deliberately. Matching on color alone would

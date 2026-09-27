@@ -7,7 +7,7 @@ import * as packageJson from '../../../../package.json'
 import { RadioLogStatusType, LogService, MissionType } from './'
 import {
   DEFAULT_RADIO_LOG_STATUSES, DEFAULT_LOCATION_TYPES, DEFAULT_RECIPIENT_OPTIONS_213,
-  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, migrateMission
+  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, migrateMission
 } from './mission-migration'
 
 @Injectable({ providedIn: 'root' })
@@ -307,7 +307,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
         overviewMaxZoom: 16
       },
 
-      imageDirectory: "./assets/imgs/",    //! WARNING: Hardcoded & potential SECURITY risk.
+      imageDirectory: BUNDLED_IMAGE_DIRECTORY,
       defRadioLogStatus: 0, // which of the following array entries to use as the default value
       //? FUTURE: Consider replacing "Color" with "CSS_Style" to allow more options?
       //? FUTURE: Consider adding contrasting 'shadow color' for nice display on entry form
