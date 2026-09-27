@@ -281,7 +281,7 @@ what decides what gets added next.
 > Address lookup needs Internet. Without it, you'll see a message saying so. Coordinates
 > always work offline — so if the network is down, work in coordinates.
 
-**Watching the picture develop.** Both map pages plot every report. Where reports cluster
+**Watching the picture develop.** The **Map** page plots every report, with either map. Where reports cluster
 together, they are grouped into a numbered circle; zoom in to separate them. Click a marker
 for detail.
 
