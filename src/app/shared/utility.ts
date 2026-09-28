@@ -192,7 +192,30 @@ export class Utility {
     return { negative: isNegative, days: days, hours: hours, minutes: min, seconds: sec, string: timeAsString }
   }
 
-
+  /**
+   * H (2026-09-28, John: AAR note): "a report dated one hour in the future was accepted
+   * silently." A pure check, not a validator - D-33/capability-not-policy means this warns
+   * rather than blocks (a scribe legitimately backfilling a paper log, or correcting a typo
+   * mid-edit, must still be able to submit) - see EntryComponent.reportTimeInFuture, which
+   * reads this on every date/time change and shows the warning, never disables Send.
+   *
+   * `thresholdMinutes` defaults to 5 rather than 0: clock skew between this device and
+   * whatever it's compared against, plus the handful of seconds a scribe spends between
+   * opening the time picker and hitting Send, both land a "right now" entry a few seconds to
+   * a few minutes ahead - flagging every one of those would just be noise around the actual
+   * mistake this exists to catch (a stray hour, a wrong AM/PM-equivalent, a fat-fingered day).
+   */
+  static isReportTimeInFuture(reportTime: Date | string | number, now: Date | number = new Date(), thresholdMinutes = 5): boolean {
+    const reportMs = reportTime instanceof Date ? reportTime.getTime() : new Date(reportTime).getTime()
+    const nowMs = now instanceof Date ? now.getTime() : now
+    if (isNaN(reportMs) || isNaN(nowMs)) {
+      // Same "don't fail loudly on a bad Date" stance as asTime() elsewhere in this codebase
+      // (mission.component.ts) - an unparsable value isn't this check's problem to solve,
+      // and silently not-warning is safer than throwing out of a template binding.
+      return false
+    }
+    return reportMs - nowMs > thresholdMinutes * 60 * 1000
+  }
 
   //--------------------------------------------------------------------------
 

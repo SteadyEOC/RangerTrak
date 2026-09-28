@@ -31,6 +31,44 @@ describe('Utility', () => {
     });
   });
 
+  describe('isReportTimeInFuture', () => {
+    const now = Date.UTC(2026, 0, 1, 12, 0, 0);
+
+    it('is false for a time in the past', () => {
+      expect(Utility.isReportTimeInFuture(Date.UTC(2026, 0, 1, 11, 0, 0), now)).toBeFalse();
+    });
+
+    it('is false for the current moment', () => {
+      expect(Utility.isReportTimeInFuture(now, now)).toBeFalse();
+    });
+
+    it('is false for a few minutes in the future, within the default 5-minute threshold', () => {
+      expect(Utility.isReportTimeInFuture(Date.UTC(2026, 0, 1, 12, 4, 59), now)).toBeFalse();
+    });
+
+    it('is true just past the default 5-minute threshold', () => {
+      expect(Utility.isReportTimeInFuture(Date.UTC(2026, 0, 1, 12, 5, 1), now)).toBeTrue();
+    });
+
+    it('is true for an hour in the future - the reported live symptom', () => {
+      expect(Utility.isReportTimeInFuture(Date.UTC(2026, 0, 1, 13, 0, 0), now)).toBeTrue();
+    });
+
+    it('honors a custom threshold', () => {
+      const tenMinAhead = Date.UTC(2026, 0, 1, 12, 10, 0);
+      expect(Utility.isReportTimeInFuture(tenMinAhead, now, 5)).toBeTrue();
+      expect(Utility.isReportTimeInFuture(tenMinAhead, now, 15)).toBeFalse();
+    });
+
+    it('accepts an ISO string the same way settings round-trip through localStorage', () => {
+      expect(Utility.isReportTimeInFuture('2026-01-01T13:00:00.000Z', now)).toBeTrue();
+    });
+
+    it('is false, not throwing, for an unparsable value', () => {
+      expect(Utility.isReportTimeInFuture('not a date', now)).toBeFalse();
+    });
+  });
+
   describe('zeroFill', () => {
     it('left-pads a number to the requested width', () => {
       expect(Utility.zeroFill(5, 2)).toBe('05');

@@ -5,7 +5,7 @@ import {
 import { CommonModule, DOCUMENT } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import {
-  AfterViewInit, Component, ElementRef, EventEmitter, Inject, Input, isDevMode, NgZone, OnDestroy,
+  AfterViewInit, Component, computed, ElementRef, EventEmitter, Inject, Input, isDevMode, NgZone, OnDestroy,
   OnInit, Output, signal, ViewChild,
   ChangeDetectionStrategy
 } from '@angular/core'
@@ -421,6 +421,16 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.log.verbose(`Got new Report time: ${newTime}`, this.id)
     this.entryModel.update(m => ({ ...m, date: newTime }))
   }
+
+  /**
+   * H (2026-09-28, John: AAR note): "a report dated one hour in the future was accepted
+   * silently." A visible warning under the date/time, not a block - capability, not policy
+   * (see Utility.isReportTimeInFuture's own doc comment for why 5 minutes and why this
+   * never disables Send). Recomputed whenever entryModel().date changes (typing/picking a
+   * new time, or resetAll() reseeding it) - not on a live timer, since the moment that
+   * matters is when the scribe sets or edits the time, not every second after.
+   */
+  reportTimeInFuture = computed(() => Utility.isReportTimeInFuture(this.entryModel().date))
 
   /**
    * Initialize data or fetch external data from services or API (https://geeksarray.com/blog/angular-component-lifecycle)

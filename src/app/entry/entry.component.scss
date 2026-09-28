@@ -123,6 +123,27 @@ $filledColor: var(--rt-surface-2);
 
 // E-114 Phase 1: same plain-text-button treatment as .entry-welcome__demo's sibling controls,
 // sized down to sit inline inside the small connectivity badge rather than compete with it.
+// H (2026-09-28, John: AAR note): under the date/time picker, only while the report time is
+// more than 5 minutes in the future (Utility.isReportTimeInFuture). Same readiness-red text
+// treatment as mission-advanced-options' own `.mission__note--warn` - a warning, not a
+// `.warn` callout box: this needs to read at a glance under a field a scribe is actively
+// editing, not as a separate panel competing for attention.
+.entry-time-warning {
+  display    : flex;
+  align-items: center;
+  gap        : 0.4em;
+  margin     : 0.35em 0 0;
+  font-size  : var(--rt-type-body-sm-size);
+  color      : var(--rt-readiness-red);
+
+  mat-icon {
+    flex     : none;
+    font-size: 18px;
+    width    : 18px;
+    height   : 18px;
+  }
+}
+
 .entry-connectivity__send {
   margin-inline-start: 0.6em;
   padding      : 0 0.5em;

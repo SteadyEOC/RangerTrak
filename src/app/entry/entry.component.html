@@ -228,6 +228,18 @@
         [dateTabIndex]="dateTabIndex" [timeTabIndexStart]="timeTabIndexStart">
         <!-- [initialDate] = "initialTime" works, but we just use default - current time -->
       </rangertrak-time-picker>
+
+      <!-- H (2026-09-28, John: AAR note): "a report dated one hour in the future was
+           accepted silently." A visible WARNING, not a block - see
+           Utility.isReportTimeInFuture's own doc comment (capability, not policy: a scribe
+           backfilling a paper log, or mid-correction, must still be able to submit).
+           data-testid, not a class - same reason the rest of this page's own e2e hooks are. -->
+      @if (reportTimeInFuture()) {
+      <p class="entry-time-warning" role="status" data-testid="futureTimeWarning">
+        <mat-icon aria-hidden="true">warning</mat-icon>
+        This time is in the future. Check it before submitting.
+      </p>
+      }
     </div>
 
     <!-- ======================================= -->
