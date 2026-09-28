@@ -11,13 +11,17 @@
          not duplicated here - this stays just long enough to act on, not to explain. -->
     @if (isPhone()) {
       <div class="warn mission-command-post__phone-note">
-        This device can publish to RangerTrak Board, but can't run it - that needs a
-        laptop.
+        <!-- 2026-09-28, John: AAR note - the switch does not start the Board (nothing in
+             the app can); it sends this device's log to one already running on a laptop,
+             and that works from a phone too. Don't imply phones are shut out. -->
+        This phone can send to a Board running on a laptop. It can't run the Board itself.
       </div>
     }
     <p class="mission__note">
-      Needs a laptop running the RangerTrak Board program - see the Guide for setup. Off by default; your own
-      copy of the mission is unaffected either way.
+      <!-- 2026-09-28, John: AAR note - same correction as the phone note and the switch
+           label below: this device only ever sends to the Board, never runs it. -->
+      The Board runs on a laptop at the command post (see the Guide). This device only
+      sends to it. Off by default; your own copy of the mission is unaffected either way.
     </p>
     <div class="warn">
       Uses <code>https://</code>. The first time each device visits that address, the browser
@@ -30,7 +34,7 @@
          checkbox/toggle (angular/components#32072). -->
     <mat-slide-toggle [checked]="form.commandPostEnabled().value()"
       (change)="form.commandPostEnabled().value.set($event.checked)">
-      Publish to RangerTrak Board
+      Send this log to a RangerTrak Board
     </mat-slide-toggle>
 
     @if (form.commandPostEnabled().value()) {
