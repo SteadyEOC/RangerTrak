@@ -188,6 +188,16 @@ mat-slide-toggle {
   border    : none;
   background: transparent;
 
+  // 2026-09-28, John: AAR note - "matches the Material buttons (same radius, font,
+  // height), not a square box." This is leaflet.offline's own control, not a matButton, so
+  // it can't take mat.button-overrides() the way real Material buttons on this page just
+  // did (see styles.scss's app-wide button-shape block) - matched by hand instead, reading
+  // the same `--mat-sys-*` system tokens mat.theme() already emits app-wide (label-large
+  // for font, outline/primary for an outlined-button look) rather than inventing parallel
+  // values that could drift from the real buttons over time. 8px to match the new
+  // app-wide button corner radius exactly, not `var(--rt-radius)` (6px) - this control
+  // sits right beside real matButtons (Zoom to Extent) since the F29 grouping fix, so the
+  // two radii being visibly different would be the more obvious mismatch now.
   a {
     display      : flex;
     align-items  : center;
@@ -203,16 +213,19 @@ mat-slide-toggle {
     line-height  : 1.25;
     white-space  : nowrap;
     text-align   : left;
-    font-size    : 0.85rem;
-    background   : var(--rt-surface);
-    color        : var(--rt-ink);
-    border       : 1px solid var(--rt-ink-3);
-    border-radius: var(--rt-radius);
+    font-family  : var(--mat-sys-label-large-font, Roboto);
+    font-size    : var(--mat-sys-label-large-size, 0.875rem);
+    font-weight  : var(--mat-sys-label-large-weight, 500);
+    letter-spacing: var(--mat-sys-label-large-tracking, normal);
+    background   : transparent;
+    color        : var(--mat-sys-primary, var(--rt-ink));
+    border       : 1px solid var(--mat-sys-outline, var(--rt-ink-3));
+    border-radius: 8px;
     margin-bottom: 0.25em;
   }
 
   a:hover {
-    background: var(--rt-surface-2);
+    background: color-mix(in srgb, var(--mat-sys-primary, var(--rt-ink)) 8%, transparent);
   }
 
   // 2026-09-15, e2e "/map does not widen the page past the device" (390px phone): the
@@ -234,22 +247,41 @@ mat-slide-toggle {
 
 // Maintainer, 2026-08-24: the whole control (buttons + these info lines) was re-parented
 // out of Leaflet's floating corner-control system into normal page flow - see
-// #offlineControlsHost in the template / initMainMap(). Bare breathing room now that it's
-// not sitting inside Leaflet's own cornered .leaflet-bar spacing.
+// #offlineControlsHost in the template / initMainMap().
 //
-// Reported live from a screenshot, 2026-08-31: these buttons rendered well below
-// #mapLeaflet-overview's float instead of wrapping into the narrow column beside it, leaving
-// a tall blank gap the float's own height. `float: none` (below, on `.savetiles.leaflet-bar`)
-// only stops THIS block from floating itself - it says nothing about how wide a non-float
-// block sizes itself next to one, and with no explicit width this one was sizing to its full
-// unconstrained content width (two whole-sentence buttons), too wide to fit beside a 175px
-// float, so the browser dropped the whole block below it instead. Same fix, same reasoning,
-// as the `mat-slide-toggle` rule right below this one, which hit the identical problem one
-// element sooner: cap the width to what is actually available beside the float so it narrows
-// into that column instead of falling out of it.
+// 2026-09-28, John: AAR note - moved out of .mapLeaflet-container (where it used to wrap
+// into the narrow column beside #mapLeaflet-overview's float, the old `max-width: calc(100%
+// - 175px - 0.5rem)` this rule used to carry) and into .map-controls below, grouped with
+// Zoom to Extent and Print map. No float to dodge from there, so the old width cap is gone
+// too - .map-controls' own `clear: both` keeps the whole group off to the side of the float.
 .offline-controls {
-  margin-top: 0.5em;
-  max-width  : calc(100% - 175px - 0.5rem);
+  margin: 0;
+}
+
+// F: Zoom to Extent, Print map and the offline save-tiles control, grouped as one set of
+// "controls for this view" instead of scattered down the page - see the template's own
+// comment on this block for the history. `clear: both` is deliberate, not defensive
+// boilerplate: #mapLeaflet-overview's float (above) is tall enough to still be reaching this
+// far down the page in some layouts (see the `mat-slide-toggle` rule above, which needs the
+// same fix one element sooner) - a control group read wrong squeezed into that narrow
+// column, so this always starts below it instead.
+.map-controls {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: flex-start;
+  gap        : 0.75rem;
+  clear      : both;
+  margin     : 0.5em 0 1em;
+}
+
+// G: these are interactive-only, same reasoning map-page.component.scss already applies to
+// its own .map-engine-switch/.fullscreen-toggle - inert or actively confusing on paper
+// (a "Print map" button printed onto the page it just printed).
+@media print {
+  .map-controls,
+  .map-add-location {
+    display: none;
+  }
 }
 
 // Roadmap "Offline map area" item: saved/estimated size text, appended by

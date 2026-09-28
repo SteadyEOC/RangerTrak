@@ -94,6 +94,27 @@ body {
   height: 100%;
 }
 
+// 2026-09-28, John: AAR note - "less oval" buttons, if it's OK by Material style. M3's
+// default shape for every mat-button variant is `corner-full` (a full pill, its own
+// height/2 radius) - Material itself supports a smaller, less-round corner through the
+// official per-component override tokens rather than hand-rolled CSS fighting the MDC
+// styles, so this uses `mat.button-overrides()` the same way the rest of this file leans
+// on Material's own APIs instead of overriding `.mat-mdc-*` classes directly. One flat 8px
+// for every filled/outlined/text/tonal/raised button, app-wide - not a token, since this is
+// a one-off editorial call ("about 8px"), not a value anything else reads. Icon buttons and
+// FABs are untouched: a round icon button is normal M3, not the "oval" look being fixed,
+// and the app has no FABs to look out of place. Leaflet's own save-tiles control (not a
+// Material button) is matched to this by hand - see mapLeaflet.component.scss.
+:root {
+  @include mat.button-overrides((
+    filled-container-shape: 8px,
+    outlined-container-shape: 8px,
+    protected-container-shape: 8px,
+    text-container-shape: 8px,
+    tonal-container-shape: 8px,
+  ));
+}
+
 // 2026-09-27 (sticky navbar): in-page fragment links - Help's own tab anchors, and the
 // header's mission-readiness panel [fragment] links (header.component.html) - used to land
 // their target flush against the viewport top. Now that app.component.html's
@@ -196,9 +217,13 @@ rangertrak-footer {
 // Printing an ICS-309 from the Radio Log (radio-log.component.ts, onBtnPrint309) prints the
 // log alone: the app's navbar, banners, page header and footer are hidden only while that
 // print is running. Global because those elements live outside the Radio Log component.
+// G (2026-09-28, John: AAR note): "Print map" on the Map page joins the same rt-print-*
+// body-class family as Radio Log's ICS-309 print and After Action's own print - see
+// mapLeaflet.component.ts's/mapLibre.component.ts's onBtnPrintMap().
 @media print {
   body.rt-print-309,
-  body.rt-print-aar {
+  body.rt-print-aar,
+  body.rt-print-map {
     rangertrak-navbar,
     rangertrak-stale-origin-notice,
     rangertrak-install-update,

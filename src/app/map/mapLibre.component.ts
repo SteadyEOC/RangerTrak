@@ -304,7 +304,13 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       // raw fetch log. Left `false` anyway since it's a real, harmless behavior in its own
       // right (retains a blurrier placeholder tile longer instead of flashing to background
       // color while its replacement loads) - just don't credit it with fixing this bug.
-      cancelPendingTileRequestsWhileZooming: false
+      cancelPendingTileRequestsWhileZooming: false,
+      // G (2026-09-28, John: AAR note): "Print map" - see onBtnPrintMap()'s own comment for
+      // why a WebGL canvas needs this to print at all. Only the main map carries it; the
+      // 175px overview thumbnail below is decorative and never printed. Nested under
+      // canvasContextAttributes, not a top-level MapOptions field, in this maplibre-gl
+      // version.
+      canvasContextAttributes: { preserveDrawingBuffer: true }
     })
 
     // tools/e2e.js (#76 - the All/selected switch): stashed for read-only e2e introspection
@@ -1021,6 +1027,30 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     // MapLibre wants [lng, lat] pairs, the reverse of Leaflet - fitToBounds() above already
     // documents this. maxZoom matters: without it, two reports 10m apart would slam to max zoom.
     this.map.fitBounds([[b.west, b.south], [b.east, b.north]], { padding: 40, maxZoom: 16 })
+  }
+
+  /**
+   * G (2026-09-28, John: AAR note): same body-class print technique as LmapComponent's own
+   * copy of this method (mapLeaflet.component.ts) and After Action's onPrint(). This
+   * engine's map is a WebGL canvas, not Leaflet's plain tile <img>s, which is a known,
+   * well-documented risk for printing/screenshotting blank: a WebGL context normally clears
+   * its backbuffer right after compositing each frame, before the browser's print rasterizer
+   * ever asks for one. `preserveDrawingBuffer: true` on the main map (below) is the standard
+   * fix. Verified live with CDP Page.printToPDF against this build: the map prints correctly
+   * with this flag set, WITH a demo scenario loaded for real tile detail. An earlier check
+   * without a scenario loaded printed a flat background fill with no roads/labels - initially
+   * mistaken for this same blank-canvas bug, but it turned out to be correct behavior, not a
+   * bug: this app's own low-detail bundled world map genuinely has no data at that zoom
+   * without a scenario's own higher-detail pmtiles source registered (see
+   * showNoDetailNotice()) - confirmed by the fact that the OVERVIEW map (initOverviewMap()
+   * below, deliberately left WITHOUT this flag) printed its own real content correctly at
+   * its own lower zoom in that same run, which a genuine blank-canvas bug would not explain.
+   */
+  onBtnPrintMap(): void {
+    document.body.classList.add('rt-print-map')
+    window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-map'), { once: true })
+    window.print()
+    document.body.classList.remove('rt-print-map')
   }
 
   ngOnDestroy(): void {

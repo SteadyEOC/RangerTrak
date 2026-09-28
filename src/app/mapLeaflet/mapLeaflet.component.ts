@@ -1188,6 +1188,22 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   }
 
   /**
+   * G (2026-09-28, John: AAR note): the Map page already had print CSS for
+   * `.map-print-header` (map-page.component.scss) but no button to trigger it. Same
+   * body-class technique as Radio Log's ICS-309 print and After Action's own onPrint():
+   * hides the app chrome (navbar/banners/footer/page header) for the duration of the print
+   * only - the map tiles themselves need no special handling here, unlike MapLibre's own
+   * copy of this method (see mapLibre.component.ts's onBtnPrintMap for why that engine
+   * does).
+   */
+  onBtnPrintMap(): void {
+    document.body.classList.add('rt-print-map')
+    window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-map'), { once: true })
+    window.print()
+    document.body.classList.remove('rt-print-map')
+  }
+
+  /**
    * Redraws the mile grid overlay (see MILE_METERS' own comment) for the current viewport.
    * Clears and rebuilds from scratch rather than diffing - cheap enough at the line counts
    * a capped, zoomed-in-enough grid actually produces (see maxLines below), and far simpler

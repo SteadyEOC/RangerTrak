@@ -117,3 +117,12 @@ mat-slide-toggle {
   width : 22px;
   height: 26px;
 }
+
+// G: the whole controls/cards column is interactive-only chrome, same reasoning
+// map-page.component.scss already applies to its own .map-engine-switch/.fullscreen-toggle -
+// pointless on paper, and includes the very "Print map" button that triggered the print.
+@media print {
+  .rt-action-bar-group {
+    display: none;
+  }
+}

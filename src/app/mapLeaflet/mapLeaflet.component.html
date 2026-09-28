@@ -16,13 +16,7 @@
 
     <div id="Lmap-status">Click map to copy coordinates</div>
   </div>
-  <!-- Maintainer, 2026-08-24: the offline-save control (Save this area / Remove saved
-       tiles / the current-view and saved-area info lines) was floating over the map tiles
-       as a Leaflet corner control - moved into normal page flow, just below the map.
-       initMainMap() re-parents the control's own DOM node in here after building it. -->
-  <!-- F29-21 (2026-08-30): id is a fragment-scroll target for the header readiness dot's
-       "Offline map tiles saved" row - see mission-readiness.component.ts's own comment. -->
-  <div #offlineControlsHost id="readiness-offline-tiles" class="offline-controls"></div>
+
 </div>
 <br />
 
@@ -35,20 +29,47 @@ Radio log entries to show: All ({{numAllRows()}})
 </mat-slide-toggle>
 
 <br />
-<!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now (reports
-     honoring the All/selected switch, evidence markers, Location pins) - not the once-at-init
-     fit to the whole log. data-testid, not a class - tools/e2e.js needs a stable hook and
-     this repo has already been burned by e2e selectors hanging off styling classes. -->
-<button matButton="outlined" type="button" (click)="onBtnZoomToExtent()"
-  data-testid="zoomToExtent" title="Zoom out until every report, evidence marker and location now shown fits on screen">
-  <mat-icon>zoom_out_map</mat-icon>
-  Zoom to Extent
-</button>
+<!-- 2026-09-28, John: AAR note - "Zoom to extent" and the save-tiles control used to sit
+     in two different places on the page (this one here, the offline control down inside
+     .mapLeaflet-container beside the overview map) - grouped into one place as controls
+     for THIS view, print map (G) joining them since it's the same kind of thing. `clear:
+     both` (mapLeaflet.component.scss) keeps this group from trying to wrap beside
+     #mapLeaflet-overview's float the way the toggle above still does - a control group
+     reads wrong squeezed into a narrow column next to a thumbnail. -->
+<div class="map-controls">
+  <!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now (reports
+       honoring the All/selected switch, evidence markers, Location pins) - not the once-at-init
+       fit to the whole log. data-testid, not a class - tools/e2e.js needs a stable hook and
+       this repo has already been burned by e2e selectors hanging off styling classes. -->
+  <button matButton="outlined" type="button" (click)="onBtnZoomToExtent()"
+    data-testid="zoomToExtent" title="Zoom out until every report, evidence marker and location now shown fits on screen">
+    <mat-icon>zoom_out_map</mat-icon>
+    Zoom to Extent
+  </button>
+
+  <!-- G: prints the map alone (rt-print-map body class, styles.scss) - same approach as
+       Radio Log's ICS-309 print and After Action's own onPrint(). -->
+  <button matButton="outlined" type="button" (click)="onBtnPrintMap()"
+    data-testid="printMap" title="Print this map">
+    <mat-icon>print</mat-icon>
+    Print map
+  </button>
+
+  <!-- Maintainer, 2026-08-24: the offline-save control (Save this area / Remove saved
+       tiles / the current-view and saved-area info lines) was floating over the map tiles
+       as a Leaflet corner control - moved into normal page flow. initMainMap() re-parents
+       the control's own DOM node in here after building it. Moved again 2026-09-28 (AAR
+       note) from just below the map to sit beside Zoom to Extent/Print map instead - see
+       this block's own opening comment. -->
+  <!-- F29-21 (2026-08-30): id is a fragment-scroll target for the header readiness dot's
+       "Offline map tiles saved" row - see mission-readiness.component.ts's own comment. -->
+  <div #offlineControlsHost id="readiness-offline-tiles" class="offline-controls"></div>
+</div>
 
 <!-- ADR D-49: arms the next plain map click to place a Location there instead of copying
      coordinates - see placingLocation's own comment (mapLeaflet.component.ts) for why this
      is one-shot rather than a persistent mode. -->
-<button matButton="outlined" type="button" (click)="onToggleAddLocation()"
+<button matButton="outlined" type="button" class="map-add-location" (click)="onToggleAddLocation()"
   [attr.aria-pressed]="placingLocation()">
   <mat-icon>add_location</mat-icon>
   {{ placingLocation() ? 'Click the map to place it…' : 'Add Location' }}
