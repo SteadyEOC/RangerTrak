@@ -55,6 +55,47 @@
   </small>
 </rangertrak-section>
 
+<!-- 2026-09-28, John: AAR note - "Built with" / thanks, naming the main third-party
+     libraries and data RangerTrak runs on. Appreciative, not a legal notices page - the
+     license file's own third-party section (if any) is the place for that; this is a plain
+     thank-you a reader can actually follow. -->
+<rangertrak-section summary="Built with">
+  <small>
+    <ul>
+      <li><a href="https://angular.dev" target="_blank" rel="noopener">Angular</a> and
+        <a href="https://material.angular.io" target="_blank" rel="noopener">Angular Material</a>
+        &mdash; the framework and the components almost everything on screen is built from</li>
+      <li><a href="https://www.ag-grid.com/" target="_blank" rel="noopener">AG Grid</a>
+        (Community edition) &mdash; the Rangers, Reports and Messages tables</li>
+      <li><a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>, plus
+        <a href="https://github.com/allartk/leaflet.offline" target="_blank" rel="noopener">leaflet.offline</a>
+        &mdash; the Leaflet map engine and its offline tile saving</li>
+      <li><a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre GL JS</a>
+        and <a href="https://protomaps.com" target="_blank" rel="noopener">PMTiles / Protomaps</a>
+        &mdash; the vector map engine and its bundled offline basemap format</li>
+      <li>&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap
+        contributors</a> &mdash; the map data underneath both map engines</li>
+      <li><a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a>
+        (CC-BY-SA) &mdash; the topographic map style</li>
+      <li><a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> &mdash;
+        the hillshade (terrain relief) layer</li>
+      <li><a href="https://nominatim.org" target="_blank" rel="noopener">Nominatim</a>,
+        OpenStreetMap's own geocoder &mdash; the default address lookup, no API key needed</li>
+      <li><a href="https://pdf-lib.js.org" target="_blank" rel="noopener">pdf-lib</a> &mdash;
+        fills the printable ICS-213 and ICS-309 forms</li>
+      <li><a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener">fflate</a>
+        &mdash; the zip work behind mission backup/restore and bulk photo import</li>
+      <li><a href="https://sheetjs.com" target="_blank" rel="noopener">SheetJS / xlsx</a>
+        &mdash; the grids' Excel export</li>
+      <li><a href="https://github.com/proj4js/mgrs" target="_blank" rel="noopener">mgrs</a> and
+        <a href="https://github.com/danieljfarrell/utm" target="_blank" rel="noopener">utm</a>
+        &mdash; the MGRS and UTM coordinate conversions</li>
+      <li><a href="https://github.com/brix/crypto-js" target="_blank" rel="noopener">crypto-js</a>
+        &mdash; the optional passphrase encryption for backups and on-device storage</li>
+    </ul>
+  </small>
+</rangertrak-section>
+
 <h3>License</h3>
 
 <rangertrak-section emphasis="plain">
