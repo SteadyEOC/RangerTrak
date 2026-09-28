@@ -842,6 +842,50 @@ async function checkEntryAutofocusAndReset() {
 }
 
 /**
+ * H (2026-09-28, John: AAR note): "a report dated one hour in the future was accepted
+ * silently." Steps the When time-picker's minute segment forward with the shared ▲ stepper
+ * (adjustTime(1) - falls back to the minute segment when nothing has been focused yet, same
+ * as a scribe who never clicked into a specific segment) rather than typing a date/hour
+ * directly: TimePickerComponent.adjustTotalMinutes() does real Date arithmetic and correctly
+ * carries the step across an hour/day boundary (see that method's own comment), so stepping
+ * forward is guaranteed to land in the future no matter what real time this check happens to
+ * run at - typing a fixed hour could land in the past depending on the clock.
+ */
+async function checkEntryFutureTimeWarning() {
+  console.log('\nEntry: a future report time shows a warning, but Submit still works (H)')
+  await goto('/')
+  check('no warning for the default (current) time', await evaluate(`!!document.querySelector('[data-testid="futureTimeWarning"]')`), false)
+
+  await evaluate(`(async () => {
+    const up = [...document.querySelectorAll('.rt-datetime__step')]
+      .find(b => (b.title || '').startsWith('Step up'));
+    // 10 clicks of the 1-minute stepper - safely past the 5-minute warning threshold and
+    // small enough to stay well inside the picker's own future bound (see #81's own comment
+    // on why there is no longer a fixed max).
+    for (let i = 0; i < 10; i++) { up.click(); }
+  })()`)
+  await sleep(400)
+  const warned = await evaluate(`!!document.querySelector('[data-testid="futureTimeWarning"]')`)
+  check('warning appears once the time is pushed into the future', warned, true)
+
+  const submit = await evaluate(`(() => {
+    const btn = document.querySelector('.enter__Submit-button');
+    return { present: !!btn, disabled: btn ? btn.disabled : null };
+  })()`)
+  // Capability, not policy (D-33-adjacent): the warning informs, it never blocks.
+  check('Submit stays enabled despite the warning', submit.disabled, false)
+
+  // Stepping back the same 10 minutes should clear the warning again.
+  await evaluate(`(async () => {
+    const down = [...document.querySelectorAll('.rt-datetime__step')]
+      .find(b => (b.title || '').startsWith('Step down'));
+    for (let i = 0; i < 10; i++) { down.click(); }
+  })()`)
+  await sleep(400)
+  check('warning clears once the time is back to the present', await evaluate(`!!document.querySelector('[data-testid="futureTimeWarning"]')`), false)
+}
+
+/**
  * Architecture decision, 2026-08-26: evidence/clue location, entered as range-and-bearing
  * from the reporter's own position (evidence-location.component.ts), computed into an
  * absolute lat/lng, and drawn as its own marker on the Entry mini-map. Real risk surface
@@ -1071,6 +1115,65 @@ async function checkEntryPhoneWidth() {
 }
 
 /**
+ * C (2026-09-28, John: AAR note): "after choosing a colour scheme on a 390px phone, the
+ * whole screen stays shifted." Asserts the two invariants the report specifically named
+ * (scrollX and scrollWidth) - neither was ever observed to fail in this build, even before
+ * the fix below, across several interaction styles (synthetic click, real mouse tap, item
+ * select, backdrop dismiss). What DID reliably reproduce, confirmed live with CDP before
+ * this check was written: closing the skin menu reset window.scrollY to 0 regardless of
+ * where the page was actually scrolled - MatMenuTrigger correctly restores focus to the
+ * skin-toggle button (do not disable that, it's a real accessibility feature), but that
+ * button lives inside app.component.scss's `.app-sticky-header` (`position: sticky`), and
+ * focusing a sticky element scrolls the browser to its STATIC in-flow position (near the
+ * very top of the document) rather than its current sticky one. Fixed in
+ * navbar.component.ts's onSkinMenuOpened()/onSkinMenuClosed(). This check asserts both the
+ * originally-reported invariants AND the scrollY regression actually found and fixed.
+ */
+async function checkSkinPickerPhoneScroll() {
+  console.log('\nColour scheme picker at 390px does not leave the page scrolled/shifted (C)')
+  await goto('/mission')
+  await evaluate(`(() => {
+    const f = document.createElement('div'); f.style.height = '2000px'; f.id = 'e2e-tall-filler';
+    document.querySelector('.content')?.appendChild(f);
+  })()`)
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true })
+  await evaluate(`window.scrollTo(0, 400)`)
+  await sleep(400)
+
+  const before = await evaluate(`({ scrollX: window.scrollX, scrollY: window.scrollY })`)
+
+  const btnRect = await evaluate(`(() => {
+    const b = document.querySelector('.skin-toggle'); const r = b.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  })()`)
+  await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: btnRect.x, y: btnRect.y, button: 'left', clickCount: 1 })
+  await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: btnRect.x, y: btnRect.y, button: 'left', clickCount: 1 })
+  await sleep(500)
+
+  // Pick whichever option is NOT already checked, so this always exercises a real change.
+  const itemRect = await evaluate(`(() => {
+    const items = [...document.querySelectorAll('.mat-mdc-menu-panel button.mat-mdc-menu-item')];
+    const unchecked = items.find(i => !i.querySelector('.skin-check')) || items[0];
+    const r = unchecked.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  })()`)
+  check('the skin menu opened with options to pick from', !!itemRect, true)
+  await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: itemRect.x, y: itemRect.y, button: 'left', clickCount: 1 })
+  await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: itemRect.x, y: itemRect.y, button: 'left', clickCount: 1 })
+  await sleep(600)
+
+  const after = await evaluate(`({
+    scrollX: window.scrollX, scrollY: window.scrollY,
+    scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth,
+  })`)
+  check('window.scrollX is 0 after the picker closes', after.scrollX, 0)
+  check('document does not scroll wider than the phone', after.scrollWidth <= after.clientWidth + 1, true)
+  check('the page stays at the scroll position it was at (no jump-to-top)', after.scrollY, before.scrollY)
+
+  await send('Emulation.clearDeviceMetricsOverride')
+}
+
+/**
  * E-65: the same "does it fit a phone" question as checkEntryPhoneWidth above, asked of
  * EVERY route rather than just Entry.
  *
@@ -1142,6 +1245,72 @@ async function checkBackToTop() {
   const after = await evaluate(`({ y: Math.round(window.scrollY), still: !!document.querySelector('.back-to-top') })`)
   check('clicking it returns to the top', after.y, 0)
   check('and it hides itself again once there', after.still, false)
+
+  // B (2026-09-28, John: AAR note): "no back-to-top on Mission" after the sticky navbar
+  // shipped (4815525) - at 390px specifically, and unobstructed by that navbar. Not
+  // reproduced with the fix in place (.back-to-top's z-index moved from 900, tied with
+  // .app-sticky-header, to 950 - see that component's own scss comment for why the tie was
+  // real even though it happened to render correctly) - this guards the fix stays fixed.
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true })
+  await goto('/mission')
+  await evaluate(`window.scrollTo(0, document.documentElement.scrollHeight)`)
+  await sleep(600)
+  const onMission = await evaluate(`(() => {
+    const b = document.querySelector('.back-to-top')
+    if (!b) return { present: false }
+    const r = b.getBoundingClientRect()
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2
+    const topEl = document.elementFromPoint(cx, cy)
+    return { present: true, unobstructed: !!topEl && (topEl === b || b.contains(topEl)) }
+  })()`)
+  check('back-to-top appears on Mission at 390px too', onMission.present, true)
+  if (onMission.present) {
+    check('...and nothing covers it (sticky navbar included)', onMission.unobstructed, true)
+  }
+  await send('Emulation.clearDeviceMetricsOverride')
+}
+
+/**
+ * B (2026-09-28, John: AAR note): "the danger zone's 'Reset mission to defaults' warning
+ * text does not fit its button at phone width." Root cause, confirmed live: Material's
+ * `.mdc-button__label` is `white-space: nowrap` and the button's own container height is
+ * fixed (not min-height), so a label that needs more room than the button has has nowhere
+ * to go - fixed in mission-advanced-options.component.scss (white-space: normal on the
+ * label, height: auto + min-height on the button). Forces a narrow column to actually make
+ * a label wrap (didn't reproduce at default text size on 375-390px - this row wraps whole
+ * BUTTONS via flex-wrap, so nothing squeezes one below its own content width there) and
+ * asserts the wrapped label is never taller than its own button - i.e. never clipped.
+ */
+async function checkMissionDangerZoneButtonsFit() {
+  console.log('\nDanger zone buttons wrap cleanly rather than clipping their label (B)')
+  await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 667, deviceScaleFactor: 3, mobile: true })
+  await goto('/mission')
+  await evaluate(`document.querySelector('.rt-danger-zone-trigger')?.querySelector('button, [role="button"], summary')?.click()`)
+  await sleep(400)
+
+  const natural = await evaluate(`(() => {
+    const btns = [...document.querySelectorAll('.mission__danger-button')];
+    return btns.map(b => ({
+      text: b.textContent.trim(),
+      right: b.getBoundingClientRect().right,
+      clipped: b.scrollHeight > b.clientHeight + 1,
+    }));
+  })()`)
+  check('danger-zone buttons found', natural.length > 0, true)
+  check('none overflow the page at 375px', natural.every(b => b.right <= 375 + 1), true)
+  check('none clip their own (unwrapped) label', natural.every(b => !b.clipped), true)
+
+  // Force a narrow column - the interesting case is whether a wrapped label still fits its
+  // own button, not whether it wraps at 375px (see this function's own doc comment).
+  const forced = await evaluate(`(() => {
+    const b = document.querySelector('.mission__danger-button');
+    b.style.maxWidth = '90px';
+    return { clipped: b.scrollHeight > b.clientHeight + 1, height: b.getBoundingClientRect().height };
+  })()`)
+  check('a label forced to wrap still fits its (now taller) button', forced.clipped, false)
+  check('...by actually growing taller, not staying pinned at one line height', forced.height > 40, true)
+
+  await send('Emulation.clearDeviceMetricsOverride')
 }
 
 /**
@@ -2741,10 +2910,13 @@ async function main() {
     // Read-only: pure DOM/layout reads and in-memory form edits, nothing persisted - so these
     // are safe against production too, which is where phone-width regressions actually bite.
     await checkEntryTabOrder()
+    await checkEntryFutureTimeWarning()
     await checkMiniMapFillsItsBox()
     await checkEntryPhoneWidth()
     await checkAllRoutesPhoneWidth()
     await checkBackToTop()
+    await checkSkinPickerPhoneScroll()
+    await checkMissionDangerZoneButtonsFit()
     await checkWelcomePanelDismissAndReopen()
     await checkLocationDdDdmDmsSync()
     await checkFieldReportsPhoneLayout()
