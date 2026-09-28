@@ -5,7 +5,18 @@
   // phone. Uses the safe-area inset so it isn't under a home indicator on iOS.
   right          : calc(1rem + env(safe-area-inset-right, 0px));
   bottom         : calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  z-index        : 900;
+  // 2026-09-28, John: AAR note - reported invisible on Mission after the sticky navbar
+  // shipped (4815525). Not reproduced live (headless Chrome at 390px on /mission: present,
+  // unobstructed, on top, clicks through fine) - most likely a stale cached PWA build (same
+  // day as the sticky-navbar commit; see the "stale www screenshots" lesson). Bumped past
+  // app.component.scss's .app-sticky-header (900) anyway: the two were tied at 900, which
+  // only rendered correctly because this element happens to come later in the DOM (later
+  // wins a z-index tie) - real, but an accident of markup order, not a rule. 950 removes
+  // that fragility outright rather than leaving it working by coincidence. Still well under
+  // Material's own overlay layer (.cdk-overlay-container, 1000) and the header's own
+  // mission-info panel (1100)/guide drawer (1200) - see .app-sticky-header's own comment for
+  // that ladder.
+  z-index        : 950;
 
   display        : flex;
   align-items    : center;

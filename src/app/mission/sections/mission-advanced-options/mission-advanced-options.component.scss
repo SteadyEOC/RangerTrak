@@ -80,6 +80,29 @@
   --mat-button-outlined-label-text-color: var(--rt-readiness-red);
   --mat-button-outlined-outline-color   : var(--rt-readiness-red);
   color                                 : var(--rt-readiness-red);
+
+  // 2026-09-28, John: AAR note - "Reset mission to defaults" doesn't fit its button at
+  // phone width. Root cause, confirmed live: Material's own `.mdc-button__label` is
+  // `white-space: nowrap` and the button's own height is a fixed
+  // `--mdc-outlined-button-container-height` (32px at this app's density), not a min-height
+  // - forcing a wrapped label onto two lines still doesn't happen because the label can't
+  // wrap at all, so a phone narrow enough (or a system font large enough) that "Reset
+  // mission to defaults" doesn't fit on one line has nowhere for the extra width to go.
+  // Didn't reproduce at 375-390px default text size (this row wraps whole buttons via flex-
+  // wrap, so a button never gets squeezed below its own content width there) - fixed at the
+  // actual mechanism anyway, for whatever combination of a narrower device and/or larger
+  // system font size does hit it. `height: auto` + `min-height` (not a fixed height) is the
+  // same "starts editable, room to grow" pattern the offline save-tiles buttons
+  // (mapLeaflet.component.scss) already use for the identical reason.
+  ::ng-deep .mdc-button__label {
+    white-space: normal;
+    text-align : center;
+    line-height: 1.25;
+  }
+
+  height    : auto;
+  min-height: var(--rt-tap-min);
+  padding-block: 0.4em;
 }
 
 // F29-18: the danger zone now opens from a collapsed ExpandableSectionComponent instead of
