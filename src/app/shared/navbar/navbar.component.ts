@@ -51,6 +51,27 @@ export class NavbarComponent implements OnInit {
 
   protected readonly skins = SKINS
 
+  /**
+   * 2026-09-28, John: AAR note - see the template's own comment on the skin-toggle button
+   * for the root cause (focusing a `position: sticky` element scrolls to its static, not its
+   * sticky, position). Captured on open rather than read fresh on close because the jump has
+   * already happened by the time `menuClosed` fires - this is what's being restored TO, not
+   * a live read of a value the jump has already clobbered.
+   */
+  private skinMenuScrollY = 0
+
+  onSkinMenuOpened(): void {
+    this.skinMenuScrollY = window.scrollY
+  }
+
+  onSkinMenuClosed(): void {
+    // Only correcting the specific jump-to-static-position bug, not fighting anything else -
+    // if the page was already at this Y (nothing to correct) this is a same-value no-op.
+    if (window.scrollY !== this.skinMenuScrollY) {
+      window.scrollTo(window.scrollX, this.skinMenuScrollY)
+    }
+  }
+
   constructor(
     private log: LogService,
     //private missionService: MissionService,

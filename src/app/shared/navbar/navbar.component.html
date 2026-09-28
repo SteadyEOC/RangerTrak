@@ -199,7 +199,17 @@
          menu, not a cycle button like the theme toggle above - three NAMED options read
          better as a list with the current one checked than as an unlabelled icon a scribe
          has to click through blind. -->
+    <!-- 2026-09-28, John: AAR note - "after choosing a colour scheme on a 390px phone, the
+         whole screen stays shifted." Root cause: this button lives inside the sticky header
+         (app.component.scss's .app-sticky-header, `position: sticky`); MatMenuTrigger
+         restores focus to it once the menu closes (correct, keyboard-first behavior - do NOT
+         disable via matMenuTriggerRestoreFocus, that's an accessibility regression), but
+         focusing a sticky-positioned element makes the browser scroll to its STATIC in-flow
+         position rather than its current sticky one - for the navbar, that's the very top of
+         the page. onSkinMenu{Opened,Closed}() below save/restore the real scroll position
+         around that jump instead. -->
     <button type="button" class="skin-toggle" [matMenuTriggerFor]="skinMenu"
+      (menuOpened)="onSkinMenuOpened()" (menuClosed)="onSkinMenuClosed()"
       aria-label="Color scheme" title="Color scheme">
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
         <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
