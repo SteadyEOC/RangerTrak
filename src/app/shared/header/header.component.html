@@ -20,7 +20,11 @@
     title="Click to go to Field Entry and reopen the welcome panel">
     <rangertrak-mission-readiness (dotActivated)="panelOpenOnTouch.set(!panelOpenOnTouch())"></rangertrak-mission-readiness>
     <span class="status-divider"></span>
-    <span class="opPeriod">{{opPeriod()}} <span class="status-divider status-divider--inline"></span> {{timeElapsedDisplay()}} &
+    <!-- 2026-09-28, John: AAR note - timeElapsedDisplay() is rounded to the hour before a
+         period starts (see HeaderComponent.compactHoursUntilStart's own comment); this title
+         gives the exact Starts/Ends reading for anyone who wants it, same data already in
+         the hover panel below, just reachable without waiting for the hover delay. -->
+    <span class="opPeriod" [title]="'Starts ' + opPeriodStartDisplay() + ' – Ends ' + opPeriodEndDisplay()">{{opPeriod()}} <span class="status-divider status-divider--inline"></span> {{timeElapsedDisplay()}} &
       {{timeLeftDisplay()}}</span>
     <span class="status-divider"></span>
     <span class="clock">{{clockDisplay()}}</span>
