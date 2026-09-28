@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/rangertrak-mark-on-dark.svg">
-    <img src="src/assets/icons/rangertrak-mark.svg" width="96" alt="RangerTrak logo: a map pin that is also a handheld radio">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/SteadyEOC/RangerTrak/main/.github/rangertrak-mark-on-dark.svg">
+    <img src="https://raw.githubusercontent.com/SteadyEOC/RangerTrak/main/src/assets/icons/rangertrak-mark.svg" width="96" alt="RangerTrak logo: a map pin that is also a handheld radio">
   </picture>
 </p>
 
