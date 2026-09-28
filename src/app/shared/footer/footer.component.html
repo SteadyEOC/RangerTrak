@@ -12,10 +12,10 @@
          page content regardless of where the footer itself is. -->
     <rangertrak-install-update [stickyBottom]="true"></rangertrak-install-update>
   </div>
-  <!-- E-120: steadyeoc.com has no web page - this whole line used to link there. Now plain
-       text with just "rangertrak.com" (the app's own real site) linked, rather than the
-       word "SteadyEOC" pointing somewhere it doesn't go. -->
-  <span class="copyLeft">© 2019–{{today | date: 'y'}} John Cornelison -
-    RangerTrak is a free, open-source project from SteadyEOC:
-    <a href="https://rangertrak.com" target="_blank">rangertrak.com</a></span>
+  <!-- E-120: steadyeoc.com has no web page - this whole line used to link there. 2026-09-27
+       (John): shorter wording, and the project phrase itself links to rangertrak.com "for
+       now" (until steadyeoc.com has content). -->
+  <span class="copyLeft">©2019–{{today | date: 'y'}} John Cornelison -
+    <a href="https://rangertrak.com" target="_blank" rel="noopener">RangerTrak: a free,
+      open-source project from SteadyEOC</a></span>
 </div>
