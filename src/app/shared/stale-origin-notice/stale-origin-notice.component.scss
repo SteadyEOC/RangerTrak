@@ -1,15 +1,19 @@
 @use "../../../styles/typography" as type;
 
-// E-45: same sticky-banner treatment as InstallUpdateComponent's [fixed] mode, and for the
-// same reason - a visitor stranded on the old www. origin needs to see this regardless of
-// scroll position or which page their stranded cache happens to be showing. Deliberately a
-// separate component/stylesheet rather than sharing InstallUpdateComponent's, so the whole
-// thing can be deleted as one unit later (see the component's own removal note) without
-// touching a component that isn't temporary.
+// E-45: a visitor stranded on the old www. origin needs to see this regardless of scroll
+// position or which page their stranded cache happens to be showing. Deliberately a separate
+// component/stylesheet rather than sharing InstallUpdateComponent's, so the whole thing can
+// be deleted as one unit later (see the component's own removal note) without touching a
+// component that isn't temporary.
+//
+// 2026-09-27: was `position: sticky; top: 0; z-index: 1000` here directly - this banner's own
+// scroll-visibility guarantee, independent of the navbar below it. That duplicated the same
+// "stays visible while scrolling" job the navbar itself didn't have yet, and the two pinning
+// separately could disagree about which one was actually at the top. Both now live inside
+// app.component.html's one `.app-sticky-header` wrapper (see app.component.scss), which is
+// the thing that sticks; this is a plain block again, same as before E-45 needed to pin
+// itself.
 .stale-origin-notice {
-  position       : sticky;
-  top            : 0;
-  z-index        : 1000; // same plane as InstallUpdateComponent's [fixed] banner
   width          : 100%;
   box-sizing     : border-box;
   display        : flex;

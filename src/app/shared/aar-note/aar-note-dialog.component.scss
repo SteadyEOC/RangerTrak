@@ -18,3 +18,10 @@
   align-items: center;
   gap        : 0.75em;
 }
+
+// Same left/right split as location-dialog.component.scss's own
+// .rt-location-dialog__delete/__spacer pair: a spacer with flex-grow claims the row's slack
+// space, pushing Cancel/Save right while the See all notes link stays flush left.
+.rt-aar-dialog__spacer {
+  flex: 1 1 auto;
+}

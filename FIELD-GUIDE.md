@@ -293,8 +293,9 @@ single incident.
 incoming operator, who restores it on their device.
 
 **Reports from rangers' own phones.** A device is set up as either the **full app** (the
-command post) or **field mode** (a ranger's own phone: Entry, After Action and Help only,
-chosen once on a new device and not reversible from inside the app). RangerTrak never sends a
+command post) or **field mode** (a ranger's own phone: Entry and Help only, chosen once on a
+new device and not reversible from inside the app - the AAR notes page has no menu item on
+either device, but is still reached from the AAR note button, see below). RangerTrak never sends a
 report over the network by itself. Every report saves on the phone straight away. **Send my
 reports** bundles them into one file and opens the phone's share sheet, and the ranger picks
 the route: email or a messaging app over cell data or WiFi, or AirDrop / Nearby Share to a
@@ -308,10 +309,13 @@ to anyone on the station's WiFi; phones cannot send reports through it.
 **Noting things for the debrief.** When you notice something to fix or improve later, such as
 a relay point out of range or a form field that slows you down, press **AAR note** at the
 top of any page. Type a line, choose whether it is about the incident or about RangerTrak, and
-save. You stay on the page you were on. After the mission, the **After Action** page lists the
+save. You stay on the page you were on. After the mission, the **AAR notes** page lists the
 notes. Add an area, a recommendation and an owner to each, then print the incident notes as
 an improvement-plan table or export them all as a spreadsheet. Notes are in the mission
-backup, and device encryption covers them.
+backup, and device encryption covers them. An AAR note is private to this device until you
+choose to send it: **Feedback** (Help) is the separate, public path to RangerTrak's
+developers, and only takes a note marked *RangerTrak*, through **Review and send**, after you
+check it.
 
 ---
 

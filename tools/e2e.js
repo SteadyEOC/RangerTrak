@@ -417,6 +417,72 @@ async function checkNavbarLayout() {
   await send('Emulation.clearDeviceMetricsOverride')
 }
 
+/**
+ * 2026-09-27, John: "the navbar should always be visible while scrolling." Checks two
+ * things at both desktop (1360px) and phone (390px) width, on /map - tall enough (70vh map
+ * plus everything below it) to force real scrolling at either size:
+ *
+ *   1. the navbar's own top stays pinned at the viewport top after a scroll (the sticky
+ *      wrapper, app.component.scss's .app-sticky-header, actually works).
+ *   2. once the map has scrolled far enough that its own top-left zoom control lands in the
+ *      SAME on-screen band the pinned navbar occupies, the navbar - not the control - is
+ *      what document.elementFromPoint() finds there. Leaflet does not create a stacking
+ *      context of its own, and its heaviest control chrome reaches z-index 1000 (leaflet.css)
+ *      - uncontained, that would out-rank the navbar wrapper's own z-index (900) in the
+ *      document's GLOBAL stacking order and slide over it exactly when they overlap like
+ *      this. map-page.component.scss's `.map-fullscreen-area { isolation: isolate }` is what
+ *      is actually under test here, not just CSS trivia - a missing/reverted isolation rule
+ *      turns this check red (confirmed live, see the task's own verify-red note).
+ */
+async function checkStickyNavbar() {
+  console.log('\n2026-09-27: the navbar stays pinned to the viewport top while scrolling, and a map control cannot slide over it')
+
+  for (const vp of [
+    { width: 1360, height: 900, mobile: false, label: 'desktop 1360px' },
+    { width: 390, height: 844, mobile: true, label: 'phone 390px' },
+  ]) {
+    await send('Emulation.setDeviceMetricsOverride', { width: vp.width, height: vp.height, deviceScaleFactor: 1, mobile: vp.mobile })
+    await goto('/map')
+    await sleep(500) // let Leaflet finish laying out its own controls before measuring them
+
+    const before = await evaluate(`(() => {
+      const nav = document.querySelector('.main-nav').getBoundingClientRect();
+      const ctrl = document.querySelector('#mapLeaflet-main .leaflet-control-zoom');
+      const cr = ctrl ? ctrl.getBoundingClientRect() : null;
+      return { navHeight: nav.height, ctrlDocTop: cr ? cr.top + window.scrollY : null, ctrlHeight: cr ? cr.height : null };
+    })()`)
+    check(`${vp.label}: the map's zoom control is present to test against`, before.ctrlDocTop != null, true)
+
+    // Scroll so the control's own document position lands in the navbar's on-screen band -
+    // the exact scroll offset that used to let it slide over the navbar.
+    const targetScroll = Math.max(0, before.ctrlDocTop + before.ctrlHeight / 2 - before.navHeight / 2)
+    await evaluate(`window.scrollTo(0, ${targetScroll})`)
+    await sleep(300)
+
+    const after = await evaluate(`(() => {
+      const nav = document.querySelector('.main-nav').getBoundingClientRect();
+      const ctrl = document.querySelector('#mapLeaflet-main .leaflet-control-zoom');
+      const cr = ctrl ? ctrl.getBoundingClientRect() : null;
+      const ix1 = Math.max(nav.left, cr ? cr.left : Infinity), ix2 = Math.min(nav.right, cr ? cr.right : -Infinity);
+      const iy1 = Math.max(nav.top, cr ? cr.top : Infinity), iy2 = Math.min(nav.bottom, cr ? cr.bottom : -Infinity);
+      const overlapping = ix2 > ix1 && iy2 > iy1;
+      const hitEl = overlapping ? document.elementFromPoint((ix1 + ix2) / 2, (iy1 + iy2) / 2) : null;
+      return {
+        scrolledEnough: window.scrollY >= ${targetScroll} - 50,
+        navTop: nav.top,
+        overlapping,
+        hitInsideNav: hitEl ? !!hitEl.closest('.main-nav') : false,
+      };
+    })()`)
+    check(`${vp.label}: scrolled far enough to actually test the overlap (page tall enough)`, after.scrolledEnough, true)
+    check(`${vp.label}: navbar stays pinned to the viewport top after scrolling`, after.navTop >= 0 && after.navTop < 5, true)
+    check(`${vp.label}: the test precondition - the map control's rect does reach the navbar's band`, after.overlapping, true)
+    check(`${vp.label}: the navbar wins that point, not the map control underneath it`, after.hitInsideNav, true)
+  }
+
+  await send('Emulation.clearDeviceMetricsOverride')
+}
+
 async function checkMapEngineSwitch() {
   console.log('\nMap page: the switch mounts exactly one engine at a time, never both (E-64)')
   await goto('/map')
@@ -2665,6 +2731,7 @@ async function main() {
 
     await checkRoutesRender()
     await checkNavbarLayout()
+    await checkStickyNavbar()
     if (FULL) {
       await checkMapEngineSwitch()
       await checkMapEngineSurvivesNavigation()

@@ -5,3 +5,39 @@
 
 // see https://developers.google.com/maps/documentation/javascript/overview#HTML5 for older browsers
 // https://giancarlobuomprisco.com/css/automatic-dark-mode-any-website
+
+// 2026-09-27, John: "the navbar should always be visible while scrolling." Sticks the whole
+// group (stale-origin notice, navbar, app-wide update banner - see app.component.html) to the
+// viewport top as ONE unit, so they stack naturally and move together - the individual
+// banners are plain blocks now (see stale-origin-notice.component.scss), not separately
+// sticky, which is what let them disagree about who was "at the top."
+//
+// z-index 900: below Angular Material's own overlay layer (.cdk-overlay-container, 1000 -
+// dialogs/menus/snackbars must always win against a pinned navbar) and below the header's
+// mission-info panel (1100) and the guide drawer (1200/1201, see those components' own
+// scss) - both of which are deliberately allowed to cover this bar. Still high enough to sit
+// above ordinary page content and above a map's Leaflet panes/controls IF the map's own host
+// contains them first: Leaflet does not create a stacking context of its own, and its
+// heaviest control chrome reaches z-index 1000 uncontained, which would otherwise climb
+// straight past this 900 during a scroll. `isolation: isolate` on the map hosts
+// (map-page.component.scss's .map-fullscreen-area for the full map page, and
+// mini-mapLeaflet.component.scss's .mapLeaflet-container for the Entry mini-map) is what
+// keeps that 1000 scoped to the map's own box instead of the document's global stacking
+// order.
+.app-sticky-header {
+  position: sticky;
+  top     : 0;
+  z-index : 900;
+
+  // Phone-width safety net: navbar.component.scss's `.main-nav>ul.open` drops the full link
+  // list below the brand/toggle row when the hamburger menu is open. That, plus a visible
+  // stale-origin/update banner above it, can add up to more than one short screen's worth of
+  // height - a plain sticky element does not scroll internally, so anything past its own
+  // bottom edge would be permanently unreachable once stuck at the top. Capping this
+  // wrapper's own height to the viewport and letting IT scroll keeps every open-menu item
+  // reachable without ever having to un-stick the bar to get to them. Harmless the rest of
+  // the time: nothing here overflows 100vh outside the open mobile menu, so no scrollbar
+  // shows.
+  max-height: 100vh;
+  overflow-y: auto;
+}

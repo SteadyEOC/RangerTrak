@@ -94,6 +94,19 @@ body {
   height: 100%;
 }
 
+// 2026-09-27 (sticky navbar): in-page fragment links - Help's own tab anchors, and the
+// header's mission-readiness panel [fragment] links (header.component.html) - used to land
+// their target flush against the viewport top. Now that app.component.html's
+// .app-sticky-header stays pinned there, a fragment jump would otherwise put the target
+// heading right underneath it, hidden. scroll-padding-top reserves that height so the
+// browser's native fragment/anchor scrolling stops just below the pinned bar instead.
+// Sized for the common case (just the navbar); the stale-origin/update banners it can also
+// hold are both self-hiding and rare, so a landing that is a little high while one of them
+// is showing is an acceptable trade against hard-coding their height too.
+html {
+  scroll-padding-top: 4.5rem;
+}
+
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;

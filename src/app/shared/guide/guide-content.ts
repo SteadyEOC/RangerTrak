@@ -271,7 +271,10 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
   },
 
   '/after-action': {
-    screen: 'After Action',
+    // 2026-09-27: "AAR notes" - matches the page's own title (after-action.component.ts)
+    // and the header's "AAR note" capture button now that the old "After Action" nav item
+    // is gone (navbar.component.html).
+    screen: 'AAR notes',
     tabs: [
       {
         label: 'This page',

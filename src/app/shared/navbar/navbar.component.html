@@ -123,10 +123,12 @@
          things are on the main menu!" Log's own nav item is gone the same day; it's
          reachable from this Help page instead (see help.component.html). Route stays
          /help - every internal link already uses routerLink, not a hardcoded path. -->
-    <!-- E-116: outside the field-mode block on purpose - notes captured on a field-mode phone
-         must be reviewable there too. -->
-    <li><a [routerLink]="['/after-action']" routerLinkActive="active" (click)="closeNav()"
-        title="Notes to fix or improve later, for the after-action review.">After Action</a></li>
+    <!-- 2026-09-27, John: the After Action (now "AAR notes") nav item added 2026-09-27 (E-116)
+         came off the menu the same day - "too many confusing things on the main menu" applies
+         here too. The /after-action route and its fieldModeGuard-free reachability stay
+         exactly as they were; the page is reached from the AAR note button's capture dialog
+         ("See all notes (N)", see aar-note-dialog.component.html) or a direct link/bookmark,
+         not from here. -->
     <li><a [routerLink]="['/help']" routerLinkActive="active" (click)="closeNav()">Help</a></li>
     <li *ngIf="isNavigating()" class="Navbar__progressBar">Loading... <span class="smaller"> (Please 'Refresh' the
         page.)</span>

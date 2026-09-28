@@ -75,6 +75,19 @@
   outline-offset: 2px;
 }
 
+// 2026-09-27 (sticky navbar): `isolation: isolate` gives this element its own stacking
+// context, so whichever engine mounts inside it (Leaflet or MapLibre - see the template)
+// has its z-index climbed no higher than THIS box's own place in the document's stacking
+// order. Leaflet in particular does not create a stacking context of its own, and its
+// control chrome reaches z-index 1000 (leaflet.css) - without this, that 1000 competed
+// directly against app.component.scss's .app-sticky-header (900) in the GLOBAL stacking
+// order, so a map control could slide over the pinned navbar while the page scrolled. This
+// one rule covers both engines since they both mount here, not in map-page.component.html
+// per-engine.
+.map-fullscreen-area {
+  isolation: isolate;
+}
+
 // The Fullscreen API's own pseudo-class - fills the screen and gives the map room instead
 // of sitting inside the app's normal page padding/max-width.
 .map-fullscreen-area:fullscreen {

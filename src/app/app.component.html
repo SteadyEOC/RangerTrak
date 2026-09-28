@@ -1,24 +1,31 @@
 <!--rangertrak-alerts></rangertrak-alerts-->
 
-<!-- E-45: DELIBERATELY TEMPORARY, see the component's own removal note. Ahead of the E-43
-     banner below since a stranded www. visitor needs this one first - it's the reason
-     they'd be looking at a possibly months-old build in the first place. -->
-<rangertrak-stale-origin-notice></rangertrak-stale-origin-notice>
+<!-- Sticky header group (2026-09-27, John: "the navbar should always be visible while
+     scrolling"). One `position: sticky` wrapper around the navbar and everything that has to
+     stack above/below it while pinned, rather than each piece pinning itself - see
+     app.component.scss's .app-sticky-header for the z-index reasoning, and each banner's own
+     scss for why it went back to being a plain block now that the WRAPPER is what sticks. -->
+<div class="app-sticky-header">
+  <!-- E-45: DELIBERATELY TEMPORARY, see the component's own removal note. Ahead of the E-43
+       banner below since a stranded www. visitor needs this one first - it's the reason
+       they'd be looking at a possibly months-old build in the first place. -->
+  <rangertrak-stale-origin-notice></rangertrak-stale-origin-notice>
 
-<rangertrak-navbar></rangertrak-navbar>
+  <rangertrak-navbar></rangertrak-navbar>
 
-<!-- Raised live, 2026-08-27: revisits E-57(1)'s "top banner -> footer only" call - the
-     footer's [stickyBottom] instance below doesn't reliably stay near the top of view on a
-     short page (its `position: sticky` only pins once the page has scrolled enough for the
-     footer to reach the bottom edge), and Mission's own [detailed] instance only ever showed
-     on Mission. Same component, same [detailed] wording as Mission's, now app-wide ahead of
-     every page's own content - self-hiding, so it renders nothing when no update is pending.
-     [showInstall]="false": an "install this app" offer is a different, lower-urgency thing
-     with no business competing for attention on an incident-tracking page mid-response - it
-     already has its own unobtrusive home in the footer, plus a detailed explanation on
-     Mission (see mission.component.html). A version update, in contrast, genuinely needs to
-     be noticed wherever a scribe happens to be. -->
-<rangertrak-install-update [detailed]="true" [showInstall]="false"></rangertrak-install-update>
+  <!-- Raised live, 2026-08-27: revisits E-57(1)'s "top banner -> footer only" call - the
+       footer's [stickyBottom] instance below doesn't reliably stay near the top of view on a
+       short page (its `position: sticky` only pins once the page has scrolled enough for the
+       footer to reach the bottom edge), and Mission's own [detailed] instance only ever showed
+       on Mission. Same component, same [detailed] wording as Mission's, now app-wide ahead of
+       every page's own content - self-hiding, so it renders nothing when no update is pending.
+       [showInstall]="false": an "install this app" offer is a different, lower-urgency thing
+       with no business competing for attention on an incident-tracking page mid-response - it
+       already has its own unobtrusive home in the footer, plus a detailed explanation on
+       Mission (see mission.component.html). A version update, in contrast, genuinely needs to
+       be noticed wherever a scribe happens to be. -->
+  <rangertrak-install-update [detailed]="true" [showInstall]="false"></rangertrak-install-update>
+</div>
 
 <div class="content">
   <router-outlet></router-outlet>

@@ -2,7 +2,7 @@
 
 <div mat-dialog-content class="rt-aar-dialog">
   <p class="rt-aar-dialog__hint">Something to fix or improve later. You can add a recommendation and an
-    owner on the After Action page.</p>
+    owner on the AAR notes page.</p>
 
   <mat-form-field appearance="outline">
     <mat-label>What did you notice?</mat-label>
@@ -18,9 +18,28 @@
       <mat-button-toggle value="app">{{ aboutLabels.app }}</mat-button-toggle>
     </mat-button-toggle-group>
   </div>
+  <!-- 2026-09-27, John: Feedback and an AAR note marked RangerTrak are easy to confuse -
+       this note is NOT sent anywhere yet, unlike Feedback (Help > Feedback), which goes
+       out right away as a public GitHub issue. Shown only for the RangerTrak choice; the
+       incident choice never leaves this device at all, so it needs no such caveat. -->
+  @if (about() === 'app') {
+  <p class="rt-aar-dialog__hint">Private until you choose to send it as feedback, from the AAR notes page.</p>
+  }
 </div>
 
-<div mat-dialog-actions align="end">
+<div mat-dialog-actions>
+  <!-- Left-aligned, same pattern as the location dialog's own left-aligned Delete
+       (location-dialog.component.html) - a spacer pushes Cancel/Save to the right instead
+       of an `align="end"` on the whole row, which would put this flush against them too.
+       Hidden at zero notes: nothing to see yet, and the hint text above already covers
+       where a note ends up. -->
+  @if (noteCount() > 0) {
+  <button matButton type="button" class="rt-aar-dialog__see-all" (click)="onSeeAll()"
+    data-testid="aar-note-see-all">
+    See all notes ({{ noteCount() }})
+  </button>
+  }
+  <span class="rt-aar-dialog__spacer"></span>
   <button matButton type="button" (click)="onCancel()">Cancel</button>
   <button matButton="filled" type="button" [disabled]="!text().trim()" (click)="onSave()"
     data-testid="aar-note-save">Save note</button>

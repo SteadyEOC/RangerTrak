@@ -56,6 +56,14 @@
   contain         : layout;
   overflow        : hidden;
 
+  // 2026-09-27 (sticky navbar): same reasoning as map-page.component.scss's own copy of
+  // this comment - Leaflet does not create a stacking context of its own, and its control
+  // chrome reaches z-index 1000 (leaflet.css), which would otherwise compete directly
+  // against app.component.scss's .app-sticky-header (900) in the GLOBAL stacking order and
+  // could slide over the pinned navbar on a scrolled Entry page. `isolation: isolate`
+  // contains this mini-map's whole stacking order to its own box.
+  isolation       : isolate;
+
   // 2026-08-21: matches .minimap-placeholder's own tablet-down update in
   // entry.component.scss - see its comment for why 10.5vw (30% of the desktop float width)
   // was wrong once the map stopped floating beside text at this breakpoint.

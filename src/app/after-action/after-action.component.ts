@@ -36,7 +36,11 @@ function csvCell(value: string | undefined): string {
 })
 export class AfterActionComponent {
   private id = 'After Action'
-  title = 'After Action'
+  // 2026-09-27: page title only - the nav item that used to sit next to this on the menu is
+  // gone (see navbar.component.html), and "AAR notes" is the one name for this page now,
+  // matching the header's own "AAR note" capture button. `id` above is a log label, not
+  // user-visible text, so it stays as-is.
+  title = 'AAR notes'
   pageDescr = 'Notes to fix or improve later, gathered during the mission for the after-action review.'
 
   readonly aboutLabels = AAR_NOTE_ABOUT_LABELS
