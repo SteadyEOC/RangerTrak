@@ -30,42 +30,84 @@
        rects layered on the body, not one compound path. -->
   <span title="RangerTrak" class="title">
     <a class="brand" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-      <svg class="brand-icon" width="24" height="40" viewBox="0 0 155 260" aria-hidden="true">
+      <!-- 2026-09-28, John: "enlarge to fill the navbar's vertical space better" - grown from
+           24x40 to 26x44 (same aspect, viewBox untouched) to match --rt-tap-min (44px), which
+           is what actually sets the row's height via the icon buttons in .rightAlign. Since
+           that's already the row's height ceiling, this fills it without making the sticky
+           header any taller. -->
+      <svg class="brand-icon" width="26" height="44" viewBox="0 0 155 260" aria-hidden="true"
+        [class.rt-pulse-a]="pulseKey() % 2 === 0" [class.rt-pulse-b]="pulseKey() % 2 !== 0">
+        <!-- 2026-09-28, John: "animated logo waves, on events only" - this used to run
+             `infinite`, all the time, whether or not anything was happening. Now the
+             animation is finite (one pass per trigger) and fires only for: page load (the
+             rt-pulse-a class below is already present on first render, so the animation
+             plays once as soon as this SVG paints - no JS needed for that trigger either),
+             a submitted radio log entry (NavbarComponent.pulseKey, incremented from
+             RadioLogService.reportSubmittedSignal - see navbar.component.ts), and
+             hover/focus of the brand link (the two CSS-only rules below - independent of
+             pulseKey, so hovering never needs a class write). rt-pulse-a/rt-pulse-b are two
+             IDENTICALLY styled classes that NavbarComponent alternates between on each
+             submit: the class value has to actually change for the browser to restart an
+             already-finished animation - toggling the same class off then on within one
+             signal write would not reliably do that. -->
         <style>
           .brand-icon .wave {
-            --rt-period: 18s;
-            animation: rt-signal var(--rt-period) ease-in-out infinite;
+            opacity: 0.5;
           }
 
+          .brand-icon.rt-pulse-a .wave,
+          .brand-icon.rt-pulse-b .wave,
+          .brand:hover .brand-icon .wave,
+          .brand:focus-visible .brand-icon .wave {
+            animation: rt-signal 1.6s ease-out;
+          }
+
+          /* Staggered so the smallest ring (nearest the antenna) fires first and the
+             largest (nearest the edge) fires last - reads as one ripple moving outward,
+             not three rings blinking in place together. */
           .brand-icon .wave-1 {
-            animation-delay: calc(var(--rt-period) / -1.5);
+            animation-delay: 0s;
           }
 
           .brand-icon .wave-2 {
-            animation-delay: calc(var(--rt-period) / -3);
+            animation-delay: 0.15s;
+          }
+
+          .brand-icon .wave-3 {
+            animation-delay: 0.3s;
           }
 
           @keyframes rt-signal {
             0% {
-              opacity: 0.32;
+              opacity: 0.15;
+              stroke: var(--rt-signal);
             }
 
-            15% {
+            35% {
               opacity: 1;
+              /* Gentle colour pulse toward the skin's accent token, not a fixed literal -
+                 see .brand-icon__signal's own comment on why --rt-signal itself doesn't
+                 vary by skin the way --rt-accent does. */
+              stroke: color-mix(in srgb, var(--rt-signal), var(--rt-accent) 55%);
             }
 
-            40% {
+            70% {
               opacity: 1;
+              stroke: var(--rt-signal);
             }
 
             100% {
-              opacity: 0.32;
+              opacity: 0;
+              stroke: var(--rt-signal);
             }
           }
 
           @media (prefers-reduced-motion: reduce) {
             .brand-icon .wave {
-              animation: none;
+              /* !important: without it, the higher-specificity trigger rules above (two
+                 classes/pseudo-classes) would win over this plain .wave rule and animate
+                 anyway. */
+              animation: none !important;
             }
           }
         </style>
@@ -107,17 +149,21 @@
          route, Leaflet shown by default, with an on-page switch to try MapLibre + PMTiles.
          So there is only one nav item now; the reasoning behind the label survives, it just
          has nothing left to disambiguate. -->
+    <!-- 2026-09-28, John: titles reworded short and plain (the previous Map/Radio Log titles
+         named engines and internals a scribe doesn't need) - every nav item gets one now. -->
     <li><a [routerLink]="['/map']" routerLinkActive="active" (click)="closeNav()"
-        title="Detailed worldwide map (Leaflet + OpenStreetMap) by default, with a switch to try the bundled MapLibre + PMTiles alternative engine.">Map</a>
+        title="Map of every report">Map</a>
     </li>
     <li><a [routerLink]="['/radio-log']" routerLinkActive="active" (click)="closeNav()"
-        title="The chronological log of every radio log entry - who, where, when, what.">Radio Log</a></li>
+        title="Every report, in one table">Radio Log</a></li>
     <!-- New 2026-08-27: ICS-213 messages (radio log entries with "Also generate an ICS-213"
          checked) - a distinct, filtered view, not just Radio Log under another name. -->
     <li><a [routerLink]="['/messages']" routerLinkActive="active" (click)="closeNav()"
         title="ICS-213 general messages generated from radio log entries.">Messages</a></li>
-    <li><a [routerLink]="['/rangers']" routerLinkActive="active" (click)="closeNav()">Rangers</a></li>
-    <li><a [routerLink]="['/mission']" routerLinkActive="active" (click)="closeNav()">Mission</a></li>
+    <li><a [routerLink]="['/rangers']" routerLinkActive="active" (click)="closeNav()"
+        title="The roster">Rangers</a></li>
+    <li><a [routerLink]="['/mission']" routerLinkActive="active" (click)="closeNav()"
+        title="Mission settings, statuses, locations and backups">Mission</a></li>
     }
     <!-- Renamed from "Help" to "Help" - the maintainer's framing: "Too many confusing
          things are on the main menu!" Log's own nav item is gone the same day; it's
@@ -129,7 +175,8 @@
          exactly as they were; the page is reached from the AAR note button's capture dialog
          ("See all notes (N)", see aar-note-dialog.component.html) or a direct link/bookmark,
          not from here. -->
-    <li><a [routerLink]="['/help']" routerLinkActive="active" (click)="closeNav()">Help</a></li>
+    <li><a [routerLink]="['/help']" routerLinkActive="active" (click)="closeNav()"
+        title="How to use RangerTrak, and feedback">Help</a></li>
     <li *ngIf="isNavigating()" class="Navbar__progressBar">Loading... <span class="smaller"> (Please 'Refresh' the
         page.)</span>
       <mat-progress-bar mode="indeterminate">
@@ -146,13 +193,16 @@
          hidden entirely at tablet-up via CSS, not [hidden], so it never steals a tab stop
          there. -->
     <button type="button" class="nav-toggle" (click)="toggleNav()" aria-controls="mainNavLinks"
-      [attr.aria-expanded]="navOpen()" [attr.aria-label]="(navOpen() ? 'Close' : 'Open') + ' navigation menu'">
+      [attr.aria-expanded]="navOpen()" [attr.aria-label]="(navOpen() ? 'Close' : 'Open') + ' navigation menu'"
+      [attr.title]="(navOpen() ? 'Close' : 'Open') + ' navigation menu'">
       @if (navOpen()) {
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <!-- 2026-09-28, John: 22px -> 24px, matching the theme/skin/git icons next to it -
+           this was the second of the "two sizes" in play here. -->
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
         <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       } @else {
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
         <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       }
@@ -166,7 +216,8 @@
       [attr.aria-label]="'Theme: ' + theme.mode() + '. Click to change.'"
       [title]="'Theme: ' + theme.mode() + ' (click to change)'">
       @if (theme.mode() === 'light') {
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <!-- 2026-09-28, John: 20px -> 24px, matching skin/nav-toggle/git icons in the same row. -->
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
         <circle cx="12" cy="12" r="5" fill="currentColor" />
         <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="12" y1="1" x2="12" y2="3" />
@@ -180,11 +231,11 @@
         </g>
       </svg>
       } @else if (theme.mode() === 'dark') {
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" />
       </svg>
       } @else {
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
         <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
         <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" />
       </svg>
@@ -211,7 +262,7 @@
     <button type="button" class="skin-toggle" [matMenuTriggerFor]="skinMenu"
       (menuOpened)="onSkinMenuOpened()" (menuClosed)="onSkinMenuClosed()"
       aria-label="Color scheme" title="Color scheme">
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
         <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
         <circle cx="12" cy="8" r="1.6" fill="currentColor" />
         <circle cx="8.2" cy="13" r="1.6" fill="currentColor" />

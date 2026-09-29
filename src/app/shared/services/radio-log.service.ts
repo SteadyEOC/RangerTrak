@@ -70,6 +70,17 @@ export class RadioLogService {
 
   public rangers: RangerType[] = []
 
+  /**
+   * 2026-09-28, John: increments each time a NEW radio log entry is added via
+   * addRadioLogEntry() - deliberately separate from radioLogSignal (the whole log) so a
+   * subscriber only interested in "a report was just submitted" (the navbar brand mark's
+   * event-triggered pulse - see navbar.component.ts) doesn't have to diff two full log
+   * objects to notice. Not incremented by merges/restores (mergeIncomingReports(),
+   * replaceAllRadioLog()) - those are bulk/background operations, not "a scribe just
+   * submitted one report."
+   */
+  public readonly reportSubmittedSignal = signal(0)
+
   private storageLocalName = 'radioLog'
   private serverUri = 'https://localhost:4000/products' // FUTURE:
   private boundsMargin = 0.0025
@@ -270,6 +281,7 @@ export class RadioLogService {
     this.recalcRadioLogBounds(this.radioLog)
 
     this.updateRadioLogAndPublish() // put to localStorage & update subscribers
+    this.reportSubmittedSignal.update(n => n + 1)
     return newReport
   }
 

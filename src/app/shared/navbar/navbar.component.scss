@@ -71,6 +71,12 @@
   margin-left : -0.4em; // visually align with the nav row below despite the padding above
   border-radius: 6px;
   @include type.type-title;
+  // 2026-09-28, John: "enlarge to fill the navbar's vertical space better." type-title's own
+  // 1.25rem/1.75rem (28px line-height) left a lot of the 44px row (--rt-tap-min, the same
+  // ceiling the brand-icon above was just grown to fill) unused. Sized up but stopped well
+  // short of type-title-lg's 2.25rem line-height, which would have pushed the header taller.
+  font-size     : 1.4rem;
+  line-height   : 1.9rem;
   font-weight   : 700;
   letter-spacing: 0.2px;
 }
@@ -204,10 +210,12 @@
 // template already does - the invert(1) hack is gone, not relocated, since there's no
 // fixed-color raster left to invert.
 #gitLogo {
-  // Same 1.5em sizing the old PNG used, kept square via the SVG's own viewBox instead of
-  // the old PNG's fixed HTML width/height attributes (which is what stretched it before).
-  width       : 1.5em;
-  height      : 1.5em;
+  // 2026-09-28, John: was 1.5em (~28.8px against .main-nav's 1.2em font-size) while the
+  // theme/skin toggle icons next to it were a flat 20px - two different sizes in the same
+  // icon row. Fixed px now, same as the others, at the 24px value they all share (Material's
+  // own default icon-button glyph size) instead of an em value that drifted with font-size.
+  width       : 24px;
+  height      : 24px;
   margin-right: 2px;
 }
 

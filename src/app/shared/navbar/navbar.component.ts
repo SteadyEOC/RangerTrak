@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core'
+import { Component, OnInit, ChangeDetectionStrategy, signal, effect } from '@angular/core'
 import { NavigationEnd, NavigationError, NavigationStart, Router, RouterModule } from '@angular/router';
 import { faL, faMapMarkedAlt } from '@fortawesome/free-solid-svg-icons'
 import { MatProgressBarModule } from '@angular/material/progress-bar'
@@ -8,7 +8,7 @@ import { MDCTopAppBar } from '@material/top-app-bar'
 // import { MatButton } from '@angular/material/button'
 // import { MatButtonModule } from '@angular/material/button'
 import { subscribeOn } from 'rxjs';
-import { FieldModeService, LogService, MissionService, MissionType, Skin, SKINS, SkinService, ThemeService } from '../services';
+import { FieldModeService, LogService, MissionService, MissionType, RadioLogService, Skin, SKINS, SkinService, ThemeService } from '../services';
 //https://material.io/components/app-bars-top/web#regular-top-app-bar
 
 @Component({
@@ -52,6 +52,23 @@ export class NavbarComponent implements OnInit {
   protected readonly skins = SKINS
 
   /**
+   * 2026-09-28, John: drives the brand mark's event-triggered wave pulse (see the template's
+   * own comment on the svg's rt-pulse-a/rt-pulse-b bindings). `pulseKey % 2` alternates which
+   * of the two identically-styled classes is applied, so an already-finished CSS animation
+   * restarts on the NEXT submitted report even though the animation-triggering class value at
+   * rest never repeats twice in a row. Starts at 0 (class 'rt-pulse-a') so the animation also
+   * plays once for free on initial page load - nothing needs to increment it for that case,
+   * the class is just already there on first render.
+   */
+  pulseKey = signal(0)
+
+  // Effects run once immediately on creation; that first run is the initial signal read, not
+  // a real "a report was submitted" event, so it must not also bump pulseKey (page load
+  // already gets its pulse for free from rt-pulse-a's presence on first render - counting
+  // this too would be a redundant second pulse at boot).
+  private pulseEffectRanOnce = false
+
+  /**
    * 2026-09-28, John: AAR note - see the template's own comment on the skin-toggle button
    * for the root cause (focusing a `position: sticky` element scrolls to its static, not its
    * sticky, position). Captured on open rather than read fresh on close because the jump has
@@ -78,9 +95,18 @@ export class NavbarComponent implements OnInit {
     private router: Router,
     protected theme: ThemeService,
     protected skin: SkinService,
-    protected fieldMode: FieldModeService
+    protected fieldMode: FieldModeService,
+    private radioLog: RadioLogService
   ) {
     this.log.verbose("constructor", this.id)
+
+    // 2026-09-28: fires the brand mark's wave pulse on every submitted radio log entry - see
+    // pulseKey's own comment for why the first (creation-time) run is skipped.
+    effect(() => {
+      this.radioLog.reportSubmittedSignal()
+      if (!this.pulseEffectRanOnce) { this.pulseEffectRanOnce = true; return }
+      this.pulseKey.update(n => n + 1)
+    })
 
     this.router.events.subscribe(
       (event) => {
