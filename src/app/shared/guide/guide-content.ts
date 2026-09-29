@@ -452,7 +452,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               // coverage, but "Load a custom .pmtiles file…" (CustomPmtilesService) has existed
               // since 2026-08-27.
               'The MapLibre + PMTiles engine needs no network at all. A low-detail world map is built into the app everywhere, with real street-level detail in each demo area while that demo is loaded. If you have a .pmtiles map file for your own area, press "Load a custom .pmtiles file…" below that map to add real detail there too — it then works offline the same way.',
-              'A coordinator can build that map file ahead of time with a free command-line tool — see "For coordinators: make your own offline map file" in the printed Field Guide for the steps.'
+              'A coordinator can build that map file ahead of time with a free command-line tool — see "Make a map file for your area" in Help > Your data for the steps.'
             ]
           },
           {
