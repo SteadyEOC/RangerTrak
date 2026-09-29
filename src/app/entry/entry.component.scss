@@ -40,6 +40,10 @@ $filledColor: var(--rt-surface-2);
 
 .entry-welcome__text {
   flex: 1 1 20em;
+  // 2026-09-29: e2e caught the demo item's scenario <select> (sized to its longest option)
+  // widening the page to 417px on a 390px phone. min-width: 0 lets this flex item shrink
+  // below that, and the label/select below are allowed to wrap and shrink with it.
+  min-width: 0;
 }
 
 .entry-welcome__dismiss {
@@ -80,6 +84,8 @@ $filledColor: var(--rt-surface-2);
 // Material for one control (see the template's own comment on why).
 .entry-welcome__scenario-label {
   display    : inline-flex;
+  flex-wrap  : wrap;
+  max-width  : 100%;
   align-items: center;
   gap        : 0.35em;
   margin-inline-start: 0.5em;
@@ -87,6 +93,8 @@ $filledColor: var(--rt-surface-2);
 }
 
 .entry-welcome__scenario {
+  max-width   : 100%;
+  min-width   : 0;
   font        : inherit;
   padding     : 0.15em 0.4em;
   border      : 1px solid var(--rt-line);
