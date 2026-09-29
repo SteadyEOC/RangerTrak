@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.99.0-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.9...v0.99.0-alpha) (2026-09-29)
+
+
+### Features
+
+* **entry:** close the welcome panel after Load Demo Data or This is my field phone ([f02f965](https://github.com/SteadyEOC/RangerTrak/commit/f02f965fb742f9a36a204d37af675317b5cbb34e))
+* **entry:** warn when a report's time is in the future ([2cf8fd7](https://github.com/SteadyEOC/RangerTrak/commit/2cf8fd74e7ce857af7a2aec9eced7fbc19aab304))
+* **entry:** welcome panel as three numbered choices ([72c3836](https://github.com/SteadyEOC/RangerTrak/commit/72c383614775a63c275126684fa3b41213bbe402))
+* **field-mode:** ask the field-phone question on phones and tablets only ([171169f](https://github.com/SteadyEOC/RangerTrak/commit/171169fc922a539499d02e049e5f3933f6bc54db))
+* **field-mode:** Turn off field mode, from Help (E-142) ([46273a4](https://github.com/SteadyEOC/RangerTrak/commit/46273a40b87dd95eacb65fb7e7e8d39ed978dfb8))
+* **header:** shorter mission pill wording, no minus signs ([5635622](https://github.com/SteadyEOC/RangerTrak/commit/5635622b7de00b71e4c286f57daa27a5e23ead10))
+* **icons:** new app icon (flat badge), separate any and maskable manifest icons ([db8b8d6](https://github.com/SteadyEOC/RangerTrak/commit/db8b8d664180c975b486d40ff1e2085365fb0a8f))
+* **map,style:** less-oval buttons, grouped map controls, and Print map ([5a1e018](https://github.com/SteadyEOC/RangerTrak/commit/5a1e018be0f035da76c67290945cb98093668a12))
+* **mission:** sentence-case titles, logical card order, an Advanced card, clickable danger zones ([11e1936](https://github.com/SteadyEOC/RangerTrak/commit/11e1936201b82ba117b547e6e6a72930486eaea0))
+* **nav,aar:** sticky navbar; one name, "AAR notes", off the menu ([4815525](https://github.com/SteadyEOC/RangerTrak/commit/4815525fa5e3a294da9b9d09dae1f77486e1a3e8))
+* **navbar:** bigger brand mark, unified icon sizes, hover text, event-only wave animation ([015f6ee](https://github.com/SteadyEOC/RangerTrak/commit/015f6ee035263dc1bb81dc5d2559ec8315851e45))
+* **navbar:** logo waves pulse twice on page load and navigation, once per report ([bde809f](https://github.com/SteadyEOC/RangerTrak/commit/bde809f6e024988a48449e34c7ef211404ea0aa1))
+* **printing:** one click to the print dialog, on Radio Log and Messages ([7cfc11f](https://github.com/SteadyEOC/RangerTrak/commit/7cfc11fac39987eed9327e921878d3dc41419418))
+* **rangers:** blank new rows, jump to and edit them, save on every cell edit ([3495367](https://github.com/SteadyEOC/RangerTrak/commit/349536785b2a827d07bc6842f828a7e27b46ca29))
+* **storage:** one active RangerTrak tab per browser ([16fc375](https://github.com/SteadyEOC/RangerTrak/commit/16fc375feff9e70c2714eb7ca920077af5c6ff6a))
+
+
+### Bug Fixes
+
+* **csp:** allow https: in connect-src so Command Post Server publishing works (E-131, temporary until beta) ([9fb111c](https://github.com/SteadyEOC/RangerTrak/commit/9fb111c066b03eb93a1b1213a937c4e76be540c2))
+* **demo:** name the demo op period "Op 1" and start it before the first report ([ee62607](https://github.com/SteadyEOC/RangerTrak/commit/ee626071ca7548da428c4db918d04b5d539e0790))
+* **entry:** callsign picker options grow to fit a wrapped phone number ([1144880](https://github.com/SteadyEOC/RangerTrak/commit/1144880234923a351cd50ce4d434a316c8dc7b30))
+* **entry:** the welcome panel's demo scenario picker no longer widens a phone page ([efc4cfa](https://github.com/SteadyEOC/RangerTrak/commit/efc4cfab38fac6aa6e3402b7957d8d5edcc8a0b0))
+* **header:** "period end: in H:MM:SS" / "period end: H:MM:SS ago", no minus sign ([a6b33cd](https://github.com/SteadyEOC/RangerTrak/commit/a6b33cd2c8f07832eb568c249a5e4d2790c5da63))
+* **header:** drop the colon after "period end" ([41d956f](https://github.com/SteadyEOC/RangerTrak/commit/41d956f270fe694aee57c453facd5330176c801e))
+* **header:** separate elapsed and period-end readings with a semicolon ([cb2a29d](https://github.com/SteadyEOC/RangerTrak/commit/cb2a29d600624bd900e334fabb12b12d1621b4ce))
+* **header:** shorten the op-period countdown before a mission starts ([8abaad8](https://github.com/SteadyEOC/RangerTrak/commit/8abaad855ec4fd9e3d4724d5912e6f7b1fa6099e))
+* **header:** status pill fits on two lines on a phone ([a32ab84](https://github.com/SteadyEOC/RangerTrak/commit/a32ab84c84fa15e55b862ded3503442cffdc8274))
+* **help:** move the marmot photo right and fade its edge in ([864304f](https://github.com/SteadyEOC/RangerTrak/commit/864304f6bf599aa6919e97c494561ca1adf239b7))
+* **icons:** scale the app icon's pin up to fill the tile height ([e06f122](https://github.com/SteadyEOC/RangerTrak/commit/e06f1223ae55a0142cf7d78750895a10c6552b55))
+* **mission:** back-to-top and danger-zone buttons hold up at phone width ([0d417f5](https://github.com/SteadyEOC/RangerTrak/commit/0d417f53647a647ef0bcdc46b3f8bc074ca87c60))
+* **mission:** the Board switch says it sends the log, not that it runs the Board ([df5af67](https://github.com/SteadyEOC/RangerTrak/commit/df5af670c8d0b12955abf58f38d6663f21892b40))
+* **navbar:** closing the colour-scheme menu no longer jumps the page to the top ([3114124](https://github.com/SteadyEOC/RangerTrak/commit/3114124c2f09fc78a71525cd433c14ca1cc1b99f))
+
 ### [0.96.9](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.8...v0.96.9) (2026-09-27)
 
 
