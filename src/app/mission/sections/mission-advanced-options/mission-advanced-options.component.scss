@@ -2,8 +2,26 @@
 // rule) is gone - every control here is a `matButton` now. `.rt-danger-zone` and its
 // children come from styles/_patterns.scss.
 
+@use "../../../../styles/typography" as type;
+
 :host {
   display: contents;
+}
+
+// ── Advanced / Debug ─────────────────────────────────────────────────────────
+// Moved 2026-09-28 from mission.component.scss - the "Debug mode" checkbox now lives on
+// this component's own Advanced card instead of a stray full-width row on the page (see
+// mission-advanced-options.component.html's own comment). Styling unchanged.
+.mission__debug {
+  display    : flex;
+  align-items: baseline;
+  flex-wrap  : wrap;
+  gap        : 0.5rem;
+}
+
+.mission__debug-note {
+  @include type.type-body-sm;
+  color: var(--rt-ink-3);
 }
 
 // F29-22 (2026-08-29): same auto-fit/minmax pattern mission.component.scss's own

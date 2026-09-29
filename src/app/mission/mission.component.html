@@ -46,17 +46,19 @@
          the horizontal space sat empty while the page ran several screens deep. Each section
          renders its own <mat-card>s and sets `:host { display: contents }`, so the cards
          themselves - not the section wrappers - are this grid's items. -->
+    <!-- 2026-09-28, John: reordered to read top-to-bottom as one story instead of an
+         arbitrary grid - SETUP first (mission details/op period, statuses, location
+         categories/locations, then map/location defaults), then SHARING (RangerTrak
+         Board). Data safety and Danger zone (mission-advanced-options, below the action
+         bar) follow as their own always-last group - see this page's own doc comment on
+         mission-advanced-options's placement. Nothing here changed a component's inputs,
+         outputs, ids or data-testids - only which order they render in. -->
     <div class="mission__grid">
       <rangertrak-mission-details-section [form]="settingsForm" [opPeriodStart]="opPeriodStart()"
         [opPeriodEnd]="opPeriodEnd()" [timePickerLabelStart]="timePickerLabelStart"
         [timePickerLabelEnd]="timePickerLabelEnd" (timeEventStart)="onNewTimeEventStart($event)"
         (timeEventEnd)="onNewTimeEventEnd($event)">
       </rangertrak-mission-details-section>
-
-      <rangertrak-mission-location-section [form]="settingsForm" [settings]="settings">
-      </rangertrak-mission-location-section>
-
-      <rangertrak-mission-maps-section [form]="settingsForm"></rangertrak-mission-maps-section>
 
       <rangertrak-mission-field-report-statuses [rowData]="rowData()" (rowAdded)="onFormSubmit()">
       </rangertrak-mission-field-report-statuses>
@@ -66,39 +68,32 @@
 
       <rangertrak-mission-locations-list></rangertrak-mission-locations-list>
 
+      <rangertrak-mission-maps-section [form]="settingsForm"></rangertrak-mission-maps-section>
+
+      <rangertrak-mission-location-section [form]="settingsForm" [settings]="settings">
+      </rangertrak-mission-location-section>
+
       <rangertrak-mission-recipients213 [options]="recipientOptions213()" [form]="settingsForm"
         (optionsChange)="onRecipientOptions213Change($event)"></rangertrak-mission-recipients213>
 
+      <!-- Sharing. -->
       <rangertrak-mission-command-post [form]="settingsForm"></rangertrak-mission-command-post>
-    </div>
-
-    <!-- Debug is a saved setting, not a live mode, so it is a checkbox rather than a
-         slide-toggle (see the redesign's selection-control rule: a toggle is for something
-         that takes effect the moment you flip it; this one waits for Save like every other
-         field on the page). Bound through the FieldState's own WritableSignal because
-         Signal Forms' [formField] cannot drive a Material checkbox - angular/components#32072,
-         same as the coordinate-system and map-marker checkboxes. -->
-    <div class="mission__debug">
-      <!-- data-testid, not a class: tools/e2e.js needs a stable hook for this control, and
-           a styling class is the wrong thing to hang that on (it can be renamed by a purely
-           visual change - which is exactly how the old `.mission__Save-button` selector in
-           that suite came to be looking for a class that no longer existed). -->
-      <mat-checkbox data-testid="debug-mode" [checked]="settingsForm.debugMode().value()"
-        (change)="settingsForm.debugMode().value.set($event.checked)">Debug mode</mat-checkbox>
-      <span class="mission__debug-note">
-        Adds a diagnostic panel to the Entry screen and verbose entries to the Log page.
-      </span>
     </div>
 
     <!-- ══ 5. ACTION BAR ══ `.rt-action-bar` is global now (styles/_patterns.scss) - this
          page's own `.mission__action-bar` was the prototype for it. Sticky against the
          <form>, which still has the danger zone below it, so it settles rather than
-         hovering once the destructive controls come into view. -->
-    <div class="rt-action-bar">
-      <span class="rt-action-bar__status">
-        <mat-icon class="mission__save-icon" aria-hidden="true">cloud_off</mat-icon>
-        Mission data lives in this browser only, and is never uploaded
-      </span>
+         hovering once the destructive controls come into view.
+
+         2026-09-28, John: the "Mission data lives in this browser only, and is never
+         uploaded" status line that used to sit in this bar moved into Data safety's own
+         subtitle below (mission-advanced-options.component.html) - that card already said
+         almost the same thing, and a notice about data storage reads more naturally
+         attached to the card that explains data protection than floating beside Save/
+         Cancel. `.mission__action-bar--buttons-only` keeps the buttons right-aligned now
+         that they are this bar's only child (the shared `.rt-action-bar`'s
+         `justify-content: space-between` has nothing left to space them against). -->
+    <div class="rt-action-bar mission__action-bar--buttons-only">
       <div class="rt-action-bar__buttons">
         <!-- F29-23 (2026-08-30): only shown once there's something TO discard - Cancel doing
              nothing when the form is already clean would just be a confusing extra button. -->
@@ -117,8 +112,9 @@
       </div>
     </div>
 
-    <!-- ══ 6. DANGER ZONE ══ (plus the non-destructive Data safety card it was tangled with) -->
-    <rangertrak-mission-advanced-options (resetDefaults)="onBtnResetDefaults()">
+    <!-- ══ 6. DANGER ZONE ══ (plus the non-destructive Data safety card, and now the Advanced/
+         Debug card - see mission-advanced-options.component.html's own doc comment). -->
+    <rangertrak-mission-advanced-options [form]="settingsForm" (resetDefaults)="onBtnResetDefaults()">
     </rangertrak-mission-advanced-options>
   </form>
 

@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal } from '@angular/core'
+import { FieldTree } from '@angular/forms/signals'
 
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import {
-  BackupService, LogService, RangerPhotoService, SampleDataService, StoragePersistenceService
+  BackupService, LogService, MissionType, RangerPhotoService, SampleDataService,
+  StoragePersistenceService
 } from '../../../shared/services/'
 // Direct path, not the barrel above - see the note in rangers.component.ts.
 import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../../../shared/services/sample-data.service'
@@ -44,6 +46,14 @@ const FRESH_BACKUP_WINDOW_MS = 10 * 60 * 1000
 })
 export class MissionAdvancedOptionsComponent {
   private id = 'Mission Advanced Options Component'
+
+  // 2026-09-28, John: the "Debug mode" checkbox moved here from mission.component.html (see
+  // this component's own doc comment on the new Advanced card) - it needs the same settings
+  // FieldTree every other section already takes as `[form]`, for the exact same reason
+  // mission.component.html's own comment on the checkbox gives: Signal Forms' [formField]
+  // cannot drive a Material checkbox (angular/components#32072), so this reads/writes the
+  // field's WritableSignal directly instead.
+  @Input({ required: true }) form!: FieldTree<MissionType>
 
   @Output() resetDefaults = new EventEmitter<void>()
 

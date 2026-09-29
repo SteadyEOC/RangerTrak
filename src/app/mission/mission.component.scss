@@ -92,11 +92,14 @@
 }
 
 // ── Action bar trimming ──────────────────────────────────────────────────────
-.mission__save-icon {
-  flex     : none;
-  font-size: 18px;
-  width    : 18px;
-  height   : 18px;
+// 2026-09-28, John: the "Mission data lives in this browser only..." status line (and its
+// cloud_off icon, .mission__save-icon) that used to sit in this bar moved into Data safety's
+// subtitle - see mission.component.html's own comment. `.rt-action-bar`'s shared
+// `justify-content: space-between` (styles/_patterns.scss) has nothing left to space the
+// single remaining child against, which would otherwise left-align Save/Cancel - this pushes
+// them back to the right edge, where every other action bar's buttons already sit.
+.mission__action-bar--buttons-only {
+  justify-content: flex-end;
 }
 
 // F29-23 (2026-08-30): a visible "there's something to lose here" cue - the amber
@@ -110,19 +113,6 @@
   --mdc-filled-button-label-text-color: #ffffff;
 }
 
-// ── Debug ────────────────────────────────────────────────────────────────────
-// Was its own `<h2>Debug</h2>` section with a bare checkbox under it - a full section
-// heading for one developer-facing switch, sitting at the same level as Mission and Maps.
-// Demoted to a single labelled row between the form and its action bar.
-.mission__debug {
-  display    : flex;
-  align-items: baseline;
-  flex-wrap  : wrap;
-  gap        : 0.5rem;
-  margin     : 0.5rem 0 0;
-}
-
-.mission__debug-note {
-  @include type.type-body-sm;
-  color: var(--rt-ink-3);
-}
+// .mission__debug/.mission__debug-note moved 2026-09-28 to
+// mission-advanced-options.component.scss - the "Debug mode" checkbox now lives on that
+// component's own new Advanced card (see mission.component.html's item 7b comment).

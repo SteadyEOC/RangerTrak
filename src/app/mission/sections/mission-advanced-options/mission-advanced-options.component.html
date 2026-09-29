@@ -22,8 +22,13 @@
 <mat-card appearance="outlined" class="rt-mission-card" id="readiness-storage-protection">
   <mat-card-header>
     <mat-card-title>Data safety</mat-card-title>
-    <mat-card-subtitle>Everything RangerTrak knows lives in this browser, on this device.
-      These are the two things that protect it.</mat-card-subtitle>
+    <!-- 2026-09-28, John: folds in the "Mission data lives in this browser only, and is
+         never uploaded" line that used to sit in the page's action bar (see
+         mission.component.html's own comment) - this subtitle already said almost the same
+         thing, so the two are one sentence now instead of the same fact stated twice in two
+         different places on the same page. -->
+    <mat-card-subtitle>Everything RangerTrak knows lives in this browser, on this device,
+      and is never uploaded. These are the two things that protect it.</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     <h3 class="mission__subhead">Storage protection</h3>
@@ -114,11 +119,44 @@
   </mat-card-content>
 </mat-card>
 
+<!-- ══ Advanced ══ 2026-09-28, John: "Debug mode" moved here from a stray full-width row
+     between the form and its action bar (mission.component.html) - it read as furniture
+     rather than a setting, and sat oddly between the grid of real setup cards and the Save
+     button. A dedicated Advanced/diagnostics card, positioned right before Danger zone,
+     gives it the same card treatment every other setting already has. -->
+<mat-card appearance="outlined" class="rt-mission-card">
+  <mat-card-header>
+    <mat-card-title>Advanced</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <!-- Debug is a saved setting, not a live mode, so it is a checkbox rather than a
+         slide-toggle (see the redesign's selection-control rule: a toggle is for something
+         that takes effect the moment you flip it; this one waits for Save like every other
+         field on the page). Bound through the FieldState's own WritableSignal because
+         Signal Forms' [formField] cannot drive a Material checkbox - angular/components#32072,
+         same as the coordinate-system and map-marker checkboxes. -->
+    <div class="mission__debug">
+      <!-- data-testid, not a class: tools/e2e.js needs a stable hook for this control, and
+           a styling class is the wrong thing to hang that on (it can be renamed by a purely
+           visual change - which is exactly how the old `.mission__Save-button` selector in
+           that suite came to be looking for a class that no longer existed). -->
+      <mat-checkbox data-testid="debug-mode" [checked]="form.debugMode().value()"
+        (change)="form.debugMode().value.set($event.checked)">Debug mode</mat-checkbox>
+      <span class="mission__debug-note">
+        Adds a diagnostic panel to the Entry screen and verbose entries to the Log page.
+      </span>
+    </div>
+  </mat-card-content>
+</mat-card>
+
 <!-- ══ 6. DANGER ZONE ══ Everything below replaces data that is already on the device.
      F29-18 (2026-08-29): collapsed behind ExpandableSectionComponent so a stray click can't
      land on a destructive button - see that component's own doc comment for why this is a
-     deliberate, named exception to the 2026-08-25 "no collapsible sections" removal. -->
-<rangertrak-expandable-section class="rt-danger-zone-trigger rt-mission-card">
+     deliberate, named exception to the 2026-08-25 "no collapsible sections" removal.
+     2026-09-28: description added (item 7c) - a muted one-line summary visible even while
+     collapsed, so "what's in here" doesn't require opening it first. -->
+<rangertrak-expandable-section class="rt-danger-zone-trigger rt-mission-card"
+  description="Reset, restore, or load a sample mission">
   <span rtSummary class="rt-danger-zone__summary">
     <mat-icon aria-hidden="true">warning</mat-icon>
     Danger zone

@@ -207,8 +207,11 @@
          F29-18 (2026-08-30): collapsed behind ExpandableSectionComponent so a stray click
          can't land on a destructive button, same treatment as Rangers' and Mission's own
          danger zones - see that component's own doc comment for why this is a deliberate,
-         named exception to the 2026-08-25 "no collapsible sections" removal. -->
-    <rangertrak-expandable-section class="rt-danger-zone-trigger">
+         named exception to the 2026-08-25 "no collapsible sections" removal.
+         2026-09-28: description added (item 7c) - a muted one-line summary visible even
+         while collapsed. -->
+    <rangertrak-expandable-section class="rt-danger-zone-trigger"
+      description="Delete every radio log entry">
       <span rtSummary class="rt-danger-zone__summary">
         <mat-icon aria-hidden="true">warning</mat-icon>
         Danger zone
