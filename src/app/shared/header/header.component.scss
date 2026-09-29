@@ -1,4 +1,5 @@
 @use "../../../styles/typography" as type;
+@use "../../../styles/breakpoints" as bp;
 
   // Flex Layout: https://tburleson-layouts-demos.firebaseapp.com/#/docs
 
@@ -211,6 +212,22 @@
     text-align : right;
     @include type.type-body;
     font-weight: 700;
+  }
+
+  // 2026-09-29, John: on a phone the pill wrapped to three lines - the dot alone, the
+  // op-period reading, then the clock. Two lines instead: dot | clock first, the op-period
+  // reading on its own full-width line below. The divider that sat between the op period
+  // and the clock would now sit beside the first one, so it is hidden.
+  @include bp.phone {
+    .opPeriod {
+      order     : 1;
+      flex-basis: 100%;
+      text-align: left;
+    }
+
+    .opPeriod + .status-divider {
+      display: none;
+    }
   }
 
   // Material-M3 pass, 2026-08-25: the status cluster and the new Guide button share the
