@@ -482,6 +482,14 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    * construction time in a few places, and a reload is simpler and more reliable than chasing
    * every one of them with a signal effect.
    */
+  /**
+   * 2026-09-29, John: gates the field-phone question above to phones and tablets. A coarse
+   * primary pointer means touch-first; touchscreen laptops still report their trackpad/mouse
+   * as primary, so they are (correctly) excluded. Laptops reach the same choice from
+   * Mission > Advanced (MissionAdvancedOptionsComponent.onBtnUseAsFieldPhone()).
+   */
+  readonly isTouchFirstDevice = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+
   onEnableFieldMode(): void {
     this.fieldMode.enable()
     window.location.reload()

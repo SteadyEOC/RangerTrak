@@ -45,7 +45,10 @@
            !fieldMode.enabled() so it can't fire twice. Deliberately a second, separate
            question rather than folded into the demo-data choice: loading sample data and
            declaring this device someone's field phone are unrelated decisions. -->
-      @if (canLoadDemoData() && !fieldMode.enabled()) {
+      <!-- 2026-09-29, John: phones and tablets only (isTouchFirstDevice). A laptop has no
+           real GPS and no phone share sheet, so it can't do a field phone's job; there the
+           same choice lives under Mission > Advanced > Field phone instead. -->
+      @if (canLoadDemoData() && !fieldMode.enabled() && isTouchFirstDevice) {
       <span class="entry-welcome__field-mode">
         Is this a ranger's own field phone, not a command post?
         <button type="button" class="entry-welcome__demo" (click)="onEnableFieldMode()">

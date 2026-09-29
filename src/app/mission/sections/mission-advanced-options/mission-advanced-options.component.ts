@@ -5,8 +5,8 @@ import { FieldTree } from '@angular/forms/signals'
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import {
-  BackupService, LogService, MissionType, RangerPhotoService, SampleDataService,
-  StoragePersistenceService
+  BackupService, FieldModeService, LogService, MissionType, RadioLogService, RangerPhotoService,
+  RangerService, SampleDataService, StoragePersistenceService
 } from '../../../shared/services/'
 // Direct path, not the barrel above - see the note in rangers.component.ts.
 import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../../../shared/services/sample-data.service'
@@ -63,7 +63,41 @@ export class MissionAdvancedOptionsComponent {
     public storagePersistence: StoragePersistenceService,
     private recordStore: RecordStore,
     private rangerPhotoService: RangerPhotoService,
+    private rangerService: RangerService,
+    private radioLogService: RadioLogService,
+    private fieldMode: FieldModeService,
     private log: LogService) { }
+
+  // ── E-114 §1a: field phone, from a laptop/desktop ──────────────────────
+  // 2026-09-29, John: the Entry welcome panel now asks "Is this a ranger's own field phone?"
+  // only on touch-first devices (pointer: coarse) - a laptop has no real GPS and no phone
+  // share sheet, so the question just invites a wrong answer there. This keeps the
+  // capability reachable anyway (e.g. to try field mode at a desk before a drill).
+
+  /**
+   * Same "genuinely untouched install" test as EntryComponent.canLoadDemoData(): field mode
+   * cannot be turned off from inside the app and hides the roster, map and Mission pages, so
+   * it is only offered where there is nothing to hide - never on a working command post.
+   */
+  isBrandNewDevice(): boolean {
+    return this.rangerService.rangers.length === 0
+      && this.radioLogService.getCurrentRadioLog().numReport === 0
+      && !this.form.mission().value().trim()
+  }
+
+  onBtnUseAsFieldPhone(): void {
+    if (!this.isBrandNewDevice()) return
+    if (!confirm(`Use this device as a ranger's field phone?\n\n`
+      + `Only Radio Log Entry and Help stay on the menu. The roster, map, radio log and this `
+      + `Mission page are hidden.\n\n`
+      + `This cannot be turned off again from inside the app.`)) {
+      this.log.verbose('onBtnUseAsFieldPhone: user cancelled.', this.id)
+      return
+    }
+    this.fieldMode.enable()
+    // Reloads for the same reason EntryComponent.onEnableFieldMode() does - see its comment.
+    window.location.reload()
+  }
 
   onBtnRequestPersistence() {
     this.log.verbose('onBtnRequestPersistence: re-requesting persistent storage.', this.id)

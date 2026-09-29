@@ -146,6 +146,32 @@
         Adds a diagnostic panel to the Entry screen and verbose entries to the Log page.
       </span>
     </div>
+
+    <!-- 2026-09-29, John: the laptop/desktop way into field mode - the Entry welcome panel
+         only asks on phones and tablets now. See onBtnUseAsFieldPhone()'s own comment. -->
+    <h3 class="mission__subhead">Field phone</h3>
+    <p class="mission__note">
+      Makes this device a ranger&rsquo;s own field phone: only Radio Log Entry and Help stay on
+      the menu, and <strong>Send my reports</strong> passes reports to the command post.
+      Meant for phones and tablets; the welcome panel offers it there.
+    </p>
+    <p class="mission__note mission__note--warn">
+      It cannot be turned off again from inside the app, so it is only offered on a brand-new
+      device: no rangers, no radio log entries and no mission name.
+    </p>
+    @if (isBrandNewDevice()) {
+    <button matButton="outlined" type="button" data-testid="use-as-field-phone"
+      (click)="onBtnUseAsFieldPhone()"
+      title="Hide everything except Radio Log Entry and Help on this device">
+      <mat-icon>smartphone</mat-icon>
+      Use this device as a field phone
+    </button>
+    } @else {
+    <p class="mission__status">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      Not available: this device already has rangers, radio log entries or a mission name.
+    </p>
+    }
   </mat-card-content>
 </mat-card>
 

@@ -13,6 +13,8 @@ const FIELD_MODE_KEY = 'fieldMode'
  * accounts/login system (D-40 forecloses that outright). Set once via the first-run prompt
  * (EntryComponent's welcome panel, gated by the same `canLoadDemoData()` "genuinely untouched
  * install" check the demo-data button already uses), never silently defaulted either way.
+ * Since 2026-09-29 that prompt shows on phones and tablets only; laptops use Mission >
+ * Advanced > Field phone (MissionAdvancedOptionsComponent), behind the same empty-device gate.
  */
 @Injectable({ providedIn: 'root' })
 export class FieldModeService {
