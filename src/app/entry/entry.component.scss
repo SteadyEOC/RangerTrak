@@ -95,12 +95,21 @@ $filledColor: var(--rt-surface-2);
   color       : inherit;
 }
 
-// Wraps the field-mode question so it starts on its own line from the paragraph above it
-// (the demo-data button stays inline, mid-sentence, but this is a second, separate question -
-// see the template comment) without a fixed height fighting the panel's own flex-wrap.
-.entry-welcome__field-mode {
-  display: block;
-  margin-top: 0.4em;
+// 2026-09-29, John: one numbered item per choice (command post, field phone, demo). When
+// only the command-post item is left (any real data on the device hides the other two), a
+// lone "1." reads oddly, so the list styling drops away.
+.entry-welcome__choices {
+  margin : 0.3em 0 0;
+  padding-inline-start: 1.6em;
+
+  li + li {
+    margin-top: 0.35em;
+  }
+
+  &:has(> li:only-child) {
+    padding-inline-start: 0;
+    list-style: none;
+  }
 }
 
 // E-114 §2b: field-mode-only connectivity line - a small badge, not a full .warn callout,
