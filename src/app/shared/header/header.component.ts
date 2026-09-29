@@ -113,25 +113,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return `${HeaderComponent.MONTH_SHORT[d.getMonth()]} ${d.getDate()}, ${hh}:${mm}:${ss}`
   }
 
-  /**
-   * AAR note (2026-09-28, John): a compact "how long until this period starts" reading -
-   * whole hours (or days once past 24h), never minutes/seconds - for the one place the pill
-   * shows time before a mission's period has begun. The to-the-second precision
-   * `Utility.timeDiff().string` gives is right for elapsed/remaining time during a live
-   * period; it is just width with no value before the period exists yet, and was the widest
-   * fragment in the pill on a phone. Uses a real minus sign, not a hyphen, to match the
-   * rest of the app's negative-number convention.
-   */
-  private static compactHoursUntilStart(diff: ReturnType<typeof Utility.timeDiff>): string {
-    if (diff.days > 0) {
-      return `−${diff.days}d ${diff.hours}h`
-    }
-    // Rounds to the nearest hour rather than always truncating, so "1h59m away" doesn't
-    // misleadingly read as "0h away."
-    const roundedHours = diff.minutes >= 30 ? diff.hours + 1 : diff.hours
-    return roundedHours > 0 ? `−${roundedHours}h` : '<1h'
-  }
-
   constructor(
     private clockService: ClockService,
     private log: LogService,
@@ -235,27 +216,23 @@ export class HeaderComponent implements OnInit, OnDestroy {
     let msEndTime = new Date(this.settings.opPeriodEnd).getTime()
 
     const updateTimeDisplays = () => {
+      // 2026-09-29, John: no minus signs anywhere, and shorter. The words carry the
+      // direction, so timeDiff's leading minus is dropped from both readings:
+      //   before: "2:23:45 to start; ends in 5:36:15"
+      //   during: "1:23:45 elapsed; 5:36:15 left"
+      //   after:  "1:23:45 elapsed; 5:36:15 over"
+      // (Replaces the 2026-09-28 hour-rounded "−2h until period" and "period end in/ago".)
       const elapsed = Utility.timeDiff(msStartTime, new Date().getTime())
-      // Raised live 2026-08-30: "before period starts" was the single longest fragment in
-      // the pill's op-period readout - shortened per the maintainer's own suggested wording.
-      //
-      // AAR note (2026-09-28, John): the full H:MM:SS reading was still the widest fragment
-      // in the pill on a phone whenever a mission's period hasn't started yet (e.g.
-      // "-2:00:00  until period") - to-the-second precision on a countdown to a period that
-      // hasn't begun isn't needed the way to-the-second elapsed time is once it has. Rounded
-      // to the nearest hour in that case only; the exact Starts/Ends time is already one
-      // hover/tap away in this pill's own mission-info panel.
-      this.timeElapsedDisplay.set(elapsed.negative
-        ? `${HeaderComponent.compactHoursUntilStart(elapsed)} until period`
-        : `${elapsed.string}  elapsed`)
-
-      // 2026-09-29, John: "-9:06:46 since period ended" read badly; the direction is now
-      // carried by the words alone, so timeDiff's leading minus is dropped.
+      const elapsedUnsigned = elapsed.string.replace(/^-/, '')
       const left = Utility.timeDiff(new Date().getTime(), msEndTime)
       const leftUnsigned = left.string.replace(/^-/, '')
-      this.timeLeftDisplay.set(left.negative
-        ? `period end ${leftUnsigned} ago`
-        : `period end in ${leftUnsigned}`)
+      if (elapsed.negative) {
+        this.timeElapsedDisplay.set(`${elapsedUnsigned} to start`)
+        this.timeLeftDisplay.set(`ends in ${leftUnsigned}`)
+      } else {
+        this.timeElapsedDisplay.set(`${elapsedUnsigned} elapsed`)
+        this.timeLeftDisplay.set(left.negative ? `${leftUnsigned} over` : `${leftUnsigned} left`)
+      }
     }
     updateTimeDisplays()
 
