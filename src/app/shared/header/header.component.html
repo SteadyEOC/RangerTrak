@@ -24,7 +24,7 @@
          period starts (see HeaderComponent.compactHoursUntilStart's own comment); this title
          gives the exact Starts/Ends reading for anyone who wants it, same data already in
          the hover panel below, just reachable without waiting for the hover delay. -->
-    <span class="opPeriod" [title]="'Starts ' + opPeriodStartDisplay() + ' – Ends ' + opPeriodEndDisplay()">{{opPeriod()}} <span class="status-divider status-divider--inline"></span> {{timeElapsedDisplay()}} &
+    <span class="opPeriod" [title]="'Starts ' + opPeriodStartDisplay() + ' – Ends ' + opPeriodEndDisplay()">{{opPeriod()}} <span class="status-divider status-divider--inline"></span> {{timeElapsedDisplay()}};
       {{timeLeftDisplay()}}</span>
     <span class="status-divider"></span>
     <span class="clock">{{clockDisplay()}}</span>
