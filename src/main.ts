@@ -14,6 +14,12 @@ import { recordStore } from './app/shared/storage/record-store'
 // shown only when recordStore.checkEncryption() finds this device encrypted, BEFORE load()
 // runs. Locations/settings stay unencrypted regardless, so nothing here blocks on those.
 import { runUnlockGate } from './app/shared/storage/unlock-form'
+// Item 9 (2026-09-28, John): one active RangerTrak tab per browser - see tab-lock.ts's own
+// header comment for the two-tabs-overwrite-each-other bug this prevents. Runs FIRST, before
+// even the encryption gate: a tab that has not won the lock has nothing to unlock or boot
+// yet - see acquireTabLock()'s own comment on why this ordering is safe for the encryption
+// gate too.
+import { acquireTabLock, showBlockedGate } from './app/shared/storage/tab-lock'
 
 // NOTE: AG Grid's module registration deliberately does NOT happen here - importing
 // ag-grid-community from main.ts drags the whole grid bundle into the eager initial
@@ -29,6 +35,24 @@ console.info('Angular version', NG_VERSION.full);
 console.info('Angular CDK version', CDK_VERSION.full);
 
 async function bootstrap() {
+  // Item 9 (2026-09-28, John): must run before anything else touches storage or renders the
+  // app - a tab that has not won the single-active-tab lock must never load or write real
+  // mission data at all (see tab-lock.ts's own header comment). 'blocked' shows a full-page
+  // notice and does not resolve until this tab has stolen the lock (the notice's own "Use
+  // this tab instead" button), at which point boot continues exactly as if this tab had won
+  // the lock outright. 'unsupported' (no navigator.locks - very old browsers) and 'active'
+  // both fall straight through with no gate and no behavior change from before this feature.
+  try {
+    const lockOutcome = await acquireTabLock()
+    if (lockOutcome === 'blocked') {
+      await showBlockedGate()
+    }
+  } catch (err) {
+    // Belt and braces, same reasoning as every other catch in this function: a storage-
+    // coordination feature must never be the reason the app fails to boot.
+    console.error('Tab-lock check failed; continuing to boot without single-tab enforcement.', err)
+  }
+
   try {
     // Must run BEFORE load(): a locked device's roster/reports are encrypted envelopes, and
     // load() has no passphrase to decrypt them with until this resolves. checkEncryption()

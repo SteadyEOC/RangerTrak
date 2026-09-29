@@ -300,6 +300,29 @@ actually defends against here is narrow, and worth being honest about:
   change was paid for once. See above.
 - **Phase 3 — per-mission keys**, if agencies ask for separation between missions.
 
+## One active tab per browser
+
+Every domain service (`RangerService`, `RadioLogService`, `MissionLocationService`) keeps its
+whole state in memory and persists it with one unconditional write on every mutation -
+`RecordStore.setItem(key, JSON.stringify(wholeThing))`. That is fine within a single tab, but
+two tabs of the same browser each load their own in-memory copy at boot; the second tab to
+save always wins, silently discarding whatever the first tab wrote in between. Nothing
+coordinated tabs before `shared/storage/tab-lock.ts` (2026-09-28) - no `BroadcastChannel`, no
+`storage` event, no Web Lock.
+
+The fix is a `navigator.locks` exclusive lock, requested `{ ifAvailable: true }` at the very
+start of `main.ts` - before even the encryption gate above, since a tab that has not won the
+lock has nothing to unlock or boot yet. Whichever tab holds it is the only one `RecordStore`
+lets write: `setItem()`/`removeItem()` check a `writesEnabled` flag before touching either the
+in-memory `Map` or IndexedDB, so nothing a blocked tab still has in memory can ever reach
+storage. A tab that loses the startup race shows a full-page plain-DOM notice (same "no
+Angular yet" reasoning as the encryption gate) offering to `steal` the lock instead; a tab that
+was active and gets stolen from finds out because a `steal` rejects the *previous* holder's own
+still-pending `navigator.locks.request()` promise (per the Web Locks API), which is this app's
+only signal that it has been stolen from - no polling, no heartbeat. See `tab-lock.ts`'s own
+header comment for the full mechanics, `tools/e2e.js`'s `checkOneActiveTab()` for the
+two-real-tabs end-to-end proof, and the Help "Your data" tab for the operator-facing framing.
+
 ## Service worker and app updates
 
 `UpdateService` (`shared/services/update.service.ts`) owns the update lifecycle and is

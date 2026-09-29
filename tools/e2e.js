@@ -114,19 +114,51 @@ const dialogs = []
 const dialogQueue = []
 function queueDialogs(...responses) { dialogQueue.push(...responses) }
 
-const send = (method, params = {}) => {
+// sessionId (optional, 3rd arg): every check before item 9 (2026-09-28) only ever drove ONE
+// tab, so `send()` never needed to say which target a command was for - the implicit session
+// of the page-level WebSocket connection was always the right (only) answer. checkOneActiveTab()
+// below is the first check to open a SECOND tab (Target.createTarget/attachToTarget, flatten
+// mode), whose commands must be routed there instead - CDP's flattened-session protocol does
+// that by stamping `sessionId` on each message; a command with no sessionId still implicitly
+// targets the original page, so every pre-existing call site (none of which pass one) is
+// unaffected.
+const send = (method, params = {}, sessionId) => {
   const id = nextId++
-  ws.send(JSON.stringify({ id, method, params }))
+  const msg = { id, method, params }
+  if (sessionId) msg.sessionId = sessionId
+  ws.send(JSON.stringify(msg))
   return new Promise((resolve, reject) => pending.set(id, { resolve, reject }))
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-async function evaluate(expression) {
-  const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })
+async function evaluate(expression, sessionId) {
+  const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, sessionId)
   if (r.exceptionDetails) {
     throw new Error(r.exceptionDetails.exception?.description || 'evaluate failed')
   }
   return r.result.value
+}
+
+/**
+ * Opens a second top-level tab in the SAME browser (Target.createTarget), attaches to it in
+ * "flatten" mode (Target.attachToTarget's response sessionId is then stampable on any later
+ * `send()`/`evaluate()` call to route it there instead of the original page), and enables the
+ * same domains main()'s own setup does for the first tab. Same browser profile/origin as the
+ * first tab, which is the entire point - item 9 (2026-09-28) is about two tabs of the SAME
+ * browser colliding, not two browsers.
+ */
+async function openSecondTab(url) {
+  const { targetId } = await send('Target.createTarget', { url: 'about:blank' })
+  const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true })
+  await send('Page.enable', {}, sessionId)
+  await send('Runtime.enable', {}, sessionId)
+  await send('Page.navigate', { url }, sessionId)
+  await sleep(3500)
+  return { targetId, sessionId }
+}
+
+async function closeTarget(targetId) {
+  await send('Target.closeTarget', { targetId }).catch(() => { })
 }
 
 /**
@@ -963,12 +995,104 @@ async function checkEvidenceLocation() {
 }
 
 /**
+ * Item 9 (2026-09-28, John): one active RangerTrak tab per browser.
+ *
+ * THE BUG THIS PREVENTS (traced at the source, not re-demonstrated on a pre-fix build here -
+ * there is no way to run "before" code in the same pass as the fix that replaces it):
+ * RadioLogService/RangerService/MissionLocationService each keep their whole state in memory
+ * and persist it with ONE unconditional write - `recordStore.setItem(key,
+ * JSON.stringify(wholeThing))` (radio-log.service.ts's updateRadioLogAndPublish(), the
+ * equivalent in ranger.service.ts) - on every mutation. Two tabs of the same browser each
+ * load their own in-memory copy at boot; there was no BroadcastChannel, storage event or Web
+ * Lock anywhere in this app before item 9. Tab A adds report X, writes {...everything tab A
+ * has..., X} to IndexedDB. Tab B, still holding its OWN in-memory copy from before X existed,
+ * adds report Y and writes {...everything tab B has..., Y} - which does not include X. Last
+ * write wins; X is gone. Fixed by shared/storage/tab-lock.ts (a Web Lock, `ifAvailable`/
+ * `steal`) gating shared/storage/record-store.ts's setItem()/removeItem() behind
+ * `writesEnabled` - a tab that is not the active one cannot reach IndexedDB at all, so the
+ * scenario above can no longer happen regardless of what either tab still has in memory.
+ *
+ * THIS CHECK: opens a genuine second tab (Target.createTarget/attachToTarget, same origin -
+ * every other check in this suite drives exactly one tab, so this is the first to need
+ * send()/evaluate()'s new optional sessionId argument) and walks the whole story end to end:
+ * the second tab is blocked at boot, "Use this tab instead" steals the lock, the FIRST tab
+ * (the one the rest of this suite's `ws` session is attached to) shows the stopped-writing
+ * notice, and a report submitted from the now-active second tab actually persists. Closes the
+ * second tab and reloads the first before returning, so it re-acquires the lock and the rest
+ * of the suite (which only ever drives the first tab) finds a normal, writable app again.
+ */
+async function checkOneActiveTab() {
+  console.log('\nOne active tab per browser (item 9): a second tab is blocked, "Use this tab instead" steals it, the first tab stops saving, and the new tab\'s own write survives')
+
+  await goto('/')
+  const firstTabNormal = await evaluate(`!document.querySelector('.rt-tablock')`)
+  check('the first (only, so far) tab boots normally, no lock notice', firstTabNormal, true)
+
+  const { targetId: secondTargetId, sessionId: secondSession } = await openSecondTab(BASE + '/')
+
+  const blockedGate = await evaluate(`(() => {
+    const root = document.querySelector('.rt-tablock');
+    const btn = document.querySelector('#rt-tablock-use-here');
+    return { present: !!root, hasButton: !!btn, text: root?.textContent || '' };
+  })()`, secondSession)
+  check('the second tab shows the "already open" notice', blockedGate.present, true)
+  check('...with a "Use this tab instead" button', blockedGate.hasButton, true)
+  check('...naming the situation in plain words', /already open/i.test(blockedGate.text), true)
+
+  // Steals the lock - the SAME action a scribe takes to keep working from a new tab/window
+  // (a crashed tab reopened, a bookmark clicked twice) rather than being stuck locked out.
+  await evaluate(`document.querySelector('#rt-tablock-use-here').click()`, secondSession)
+  await sleep(2000) // steal + this tab's own Angular boot
+
+  const secondTabActive = await evaluate(`!document.querySelector('.rt-tablock')`, secondSession)
+  check('the second tab boots normally once it has stolen the lock', secondTabActive, true)
+
+  const firstTabStopped = await evaluate(`(() => {
+    const root = document.querySelector('.rt-tablock');
+    const btn = document.querySelector('#rt-tablock-reload');
+    return { present: !!root, hasReload: !!btn, text: root?.textContent || '' };
+  })()`)
+  check('the FIRST tab now shows the stopped-writing notice', firstTabStopped.present, true)
+  check('...with a Reload button', firstTabStopped.hasReload, true)
+  check('...naming what happened in plain words', /stopped saving/i.test(firstTabStopped.text), true)
+
+  // Submits a real report from the second tab (now the only tab allowed to write) - Entry is
+  // the '' route, already loaded. Same field-filling technique checkMessagesPage() uses.
+  await evaluate(`(async () => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    const setInput = (el, v) => { setter.call(el, v); el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); };
+    const cs = document.getElementById('enter__Callsign-input');
+    setInput(cs, 'E2E-TABLOCK');
+    await new Promise(r => setTimeout(r, 900));
+    document.querySelector('.enter__Submit-button')?.click();
+    await new Promise(r => setTimeout(r, 1200));
+  })()`, secondSession)
+
+  const survived = await pollUntil(
+    async () => {
+      const r = JSON.parse((await idbGetRaw('radioLog')) || '{"logEntries":[]}')
+      return (r.logEntries || []).some(e => e.callsign === 'E2E-TABLOCK')
+    },
+    ok => ok === true)
+  check('a report added from the second (now-active) tab actually persists', survived, true)
+
+  // Tear down the second tab BEFORE reloading the first - its lock hold has to release
+  // first, or the first tab's own reload below would just find itself blocked in turn.
+  await closeTarget(secondTargetId)
+  await sleep(500)
+  await goto('/')
+  const firstTabRecovered = await evaluate(`!document.querySelector('.rt-tablock')`)
+  check('the first tab is writable again once the second tab is gone', firstTabRecovered, true)
+}
+
+/**
  * Messages page (ICS-309/213 IA restructuring, scoped and built 2026-08-27): a radio log entry
  * with "Also generate an ICS-213" checked should show up here, in full, with a working
- * Print as ICS-213 button - not just render an empty page.
+ * Save PDF button (see this function's own comment on why Save PDF, not Print, is what
+ * gets clicked) - not just render an empty page.
  */
 async function checkMessagesPage() {
-  console.log('\nMessages: a generates213 report shows up, in full, with a working Print as ICS-213 button')
+  console.log('\nMessages: a generates213 report shows up, in full, with a working Save PDF button')
   await goto('/')
   await idbRemoveRaw('radioLog')
   await goto('/')
@@ -1025,12 +1149,20 @@ async function checkMessagesPage() {
   check('the message appears in the list', page.hasE2EItem, true)
   check('the newest message is selected and shown in the detail pane by default', page.detailShowsMessage, true)
 
+  // 2026-09-28, John (item 8b): the old single "Print as ICS-213" button (a plain download)
+  // split into "Print" (primary - opens the real print dialog via a hidden iframe's
+  // contentWindow.print(), ics213-print.ts) and "Save PDF" (secondary - the original
+  // download-only behaviour). This check clicks "Save PDF" deliberately, not "Print": it
+  // exercises the exact same buildIcs213Pdf() fill path this check has always verified
+  // ("PDF fills correctly, no console errors"), without depending on window.print() actually
+  // doing something sane under CDP/headless, which nothing in this suite has ever exercised
+  // or proven safe - a real print dialog with nothing to dismiss it risks hanging the run.
   await evaluate(`(() => {
-    const btn = [...document.querySelectorAll('.messages__detail button')].find(b => b.textContent.includes('Print as ICS-213'));
+    const btn = [...document.querySelectorAll('.messages__detail button')].find(b => b.textContent.includes('Save PDF'));
     btn?.click();
   })()`)
   await sleep(1500) // fetch the template + fill the PDF
-  check('printing as ICS-213 raised no console errors', consoleErrors.slice(0, 2), [])
+  check('saving the ICS-213 PDF raised no console errors', consoleErrors.slice(0, 2), [])
 }
 
 async function checkEntryPhoneWidth() {
@@ -2936,6 +3068,7 @@ async function main() {
       }
       await checkEntryPhoto()
       await checkEntryAutofocusAndReset() // submits a real report, so read-write only
+      await checkOneActiveTab() // opens a second tab and submits from it, so read-write only
       if (FULL) {
         await checkEvidenceLocation()
         await checkMessagesPage()

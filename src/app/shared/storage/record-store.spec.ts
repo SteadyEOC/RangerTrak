@@ -103,6 +103,49 @@ describe('RecordStore', () => {
     });
   });
 
+  /**
+   * Item 9 (2026-09-28, John): tab-lock.ts's own single-active-tab gate calls
+   * `recordStore.disableWrites()` on a tab that has lost (or never won) the lock - the pure
+   * part of that feature this file can actually unit-test in isolation, without a second
+   * real browser tab (that half is tools/e2e.js's checkOneActiveTab()).
+   */
+  describe('disableWrites() (item 9: one active tab per browser)', () => {
+    it('setItem() becomes a no-op - the in-memory value does not change', () => {
+      recordStore.setItem(KEY, 'before-disable');
+      recordStore.disableWrites();
+      recordStore.setItem(KEY, 'after-disable');
+
+      expect(recordStore.getItem(KEY)).toBe('before-disable');
+    });
+
+    it('setItem() on a key with no prior value stays unset', () => {
+      recordStore.disableWrites();
+      recordStore.setItem(KEY, 'should never land');
+
+      expect(recordStore.getItem(KEY)).toBeNull();
+    });
+
+    it('removeItem() also becomes a no-op', () => {
+      recordStore.setItem(KEY, 'stays');
+      recordStore.disableWrites();
+      recordStore.removeItem(KEY);
+
+      expect(recordStore.getItem(KEY)).toBe('stays');
+    });
+
+    it('disableWrites() blocks every setItem()/removeItem() from that point on, but does not retroactively cancel a write already queued beforehand', async () => {
+      // Queued (a microtask, not yet flushed) BEFORE disableWrites() - this data was valid
+      // when it was written, so letting it complete is correct; it is everything AFTER
+      // disableWrites() that must never reach storage - see the tests above.
+      recordStore.setItem(KEY, 'queued-before-disable');
+      recordStore.disableWrites();
+      recordStore.setItem(KEY, 'attempted-after-disable'); // must be a no-op
+      await recordStore.flush();
+
+      expect(await readRawFromIdb(KEY)).toBe('queued-before-disable');
+    });
+  });
+
   describe('coalesced writes', () => {
     it('collapses several synchronous setItem() calls on the same key into one IndexedDB put', async () => {
       const putSpy = spyOn(IDBObjectStore.prototype as any, 'put').and.callThrough();

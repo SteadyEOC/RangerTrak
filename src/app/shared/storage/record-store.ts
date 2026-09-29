@@ -120,6 +120,26 @@ class RecordStoreImpl {
   private openPromise?: Promise<void>
 
   /**
+   * Item 9 (2026-09-28, John - one active tab per browser): true unless `tab-lock.ts` has
+   * told this tab to stop writing, either because it never won the startup race for the
+   * single-active-tab Web Lock at all, or because it held the lock and had it stolen by a
+   * newer tab mid-session. Checked at the very top of `setItem()`/`removeItem()`, before
+   * either the in-memory Map or IndexedDB is touched, so nothing this tab still has in
+   * memory from before it was told to stop can ever reach storage and clobber whatever the
+   * now-active tab has already written - see tab-lock.ts's own header comment for the full
+   * two-tabs-overwrite-each-other scenario this prevents. Never reset back to true: a tab
+   * that has lost the lock does not get it back without a reload (tab-lock.ts's own Reload
+   * button on the stopped-writing notice), which tears down this whole object anyway.
+   */
+  private writesEnabled = true
+
+  /** tab-lock.ts's own header comment explains when/why this is called. */
+  disableWrites(): void {
+    this.writesEnabled = false
+    console.warn('RecordStore: writes disabled for this tab (another tab is now the active one).')
+  }
+
+  /**
    * Set once `checkEncryption()` has read the plaintext marker record (E-122 Phase 2b).
    * `undefined` means "no marker" - either encryption was never enabled, or it hasn't been
    * checked yet this session.
@@ -469,14 +489,18 @@ class RecordStoreImpl {
     return this.map.has(key) ? this.map.get(key)! : null
   }
 
-  /** Synchronous to the caller: the Map updates at once, IndexedDB catches up shortly after. */
+  /** Synchronous to the caller: the Map updates at once, IndexedDB catches up shortly after.
+   * A no-op if this tab's writes are disabled - see `writesEnabled`'s own comment. */
   setItem(key: string, value: string): void {
+    if (!this.writesEnabled) return
     this.map.set(key, value)
     this.queueWrite(key, value)
   }
 
-  /** Synchronous to the caller, same as `setItem()`. */
+  /** Synchronous to the caller, same as `setItem()` - including the same disabled-writes
+   * no-op. */
   removeItem(key: string): void {
+    if (!this.writesEnabled) return
     this.map.delete(key)
     this.queueWrite(key, null)
   }
@@ -604,6 +628,11 @@ class RecordStoreImpl {
     this.openPromise = undefined
     this.marker = undefined
     this.key = undefined
+    // Item 9 (2026-09-28, John): disableWrites() is deliberately one-way in production (see
+    // its own comment), but this is the shared, reused-across-specs singleton (this file's
+    // own header comment) - a spec that exercises disableWrites() must not permanently break
+    // persistence for every test that runs after it in the same Karma run.
+    this.writesEnabled = true
     // close() lets any transaction already in flight finish; it does not abort one.
     this.db?.close()
     this.db = undefined
