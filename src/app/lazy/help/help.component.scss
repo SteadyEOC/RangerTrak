@@ -1,3 +1,5 @@
+@use "../../../styles/breakpoints" as bp;
+
 // `.main` now lives in PageComponent - see shared/page/page.component.scss.
 
 // Sprint B (25a item 1): the marmot stays - Help is prose and can carry a photograph -
@@ -14,14 +16,28 @@
   background-color: var(--rt-ground);
 }
 
+// 2026-09-28 (John): was a full-bleed `inset:0` wash, which put the marmot directly behind
+// the "Start here" heading and tab labels at every width. Now a band anchored to the right
+// - wide enough to show the marmot, narrow enough to leave the text column clear at typical
+// widths - with a left-edge mask-image fade instead of a hard rectangle boundary, so there
+// is no visible "this is where the photo starts" line. `background-position: 25%` keeps the
+// marmot itself (left-of-center in the source photo) in frame rather than cropping to the
+// empty sky on its right.
 .help-backdrop::before {
   content                                 : "";
   position                                : absolute;
-  inset                                   : 0;
+  inset                                   : 0 0 0 auto;
+  right                                   : 0;
+  width                                   : min(45%, 640px);
   z-index                                 : -1;
   background-image                        : url("../../../assets/imgs/veronika_andrews-hoary-marmot-6514437.jpg");
   background-size                         : cover;
-  background-position                     : center;
+  background-position                     : 25% center;
+  // Fades from fully transparent on the left edge to fully opaque by 45% across the band,
+  // so the photo appears to emerge from nothing rather than being clipped by a straight
+  // line. Applied on top of (not instead of) the opacity below.
+  mask-image                              : linear-gradient(to right, transparent, black 45%);
+  -webkit-mask-image                      : linear-gradient(to right, transparent, black 45%);
   // One value for both schemes on purpose: `light-dark()` takes colors, not numbers, and
   // a scrim that needs a per-scheme opacity is a scrim that is too strong in one of them.
   // F29-34 (2026-08-29): maintainer reported it as too dim; raised 0.15 -> 0.30 (an absolute
@@ -29,6 +45,13 @@
   // +0.02). Flagging here so it can be dialled back if 0.30 turns out too strong.
   opacity                                 : 0.30;
   pointer-events                          : none;
+
+  // Phone: the band above is already narrower than the text column margin can spare, and a
+  // decorative photo is not worth crowding prose on a 390px screen. Drop it entirely rather
+  // than shrink it further into illegibility.
+  @include bp.phone {
+    display: none;
+  }
 }
 
 // https://dev.to/nazanin_ashrafi/how-to-darken-an-image-with-css-4f5h
