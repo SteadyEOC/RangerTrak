@@ -36,7 +36,8 @@
            that's already the row's height ceiling, this fills it without making the sticky
            header any taller. -->
       <svg class="brand-icon" width="26" height="44" viewBox="0 0 155 260" aria-hidden="true"
-        [class.rt-pulse-a]="pulseKey() % 2 === 0" [class.rt-pulse-b]="pulseKey() % 2 !== 0">
+        [class.rt-pulse-a]="pulseKey() % 2 === 0" [class.rt-pulse-b]="pulseKey() % 2 !== 0"
+        [class.rt-pulse-twice]="pulseTwice()">
         <!-- 2026-09-28, John: "animated logo waves, on events only" - this used to run
              `infinite`, all the time, whether or not anything was happening. Now the
              animation is finite (one pass per trigger) and fires only for: page load (the
@@ -46,38 +47,72 @@
              RadioLogService.reportSubmittedSignal - see navbar.component.ts), and
              hover/focus of the brand link (the two CSS-only rules below - independent of
              pulseKey, so hovering never needs a class write). rt-pulse-a/rt-pulse-b are two
-             IDENTICALLY styled classes that NavbarComponent alternates between on each
-             submit: the class value has to actually change for the browser to restart an
-             already-finished animation - toggling the same class off then on within one
-             signal write would not reliably do that. -->
+             classes NavbarComponent alternates between on each trigger; they point at two
+             identical keyframes with different names, because only a change of animation
+             name restarts an already-finished animation (see the 2026-09-29 note below). -->
         <style>
           .brand-icon .wave {
             opacity: 0.5;
           }
 
+          /* 2026-09-29, John: two passes on every page load and in-app page change
+             (rt-pulse-twice), one per submitted radio log entry. Fixed the same day: a
+             finished CSS animation only restarts when its animation-NAME changes, not when
+             an identically styled class swaps in, so rt-pulse-a and rt-pulse-b now use two
+             identical keyframes under different names. And the per-wave stagger is a custom
+             property the shorthand reads: the old separate animation-delay rules lost to the
+             shorthand's own reset (lower specificity), so all three waves fired together. */
           .brand-icon.rt-pulse-a .wave,
-          .brand-icon.rt-pulse-b .wave,
           .brand:hover .brand-icon .wave,
           .brand:focus-visible .brand-icon .wave {
-            animation: rt-signal 1.6s ease-out;
+            animation: rt-signal-a 1.6s ease-out var(--rt-wave-delay, 0s) var(--rt-pulse-count, 1);
+          }
+
+          .brand-icon.rt-pulse-b .wave {
+            animation: rt-signal-b 1.6s ease-out var(--rt-wave-delay, 0s) var(--rt-pulse-count, 1);
+          }
+
+          .brand-icon.rt-pulse-twice {
+            --rt-pulse-count: 2;
           }
 
           /* Staggered so the smallest ring (nearest the antenna) fires first and the
              largest (nearest the edge) fires last - reads as one ripple moving outward,
              not three rings blinking in place together. */
-          .brand-icon .wave-1 {
-            animation-delay: 0s;
-          }
-
           .brand-icon .wave-2 {
-            animation-delay: 0.15s;
+            --rt-wave-delay: 0.15s;
           }
 
           .brand-icon .wave-3 {
-            animation-delay: 0.3s;
+            --rt-wave-delay: 0.3s;
           }
 
-          @keyframes rt-signal {
+          @keyframes rt-signal-a {
+            0% {
+              opacity: 0.15;
+              stroke: var(--rt-signal);
+            }
+
+            35% {
+              opacity: 1;
+              /* Gentle colour pulse toward the skin's accent token, not a fixed literal -
+                 see .brand-icon__signal's own comment on why --rt-signal itself doesn't
+                 vary by skin the way --rt-accent does. */
+              stroke: color-mix(in srgb, var(--rt-signal), var(--rt-accent) 55%);
+            }
+
+            70% {
+              opacity: 1;
+              stroke: var(--rt-signal);
+            }
+
+            100% {
+              opacity: 0;
+              stroke: var(--rt-signal);
+            }
+          }
+
+          @keyframes rt-signal-b {
             0% {
               opacity: 0.15;
               stroke: var(--rt-signal);

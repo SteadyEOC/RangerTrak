@@ -62,6 +62,18 @@ export class NavbarComponent implements OnInit {
    */
   pulseKey = signal(0)
 
+  /**
+   * 2026-09-29, John: "animate twice on any page/screen load, once on a new field report
+   * entry." True on first render (the initial page load plays two passes for free, same as
+   * pulseKey's own note) and on every in-app navigation; set false by a submitted report.
+   * Always written together with a pulseKey bump, which is what restarts the animation.
+   */
+  pulseTwice = signal(true)
+
+  // The router's first NavigationEnd is the initial page load, which already pulses from
+  // first render - pulsing again for it would stack a second pair of passes at boot.
+  private firstNavigationSeen = false
+
   // Effects run once immediately on creation; that first run is the initial signal read, not
   // a real "a report was submitted" event, so it must not also bump pulseKey (page load
   // already gets its pulse for free from rt-pulse-a's presence on first render - counting
@@ -105,6 +117,7 @@ export class NavbarComponent implements OnInit {
     effect(() => {
       this.radioLog.reportSubmittedSignal()
       if (!this.pulseEffectRanOnce) { this.pulseEffectRanOnce = true; return }
+      this.pulseTwice.set(false)
       this.pulseKey.update(n => n + 1)
     })
 
@@ -120,6 +133,11 @@ export class NavbarComponent implements OnInit {
         }
         if (event instanceof NavigationEnd) {
           this.isNavigating.set(false)
+          if (this.firstNavigationSeen) {
+            this.pulseTwice.set(true)
+            this.pulseKey.update(n => n + 1)
+          }
+          this.firstNavigationSeen = true
         }
         if (event instanceof NavigationError) {
           // https://angular.io/api/router/NavigationError
