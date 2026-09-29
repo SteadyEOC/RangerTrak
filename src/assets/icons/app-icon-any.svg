@@ -29,8 +29,10 @@
   
   </defs>
   
-  <g>
-    
+  <!-- Scaled up so the narrow pin fills the tile's height like other desktop app icons do;
+       the maskable icon stays at its original size to respect Android's safe zone. -->
+  <g transform="translate(256 244) scale(1.22) translate(-256 -250)">
+
     <path d="M 256 430 L 152.08 250.00 A 120 120 0 1 1 359.92 250.00 Z" fill="none" stroke="#F0700A" stroke-width="15" filter="url(#pinShadow)"/>
     <path d="M 256 430 L 152.08 250.00 A 120 120 0 1 1 359.92 250.00 Z" fill="url(#pinFillC)"/>
   
