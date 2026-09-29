@@ -239,3 +239,29 @@ rangertrak-footer {
 // styles/_active-skin.scss (a compile-time choice, since removed); now the same fact holds
 // at runtime instead - toggling the `data-skin` attribute (shared/services/skin.service.ts)
 // changes the whole app immediately, no rebuild required.
+
+// 2026-09-29, John: on a phone the callsign picker's options wrapped the phone number onto a
+// second line that ran into the portrait and the next option. Image beside a text block that
+// wraps within itself, and the option grows to fit. Global because the autocomplete panel is
+// an overlay outside EntryComponent (see the class= comment in entry.component.html).
+.enter__Callsign-panel .mat-mdc-option {
+  min-height    : 48px;
+  padding-top   : 6px;
+  padding-bottom: 6px;
+
+  .mdc-list-item__primary-text {
+    display    : flex;
+    align-items: center;
+    gap        : 10px;
+  }
+
+  .enter__Callsign-img {
+    flex         : none;
+    margin-bottom: 0;
+    object-fit   : cover;
+  }
+
+  .enter__Callsign-text {
+    line-height: 1.3;
+  }
+}

@@ -143,13 +143,15 @@
                ham-licensed) is the whole reason D-42 exists, so they have to be pickable.
                mergedFormValue() resolves this text back to the ranger and stores their real
                callsign - blank if that's the truth - rather than the displayed fallback. -->
-          <mat-autocomplete #auto="matAutocomplete">
+          <!-- class= lands on the overlay panel, where styles.scss can reach it; the panel is
+               rendered outside this component, so entry.component.scss cannot. -->
+          <mat-autocomplete #auto="matAutocomplete" class="enter__Callsign-panel">
             <mat-option *ngFor="let ranger of filteredRangers | async"
               [value]="ranger.callsign || ranger.fullName">
               <img class="enter__Callsign-img" aria-hidden="true" [src]="'./assets/imgs/rangers/'+(ranger.image)"
                 width="40" height="40">
-              <span> {{ranger.callsign || '(no callsign)'}}</span> |
-              <small> {{ranger.fullName}} | {{ranger.phone}}</small>
+              <span class="enter__Callsign-text"><span>{{ranger.callsign || '(no callsign)'}}</span> |
+                <small>{{ranger.fullName}} | {{ranger.phone}}</small></span>
             </mat-option>
           </mat-autocomplete>
         </mat-form-field>
