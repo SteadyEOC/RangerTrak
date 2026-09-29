@@ -178,8 +178,9 @@ export type RadioLogEntryType = {
   // no-migration treatment as every other field added this way - a report with none simply
   // has never been edited there.
   revisedAt?: Date,
-  // Set the first time "Print as ICS-213" succeeds for this report (messages.component.ts),
-  // and never overwritten by a later reprint - it answers "has this gone out at all," not
+  // Set the first time Print OR Save PDF succeeds for this report (messages.component.ts's
+  // printAsIcs213()/saveIcs213Pdf(), split from one combined button 2026-09-28), and never
+  // overwritten by a later reprint/re-save - it answers "has this gone out at all," not
   // "when was it last printed." Drives the "you're editing a message that may have already
   // been sent" warning - D-47's own "warning, not a block" policy, not a new one.
   printedAt?: Date,

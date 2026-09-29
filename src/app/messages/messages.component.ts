@@ -8,6 +8,12 @@ import { PageComponent } from '../shared/page/page.component'
 import { MATERIAL_IMPORTS } from '../material-imports'
 import { formatReportTime } from '../shared'
 import { fillIcs213Pdf, ics213FieldsFromReport } from '../shared/export/ics213-pdf'
+// 2026-09-28, John (item 8b): "one click to the print dialog" - the same iframe/print()
+// machinery entry.component.ts's auto-print-on-submit already uses (D1, 2026-09-22). Static
+// import, not the dynamic one entry.component.ts uses: /messages is already its own lazy
+// route (app.routes.ts), so there is no eager-bundle cost to guard against here the way
+// there is on Entry.
+import { printIcs213 } from '../shared/export/ics213-print'
 import {
   RadioLogService, RadioLogEntryType, LogService, MissionService, MissionType
 } from '../shared/services'
@@ -20,9 +26,11 @@ import {
  * Deliberately NOT a second AG Grid clone of Radio Log/radio-log.component.ts: a message
  * is opt-in per report, so this list is expected to stay short, and the useful unit here is
  * one whole message read at a time, not a row scanned across columns. List + expanded-detail
- * instead, with a "Print as ICS-213" button wired directly to `fillIcs213Pdf()` (`0.57.0`,
- * E-31/E-41 phase 3) - built the same day as the log-shaping half of that work, but never
- * wired to any UI until now.
+ * instead, with "Print"/"Save PDF" buttons wired to `fillIcs213Pdf()` (`0.57.0`, E-31/E-41
+ * phase 3) - built the same day as the log-shaping half of that work, but never wired to any
+ * UI until now. 2026-09-28: split from one combined "Print as ICS-213" (download-only)
+ * button into Print (primary, opens the print dialog - ics213-print.ts) and Save PDF
+ * (secondary, the original download) - see printAsIcs213()/saveIcs213Pdf() below.
  *
  * `RadioLogEntryType` has no Approved-by-Name field today, so that one of the form's eight
  * fillable fields is left blank on the printed PDF rather than invented - `fillIcs213Pdf()`'s
@@ -165,6 +173,42 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.editing.set(false)
   }
 
+  /**
+   * Builds the filled ICS-213 PDF bytes for `report` - the one piece shared by both
+   * "Print" and "Save PDF" below. Same eight-field mapping entry.component.ts's
+   * auto-print-on-submit uses (ics213FieldsFromReport()), for the reason its own comment
+   * gives: a second hand-written copy is exactly how F29-47 (blank Subject/Approved-by-Name
+   * for weeks) happened in the first place.
+   */
+  private async buildIcs213Pdf(report: RadioLogEntryType): Promise<Uint8Array> {
+    const res = await fetch('assets/forms/ics-213.pdf')
+    if (!res.ok) {
+      throw new Error(`Fetching the ICS-213 template failed: ${res.status}`)
+    }
+    const templateBytes = new Uint8Array(await res.arrayBuffer())
+    return fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings))
+  }
+
+  /**
+   * First use only (Print OR Save PDF, whichever happens first) - see printedAt's own doc
+   * comment (radio-log-entry.interface.ts): it "answers 'has this gone out at all,' not
+   * 'when was it last printed'" - a plain download is just as much "gone out" as an actual
+   * print job, so both stamp it, matching the single combined button's behaviour before this
+   * split. A reprint/re-save never moves it.
+   */
+  private markPrintedOnce(report: RadioLogEntryType): void {
+    if (report.printedAt) return
+    report.printedAt = new Date()
+    this.radioLogService.saveEditedRadioLog()
+  }
+
+  /**
+   * 2026-09-28, John (item 8b): "Print" is now the primary action - one click straight to
+   * the print dialog (a hidden iframe + contentWindow.print(), same as entry.component.ts's
+   * auto-print - see ics213-print.ts's own doc comment for the Chrome/Firefox fallback it
+   * already handles). Was previously the ONLY action, and only ever downloaded a file the
+   * scribe then had to find and open themselves before they could actually print it.
+   */
   async printAsIcs213(): Promise<void> {
     const report = this.selected
     if (!report || this.printing()) {
@@ -173,19 +217,31 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
     this.printing.set(true)
     try {
-      const res = await fetch('assets/forms/ics-213.pdf')
-      if (!res.ok) {
-        throw new Error(`Fetching the ICS-213 template failed: ${res.status}`)
-      }
-      const templateBytes = new Uint8Array(await res.arrayBuffer())
+      const filled = await this.buildIcs213Pdf(report)
+      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`)
+      this.markPrintedOnce(report)
+      this.log.info(`ICS-213 for report ${report.id}: ${outcome}.`, this.id)
+    } catch (e) {
+      this.log.error(`Failed to fill ICS-213 for report ${report.id}: ${e}`, this.id)
+    } finally {
+      this.printing.set(false)
+    }
+  }
 
-      // 2026-09-22: the field mapping itself moved to ics213-pdf.ts's own
-      // ics213FieldsFromReport() once entry.component.ts's auto-print-on-submit needed the
-      // exact same eight fields - see that function's own comment for why a second
-      // hand-written copy is exactly how F29-47 (blank Subject/Approved-by-Name for weeks)
-      // happened in the first place.
-      const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings))
+  /**
+   * 2026-09-28, John (item 8b): "Save PDF" - secondary action, the exact download-only
+   * behaviour "Print as ICS-213" used to be the only option for. Kept for anyone who wants
+   * the file itself (attaching it to an email, archiving it) rather than a printer.
+   */
+  async saveIcs213Pdf(): Promise<void> {
+    const report = this.selected
+    if (!report || this.printing()) {
+      return
+    }
 
+    this.printing.set(true)
+    try {
+      const filled = await this.buildIcs213Pdf(report)
       // TS's DOM lib types Uint8Array's `.buffer` as ArrayBufferLike (which could in theory
       // be a SharedArrayBuffer), stricter than BlobPart's ArrayBuffer requirement - a real
       // Uint8Array from pdf-lib's own save() is always backed by a plain ArrayBuffer at
@@ -198,13 +254,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
       a.click()
       URL.revokeObjectURL(url)
 
-      // First print only - see printedAt's own doc comment (radio-log-entry.interface.ts) for
-      // why a reprint doesn't move it.
-      if (!report.printedAt) {
-        report.printedAt = new Date()
-        this.radioLogService.saveEditedRadioLog()
-      }
-      this.log.info(`Printed ICS-213 for report ${report.id}`, this.id)
+      this.markPrintedOnce(report)
+      this.log.info(`Saved ICS-213 PDF for report ${report.id}`, this.id)
     } catch (e) {
       this.log.error(`Failed to fill ICS-213 for report ${report.id}: ${e}`, this.id)
     } finally {

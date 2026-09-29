@@ -89,8 +89,17 @@
             <mat-card-actions>
               @if (!editing()) {
               <button matButton="outlined" type="button" (click)="onEdit()">Edit</button>
-              <button matButton="filled" type="button" [disabled]="printing()" (click)="printAsIcs213()">
-                {{ printing() ? 'Preparing…' : 'Print as ICS-213' }}
+              <!-- 2026-09-28, John (item 8b): "Print" is now the primary, one-click action -
+                   opens the print dialog directly (ics213-print.ts). "Save PDF" (below) is
+                   the secondary action, kept for anyone who wants the file itself rather
+                   than a printer. -->
+              <button matButton="outlined" type="button" [disabled]="printing()" (click)="saveIcs213Pdf()"
+                title="Download the filled ICS-213 as a PDF file">
+                {{ printing() ? 'Preparing…' : 'Save PDF' }}
+              </button>
+              <button matButton="filled" type="button" [disabled]="printing()" (click)="printAsIcs213()"
+                title="Fill the ICS-213 and open the print dialog">
+                {{ printing() ? 'Preparing…' : 'Print' }}
               </button>
               } @else {
               <button matButton type="button" (click)="onCancelEdit()">Cancel</button>

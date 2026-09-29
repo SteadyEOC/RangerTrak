@@ -114,11 +114,22 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   // E-31/E-41 phase 3, piece 3 (2026-08-31): "Print 309" scope picker, exactly the three
   // options the roadmap's own scoping settled on ("all those since the last print, or ???" -
   // recommended and adopted: filtered/visible, selected, or since the last print).
-  public printScope = signal<'visible' | 'selected' | 'sincePrint'>('visible')
+  //
+  // 2026-09-28, John (item 8a): "one click to the print dialog" for the COMMON case - this
+  // already was one click regardless of scope (no preview step between the button and
+  // window.print(), see onBtnPrint309() below), but the default scope was 'visible' -
+  // whatever the grid's current filter/sort happened to show, which is session-dependent and
+  // not actually "the common case." Defaulting to 'sincePrint' instead makes the common case
+  // exactly what the task describes: reportsForPrintScope() reads `lastPrintedAt` as epoch 0
+  // when nothing has ever been printed, so 'sincePrint' on a first print already means
+  // "everything" - the same default covers both "since the last print" and "all," with no
+  // separate "all" option needed. 'visible'/'selected' stay in the picker as secondary,
+  // manually-chosen scopes.
+  public printScope = signal<'visible' | 'selected' | 'sincePrint'>('sincePrint')
   readonly printScopeOptions: { value: 'visible' | 'selected' | 'sincePrint'; label: string }[] = [
+    { value: 'sincePrint', label: 'Since the last print (or all, if never printed)' },
     { value: 'visible', label: 'Filtered & sorted rows shown now' },
     { value: 'selected', label: 'Selected rows' },
-    { value: 'sincePrint', label: 'Since the last print' },
   ]
   // 2026-09-25 (maintainer): "does it print on a form that looks like the official ICS-309?
   // The option should be there." 'form' mirrors the standard ICS 309 as ARES/AUXCOMM groups
