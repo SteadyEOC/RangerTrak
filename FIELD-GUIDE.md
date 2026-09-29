@@ -294,7 +294,7 @@ incoming operator, who restores it on their device.
 
 **Reports from rangers' own phones.** A device is set up as either the **full app** (the
 command post) or **field mode** (a ranger's own phone: Entry and Help only, chosen once on a
-new device and not reversible from inside the app - the AAR notes page has no menu item on
+new device and not reversible from inside the app - the AAR (after-action review) notes page has no menu item on
 either device, but is still reached from the AAR note button, see below). RangerTrak never sends a
 report over the network by itself. Every report saves on the phone straight away. **Send my
 reports** bundles them into one file and opens the phone's share sheet, and the ranger picks
