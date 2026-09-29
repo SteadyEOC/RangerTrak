@@ -54,11 +54,14 @@
       [class.rt-install-update--detailed]="detailed">
       <p class="rt-install-update__text">
         Install RangerTrak on this device to work offline, get a ready icon to return to,
-        and skip the browser address bar. It uses almost no storage and is easily
-        uninstalled.
+        and skip the browser address bar. It uses almost no storage, runs nothing in the
+        background, and is easily uninstalled.
+        <!-- 2026-09-29, John. True as of this date: no push notifications, no background or
+             periodic sync; the service worker only wakes for the app's own page loads. If
+             any of that is ever added, this sentence must change with it. -->
       </p>
       <button type="button" class="rt-install-update__main" (click)="onInstall()"
-        title="Install RangerTrak on this device: uses almost no storage, works offline, and gives you an icon to return to.">
+        title="Install RangerTrak on this device: uses almost no storage, runs nothing in the background, works offline, and gives you an icon to return to.">
         <svg class="rt-install-update__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
