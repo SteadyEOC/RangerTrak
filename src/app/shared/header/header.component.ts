@@ -254,8 +254,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
       const left = Utility.timeDiff(new Date().getTime(), msEndTime)
       const leftUnsigned = left.string.replace(/^-/, '')
       this.timeLeftDisplay.set(left.negative
-        ? `period end: ${leftUnsigned} ago`
-        : `period end: in ${leftUnsigned}`)
+        ? `period end ${leftUnsigned} ago`
+        : `period end in ${leftUnsigned}`)
     }
     updateTimeDisplays()
 
