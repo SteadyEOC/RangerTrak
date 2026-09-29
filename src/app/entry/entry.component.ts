@@ -468,6 +468,10 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   async onLoadDemoData(): Promise<void> {
     await this.sampleDataService.loadSampleMission(this.selectedScenario())
+    // 2026-09-29, John: the panel's job is done once one of its choices is taken - left up,
+    // its "first load your rangers" line reads wrong over a fully loaded demo. Dismissed the
+    // normal way, so the header pill still brings it back.
+    this.welcomePanel.dismiss()
     this.log.warn('Loaded the sample mission (demo data) from the Entry welcome panel.', this.id)
     window.location.reload()
   }
@@ -492,6 +496,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onEnableFieldMode(): void {
     this.fieldMode.enable()
+    this.welcomePanel.dismiss() // same reason as in onLoadDemoData()
     window.location.reload()
   }
 
