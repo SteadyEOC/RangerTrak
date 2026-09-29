@@ -76,8 +76,9 @@ export class MissionAdvancedOptionsComponent {
 
   /**
    * Same "genuinely untouched install" test as EntryComponent.canLoadDemoData(): field mode
-   * cannot be turned off from inside the app and hides the roster, map and Mission pages, so
-   * it is only offered where there is nothing to hide - never on a working command post.
+   * hides the roster, map and Mission pages, so it is only offered where there is nothing to
+   * hide - never on a working command post. (The exit, since E-142, is Help >
+   * HelpStartComponent.onTurnOffFieldMode().)
    */
   isBrandNewDevice(): boolean {
     return this.rangerService.rangers.length === 0
@@ -90,7 +91,7 @@ export class MissionAdvancedOptionsComponent {
     if (!confirm(`Use this device as a ranger's field phone?\n\n`
       + `Only Radio Log Entry and Help stay on the menu. The roster, map, radio log and this `
       + `Mission page are hidden.\n\n`
-      + `This cannot be turned off again from inside the app.`)) {
+      + `To turn it off again, use "Turn off field mode" in Help.`)) {
       this.log.verbose('onBtnUseAsFieldPhone: user cancelled.', this.id)
       return
     }

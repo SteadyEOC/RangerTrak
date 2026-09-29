@@ -180,7 +180,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Field mode — a ranger\'s own phone',
-            text: 'This turns a personal phone into a stripped-down device for filing your own reports — not a second command post. On a phone or tablet the welcome panel offers the choice; on a laptop it is under Mission > Advanced > Field phone. Either way only on a genuinely empty device (before any rangers, reports, or mission name are set); there is no way to turn it back off from within the app once chosen.',
+            text: 'This turns a personal phone into a stripped-down device for filing your own reports — not a second command post. On a phone or tablet the welcome panel offers the choice; on a laptop it is under Mission > Advanced > Field phone. Either way only on a genuinely empty device (before any rangers, reports, or mission name are set). To go back to the full app, use Turn off field mode in Help (Rangers\' phones section).',
             bullets: [
               'Everything except this page and Help disappears from the menu — a field phone has no reason to see the roster, the map, or the Mission page, and a typed-in address to one of those pages is blocked the same way.',
               'Location starts from the phone\'s own GPS instead of the mission\'s configured default, if the phone allows it — a best-effort fill, never required, and never overwrites a position already typed by hand.',

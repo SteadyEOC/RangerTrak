@@ -117,8 +117,21 @@
     notes</span> link reaches the notes page from there too. On a brand-new phone or tablet
     the welcome panel offers field mode; on a laptop it is under <span class="ui">Mission</span>
     &gt; <span class="ui">Advanced</span> &gt; <span class="ui">Field phone</span>. Either way it
-    is only offered on a brand-new device, and it cannot be turned off again from inside the app.
+    is only offered on a brand-new device. To go back to the full app, use
+    <span class="ui">Turn off field mode</span>, which appears here on a field-mode device.
   </p>
+  <!-- E-142 (2026-09-29, John): the exit from field mode. Help is reachable in field mode,
+       Mission is not, so this is the one place the button can live. -->
+  @if (fieldMode.enabled()) {
+  <p>
+    <strong>This device is in field mode.</strong>
+    <button matButton="outlined" type="button" data-testid="turn-off-field-mode"
+      (click)="onTurnOffFieldMode()"
+      title="Bring back every page: roster, map, radio log and Mission">
+      Turn off field mode
+    </button>
+  </p>
+  }
   <p>
     RangerTrak never sends a report over the network by itself. Every report is saved on the
     phone the moment it is submitted, with or without a signal. Sending is a separate step:

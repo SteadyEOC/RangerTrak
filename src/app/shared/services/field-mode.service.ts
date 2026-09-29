@@ -31,9 +31,8 @@ export class FieldModeService {
     this.log.warn('Field mode (lite mode) enabled on this device.', this.id)
   }
 
-  /** Recommend only alongside a real reset, never a casual toggle - see E-114 §1a's own
-   *  "not scoped further than this" note on why turning it back off deliberately has no UI
-   *  affordance today. Exists for completeness/testability, not wired to any button yet. */
+  /** E-142 (2026-09-29, John): wired to Help's "Turn off field mode" button
+   *  (HelpStartComponent.onTurnOffFieldMode()), which confirms first and reloads after. */
   disable(): void {
     localStorage.removeItem(FIELD_MODE_KEY)
     this.enabled.set(false)
