@@ -249,8 +249,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
         ? `${HeaderComponent.compactHoursUntilStart(elapsed)} until period`
         : `${elapsed.string}  elapsed`)
 
+      // 2026-09-29, John: "-9:06:46 since period ended" read badly; the direction is now
+      // carried by the words alone, so timeDiff's leading minus is dropped.
       const left = Utility.timeDiff(new Date().getTime(), msEndTime)
-      this.timeLeftDisplay.set(`${left.string} ${left.negative ? ' since period ended' : ' left'}`)
+      const leftUnsigned = left.string.replace(/^-/, '')
+      this.timeLeftDisplay.set(left.negative
+        ? `period end: ${leftUnsigned} ago`
+        : `period end: in ${leftUnsigned}`)
     }
     updateTimeDisplays()
 
