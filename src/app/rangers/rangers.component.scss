@@ -100,6 +100,16 @@ label {
   margin-top: 0.5rem;
 }
 
+// 2026-09-28: "Bulk roster tools" (item 11) - the two rows inside the collapsed section
+// (import/export/photos/Setup-files, then the CSV export row) are plain `.rt-action-bar__buttons`
+// rows, not full `.rt-action-bar`s - that class's sticky positioning/border/shadow is meant for
+// a bar pinned to the bottom of the whole page, which reads as broken nested inside an
+// expansion panel's body. This just gives the panel body some breathing room from the section
+// header above it.
+.rangers__bulk-tools {
+  padding-top: 0.25rem;
+}
+
 // Real empty state for 0 rangers (fresh device, or right after Delete all rangers) - see
 // the template comment. Sits ABOVE the (still-rendered) empty grid, so it is the first
 // thing a first-time coordinator sees rather than something they'd have to scroll past

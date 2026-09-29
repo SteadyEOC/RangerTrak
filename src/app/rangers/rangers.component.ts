@@ -127,6 +127,10 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     // EVENT handlers
     // onRowClicked: event => this.log.verbose('A row was clicked'),
     // onSelectionChanged: (event: SelectionChangedEvent) => this.onRowSelection(event),
+    // 2026-09-28, John: same pattern radio-log.component.ts's gridOptions already uses
+    // (onCellValueChanged -> onCellEdited() -> <service>.saveEdited...()) - see
+    // onCellEdited()'s own comment for why the roster gets the same treatment now.
+    onCellValueChanged: () => this.onCellEdited(),
 
     // CALLBACKS
     // getRowHeight: (params) => 25
@@ -259,7 +263,12 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       // matches the order a scribe actually scans a roster row in.
       // Fixed: the cell renders a 40x40 <img>, so measuring its content is pointless -
       // it is always exactly one thumbnail wide.
-      { headerName: "Image", field: "image", cellRenderer: this.imageCellRenderer, tooltipField: "image", tooltipComponentParams: { color: '#ececec' }, width: 80, maxWidth: 80, resizable: false },
+      // 2026-09-28, John: explicitly non-editable - it only ever had a cellRenderer (the
+      // thumbnail), no cellEditor, so double-clicking it used to open AG Grid's default
+      // plain-text editor (the raw filename) floating over the thumbnail. That made this
+      // the grid's first EDITABLE column by definition order, which is not where a scribe
+      // filling in a brand-new blank ranger should land - see focusNewRangerRow() below.
+      { headerName: "Image", field: "image", cellRenderer: this.imageCellRenderer, tooltipField: "image", tooltipComponentParams: { color: '#ececec' }, width: 80, maxWidth: 80, resizable: false, editable: false },
       { headerName: idFieldLabel || 'ID', field: "id", cellRenderer: this.idCellRenderer, singleClickEdit: true, maxWidth: 170 },
       { headerName: "Call Sign", field: "callsign", cellRenderer: this.callsignCellRenderer, minWidth: 110, maxWidth: 200 },
       { headerName: "Full Name", field: "fullName", tooltipField: "FCC Licensee Name", minWidth: 150, maxWidth: 300 },
@@ -388,11 +397,85 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
 
   //--------------------------------------------------------------------------
 
+  /**
+   * 2026-09-28, John: "clicked Add Ranger and got a new row on the LAST page with a fake
+   * photo and fake info, while the grid stayed on page 1." Two separate bugs:
+   *
+   *   1. The fake-looking data: RangerService.AddRanger()'s no-args branch used to hand
+   *      back a hardcoded demo row ("!A_New_Tactical" / "AAA_New_Name" / a stock male.png
+   *      photo / a fake phone number) - fixed at the source, see that method's own comment.
+   *   2. "Stayed on page 1": this used to call reloadPage() (a full window.location.reload())
+   *      after adding ONE row - unnecessary (this.rangers() already reflects the new roster
+   *      through the same RangerService subscription every other mutation goes through) and
+   *      actively counterproductive: a full reload always remounts the grid back to page 1,
+   *      which is the "stayed on page 1" symptom. Reload is gone; focusNewRangerRow() below
+   *      does the real fix - find wherever the new row actually landed (AddRanger() sorts by
+   *      callsign, so "last row" was never reliable either) and go there.
+   */
   onBtnAddRanger(formData?: string) {
     this.log.verbose("Adding new ranger", this.id)
-    this.rangerService.AddRanger()  // this calls updateLocalStorageAndPublish
+    const added = this.rangerService.AddRanger(formData ?? "")  // this calls updateLocalStorageAndPublish
+    // Keeps the grid's own copy in lockstep with the service synchronously, rather than
+    // waiting for the next change-detection pass to pick up the `rangers()` signal through
+    // the [rowData] binding - focusNewRangerRow() right below needs the new row to already
+    // be in the grid's row model.
+    this.gridApi?.setGridOption('rowData', this.rangers())
     this.refreshGrid()
-    this.reloadPage()
+    this.focusNewRangerRow(added)
+  }
+
+  /**
+   * Moves the grid to whatever page the new row landed on, scrolls it into view, selects it,
+   * and opens its first editable cell for typing - see onBtnAddRanger()'s own comment. Uses
+   * the row's position in the CURRENT filtered/sorted view (forEachNodeAfterFilterAndSort),
+   * not its position in the underlying array, since that view is what pagination actually
+   * pages through.
+   */
+  private focusNewRangerRow(added: RangerType): void {
+    if (!this.gridApi) return
+
+    let rowIndex = -1
+    this.gridApi.forEachNodeAfterFilterAndSort((node: { data: RangerType }, index: number) => {
+      if (node.data === added) rowIndex = index
+    })
+    if (rowIndex < 0) {
+      this.log.warn(`focusNewRangerRow: could not find the new ranger in the grid's own row model.`, this.id)
+      return
+    }
+
+    const pageSize = this.gridApi.paginationGetPageSize()
+    if (pageSize > 0) {
+      this.gridApi.paginationGoToPage(Math.floor(rowIndex / pageSize))
+    }
+    this.gridApi.ensureIndexVisible(rowIndex, 'middle')
+
+    const rowNode = this.gridApi.getDisplayedRowAtIndex(rowIndex)
+    rowNode?.setSelected(true, true)
+
+    const firstEditableField = this.columnDefs.find(c => c.editable !== false && c.field)?.field
+    if (firstEditableField) {
+      this.gridApi.setFocusedCell(rowIndex, firstEditableField)
+      this.gridApi.startEditingCell({ rowIndex, colKey: firstEditableField })
+    }
+  }
+
+  /**
+   * The Radio Log grid has always saved on every committed cell edit; the Rangers grid used
+   * to require a separate "Save edits" button instead. Investigated 2026-09-28 (John):
+   * RangerService.updateLocalStorageAndPublish() - the button's only action - does no
+   * validation of any kind (rosterWarnings()'s duplicate-callsign/duplicate-id checks are an
+   * IMPORT-time advisory only, never called from here), so there was nothing left for a
+   * manual Save step to actually gate. The button and its "unsaved" framing are gone; the
+   * route was never wired to unsavedChangesGuard (only /mission is, per app.routes.ts), so
+   * there was no guard state to remove alongside it.
+   *
+   * One real, pre-existing side effect carried over unchanged: updateLocalStorageAndPublish()
+   * re-sorts the roster by callsign on every save, same as the old button already did - so a
+   * row can still move once its callsign commits. Not new behavior, just now automatic.
+   */
+  private onCellEdited() {
+    this.log.verbose(`Ranger edited in grid; saving.`, this.id)
+    this.rangerService.updateLocalStorageAndPublish()
   }
 
   /** Scenario picker for "Load sample mission" below - see SAMPLE_SCENARIOS' own comment. */
@@ -459,10 +542,8 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     this.gridApi.deselectAll()
   }
 
-  onBtnUpdateLocalStorage() {
-    this.log.verbose(`onBtnUpdateLocalStorage: saving the edited roster to local storage`, this.id)
-    this.rangerService.updateLocalStorageAndPublish()
-  }
+  // onBtnUpdateLocalStorage removed 2026-09-28: was the "Save edits" button's only action -
+  // see onCellEdited()'s own comment for why edits now save automatically instead.
 
   //--------------------------------------------------------------------------
   // Roster import / export (JSON)

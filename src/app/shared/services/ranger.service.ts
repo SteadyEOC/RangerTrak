@@ -1,6 +1,5 @@
 import { Observable, Observer, of, ReplaySubject } from 'rxjs'
 
-import { formatDate } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 
@@ -404,11 +403,18 @@ export class RangerService implements OnInit {
     if (formData != "") {
       newRanger = JSON.parse(formData)
     } else {
+      // 2026-09-28, John: this used to hand back demo-looking placeholder data
+      // ("!A_New_Tactical" / "AAA_New_Name" / a stock "male.png" photo / a fake phone
+      // number) - a scribe adding a real ranger got a row that looked already filled in,
+      // easy to mistake for a template rather than a blank they need to edit. Genuinely
+      // blank now; `image: ""` already resolves to the neutral silhouette via photoSrc()'s
+      // own fallback (RangersComponent), so no placeholder photo is needed for the grid to
+      // render correctly. `uid` is minted below by normalizeRangerIds(), same as for every
+      // other row - nothing here needs to invent one itself. No `id`: D-42 already
+      // established this app never mints a credential, only an operator or the incident's
+      // own check-in process supplies one.
       newRanger = {
-        // D-42: no id here - the app never mints a credential, only an operator or the
-        // incident's own check-in process supplies one.
-        callsign: "!A_New_Tactical", fullName: "AAA_New_Name",
-        image: "male.png", phone: "206-463-0000", team: "", role: "", note: `Manually added at ${formatDate(Date.now(), 'short', "en-US")}.` //https://angular.io/guide/i18n-common-locale-id
+        callsign: "", fullName: "", image: "", phone: "", team: "", role: "", note: ""
       }
     }
     // ADR D-43: mint the surrogate key at creation rather than relying on the next load's

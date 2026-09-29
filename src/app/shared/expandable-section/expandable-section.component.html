@@ -1,6 +1,9 @@
 <mat-expansion-panel class="rt-expandable-section" [expanded]="startOpen">
   <mat-expansion-panel-header>
     <mat-panel-title>{{ summary }}<ng-content select="[rtSummary]"></ng-content></mat-panel-title>
+    @if (description) {
+    <mat-panel-description>{{ description }}</mat-panel-description>
+    }
   </mat-expansion-panel-header>
   <ng-content></ng-content>
 </mat-expansion-panel>

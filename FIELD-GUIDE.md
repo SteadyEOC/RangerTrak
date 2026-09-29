@@ -341,8 +341,8 @@ group:
 > ⚠️ **Export first.** This is irreversible, and there is no undo.
 
 1. **Mission** → *Danger zone* → **Reset mission to defaults**, then re-enter what you want.
-2. **Rangers** → *Danger zone* → **Delete all rangers**. Note that a default roster is loaded
-   automatically in its place; edit or replace it as needed, then **Save edits**.
+2. **Rangers** → *Danger zone* → **Delete all rangers**. The roster stays empty until you
+   import one or add rangers — edits save automatically as you make them.
 3. **Radio Log** → *Danger zone* → **Delete all radio log entries**.
 
 Switching to a different browser or a different device also gives you a completely fresh
@@ -496,8 +496,6 @@ seeing what a busy mission looks like.
 
 **Rough edges to be aware of:**
 
-- **Roster edits are not saved automatically.** Press **Save edits** on the Rangers page,
-  or your changes are lost on reload.
 - **The Alternative map's built-in street detail covers the demo areas only**, and only
   while that demo is loaded. Everywhere else you get a low-detail world map with your report
   markers on it — correct positions, no streets — unless you load your own map file for that

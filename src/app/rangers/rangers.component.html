@@ -129,87 +129,95 @@
           Add
         </button>
 
-        <button matButton="outlined" type="button" (click)="onBtnUpdateLocalStorage()"
-          title="Write the edits you have made in the grid above to this browser">
-          <mat-icon>save</mat-icon>
-          Save edits
-        </button>
-
         <button matButton="outlined" type="button" (click)="onDeselectAll()">
           Clear selection
         </button>
-
-        <!-- matButton only attaches to button/a elements (its own selector, never label) -
-             an earlier <label matButton> here silently did nothing, rendering as plain
-             unstyled text next to its real-button siblings. A real button now triggers the
-             hidden input via .click(), called synchronously inside this click handler -
-             opens the native file picker fine (the user-activation flag carries through).
-
-             Style B ("Setup files") - shares its `layers` icon with Export roster below and
-             the Setup files link at the end of this bar, so the three read as one matched
-             family, distinct from Mission Setup's "Mission Backup" controls. -->
-        <button matButton="outlined" type="button" (click)="importRosterFile.click()"
-          title="Replace the roster from a JSON file, or merge in the rangers from a setup file (a .zip built on the Setup files page). Radio log entries and settings are not affected.">
-          <mat-icon>layers</mat-icon>
-          Import roster
-        </button>
-        <input #importRosterFile id="importRosterFile" type="file"
-          accept="application/json,.json,application/zip,.zip" (change)="onRosterFileSelected($event)" hidden />
-
-        <button matButton="outlined" type="button" (click)="onBtnExportRangersJson()"
-          title="Download just the roster as JSON - the file Import roster expects">
-          <mat-icon>layers</mat-icon>
-          Export roster
-        </button>
-
-        <button matButton="outlined" type="button" (click)="importPhotoFiles.click()"
-          title="Store photographs on this device. Name each file after its callsign, e.g. K7VMI.jpg">
-          <mat-icon>image</mat-icon>
-          Import photos
-        </button>
-        <input #importPhotoFiles id="importPhotoFiles" type="file" accept="image/*" multiple
-          (change)="onPhotoFilesSelected($event)" hidden />
-
-        <!-- E-109 Setup files v2 (2026-08-31): a pre-mission provisioning tool that packages
-             any combination of rangers + photos, locations, and mission settings - a separate
-             page (see its own doc comment for why), linked from here since it's the natural
-             next stop from roster management. -->
-        <a matButton="outlined" routerLink="/prep"
-          title="Package this roster and its photos, locations, and/or mission settings into one or more files for another device - or load ones someone handed you">
-          <mat-icon>layers</mat-icon>
-          Setup files
-        </a>
       </div>
     </div>
 
-    <!-- CSV export gets its own row: it carries two controls (separator, all rows) that
-         belong to it and to nothing else in the bar above. -->
-    <div class="rt-action-bar rangers__export">
-      <span class="rt-action-bar__status">
-        Spreadsheet export &mdash; for Excel; cannot be imported back, use Export roster for that
-      </span>
-      <div class="rt-action-bar__buttons">
-        <mat-form-field class="rangers__control">
-          <mat-label>CSV separator</mat-label>
-          <mat-select [value]="columnSeparator()"
-            (selectionChange)="columnSeparator.set($event.value); onSeperatorChange()">
-            @for (opt of separatorOptions; track opt.value) {
-              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+    <!-- ══ Bulk roster tools ══ 2026-09-28, John: the less-used, whole-roster operations -
+         spreadsheet export, import/export roster, import photos, and the Setup files link -
+         moved out of the everyday action bar above and into one collapsed section. This is a
+         second, deliberate exception to the 2026-08-25 "no collapsible sections" removal
+         (Danger zone below is the first) - the same reasoning applies: these are occasional,
+         whole-roster operations, not the "add a ranger, edit a cell" flow this page exists
+         for day to day. Same component, same clickable-header treatment (chevron,
+         hover/focus, a muted one-line description while collapsed) as Danger zone - just
+         without the warning colour, since nothing here is destructive. -->
+    <rangertrak-expandable-section summary="Bulk roster tools"
+      description="Import, export and photos for the whole roster">
+      <div class="rangers__bulk-tools">
+        <div class="rt-action-bar__buttons">
+          <!-- matButton only attaches to button/a elements (its own selector, never label) -
+               an earlier <label matButton> here silently did nothing, rendering as plain
+               unstyled text next to its real-button siblings. A real button now triggers the
+               hidden input via .click(), called synchronously inside this click handler -
+               opens the native file picker fine (the user-activation flag carries through).
 
-        <mat-checkbox [checked]="allRows()" (change)="allRows.set($event.checked)"
-          title="By default only the filtered and sorted rows are exported.">
-          All rows
-        </mat-checkbox>
+               Style B ("Setup files") - shares its `layers` icon with Export roster below and
+               the Setup files link at the end of this bar, so the three read as one matched
+               family, distinct from Mission Setup's "Mission Backup" controls. -->
+          <button matButton="outlined" type="button" (click)="importRosterFile.click()"
+            title="Replace the roster from a JSON file, or merge in the rangers from a setup file (a .zip built on the Setup files page). Radio log entries and settings are not affected.">
+            <mat-icon>layers</mat-icon>
+            Import roster
+          </button>
+          <input #importRosterFile id="importRosterFile" type="file"
+            accept="application/json,.json,application/zip,.zip" (change)="onRosterFileSelected($event)" hidden />
 
-        <button matButton="filled" type="button" (click)="onBtnExportToExcel()">
-          <mat-icon>download</mat-icon>
-          Export CSV
-        </button>
+          <button matButton="outlined" type="button" (click)="onBtnExportRangersJson()"
+            title="Download just the roster as JSON - the file Import roster expects">
+            <mat-icon>layers</mat-icon>
+            Export roster
+          </button>
+
+          <button matButton="outlined" type="button" (click)="importPhotoFiles.click()"
+            title="Store photographs on this device. Name each file after its callsign, e.g. K7VMI.jpg">
+            <mat-icon>image</mat-icon>
+            Import photos
+          </button>
+          <input #importPhotoFiles id="importPhotoFiles" type="file" accept="image/*" multiple
+            (change)="onPhotoFilesSelected($event)" hidden />
+
+          <!-- E-109 Setup files v2 (2026-08-31): a pre-mission provisioning tool that packages
+               any combination of rangers + photos, locations, and mission settings - a separate
+               page (see its own doc comment for why), linked from here since it's the natural
+               next stop from roster management. -->
+          <a matButton="outlined" routerLink="/prep"
+            title="Package this roster and its photos, locations, and/or mission settings into one or more files for another device - or load ones someone handed you">
+            <mat-icon>layers</mat-icon>
+            Setup files
+          </a>
+        </div>
+
+        <!-- CSV export gets its own row: it carries two controls (separator, all rows) that
+             belong to it and to nothing else in this section. -->
+        <div class="rt-action-bar__buttons rangers__export">
+          <span class="rt-action-bar__status">
+            Spreadsheet export &mdash; for Excel; cannot be imported back, use Export roster for that
+          </span>
+          <mat-form-field class="rangers__control">
+            <mat-label>CSV separator</mat-label>
+            <mat-select [value]="columnSeparator()"
+              (selectionChange)="columnSeparator.set($event.value); onSeperatorChange()">
+              @for (opt of separatorOptions; track opt.value) {
+                <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-checkbox [checked]="allRows()" (change)="allRows.set($event.checked)"
+            title="By default only the filtered and sorted rows are exported.">
+            All rows
+          </mat-checkbox>
+
+          <button matButton="filled" type="button" (click)="onBtnExportToExcel()">
+            <mat-icon>download</mat-icon>
+            Export CSV
+          </button>
+        </div>
       </div>
-    </div>
+    </rangertrak-expandable-section>
 
     <!-- ══ 6. DANGER ZONE ══ Was inside "Advanced", styled identically to the prose around
          it - so emptying the roster, and appending 18 station signs that duplicate on a
@@ -219,7 +227,7 @@
          can't land on a destructive button, and these read as exceptional actions rather
          than furniture on the page - see that component's own doc comment for why this is a
          deliberate, named exception to the 2026-08-25 "no collapsible sections" removal. -->
-    <rangertrak-expandable-section class="rt-danger-zone-trigger">
+    <rangertrak-expandable-section class="rt-danger-zone-trigger" description="Delete the whole roster">
       <span rtSummary class="rt-danger-zone__summary">
         <mat-icon aria-hidden="true">warning</mat-icon>
         Danger zone

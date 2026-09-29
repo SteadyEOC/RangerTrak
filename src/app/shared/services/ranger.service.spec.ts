@@ -277,6 +277,30 @@ describe('RangerService', () => {
 
       expect(latest.some(r => r.callsign === 'TEST2')).toBeTrue();
     });
+
+    /**
+     * 2026-09-28, John (item 5a): the no-args branch (Rangers page's "Add" button) used to
+     * hand back demo-looking placeholder data - "!A_New_Tactical" / "AAA_New_Name" / a stock
+     * male.png photo / a fake phone number - easy to mistake for a template rather than a
+     * blank row to fill in. Genuinely blank now, with only a minted uid.
+     */
+    it('the no-args branch (the Rangers page "Add" button) returns a genuinely blank ranger, not placeholder demo data', () => {
+      const service = TestBed.inject(RangerService);
+
+      const added = service.AddRanger();
+
+      expect(added.callsign).toBe('');
+      expect(added.fullName).toBe('');
+      expect(added.image).toBe('');
+      expect(added.phone).toBe('');
+      expect(added.team).toBe('');
+      expect(added.role).toBe('');
+      expect(added.note).toBe('');
+      expect(added.id ?? '').toBe('');
+      // The one thing it DOES get: a minted surrogate key, same as every other roster row -
+      // without this, a report filed against a freshly-added ranger has nothing to join on.
+      expect(added.uid).toBeTruthy();
+    });
   });
 
   describe('updateRanger / deleteRanger', () => {

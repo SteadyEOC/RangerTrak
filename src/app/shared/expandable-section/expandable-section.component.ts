@@ -33,6 +33,15 @@ export class ExpandableSectionComponent {
   /** Plain-text heading. Omit and project `[rtSummary]` for anything richer. */
   @Input() summary = ''
 
+  /**
+   * 2026-09-28, John: a short, muted one-line explanation shown in the header WHILE
+   * COLLAPSED (Material's own `<mat-panel-description>`, always visible regardless of
+   * expanded state) - so a reader can tell what a section holds before opening it, e.g.
+   * Danger zone: "Reset, restore, or load a sample mission." Omit for a section whose
+   * heading alone is already self-explanatory.
+   */
+  @Input() description = ''
+
   /** Starts open. Every current use (danger zones, FAQ, Log) wants closed - default false. */
   @Input() startOpen = false
 }

@@ -106,7 +106,10 @@ const YOUR_DATA: GuideTab = {
         'Clearing site data clears the mission. Back up mission, on the Mission page, guards against this.',
         'Especially on iPhone and iPad, every browser can clear a site\'s data after about a week unused, and storage protection is not reliable there (nor in Safari on a Mac). Install RangerTrak and back up the mission.',
         'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.',
-        'The roster, radio log entries, after-action notes and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).'
+        'The roster, radio log entries, after-action notes and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).',
+        // Item 9 (2026-09-28, John): so a scribe who opens a second tab/window and sees
+        // either notice understands why, rather than assuming something broke.
+        'Only ONE tab of this browser saves at a time. Opening RangerTrak in a second tab or window shows a notice offering to make that one active instead - the other stops saving, with its own notice, until reloaded.'
       ]
     }
   ]
@@ -262,7 +265,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Printing',
-            text: 'Print as ICS-213 fills FEMA’s own real ICS-213 form and downloads it as a PDF, ready to hand off or file. Subject comes from the report\'s own Subject field, and Approved by is the operator who filed the report. The Reply section is left blank for the recipient to fill in.'
+            text: 'Both Print and Save PDF fill FEMA’s own real ICS-213 form the same way - Print opens the print dialog directly (one click to paper), Save PDF downloads the file instead, for attaching to an email or filing. Subject comes from the report\'s own Subject field, and Approved by is the operator who filed the report. The Reply section is left blank for the recipient to fill in.'
           }
         ]
       },
@@ -308,8 +311,11 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
         label: 'This page',
         blocks: [
           {
-            heading: 'Edits here are NOT saved automatically',
-            text: 'Unlike the Radio Log grid, changes typed into this grid need the Save edits button before they stick. Importing, adding and deleting a ranger all save themselves.'
+            // 2026-09-28: edits now save the same way the Radio Log grid always has - on
+            // each cell you finish editing, no separate step. The "Save edits" button this
+            // heading used to describe is gone.
+            heading: 'Edits here save automatically',
+            text: 'Same as the Radio Log grid: every cell you finish editing saves right away. Importing, adding and deleting a ranger all save themselves too.'
           },
           {
             heading: 'Loading a roster',
@@ -317,7 +323,8 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Import roster replaces the whole roster from a JSON file, or MERGES rangers in from a setup file (a .zip built on the Setup files page). Radio log entries and settings are left alone either way. Each entry needs a UNIQUE ID — a callsign is optional.',
               'Export roster writes that file back out. Do it before importing if you want to keep the roster you already have.',
               'JSON round-trips: it can be imported back in. Export CSV is for Excel and cannot.',
-              'Photos are kept on this device only, never uploaded and never in the repo. Name each file after the ranger\'s id or callsign - any common image format works (JPG, PNG, GIF, WEBP, etc.).'
+              'Photos are kept on this device only, never uploaded and never in the repo. Name each file after the ranger\'s id or callsign - any common image format works (JPG, PNG, GIF, WEBP, etc.).',
+              'Import roster, Export roster, Import photos, Export CSV, and Setup files all live under "Bulk roster tools", collapsed near the bottom of this page.'
             ]
           },
           {
