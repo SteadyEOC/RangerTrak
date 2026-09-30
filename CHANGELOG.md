@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.5-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.4-alpha...v0.99.5-alpha) (2026-09-30)
+
+
+### Features
+
+* **map:** Roads and place names overlay for the Satellite map (Esri reference layers) ([f14efda](https://github.com/SteadyEOC/RangerTrak/commit/f14efdaa51b03016593bcdf7a32fc0aff2668a1e))
+* **mission:** Ranger ID field name defaults to "Ranger ID"; blank or the old "ID" also shows as Ranger ID ([bccd08d](https://github.com/SteadyEOC/RangerTrak/commit/bccd08d11531ae8635b844ba2e735cbf54cafcde))
+
+
+### Bug Fixes
+
+* ARES review minor items and Help tab body spacing (E-153) ([585e701](https://github.com/SteadyEOC/RangerTrak/commit/585e7011be8d47395bea45b9375f5cb9d448bfd1))
+* **mission:** a colour edit repaints the whole row - Status tint and category icon preview no longer wait for a reload ([cf70da7](https://github.com/SteadyEOC/RangerTrak/commit/cf70da71777089a23bea9d7d82c5c3fbefc759d2))
+
 ### [0.99.4-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.3-alpha...v0.99.4-alpha) (2026-09-30)
 
 
