@@ -333,6 +333,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // pointer-events:none control.
   private saveEstimateText = ''
   private osmBaseActive = false
+  // 2026-09-30, John: E-162 - the satellite base layer is online-only and not offered for saving.
+  private satelliteBaseActive = false
 
   ngAfterViewInit() {
     this.afterViewInitTimer = setTimeout(() => {
@@ -521,9 +523,23 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // savetiles control below are still bound to `tiles` (OSM) specifically -
     // offline-BULK-saving OpenTopoMap needs its own wiring (or a rebind on the control's
     // `baselayerchange` event), left for whichever session actually needs it.
+    // 2026-09-30, John: E-162 - Esri World Imagery satellite base layer. A plain L.tileLayer
+    // (like the hillshade), online only: it is not a tileLayerOffline, so it neither auto-caches
+    // nor is offered to "Save this area" (the baselayerchange handler below disables that
+    // button while it is showing). Esri's own terms of use for World Imagery must be
+    // re-checked before 1.0 (roadmap E-162). server.arcgisonline.com is already in the CSP.
+    // maxZoom 19 is the service's usual detail limit; past it Leaflet just enlarges tiles.
+    const satelliteTiles = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19, minZoom: 3,
+        attribution: 'Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+      }
+    )
     const baseLayers: Record<string, L.Layer> = {
       'OpenStreetMap': tiles,
       'OpenTopoMap (contours)': openTopoTiles,
+      'Satellite (Esri World Imagery)': satelliteTiles,
     }
     // Region download manager, phase A (scoped 2026-08-25, built 2026-08-26 on request):
     // "a browsable/verifiable record of which specific areas are on disk," not just the
@@ -637,6 +653,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // URL template once at construction - see rebindOfflineAreaInfo() below.
     this.lMap.on('baselayerchange', (e: L.LayersControlEvent) => {
       const newBase = e.layer as ReturnType<typeof tileLayerOffline>
+      // E-162: satellite is not a tileLayerOffline - leave the save control bound to the last
+      // offline layer, but block it (and say why) until an offline base is picked again.
+      this.satelliteBaseActive = !this.offlineTileLayers.includes(newBase)
+      if (this.satelliteBaseActive) {
+        this.refreshEstimatedAreaInfo?.()
+        return
+      }
       saveTilesControl.setLayer(newBase)
       this.rebindOfflineAreaInfo?.(newBase)
     })
@@ -767,6 +790,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * `maxZoom` refreshEstimatedAreaInfo() last set, instead of downloading immediately.
    */
   private confirmSaveTiles(status: SaveStatus, successCallback: Function): void {
+    if (this.satelliteBaseActive) {
+      alert('Switch to OpenTopoMap to save for offline use - satellite imagery is online only.')
+      return
+    }
     if (this.osmBaseActive) {
       // Defense in depth - the button is already CSS-disabled (rt-savetiles-disabled) and
       // its text already explains why for this case; this only matters if a click somehow
@@ -857,8 +884,14 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       // covers). Disabling here, not just at click time, means a scribe never gets as far as
       // pressing a button that was always going to refuse.
       this.osmBaseActive = activeTiles === osmLayer
-      saveButton.classList.toggle('rt-savetiles-disabled', this.osmBaseActive)
-      saveButton.setAttribute('aria-disabled', String(this.osmBaseActive))
+      const saveBlocked = this.osmBaseActive || this.satelliteBaseActive
+      saveButton.classList.toggle('rt-savetiles-disabled', saveBlocked)
+      saveButton.setAttribute('aria-disabled', String(saveBlocked))
+      if (this.satelliteBaseActive) {
+        estimateInfo.textContent = '(switch to OpenTopoMap to save for offline use - satellite imagery is online only)'
+        this.saveEstimateText = ''
+        return
+      }
       if (this.osmBaseActive) {
         estimateInfo.textContent =
           '(switch to OpenTopoMap to save for offline use - OpenStreetMap\'s servers don\'t allow it)'
