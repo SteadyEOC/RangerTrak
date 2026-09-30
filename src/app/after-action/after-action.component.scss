@@ -14,13 +14,18 @@
   flex: 1 1 auto;
 }
 
+// 2026-09-30, John: E-144 - was a single column of full-width note cards, which on a wide
+// monitor stretched every text area across the screen. Same auto-fit/minmax pattern as
+// Mission's .mission__grid: two or more columns when there is room, one on a phone.
+// align-items: start so a tall note does not stretch the card beside it.
 .rt-aar__list {
   list-style: none;
   margin    : 0;
   padding   : 0;
-  display   : flex;
-  flex-direction: column;
+  display   : grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
   gap       : var(--rt-space-md, 1rem);
+  align-items: start;
 }
 
 .rt-aar__note {
@@ -48,6 +53,15 @@
 .rt-aar__actions {
   display        : flex;
   justify-content: flex-end;
+}
+
+// 2026-09-30, John: E-144 - "Notes about RangerTrak" and "Delete notes" side by side when there
+// is room, stacked on a phone (same pattern as above).
+.rt-aar__sections {
+  display              : grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+  gap                  : 0 var(--rt-space-md, 1rem);
+  align-items          : start;
 }
 
 .rt-aar__section {
