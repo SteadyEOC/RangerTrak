@@ -1,3 +1,5 @@
+import { showFirstPrintTip } from '../../shared/export/print-tip'
+
 /**
  * 2026-09-30, John: E-152 part 1 - what "Print map" does, shared by both map engines.
  *
@@ -29,6 +31,7 @@ const PAGE_CSS = `
 `
 
 export function printMapSheet(): void {
+  showFirstPrintTip() // 2026-09-30, John: once per device, see print-tip.ts
   const style = document.createElement('style')
   style.textContent = PAGE_CSS
   document.head.appendChild(style)

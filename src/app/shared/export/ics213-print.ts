@@ -17,6 +17,8 @@
  * own onFormSubmit() comment for why this is kicked off fire-and-forget, never awaited by the
  * submit path itself.
  */
+import { showFirstPrintTip } from './print-tip'
+
 export type Ics213PrintOutcome = 'printed' | 'downloaded'
 
 export async function printIcs213(pdfBytes: Uint8Array, filename: string): Promise<Ics213PrintOutcome> {
@@ -25,6 +27,9 @@ export async function printIcs213(pdfBytes: Uint8Array, filename: string): Promi
   // pdf-lib's save() is always backed by a plain ArrayBuffer at runtime.
   const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' })
   const url = URL.createObjectURL(blob)
+
+  // 2026-09-30, John: once per device, before the first print dialog - see print-tip.ts.
+  showFirstPrintTip()
 
   if (await tryPrintViaIframe(url)) {
     return 'printed'
@@ -37,7 +42,31 @@ export async function printIcs213(pdfBytes: Uint8Array, filename: string): Promi
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+  explainDownloadFallbackOnce()
   return 'downloaded'
+}
+
+/**
+ * 2026-09-30, John: "I didn't see any print dialog, just the PDF file name." That is this
+ * fallback: the browser would not open the form in a print dialog (Firefox, or Chrome/Edge set
+ * to download PDFs instead of opening them), so the form was saved as a file. Silent until
+ * now on the Messages page. Explained once per device (the no-modal-per-submission rule in
+ * this file's header still holds); Entry's own status line repeats it on every submit.
+ */
+const DOWNLOAD_FALLBACK_EXPLAINED_KEY = 'ics213DownloadFallbackExplained'
+
+function explainDownloadFallbackOnce(): void {
+  try {
+    if (localStorage.getItem(DOWNLOAD_FALLBACK_EXPLAINED_KEY) === 'true') return
+    localStorage.setItem(DOWNLOAD_FALLBACK_EXPLAINED_KEY, 'true')
+  } catch {
+    return
+  }
+  alert(`This browser saved the ICS-213 as a file instead of opening the print dialog.\n\n`
+    + `To print it, open the downloaded file and print from there.\n\n`
+    + `In Chrome or Edge you can print directly instead: in the browser's settings, `
+    + `Privacy and security > Site settings > PDF documents, choose "Open PDFs in Chrome" `
+    + `(or Edge). Firefox always saves the file.`)
 }
 
 /**

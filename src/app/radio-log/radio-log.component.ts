@@ -29,6 +29,7 @@ import {
 } from '../shared/services'
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
 import { recordStore } from '../shared/storage/record-store'
+import { showFirstPrintTip } from '../shared/export/print-tip'
 
 @Pipe({ name: 'myUnusedPipe' })
 export class myUnusedPipe implements PipeTransform {
@@ -819,6 +820,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // print so the Map page's own print output is unaffected. window.print() blocks until
       // the dialog closes in every browser this app supports, so removing the class right
       // after it is safe; 'afterprint' is the belt to that brace.
+      showFirstPrintTip() // 2026-09-30, John: once per device, see print-tip.ts
       document.body.classList.add('rt-print-309')
       window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-309'), { once: true })
       window.print()

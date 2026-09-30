@@ -51,6 +51,21 @@
     is a line at the bottom to sign as the person who prepared it.
   </rangertrak-expandable-section>
 
+  <!-- 2026-09-30, John: print defaulted to "Save as PDF", and on one browser only a file-name
+       dialog appeared. A web page cannot choose the printer or skip the dialog; see
+       shared/export/print-tip.ts and ics213-print.ts. -->
+  <rangertrak-expandable-section summary="I pressed Print but it saved a PDF instead.">
+    Every Print button opens your browser's own print dialog, and the browser starts on the
+    last place you printed to, which is often "Save as PDF". Choose your printer there once;
+    the browser remembers it, so from then on it is Print, then Enter. If you only see a box
+    asking for a file name, your browser saved the ICS-213 as a file instead: open that file
+    and print it. In Chrome or Edge you can make it print directly by setting the browser to
+    open PDFs rather than download them (Settings, Privacy and security, Site settings, PDF
+    documents). Firefox always saves the file. On a laptop kept just for RangerTrak, starting
+    Chrome or Edge with <code>--kiosk-printing</code> in its desktop shortcut skips the print
+    dialog entirely and prints straight to the default printer.
+  </rangertrak-expandable-section>
+
   <rangertrak-expandable-section summary="The Radio Log page looks different on my phone.">
     On a phone it becomes a read-only list of cards, because the full table cannot be used
     accurately at that width. Corrections need a wider screen.

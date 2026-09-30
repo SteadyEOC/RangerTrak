@@ -8,6 +8,7 @@ import { MATERIAL_IMPORTS } from '../material-imports'
 import {
   AAR_NOTE_ABOUT_LABELS, AarNoteAbout, AarNoteService, AarNoteType, LogService, MissionService
 } from '../shared/services'
+import { showFirstPrintTip } from '../shared/export/print-tip'
 
 type Filter = 'all' | AarNoteAbout
 
@@ -95,6 +96,7 @@ export class AfterActionComponent {
 
   /** Same body-class technique as Radio Log's ICS-309 print: hides the app chrome on paper. */
   onPrint(): void {
+    showFirstPrintTip() // 2026-09-30, John: once per device, see print-tip.ts
     document.body.classList.add('rt-print-aar')
     window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-aar'), { once: true })
     window.print()

@@ -16,7 +16,7 @@
 
       <span class="rt-aar__spacer"></span>
       <button matButton="outlined" type="button" (click)="onPrint()" [disabled]="incidentNotes().length === 0"
-        title="Print the notes about this incident as an improvement-plan table">
+        title="Print the notes about this incident as an improvement-plan table. Opens your browser's print dialog; choose your printer there">
         <mat-icon>print</mat-icon> Print
       </button>
       <button matButton="outlined" type="button" (click)="onExportCsv()"

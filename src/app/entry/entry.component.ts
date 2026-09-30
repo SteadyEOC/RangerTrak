@@ -1032,7 +1032,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.submitInfo) {
         this.submitInfo.innerText = outcome === 'printed'
           ? `Entry id # ${report.id} saved - 213 sent to print`
-          : `Entry id # ${report.id} saved - 213 downloaded (print dialog unavailable)`
+          : `Entry id # ${report.id} saved - 213 saved as a file (this browser won't print it directly): open the file to print`
         Utility.resetMaterialFadeAnimation(this.submitInfo)
       }
       this.log.info(`Auto-print ICS-213 for report ${report.id}: ${outcome}`, this.id)

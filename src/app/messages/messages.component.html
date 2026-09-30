@@ -98,7 +98,7 @@
                 {{ printing() ? 'Preparing…' : 'Save PDF' }}
               </button>
               <button matButton="filled" type="button" [disabled]="printing()" (click)="printAsIcs213()"
-                title="Fill the ICS-213 and open the print dialog">
+                title="Fill the ICS-213 and open your browser's print dialog; choose your printer there">
                 {{ printing() ? 'Preparing…' : 'Print' }}
               </button>
               } @else {
