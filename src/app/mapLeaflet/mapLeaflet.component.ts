@@ -36,7 +36,8 @@ import {
   AbstractMap, Utility, rangerIconFor, rangerColorFor, evidenceIconFor, radioLogStatusColor,
   locationCategoryColor, locationIconFor, resolveLocationIcon, formatReportTime, computeExtent, ExtentPoint
 } from '../shared'
-import { DDToUTM, UTMToDD } from '../shared/mapping/coordinate'
+import { forward as mgrsForward } from 'mgrs'
+import { DDToUTM, DDToUTMInZone, UTMToDD } from '../shared/mapping/coordinate'
 import {
   RadioLogService, RadioLogEntryType, LocationType, LogService, MissionLocationService,
   MissionLocationType, RangerService, MissionService
@@ -166,6 +167,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // Mile grid overlay (see MILE_METERS' own comment) - redrawn on pan/zoom by
   // refreshMileGrid(), only while this layer is actually checked on in the layers control.
   mileGridLayer = L.layerGroup()
+  // 2026-09-30, John: E-162 - USNG / MGRS grid overlay; redrawn by refreshUsngGrid() the same way.
+  usngGridLayer = L.layerGroup()
   mapOptions = ""
 
   // ADR D-49: Locations (Command Post, Staging Area, Ranger First Aid, ...). A plain layer
@@ -549,6 +552,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'Hillshade (terrain relief)': hillshadeOverlay,
       'Saved offline tiles': savedTilesOverlay,
       'Mile grid': this.mileGridLayer,
+      'USNG / MGRS grid': this.usngGridLayer,
     }
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
 
@@ -560,10 +564,16 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       if (this.lMap.hasLayer(this.mileGridLayer)) {
         this.refreshMileGrid()
       }
+      if (this.lMap.hasLayer(this.usngGridLayer)) {
+        this.refreshUsngGrid()
+      }
     })
     this.lMap.on('overlayadd', (e: L.LayersControlEvent) => {
       if (e.layer === this.mileGridLayer) {
         this.refreshMileGrid()
+      }
+      if (e.layer === this.usngGridLayer) {
+        this.refreshUsngGrid()
       }
     })
 
@@ -1323,6 +1333,163 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       if (pts.length > 1) {
         this.mileGridLayer.addLayer(L.polyline(pts, gridStyle))
       }
+    }
+  }
+
+  /**
+   * 2026-09-30, John: E-162 - USNG / MGRS grid overlay. US search and rescue reads positions
+   * in USNG (the same grid as MGRS), so this draws the real thing: lines at constant UTM
+   * easting/northing, computed on the device with the same UTM helpers the Mile grid uses,
+   * so it works with no Internet. Spacing follows the zoom: 100 m lines when zoomed well in,
+   * 1 km lines at working zoom, 10 km lines when zoomed out, and nothing below zoom 8 (a
+   * grid across a whole region is noise). The 100 km lines are drawn heavier. Each line is
+   * labelled, at the viewport edge, with the digits that follow the 100 km square ID in a
+   * grid reference (2 digits for 1 km lines: "14" is 14 km), and one label near the top
+   * gives the zone and 100 km square ID for the middle of the screen.
+   *
+   * UTM zone edges: a viewport can straddle one, and grid lines do not carry across (each
+   * zone has its own grid). Every zone the viewport touches is drawn in its own projection
+   * and each line is cut off at that zone's edge (found by bisection, so the cut is clean),
+   * which leaves a thin unlined strip at the boundary rather than lines that shear across
+   * it. The 100 km square ID label only follows the zone under the middle of the screen.
+   * Not handled: the Norway/Svalbard zone exceptions (outside this app's operating area).
+   */
+  private refreshUsngGrid(): void {
+    this.usngGridLayer.clearLayers()
+    if (this.lMap.getZoom() < 8) {
+      return
+    }
+    const view = this.lMap.getBounds()
+    const pad = view.pad(0.1)
+    const south = Math.max(pad.getSouth(), -80)
+    const north = Math.min(pad.getNorth(), 84)
+    const west = Math.max(pad.getWest(), -180)
+    const east = Math.min(pad.getEast(), 179.999)
+    if (south >= north || west >= east) {
+      return
+    }
+    const hemisphere = view.getCenter().lat >= 0 ? 'N' : 'S'
+    const zoneOf = (lng: number) => Math.min(60, Math.max(1, Math.floor((lng + 180) / 6) + 1))
+    const color = '#cc0066'
+    type LL = { lat: number, lng: number }
+
+    for (let zone = zoneOf(west); zone <= zoneOf(east); zone++) {
+      const zoneLo = (zone - 1) * 6 - 180
+      const zoneHi = zone * 6 - 180
+      const lo = Math.max(west, zoneLo)
+      const hi = Math.min(east, zoneHi)
+
+      // Bounding box of the visible part of this zone, in this zone's UTM: a 3x3 sample
+      // rather than 4 corners, since the box edges bow slightly.
+      const es: number[] = []
+      const ns: number[] = []
+      for (let i = 0; i <= 2; i++) {
+        for (let j = 0; j <= 2; j++) {
+          const p = DDToUTMInZone(south + (north - south) * i / 2, lo + (hi - lo) * j / 2, zone)
+          es.push(p.easting)
+          ns.push(p.northing)
+        }
+      }
+      const minE = Math.min(...es), maxE = Math.max(...es)
+      const minN = Math.min(...ns), maxN = Math.max(...ns)
+
+      // Finest spacing that keeps this zone's line count sane.
+      const spacing = [100, 1000, 10000].find(s =>
+        (maxE - minE) / s + 1 <= 45 && (maxN - minN) / s + 1 <= 45)
+      if (!spacing) {
+        continue
+      }
+      const labelDigits = 5 - Math.log10(spacing)  // 100 m -> 3, 1 km -> 2, 10 km -> 1
+
+      const inside = (p: LL | null): p is LL => !!p && p.lng >= zoneLo && p.lng <= zoneHi
+      const trace = (f: (t: number) => LL | null, weight: number) => {
+        const style: L.PolylineOptions = { color, weight, opacity: 0.6, interactive: false }
+        let seg: L.LatLngExpression[] = []
+        const flush = () => {
+          if (seg.length > 1) this.usngGridLayer.addLayer(L.polyline(seg, style))
+          seg = []
+        }
+        // The last point still inside the zone between tIn (inside) and tOut (outside).
+        const edge = (tIn: number, tOut: number): L.LatLngExpression | null => {
+          let a = tIn, b = tOut
+          for (let k = 0; k < 7; k++) {
+            const m = (a + b) / 2
+            if (inside(f(m))) a = m; else b = m
+          }
+          const p = f(a)
+          return inside(p) ? [p.lat, p.lng] : null
+        }
+        const STEPS = 10
+        let prevT = 0
+        let prev = f(0)
+        if (inside(prev)) seg.push([prev.lat, prev.lng])
+        for (let i = 1; i <= STEPS; i++) {
+          const t = i / STEPS
+          const cur = f(t)
+          if (inside(prev) && inside(cur)) {
+            seg.push([cur.lat, cur.lng])
+          } else if (inside(prev)) {
+            const b = edge(prevT, t)
+            if (b) seg.push(b)
+            flush()
+          } else if (inside(cur)) {
+            const b = edge(t, prevT)
+            seg = b ? [b, [cur.lat, cur.lng]] : [[cur.lat, cur.lng]]
+          }
+          prev = cur
+          prevT = t
+        }
+        flush()
+      }
+      const label = (at: LL | null, value: number) => {
+        if (!inside(at) || !view.contains([at.lat, at.lng])) return
+        const digits = String(Math.floor((value % 100000) / spacing)).padStart(labelDigits, '0')
+        this.usngGridLayer.addLayer(L.marker([at.lat, at.lng], {
+          interactive: false, keyboard: false,
+          icon: L.divIcon({
+            className: '', iconSize: [0, 0],
+            html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
+              + `font:600 11px/1 sans-serif;color:${color};text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff">${digits}</span>`,
+          }),
+        }))
+      }
+
+      // Where the labels sit: near the bottom edge (for vertical lines) and left edge (for
+      // horizontal ones) of what is on screen, in this zone.
+      const h = view.getNorth() - view.getSouth()
+      const w = view.getEast() - view.getWest()
+      const labelLat = view.getSouth() + 0.05 * h
+      const labelLng = Math.max(view.getWest(), zoneLo) + 0.04 * w
+      const midLat = view.getCenter().lat
+      const midLng = Math.min(Math.max(view.getCenter().lng, zoneLo), zoneHi)
+      const labelN = DDToUTMInZone(labelLat, midLng, zone).northing
+      const labelE = DDToUTMInZone(midLat, labelLng, zone).easting
+
+      for (let e = Math.ceil(minE / spacing) * spacing; e <= maxE; e += spacing) {
+        trace(t => UTMToDD(zone, hemisphere, e, minN + (maxN - minN) * t), e % 100000 === 0 ? 2.5 : 1)
+        label(UTMToDD(zone, hemisphere, e, labelN), e)
+      }
+      for (let n = Math.ceil(minN / spacing) * spacing; n <= maxN; n += spacing) {
+        trace(t => UTMToDD(zone, hemisphere, minE + (maxE - minE) * t, n), n % 100000 === 0 ? 2.5 : 1)
+        label(UTMToDD(zone, hemisphere, labelE, n), n)
+      }
+    }
+
+    // Zone + 100 km square for the middle of the screen, top centre.
+    try {
+      const c = view.getCenter()
+      const id = mgrsForward([c.lng, c.lat], 0)  // e.g. "10TDT"
+      const text = `${id.slice(0, id.length - 2)} ${id.slice(-2)}`
+      this.usngGridLayer.addLayer(L.marker([view.getNorth() - 0.05 * (view.getNorth() - view.getSouth()), c.lng], {
+        interactive: false, keyboard: false,
+        icon: L.divIcon({
+          className: '', iconSize: [0, 0],
+          html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
+            + `font:700 13px/1 sans-serif;color:${color};background:rgba(255,255,255,.8);padding:2px 6px;border-radius:4px">${text}</span>`,
+        }),
+      }))
+    } catch {
+      // Outside MGRS's latitude range (polar): no square ID to show.
     }
   }
 

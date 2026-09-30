@@ -221,6 +221,16 @@ export function DDToUTM(lat: number, lng: number): { zone: number; hemisphere: s
 }
 
 /**
+ * 2026-09-30, John: E-162 - like DDToUTM, but projects into a GIVEN zone instead of the
+ * point's own. The USNG/MGRS grid overlay needs this to draw each zone's lines across a
+ * viewport that straddles a zone boundary. Unrounded (the grid wants the raw metres).
+ */
+export function DDToUTMInZone(lat: number, lng: number, zone: number): { easting: number; northing: number } {
+  const { easting, northing } = utmFromLatLon(lat, lng, zone)
+  return { easting, northing }
+}
+
+/**
  * Convert UTM (Zone/Hemisphere/Easting/Northing) back to Decimal Degrees.
  * Returns null for values the `utm` package rejects (e.g. easting/northing out of
  * range for the given zone).
