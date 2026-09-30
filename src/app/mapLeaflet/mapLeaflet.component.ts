@@ -255,19 +255,28 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       let rectangle = L.rectangle(this.lMap.getBounds(), { color: 'Blue', fillOpacity: 0.07, weight: 1 })
       rectangle.addTo(this.overviewMapLeaflet)
 
-      this.lMap.on("move", () => {
-        //if (this.overviewMapLeaflet instanceof L.Map) {
+      // 2026-09-30, John: E-157 - "1st going to map page, the minimap is zoomed in, not out."
+      // The overview is created at the mission's default zoom (initOverviewMap) and was only
+      // ever pulled out to (main zoom - overviewDifference) by a main-map 'move' event. When
+      // nothing moves the main map after this point - no reports to fit to, or a fit that
+      // lands on the view it already has - no event fires, and the overview stays at the same
+      // zoom as the main map: zoomed in. Moving the map later fixed it, which is why only
+      // the first look was wrong. So the sync is now a function that also runs once right
+      // now, after the initial fit below, and again once the page has settled its size
+      // (ngAfterViewInit's timer), instead of waiting on an event.
+      this.syncOverview = () => {
+        if (!this.lMap || !this.overviewMapLeaflet) return
         this.overviewMapLeaflet.setView(this.lMap.getCenter()!,
           this.clamp(
             this.lMap.getZoom() -
             (this.settings.leaflet.overviewDifference),
             (this.settings.leaflet.overviewMinZoom),
             (this.settings.leaflet.overviewMaxZoom)
-          ))
+          ), { animate: false })
         rectangle.setBounds(this.lMap.getBounds())
       }
-        //}
-      )
+      this.lMap.on("move", this.syncOverview)
+      this.syncOverview()
     }
 
     if (this.displayReports && this.radioLog) {
@@ -281,6 +290,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       // BoundsType, converted to Leaflet's [SW, NE] form right here.
       const b = this.radioLog.bounds
       this.lMap.fitBounds(L.latLngBounds([b.south, b.west], [b.north, b.east]))
+      this.syncOverview?.()  // E-157: see above - don't rely on the fit firing 'move'
     }
 
     this.log.excessive("out of ngOnInit()", this.id)
@@ -325,6 +335,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.afterViewInitTimer = setTimeout(() => {
       this.lMap?.invalidateSize()
       this.overviewMapLeaflet?.invalidateSize()
+      this.syncOverview?.()  // E-157: the sizes are final now; make the overview match
     })
     this.printMedia?.addEventListener('change', this.onPrintMediaChange)
   }
@@ -335,6 +346,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * displayMarkers(). A signal because that method runs from an RxJS callback, outside
    * Angular's own bindings (zoneless - see AbstractMap's note on the same point).
    */
+  /** E-157: pulls the overview map out to the main map's view; set up in ngOnInit(). */
+  private syncOverview?: () => void
+
   public legendEntries = signal<RadioLogEntryType[]>([])
 
   /**
