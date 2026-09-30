@@ -113,3 +113,11 @@
   flex-direction: column;
   gap           : var(--rt-space-sm);
 }
+
+// 2026-09-30, John: E-149 - Edit / Save PDF / Print sat edge to edge. mat-card-actions is a
+// plain flex row with no gap of its own; the app's standard between buttons is 8px.
+// `flex-wrap` keeps three buttons inside a phone-width card.
+.messages__actions {
+  flex-wrap: wrap;
+  gap      : var(--rt-space-sm);
+}
