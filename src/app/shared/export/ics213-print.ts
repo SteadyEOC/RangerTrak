@@ -17,11 +17,31 @@
  * own onFormSubmit() comment for why this is kicked off fire-and-forget, never awaited by the
  * submit path itself.
  */
+import { PDFDocument } from 'pdf-lib'
+
 import { showFirstPrintTip } from './print-tip'
 
 export type Ics213PrintOutcome = 'printed' | 'downloaded'
 
-export async function printIcs213(pdfBytes: Uint8Array, filename: string): Promise<Ics213PrintOutcome> {
+/**
+ * E-150: a web page cannot set the browser's own Copies box, so N copies are N identical
+ * page-broken pages in one PDF, printed as one job. `copies` is clamped to 1-10.
+ */
+export async function repeatPdfPages(pdfBytes: Uint8Array, copies: number): Promise<Uint8Array> {
+  const n = Math.min(10, Math.max(1, Math.floor(Number(copies)) || 1))
+  if (n === 1) return pdfBytes
+  const src = await PDFDocument.load(pdfBytes)
+  const out = await PDFDocument.create()
+  const indices = src.getPageIndices()
+  for (let i = 0; i < n; i++) {
+    const pages = await out.copyPages(src, indices)
+    pages.forEach(p => out.addPage(p))
+  }
+  return out.save()
+}
+
+export async function printIcs213(pdfBytes: Uint8Array, filename: string, copies = 1): Promise<Ics213PrintOutcome> {
+  pdfBytes = await repeatPdfPages(pdfBytes, copies)
   // Uint8Array's `.buffer` types as ArrayBufferLike (stricter BlobPart wants ArrayBuffer) -
   // same type-only mismatch messages.component.ts's own Blob construction already notes;
   // pdf-lib's save() is always backed by a plain ArrayBuffer at runtime.

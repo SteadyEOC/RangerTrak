@@ -14,6 +14,7 @@ import { fillIcs213Pdf, ics213FieldsFromReport } from '../shared/export/ics213-p
 // route (app.routes.ts), so there is no eager-bundle cost to guard against here the way
 // there is on Entry.
 import { printIcs213 } from '../shared/export/ics213-print'
+import { PrintCopiesService } from '../shared/services/print-copies.service'
 import {
   RadioLogService, RadioLogEntryType, LogService, MissionService, MissionType
 } from '../shared/services'
@@ -60,6 +61,9 @@ export class MessagesComponent implements OnInit, OnDestroy {
   messages = signal<RadioLogEntryType[]>([])
   selectedId = signal<number | null>(null)
   printing = signal(false)
+  // E-150: copies for the manual Print, pre-filled from the Mission page's extra copies
+  // (1 + extra); changing it here never changes the Mission value. Not persisted.
+  printCopies = signal(1)
 
   // Edit mode for the currently selected message. Plain signals holding a working copy of
   // the editable fields, not a direct binding to the report - so Cancel can discard without
@@ -82,9 +86,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
     private radioLogService: RadioLogService,
     private missionService: MissionService,
     private log: LogService,
+    private printCopiesService: PrintCopiesService,
   ) { }
 
   ngOnInit(): void {
+    this.printCopies.set(this.printCopiesService.totalCopies())
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => { this.settings = newMission },
       error: (e) => this.log.error('Mission subscription got: ' + e, this.id),
@@ -114,6 +120,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   get selected(): RadioLogEntryType | undefined {
     return this.messages().find(r => r.id === this.selectedId())
+  }
+
+  onPrintCopiesChanged(value: string | number): void {
+    const n = Math.floor(Number(value))
+    this.printCopies.set(Number.isFinite(n) ? Math.min(10, Math.max(1, n)) : 1)
   }
 
   select(report: RadioLogEntryType): void {
@@ -218,7 +229,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.printing.set(true)
     try {
       const filled = await this.buildIcs213Pdf(report)
-      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`)
+      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies())
       this.markPrintedOnce(report)
       this.log.info(`ICS-213 for report ${report.id}: ${outcome}.`, this.id)
     } catch (e) {

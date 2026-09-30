@@ -97,6 +97,12 @@
                 title="Download the filled ICS-213 as a PDF file">
                 {{ printing() ? 'Preparing…' : 'Save PDF' }}
               </button>
+              <label class="messages__copies" title="How many copies to print (1 to 10). The pages go out as one print job.">
+                Copies
+                <input type="number" min="1" max="10" step="1" [ngModel]="printCopies()"
+                  (ngModelChange)="onPrintCopiesChanged($event)" [ngModelOptions]="{standalone: true}"
+                  data-testid="printCopies213" style="width: 3.5em">
+              </label>
               <button matButton="filled" type="button" [disabled]="printing()" (click)="printAsIcs213()"
                 title="Fill the ICS-213 and open your browser's print dialog; choose your printer there">
                 {{ printing() ? 'Preparing…' : 'Print' }}

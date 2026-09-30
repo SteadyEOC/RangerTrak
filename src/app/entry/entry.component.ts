@@ -3,6 +3,7 @@ import {
   debounceTime, map, Observable, startWith, subscribeOn, Subscription, switchMap
 } from 'rxjs'
 
+import { PrintCopiesService } from '../shared/services/print-copies.service'
 import { CommonModule, DOCUMENT } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import {
@@ -342,6 +343,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     public fieldMode: FieldModeService,
     private sampleDataService: SampleDataService,
     private operatorName: OperatorNameService,
+    private printCopies: PrintCopiesService,
     @Inject(DOCUMENT) private document: Document) {
 
     this.log.excessive(`======== constructor() ============`, this.id)
@@ -1023,7 +1025,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // lifted into ics213-pdf.ts's own ics213FieldsFromReport() so the two callers cannot
       // drift apart the way F29-47's blank Subject/Approved-by-Name once did.
       const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings))
-      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`)
+      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies.totalCopies())
 
       // First print only - printedAt's own doc comment (radio-log-entry.interface.ts)
       // and messages.component.ts's manual print button both already establish this: it

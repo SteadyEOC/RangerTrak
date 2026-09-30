@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core'
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, inject, OnChanges, Output, SimpleChanges } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { FieldTree } from '@angular/forms/signals'
 
 import { DEFAULT_RECIPIENT_OPTIONS_213, MissionType } from '../../../shared/services/'
+import { PrintCopiesService } from '../../../shared/services/print-copies.service'
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 
 /**
@@ -36,6 +37,9 @@ export class MissionRecipients213Component implements OnChanges {
   // covers, so this component takes the whole form tree the same way rather than inventing
   // a second wiring style for one checkbox.
   @Input({ required: true }) form!: FieldTree<MissionType>
+
+  /** E-150: in-memory only, see PrintCopiesService. */
+  printCopies = inject(PrintCopiesService)
 
   /** The textarea's own working text - only reconciled with `options` on external change. */
   text = ''

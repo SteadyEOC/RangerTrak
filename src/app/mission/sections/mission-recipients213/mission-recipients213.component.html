@@ -25,6 +25,16 @@
       (change)="form.autoPrint213().value.set($event.checked)">
       Automatically print every ICS-213 on submit
     </mat-checkbox>
+    <!-- E-150: extra paper copies when auto-print fires. In memory only (rc.1 storage
+         freeze) - PrintCopiesService, not a Mission field - so it is not part of Save. -->
+    <div class="mission__extra-copies">
+      <label title="How many extra copies of each ICS-213 print along with the first, for the paper log. This resets to 1 when the app reloads.">
+        Extra copies for the paper log
+        <input type="number" min="0" max="9" step="1" data-testid="extraCopies213"
+          [ngModel]="printCopies.extraCopies()" (ngModelChange)="printCopies.setExtraCopies($event)"
+          [ngModelOptions]="{standalone: true}" style="width: 3.5em">
+      </label>
+    </div>
   </mat-card-content>
   <mat-card-actions>
     <button matButton type="button" (click)="onBtnRestoreStarterList()"
