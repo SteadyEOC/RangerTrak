@@ -37,7 +37,7 @@ import {
   locationCategoryColor, locationIconFor, resolveLocationIcon, formatReportTime, computeExtent, ExtentPoint
 } from '../shared'
 import { forward as mgrsForward } from 'mgrs'
-import { DDToUTM, DDToUTMInZone, UTMToDD } from '../shared/mapping/coordinate'
+import { DDToUTM, DDToUTMInZone, UTMToDD, destinationPoint } from '../shared/mapping/coordinate'
 import {
   RadioLogService, RadioLogEntryType, LocationType, LogService, MissionLocationService,
   MissionLocationType, RangerService, MissionService
@@ -169,6 +169,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   mileGridLayer = L.layerGroup()
   // 2026-09-30, John: E-162 - USNG / MGRS grid overlay; redrawn by refreshUsngGrid() the same way.
   usngGridLayer = L.layerGroup()
+  // 2026-09-30, John: E-162 - range rings around the command post; see refreshRangeRings().
+  rangeRingsLayer = L.layerGroup()
   mapOptions = ""
 
   // ADR D-49: Locations (Command Post, Staging Area, Ranger First Aid, ...). A plain layer
@@ -569,6 +571,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'Saved offline tiles': savedTilesOverlay,
       'Mile grid': this.mileGridLayer,
       'USNG / MGRS grid': this.usngGridLayer,
+      'Range rings (from command post)': this.rangeRingsLayer,
     }
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
 
@@ -590,6 +593,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       }
       if (e.layer === this.usngGridLayer) {
         this.refreshUsngGrid()
+      }
+      if (e.layer === this.rangeRingsLayer) {
+        this.refreshRangeRings()
       }
     })
 
@@ -1204,6 +1210,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       return
     }
     this.locationsLayer.clearLayers()
+    // E-162: the command post may have just been added, moved or removed.
+    if (this.lMap.hasLayer(this.rangeRingsLayer)) {
+      this.refreshRangeRings()
+    }
 
     this.locations.forEach(loc => {
       const color = locationCategoryColor(loc.type, this.settings.locationTypes)
@@ -1366,6 +1376,44 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       if (pts.length > 1) {
         this.mileGridLayer.addLayer(L.polyline(pts, gridStyle))
       }
+    }
+  }
+
+  /**
+   * 2026-09-30, John: E-162 - range rings: concentric circles at 1, 2 and 5 miles around the
+   * command post, each labelled with its distance (miles, with kilometres beside it - the
+   * app has no units setting, so both are shown, as the scale bar does). The centre is the
+   * first Location whose category resolves to the Command Post icon (the same resolution
+   * the map markers use, so a category renamed but given that icon still counts); with
+   * none, the mission's default location (defLat/defLng). Computed here, so it works
+   * offline. Redrawn when the layer is switched on and whenever the Locations change
+   * (refreshLocationMarkers()); the rings are not interactive, so map clicks pass through.
+   */
+  private refreshRangeRings(): void {
+    this.rangeRingsLayer.clearLayers()
+    const types = this.settings.locationTypes
+    const post = this.locations.find(l => resolveLocationIcon(l.type, types) === 'command-post')
+    const lat = post ? post.lat : this.settings.defLat
+    const lng = post ? post.lng : this.settings.defLng
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return
+    }
+    for (const miles of [1, 2, 5]) {
+      const meters = miles * MILE_METERS
+      this.rangeRingsLayer.addLayer(L.circle([lat, lng], {
+        radius: meters, color: '#8a3ffc', weight: 1.5, opacity: 0.8, dashArray: '6 4',
+        fill: false, interactive: false,
+      }))
+      const top = destinationPoint(lat, lng, meters, 0)
+      this.rangeRingsLayer.addLayer(L.marker([top.lat, top.lng], {
+        interactive: false, keyboard: false,
+        icon: L.divIcon({
+          className: '', iconSize: [0, 0],
+          html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
+            + `font:600 11px/1 sans-serif;color:#6929c4;background:rgba(255,255,255,.85);padding:1px 4px;border-radius:3px">`
+            + `${miles} mi (${(meters / 1000).toFixed(1)} km)</span>`,
+        }),
+      }))
     }
   }
 
