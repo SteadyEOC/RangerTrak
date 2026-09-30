@@ -1,12 +1,13 @@
 import { AsyncPipe, DatePipe, NgComponentOutlet } from '@angular/common'
 import {
-  ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, Type, ViewChild, signal
+  ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, Type, ViewChild, computed, inject, signal
 } from '@angular/core'
 import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle'
 
 import { LmapComponent } from '../../mapLeaflet/mapLeaflet.component'
 import { PageComponent } from '../../shared/page/page.component'
 import { MissionService } from '../../shared/services'
+import { OperatorNameService } from '../../shared/services/operator-name.service'
 import { MapEngineService } from '../map-engine.service'
 
 /**
@@ -53,6 +54,15 @@ export class MapPageComponent implements OnInit, OnDestroy {
   // entry/exit fires, and MapLibre's container uses a ResizeObserver - both pick up the new
   // size on their own.
   isFullscreen = signal(false)
+
+  // Prepared by: pre-filled from the Entry page's operator name (in-memory OperatorNameService,
+  // never persisted). Once the user types here, their text wins and is never overwritten.
+  private readonly operatorName = inject(OperatorNameService)
+  private readonly typedPreparedBy = signal<string | null>(null)
+  readonly preparedBy = computed(() => this.typedPreparedBy() ?? this.operatorName.name())
+  onPreparedByInput(event: Event): void {
+    this.typedPreparedBy.set((event.target as HTMLInputElement).value)
+  }
 
   @ViewChild('fullscreenArea') private fullscreenArea!: ElementRef<HTMLElement>
 

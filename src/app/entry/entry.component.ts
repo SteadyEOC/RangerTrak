@@ -1,3 +1,4 @@
+import { OperatorNameService } from '../shared/services/operator-name.service'
 import {
   debounceTime, map, Observable, startWith, subscribeOn, Subscription, switchMap
 } from 'rxjs'
@@ -7,7 +8,7 @@ import { HttpClient } from '@angular/common/http'
 import {
   AfterViewInit, Component, computed, ElementRef, EventEmitter, Inject, Input, isDevMode, NgZone, OnDestroy,
   OnInit, Output, signal, ViewChild,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy, effect
 } from '@angular/core'
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms'
 import { form, FormField } from '@angular/forms/signals'
@@ -340,9 +341,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     public welcomePanel: WelcomePanelService,
     public fieldMode: FieldModeService,
     private sampleDataService: SampleDataService,
+    private operatorName: OperatorNameService,
     @Inject(DOCUMENT) private document: Document) {
 
     this.log.excessive(`======== constructor() ============`, this.id)
+
+    // Share the operator name, in memory only, so the Print map sheet can pre-fill "Prepared by".
+    effect(() => this.operatorName.name.set(this.operatorModel().operator.trim()))
 
     // https://angular.io/tutorial/toh-pt4#call-it-in-ngoninit states subscribes should happen in OnInit()
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({

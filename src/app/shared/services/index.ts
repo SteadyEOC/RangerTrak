@@ -49,3 +49,4 @@ export {
 //export { ShapeService } from "../unused/shape.service"
 //export { DataService } from "../unused/data.service"
 //export { TeamService, TeamType } from "../unused/team.service"
+export { OperatorNameService } from "./operator-name.service"

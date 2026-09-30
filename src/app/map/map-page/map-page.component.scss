@@ -29,6 +29,19 @@
   display: none;
 }
 
+.map-prepared-by {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+
+  input {
+    margin-left: 0.5rem;
+    min-width: 14rem;
+    max-width: 100%;
+    padding: 0.25rem 0.5rem;
+    font: inherit;
+  }
+}
+
 @media print {
   // 2026-09-30, John: E-152 - a printed map is always light on white, whatever scheme the
   // screen was in: the map's own overlays (status glows, overdue shades, tooltips) resolve
@@ -81,6 +94,10 @@
       margin     : 0;
       font-weight: 600;
     }
+  }
+
+  .map-prepared-by {
+    display: none;
   }
 
   .map-print-footer {

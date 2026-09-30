@@ -65,8 +65,13 @@
   <!-- 2026-09-30, John: E-152 - the sign-off line an ICS form ends with. Print-only. The app
        does not know who is printing (the Entry page's operator name lives only in that
        page's own form, not anywhere shared), so it is left as a line to write on. -->
+  <div class="map-prepared-by">
+    <label>Prepared by (printed on the map sheet)
+      <input type="text" [value]="preparedBy()" (input)="onPreparedByInput($event)" autocomplete="off" />
+    </label>
+  </div>
   <div class="map-print-footer">
-    <span>Prepared by: <span class="map-print-footer__line"></span></span>
+    <span>Prepared by: <span class="map-print-footer__line">{{ preparedBy() }}</span></span>
     <span>Date / time: <span class="map-print-footer__line map-print-footer__line--short"></span></span>
   </div>
 </rangertrak-page>
