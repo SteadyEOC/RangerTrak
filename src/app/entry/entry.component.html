@@ -4,7 +4,9 @@
        ("a panel above the Entry form ... rather than a landing page", since path:'' routes
        straight here and the fast path must stay fast). Dismissing it sets a per-device flag
        (WelcomePanelService); clicking the header's status-cluster pill brings it back. -->
-  @if (!welcomePanel.dismissed()) {
+  <!-- 2026-09-30, John: shows by itself only on a brand-new device; once there is data, only
+       when reopened from the header pill (WelcomePanelService.reopened). -->
+  @if (!welcomePanel.dismissed() && (canLoadDemoData() || welcomePanel.reopened())) {
   <aside class="entry-welcome" role="note">
     <div class="entry-welcome__text">
       <!-- 2026-09-29, John: the panel used to run three unrelated things together in one
