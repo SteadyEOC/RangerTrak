@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.1-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.0-alpha...v0.99.1-alpha) (2026-09-30)
+
+
+### Features
+
+* **after-action:** E-144 note cards and bottom cards use the auto-fit grid ([0f7a895](https://github.com/SteadyEOC/RangerTrak/commit/0f7a895bdf06eed91e8aa0c31d3743491349ce55))
+* **map:** Print map produces a finished map sheet (E-152 part 1) ([75d34d6](https://github.com/SteadyEOC/RangerTrak/commit/75d34d6bfd2eac082b79a3eb73184a9d7ddaff26))
+* **rangers:** E-144 size the roster grid to its rows; bottom cards side by side ([415821a](https://github.com/SteadyEOC/RangerTrak/commit/415821a450bbfa63cb4594ac245c7e98d995afcd))
+
+
+### Bug Fixes
+
+* **entry:** E-151 label the ID field Ranger ID and explain it on hover ([6126717](https://github.com/SteadyEOC/RangerTrak/commit/612671768a2394ad61f59b9eb75c84b099b42b45))
+* **help:** E-147 style Help tabs as outlined pills, selected one filled ([0725262](https://github.com/SteadyEOC/RangerTrak/commit/072526294e6c4c58c34e616cf719fcd080b1b0e6))
+* **help:** E-148 mirror the marmot so it faces into the page ([91ae208](https://github.com/SteadyEOC/RangerTrak/commit/91ae2088dbf72211812714ac19e875defc7ad5ee))
+* **map:** controls rise beside the overview mini-map instead of below it (E-143) ([553aa78](https://github.com/SteadyEOC/RangerTrak/commit/553aa78d37d0455a6a717a57e7ea26e1537d5e72))
+* **map:** Leaflet overview mini-map opens zoomed out on the first visit (E-157) ([4b6aa5b](https://github.com/SteadyEOC/RangerTrak/commit/4b6aa5b9340de388abae5ebbc15a288af6c1f2c2))
+* **messages:** E-149 gap between Edit / Save PDF / Print buttons ([f2ed886](https://github.com/SteadyEOC/RangerTrak/commit/f2ed8864de95cff3754936a74a302f18fa07d917))
+* **navbar:** E-146 brighter resting brand waves ([93c5b59](https://github.com/SteadyEOC/RangerTrak/commit/93c5b598ae4122126726709aa6b589fc790c124d))
+
 ## [0.99.0-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.96.9...v0.99.0-alpha) (2026-09-29)
 
 
