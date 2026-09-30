@@ -280,6 +280,13 @@ mat-slide-toggle {
   margin     : 0.5em 0 1em;
 }
 
+// 2026-09-30, John: E-138 - "Zoom to offline tiles" while the saved-area overlay is showing:
+// filled, like a pressed toggle (aria-pressed is set on the button too).
+.map-controls button.rt-toggled-on {
+  background-color: var(--mat-sys-secondary-container, #d0e4ff);
+  color           : var(--mat-sys-on-secondary-container, inherit);
+}
+
 // G: these are interactive-only, same reasoning map-page.component.scss already applies to
 // its own .map-engine-switch/.fullscreen-toggle - inert or actively confusing on paper
 // (a "Print map" button printed onto the page it just printed).

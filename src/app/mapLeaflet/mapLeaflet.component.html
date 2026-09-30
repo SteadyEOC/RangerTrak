@@ -57,6 +57,18 @@ Radio log entries to show: All ({{numAllRows()}})
     Zoom to Extent
   </button>
 
+  <!-- 2026-09-30, John: E-138 - replaces the old "Saved offline tiles" layers-menu checkbox.
+       Shows the blue saved-area overlay and zooms to it; pressed again, hides it.
+       aria-pressed carries the on state (filled style in the scss); disabled, with the reason
+       as hover text, until something has been saved on this device. -->
+  <button matButton="outlined" type="button" (click)="onBtnZoomToOfflineTiles()"
+    data-testid="zoomToOfflineTiles" [attr.aria-pressed]="offlineTilesShown()"
+    [class.rt-toggled-on]="offlineTilesShown()" [disabled]="!hasOfflineTiles()"
+    [attr.title]="hasOfflineTiles() ? 'Show the areas saved for offline use and zoom out to fit them all' : 'No offline tiles saved on this device yet'">
+    <mat-icon>{{ offlineTilesShown() ? 'layers_clear' : 'offline_pin' }}</mat-icon>
+    Zoom to offline tiles
+  </button>
+
   <!-- G: prints the map alone (rt-print-map body class, styles.scss) - same approach as
        Radio Log's ICS-309 print and After Action's own onPrint(). -->
   <button matButton="outlined" type="button" (click)="onBtnPrintMap()"

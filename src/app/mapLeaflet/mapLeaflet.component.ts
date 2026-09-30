@@ -324,6 +324,14 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private refreshSavedAreaInfo?: () => void
   private refreshEstimatedAreaInfo?: () => void
   private refreshSavedTilesOverlay?: () => void
+  // 2026-09-30, John: E-138 - the blue saved-area overlay used to be a layers-menu checkbox
+  // ("Saved offline tiles"); it is now driven by the "Zoom to offline tiles" button under the
+  // map. `savedTilesLayer` is the same L.geoJSON, just no longer in the layers control.
+  // `hasOfflineTiles` mirrors whether it has any features (kept current by
+  // refreshSavedTilesOverlay), `offlineTilesShown` is the button's on state.
+  private savedTilesLayer?: L.GeoJSON
+  public hasOfflineTiles = signal(false)
+  public offlineTilesShown = signal(false)
   private rebindOfflineAreaInfo?: (newTiles: ReturnType<typeof tileLayerOffline>) => void
 
   // P1-2/P1-3/P1-4 (offline map coverage scoping, 2026-09-14): the human-readable "(~N
@@ -581,12 +589,12 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // custom UI needed - the control already exists from E-85.
     const overlayLayers: Record<string, L.Layer> = {
       'Hillshade (terrain relief)': hillshadeOverlay,
-      'Saved offline tiles': savedTilesOverlay,
       'Mile grid': this.mileGridLayer,
       'USNG / MGRS grid': this.usngGridLayer,
       'Range rings (from command post)': this.rangeRingsLayer,
       'Hiking trails (Waymarked Trails)': trailsOverlay,
     }
+    this.savedTilesLayer = savedTilesOverlay  // E-138: shown by onBtnZoomToOfflineTiles(), not the menu
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
 
     // Off by default (not .addTo(this.lMap) above, same as Hillshade) - only drawn once a
@@ -619,24 +627,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // think in, rather than this app guessing which one that is.
     L.control.scale({ position: 'bottomleft' }).addTo(this.lMap)
 
-    // Maintainer, 2026-08-26: zoom out to show the full saved-tiles extent when the
-    // checkbox is switched ON, so a scribe checking "what's actually saved" (the whole
-    // point of this overlay, per its own scoping note above) doesn't land on an empty
-    // view just because their current pan/zoom doesn't happen to overlap it. Deliberately
-    // one-directional - `overlayremove` (unchecking) does NOT reset the view, matching how
-    // every other overlay/base-layer toggle on this control already behaves (no camera
-    // movement) and not fighting whatever the scribe was already looking at. Guarded
-    // against an empty overlay: `L.GeoJSON.getBounds()` throws on zero features, which is
-    // the normal case for a fresh device with nothing saved yet.
-    this.lMap.on('overlayadd', (e: L.LayersControlEvent) => {
-      if (e.layer !== savedTilesOverlay) {
-        return
-      }
-      if (savedTilesOverlay.getLayers().length === 0) {
-        return
-      }
-      this.lMap.fitBounds(savedTilesOverlay.getBounds())
-    })
+    // 2026-09-30, John: E-138 - the 2026-08-26 "zoom out to the saved extent when the layers-menu
+    // checkbox goes on" behaviour moved to onBtnZoomToOfflineTiles() (the "Zoom to offline
+    // tiles" button), which shows the overlay, fits to it, and hides it on a second press.
 
     // Bound to openTopoTiles, not tiles (OSM) - it must start matched to whichever base
     // layer actually loads by default (see openTopoTiles.addTo() above). Switching base
@@ -884,6 +877,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         savedTilesOverlay.clearLayers()
         if (stored.length > 0) {
           savedTilesOverlay.addData(getStoredTilesAsJson(activeTiles.getTileSize(), stored))
+        }
+        // E-138: keep the "Zoom to offline tiles" button in step - disabled when nothing
+        // is saved, and a shown overlay is taken down if the last tiles were just removed.
+        this.hasOfflineTiles.set(stored.length > 0)
+        if (stored.length === 0 && this.lMap.hasLayer(savedTilesOverlay)) {
+          this.lMap.removeLayer(savedTilesOverlay)
+          this.offlineTilesShown.set(false)
         }
       }).catch((err) => this.log.error(`refreshSavedTilesOverlay(): ${err}`, this.id))
     }
@@ -1294,6 +1294,30 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     }
     // maxZoom matters: without it, two reports 10m apart would slam the map to max zoom.
     this.lMap.fitBounds(L.latLngBounds([b.south, b.west], [b.north, b.east]), { padding: [24, 24], maxZoom: 16 })
+  }
+
+  /**
+   * 2026-09-30, John: E-138 - "Zoom to offline tiles". Shows the blue saved-area overlay and
+   * fits the map to it; pressed again, hides it (the camera stays where it is, like the
+   * layers-menu checkbox this replaces). Disabled in the template while nothing is saved,
+   * and guarded here because L.GeoJSON.getBounds() throws on zero features.
+   */
+  onBtnZoomToOfflineTiles(): void {
+    const layer = this.savedTilesLayer
+    if (!layer || !this.lMap) {
+      return
+    }
+    if (this.lMap.hasLayer(layer)) {
+      this.lMap.removeLayer(layer)
+      this.offlineTilesShown.set(false)
+      return
+    }
+    if (layer.getLayers().length === 0) {
+      return
+    }
+    layer.addTo(this.lMap)
+    this.offlineTilesShown.set(true)
+    this.lMap.fitBounds(layer.getBounds(), { padding: [24, 24] })
   }
 
   /**
