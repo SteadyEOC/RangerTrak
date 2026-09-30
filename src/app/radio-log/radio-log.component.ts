@@ -4,7 +4,7 @@ import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../s
 import { Observable, subscribeOn, Subscription } from 'rxjs'
 
 import { CommonModule, DOCUMENT, formatDate } from '@angular/common'
-import { AfterViewInit, Component, Inject, OnDestroy, OnInit, Pipe, PipeTransform, ElementRef, ChangeDetectionStrategy, signal } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnDestroy, OnInit, Pipe, PipeTransform, ElementRef, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 
 import { AgGridAngular } from 'ag-grid-angular';
 import { PageComponent } from '../shared/page/page.component';
@@ -103,6 +103,24 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   public rowsPerPage = signal('Auto')
 
   /** Options for the rows-per-page picker - kept here so the template just iterates. */
+  // E-144 follow-up: the grid was a fixed 60vh, leaving an empty band under a short log. Same
+  // approach as the Rangers grid: keep it a normal paginated grid and compute only the height -
+  // enough for the rows on one page, capped at the old 60vh, so a long log still paginates
+  // (Auto) or pages at the picked size (5..100) instead of growing unbounded. "All" turns
+  // pagination off and scrolls inside the 60vh cap. rowHeight/headerHeight are pinned in
+  // gridOptions so the arithmetic is exact; one spare row keeps auto-page-size from rounding
+  // down to a page a row short.
+  private static readonly GRID_ROW_PX = 42
+  private static readonly GRID_HEADER_PX = 48
+  /** Header + floating filter + pager, plus a pixel or two of border. */
+  private static readonly GRID_CHROME_PX = 48 * 3 + 2
+  readonly gridHeight = computed(() => {
+    const total = this.radioLogEntries().length
+    const perPage = Number(this.rowsPerPage())
+    const visible = Number.isFinite(perPage) && perPage > 0 ? Math.min(total, perPage) : total
+    const px = (Math.max(visible, 3) + 1) * RadioLogComponent.GRID_ROW_PX + RadioLogComponent.GRID_CHROME_PX
+    return `min(60vh, ${px}px)`
+  })
   readonly rowsPerPageOptions = ['Auto', '5', '10', '25', '50', '100', 'All']
 
   /** Options for the CSV separator picker: [stored value, label shown to the user]. */
@@ -312,6 +330,10 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
     // https://www.ag-grid.com/javascript-data-grid/row-pagination/#pagination-properties
     pagination: true,
+    // E-144 follow-up: pinned so gridHeight() can size the grid to its rows exactly.
+    rowHeight: RadioLogComponent.GRID_ROW_PX,
+    headerHeight: RadioLogComponent.GRID_HEADER_PX,
+    floatingFiltersHeight: RadioLogComponent.GRID_HEADER_PX,
     paginationAutoPageSize: true, // if set overrides paginationPageSize & forces it back to this on changes...
     //paginationPageSize: 5,
     // suppressScrollOnNewData: true, // grid to NOT scroll to the top, on page changes

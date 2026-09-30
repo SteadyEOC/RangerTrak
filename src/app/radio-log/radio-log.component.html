@@ -2,7 +2,7 @@
   <h2 class="visually-hidden">Radio Log</h2>
   <div id="reportsgrid">
     @if (!isPhone()) {
-      <ag-grid-angular #reportsGrid rowAnimation style="width: 100%; height: 60vh;" (gridReady)="onGridReady($event)"
+      <ag-grid-angular #reportsGrid rowAnimation style="width: 100%;" [style.height]="gridHeight()" (gridReady)="onGridReady($event)"
         [gridOptions]="gridOptions" [rowData]="radioLogEntries()" [columnDefs]="columnDefs"
         [tooltipShowDelay]="500">
         <!--
