@@ -477,7 +477,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Open the layers box at the top right of the map to pick a base map — OpenStreetMap, OpenTopoMap (contours) or Satellite (Esri World Imagery, which needs Internet) — and to switch overlays on and off.',
               'USNG / MGRS grid draws the grid squares used in search and rescue, with the numbers you read out for a grid reference; it is worked out on your device and works with no Internet.',
               'Range rings (from command post) draws circles at 1, 2 and 5 miles around your Command Post location (or the default location on the Mission page if you have not placed one); it works with no Internet.',
-              'Hiking trails (Waymarked Trails) shows marked hiking routes and needs Internet. Hillshade (terrain relief) also needs Internet, and the Mile grid works with no Internet.',
+              'Hiking trails (Waymarked Trails) shows marked hiking routes and needs Internet. Roads and place names draws roads and labels over the Satellite map, and needs Internet. Hillshade (terrain relief) also needs Internet, and the Mile grid works with no Internet.',
               'Zoom to offline tiles, under the map, shows the areas you have saved for offline use and zooms out to fit them; press it again to hide them. It is grayed out until you have saved something.'
             ]
           },

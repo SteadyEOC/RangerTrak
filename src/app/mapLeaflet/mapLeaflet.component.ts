@@ -561,6 +561,19 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         attribution: 'Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       }
     )
+    // 2026-09-30, John: "can the map show both satellite and a road map together, layered?" -
+    // Esri's transparent Reference layers (roads, then boundaries and place names) drawn over
+    // whichever base is showing; meant for Satellite, harmless over the others. Same host as
+    // the imagery (already in the CSP), no API key, online only, off by default. Esri's terms
+    // re-check before 1.0 covers these too (roadmap E-162). Both tile URLs checked with curl.
+    const esriReference = (service: string) => L.tileLayer(
+      `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/${service}/MapServer/tile/{z}/{y}/{x}`,
+      { maxZoom: 19, minZoom: 3, attribution: 'Roads and labels: &copy; <a href="https://www.esri.com">Esri</a>' })
+    const roadsLabelsOverlay = L.layerGroup([
+      esriReference('World_Transportation'),
+      esriReference('World_Boundaries_and_Places'),
+    ])
+
     const baseLayers: Record<string, L.Layer> = {
       'OpenStreetMap': tiles,
       'OpenTopoMap (contours)': openTopoTiles,
@@ -595,6 +608,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'USNG / MGRS grid': this.usngGridLayer,
       'Range rings (from command post)': this.rangeRingsLayer,
       'Hiking trails (Waymarked Trails)': trailsOverlay,
+      'Roads and place names (for Satellite)': roadsLabelsOverlay,
     }
     this.savedTilesLayer = savedTilesOverlay  // E-138: shown by onBtnZoomToOfflineTiles(), not the menu
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
