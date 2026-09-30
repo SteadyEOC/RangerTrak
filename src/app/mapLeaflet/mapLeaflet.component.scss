@@ -375,3 +375,11 @@ mat-slide-toggle {
     opacity: 0
   }
 }
+// 2026-09-30, John (dark mode screenshot): Leaflet's layers menu is always drawn light (white
+// panel, dark text), but its radio buttons and checkboxes followed the page's dark scheme
+// (:root's `color-scheme: light dark`), so they rendered as dark circles/boxes on white. Keep
+// the whole menu, native controls included, in light mode to match the map it sits on. Scoped
+// to the layers menu only: the Save-this-area control is deliberately themed with app tokens.
+:host ::ng-deep .leaflet-control-layers {
+  color-scheme: light;
+}
