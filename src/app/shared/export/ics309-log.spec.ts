@@ -48,10 +48,10 @@ describe('buildIcs309Log', () => {
     expect(log.rows[0].message).toBe('[All Clear] checked in');
   })
 
-  it('falls back to "(no callsign)" for a callsignless report - D-42, this is expected data', () => {
+  it('falls back to "(not given)" for a callsignless report - D-42, this is expected data', () => {
     const log = buildIcs309Log([report({ callsign: '' })], mission)
 
-    expect(log.rows[0].from).toBe('(no callsign)')
+    expect(log.rows[0].from).toBe('(not given)')
   })
 
   it('carries the mission name and a real operational-period string through the header', () => {

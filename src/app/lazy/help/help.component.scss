@@ -127,7 +127,7 @@ filter: brightness(30%);
   border-color    : var(--rt-accent);
 }
 
-.help-tabs .mat-mdc-tab-body-content {
+:host ::ng-deep .help-tabs .mat-mdc-tab-body-content {
   padding-block: 1rem;
   // Material sets overflow:hidden on the body content; prose that ends up wider than the
   // panel (a long URL, a reference table) must scroll inside it rather than pushing the

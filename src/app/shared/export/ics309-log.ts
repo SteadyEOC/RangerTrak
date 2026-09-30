@@ -83,7 +83,10 @@ export function buildIcs309Log(
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .map((r): Ics309LogRow => ({
       time: r.date,
-      from: r.callsign?.trim() || '(no callsign)',
+      // E-153 (ARES review row 21): "(no callsign)" read as a missing FCC call sign, the wrong
+      // word for tactical-only teams; the scribe types a tactical name there too, so blank means
+      // the sender simply wasn't recorded.
+      from: r.callsign?.trim() || '(not given)',
       source: r.source ?? '',
       message: formatMessage(r),
     }))

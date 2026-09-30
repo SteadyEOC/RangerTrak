@@ -111,7 +111,9 @@ export function ics213FieldsFromReport(
     '2 To Name and Position': (report.recipients213 ?? []).join(', '),
     '3 From Name and Position': report.callsign,
     '4 Subject': report.subject213 ?? '',
-    '5 Date': d.toLocaleDateString(),
+    // E-153 (ARES review row 16): the form asks mm/dd/yyyy; toLocaleDateString() printed dd/mm
+    // on a non-US device.
+    '5 Date': `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`,
     // hour12: false - 24-hour throughout the app, and the ICS-213's own convention.
     '6 Time': d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
     '7 Message': report.message213 ?? '',
