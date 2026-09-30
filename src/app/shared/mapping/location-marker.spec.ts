@@ -69,7 +69,7 @@ describe('locationMarkerSvg', () => {
   })
 
   it('carries the requested color into the drawn markup', () => {
-    const svg = locationMarkerSvg('command-post', '#ABCDEF')
+    const svg = locationMarkerSvg('staging', '#ABCDEF')
     expect(svg).toContain('#ABCDEF')
   })
 

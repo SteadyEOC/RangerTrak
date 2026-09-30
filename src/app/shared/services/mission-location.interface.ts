@@ -26,6 +26,7 @@
 export type LocationIconId =
   | 'command-post' | 'staging' | 'first-aid' | 'eoc' | 'fire-station' | 'dock'
   | 'building' | 'toilet' | 'vehicle' | 'vessel' | 'radio' | 'hazard' | 'water' | 'helispot'
+  | 'base' | 'camp' | 'safety'
   | 'pin'
 
 /**
@@ -48,6 +49,9 @@ export const LOCATION_ICON_OPTIONS: ReadonlyArray<{ id: LocationIconId, label: s
   { id: 'hazard', label: 'Hazard' },
   { id: 'water', label: 'Water / Supply Point' },
   { id: 'helispot', label: 'Helispot / Landing Zone' },
+  { id: 'base', label: 'Base (B)' },
+  { id: 'camp', label: 'Camp (C)' },
+  { id: 'safety', label: 'Safety Hazard' },
   { id: 'pin', label: 'Generic Pin' },
 ]
 

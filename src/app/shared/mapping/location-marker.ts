@@ -27,17 +27,32 @@ import { LocationCategoryType, LocationIconId } from '../services'
  * locations list, the location dialog, the Mission > Location types grid) draws from.
  */
 
+/**
+ * E-140 "flat badge" style: a 48x48 disc in the category colour, a rim, and a 24x24 stroked
+ * glyph. Letters are stroked paths, not <text>, so they draw identically on every device.
+ * `fill` is only ever the validated category colour (safeMarkerColor, applied by
+ * locationMarkerSvg) or a fixed constant - never raw input. The Command Post badge is fixed
+ * navy and orange, matching the roster's cmd badge.
+ */
+const badge = (fill: string, ink: string, glyph: string) => `
+  <g transform="scale(.5)" stroke="none">
+    <circle cx="24" cy="24" r="22.5" fill="${fill}"/>
+    <circle cx="24" cy="24" r="20.5" fill="none" stroke="${ink}" stroke-width="2"/>
+    <g transform="translate(11 11) scale(1.083)" fill="none" stroke="${ink}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${glyph}</g>
+  </g>`
+const GLYPH_CMD = '<path d="M3.5 20.5 12 8l8.5 12.5Z"/><path d="M10 20.5 12 16l2 4.5"/><path d="M12 8V2.5"/><path d="M14.6 3c1 .9 1 2.6 0 3.5"/><path d="M16.8 1.5c1.9 1.7 1.9 4.8 0 6.5"/>'
+const GLYPH_MEDIC = '<path d="M9.5 4h5v5.5H20v5h-5.5V20h-5v-5.5H4v-5h5.5Z"/>'
+const GLYPH_S = '<path d="M16 7.5c-1-1.4-2.2-2-4-2-2.3 0-3.8 1.1-3.8 2.9 0 3.9 8 2.2 8 6.9 0 1.9-1.7 3.2-4.2 3.2-1.8 0-3.2-.7-4.2-2"/>'
+const GLYPH_B = '<path d="M8 4.5v15M8 4.5h4c2 0 3.2 1.2 3.2 3.2S14 11.5 12 11.5H8M12 11.5c2.3 0 3.8 1.3 3.8 4s-1.5 4-3.8 4H8"/>'
+const GLYPH_C = '<path d="M16.5 8c-1-1.6-2.5-2.5-4.5-2.5-3.2 0-5 2.6-5 6.5s1.8 6.5 5 6.5c2 0 3.5-.9 4.5-2.5"/>'
+const GLYPH_H = '<path d="M7.5 4.5v15M16.5 4.5v15M7.5 12h9"/>'
+const GLYPH_W = '<path d="M4.5 5l3.5 14.5L12 9.5l4 10L19.5 5"/>'
+const GLYPH_SAFETY = '<path d="M12 3.5 21.5 20h-19Z"/><path d="M14 12.6c-.5-.7-1.2-1-2-1-1.1 0-1.9.6-1.9 1.5 0 2 4 1.2 4 3.4 0 .9-.9 1.6-2.1 1.6-.9 0-1.6-.4-2.1-1"/>'
+
 const SHAPES: Record<LocationIconId, (color: string) => string> = {
-  'command-post': color => `
-    <line x1="5" y1="24" x2="5" y2="2" stroke="${color}" stroke-width="2.5"/>
-    <polygon points="5,2 22,6 5,11" fill="${color}"/>`,
-  'staging': color => `
-    <rect x="1" y="1" width="22" height="22" rx="3" fill="${color}"/>
-    <text x="12" y="17" text-anchor="middle" font-size="14" font-weight="700" font-family="sans-serif" fill="white">S</text>`,
-  'first-aid': color => `
-    <rect x="1" y="1" width="22" height="22" rx="3" fill="${color}"/>
-    <rect x="10" y="5" width="4" height="14" fill="white"/>
-    <rect x="5" y="10" width="14" height="4" fill="white"/>`,
+  'command-post': () => badge('#14191E', '#E07A2E', GLYPH_CMD),
+  'staging': color => badge(color, '#FFFFFF', GLYPH_S),
+  'first-aid': color => badge(color, '#FFFFFF', GLYPH_MEDIC),
   // Added 2026-08-30 alongside DEFAULT_LOCATION_TYPES' expansion (mission-migration.ts) -
   // same "letter panel" treatment as Staging Area, for the two categories with no obvious
   // pictogram of their own at this icon size.
@@ -95,16 +110,12 @@ const SHAPES: Record<LocationIconId, (color: string) => string> = {
     <path d="M12 4l9 16H3z" fill="white"/>
     <rect x="11" y="10" width="2" height="6" fill="${color}"/>
     <rect x="11" y="17" width="2" height="2" fill="${color}"/>`,
-  // A symmetric droplet - deliberately NOT the fire flame's asymmetric wavy path above, so
-  // the two don't get confused at a glance despite both being "white blob on a panel".
-  'water': color => `
-    <rect x="1" y="1" width="22" height="22" rx="3" fill="${color}"/>
-    <path d="M12 4c-3 5-6 8.5-6 12a6 6 0 0 0 12 0c0-3.5-3-7-6-12z" fill="white"/>`,
-  // "H" panel - the conventional helispot/landing-zone marking, same letter-panel treatment
-  // as Staging/EOC/Dock.
-  'helispot': color => `
-    <rect x="1" y="1" width="22" height="22" rx="3" fill="${color}"/>
-    <text x="12" y="17" text-anchor="middle" font-size="14" font-weight="700" font-family="sans-serif" fill="white">H</text>`,
+  // E-140: ICS lettered badges (W water, H helispot, B base, C camp, S staging) - stroked paths.
+  'water': color => badge(color, '#FFFFFF', GLYPH_W),
+  'helispot': color => badge(color, '#FFFFFF', GLYPH_H),
+  'base': color => badge(color, '#FFFFFF', GLYPH_B),
+  'camp': color => badge(color, '#FFFFFF', GLYPH_C),
+  'safety': color => badge(color, '#FFFFFF', GLYPH_SAFETY),
   'pin': color => GENERIC_PIN_PATH(color),
 }
 
