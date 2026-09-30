@@ -35,13 +35,18 @@
 // 30rem is the floor because the widest single control on any card (the geocoding API key
 // field) needs about that much before it starts scrolling its own value.
 .mission__grid {
-  display              : grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
-  gap                  : 0 var(--rt-gap);
-  // Cards size to their own content instead of stretching to match the tallest card
-  // beside them - without this, the short "ICS-213 recipients" card would be padded out
-  // to the height of the "Maps" card next to it.
-  align-items          : start;
+  // 2026-09-30, John ("not as much white space; the logical structure remains most
+  // important"): was a row grid, so every row was as tall as its tallest card (Maps) and the
+  // short cards beside it left large empty holes. Now CSS columns: the cards flow DOWN each
+  // column in the same DOM order and pack with no holes, so the page reads top-to-bottom,
+  // column by column - SETUP (mission, op period, statuses, categories, locations), then
+  // maps/location defaults, recipients, then SHARING - which is the order this template
+  // already tells. Same 30rem floor, so the column count per width is unchanged, and one
+  // column on a phone. `.rt-mission-card` carries `break-inside: avoid` (global, since the
+  // cards live in the section components' own templates) and its own margin-bottom is the
+  // row gap.
+  columns   : min(100%, 30rem);
+  column-gap: var(--rt-gap);
 }
 
 // ── Readiness alert (E-79) ───────────────────────────────────────────────────

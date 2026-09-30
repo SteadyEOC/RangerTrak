@@ -186,6 +186,8 @@
   // Cards are grid items whose parents set `align-items: start`, so they size to their own
   // content rather than stretching to the tallest card in the row.
   align-self   : start;
+  // Mission lays its cards out in CSS columns (mission.component.scss) - never split one.
+  break-inside : avoid;
 }
 
 // ── Field layout ─────────────────────────────────────────────────────────────
