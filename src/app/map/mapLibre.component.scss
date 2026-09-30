@@ -1,3 +1,5 @@
+@use "../../styles/breakpoints" as bp;
+
 // Raised live 2026-08-30: this component had NO host margin at all - #pmtiles-overview, the
 // field-report toggle, the hillshade toggle, and the Add Location/engine-switch controls all
 // sat flush against the app's own thin page margin (PageComponent's `.main { margin: 0 1em
@@ -22,8 +24,21 @@
 // request as this file's own :host flow-root fix now applies one level deeper. flow-root
 // contains the float so .map-container's own height accounts for it.
 .map-container {
-  display: flow-root;
+  // 2026-09-30, John: E-143 - was flow-root, which contained the floated overview map and
+  // pushed the controls below its bottom edge (a tall empty band on a wide screen). Block
+  // lets the float hang past so the controls rise beside it; :host stays flow-root, so the
+  // component as a whole still contains it (E-99).
+  display: block;
   width  : 100%;
+}
+
+// E-143: the card group is a grid from laptop width up, and a grid box steps aside for a
+// float by itself. Below that it is plain blocks whose borders would run under the mini-map,
+// so make the group a block formatting context there too: it narrows to sit beside the float.
+@include bp.tablet-down {
+  .rt-action-bar-group {
+    display: flow-root;
+  }
 }
 
 .map-frame {

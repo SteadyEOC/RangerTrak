@@ -468,7 +468,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Route trails',
-            text: 'Route trails join one ranger\'s reports oldest to newest, on both engines, so you can see which way a team has been moving — the label at the newest end is a snapshot from when the map was drawn, not a running clock.'
+            text: 'Route trails join one ranger\'s reports oldest to newest on the Leaflet map (the MapLibre map does not draw them), so you can see which way a team has been moving — the label at the newest end is a snapshot from when the map was drawn, not a running clock.'
           }
         ]
       },

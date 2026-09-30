@@ -28,8 +28,14 @@
   // whole container to a child of it, right after the frame - same "immediately underneath
   // the main map" request as :host's own E-99 fix (float not accounted for in an ancestor's
   // height) now applies one level deeper. flow-root contains it, same reasoning as :host.
-  display : flow-root;
-  position: block;
+  // 2026-09-30, John: E-143 - was flow-root, which CONTAINED the floated overview map, so
+  // this container's height included it and everything after (the "Radio log entries to
+  // show" controls) started below the mini-map's bottom edge, leaving a tall empty band
+  // beside/under the main map on a wide screen. Plain block lets the float hang past the
+  // container's end so the controls rise to just below the map and wrap beside it - the
+  // layout the width caps on the toggles below were already written for. :host is still
+  // flow-root, so the float remains contained by the component as a whole (E-99).
+  display : block;
   // position: relative;
   top     : 0;
   left    : 0;
