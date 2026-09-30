@@ -92,4 +92,7 @@
       </div>
     </span>
   }
+} @else if (showInstall && manualHint) {
+  <!-- E-160: Firefox on Android (and Safari on iOS) never offer an Install button. -->
+  <span class="rt-install-update__hint">{{manualHint}}</span>
 }

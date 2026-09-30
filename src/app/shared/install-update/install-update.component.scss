@@ -232,3 +232,9 @@
     display: none;
   }
 }
+
+// E-160: plain manual-install steps for browsers with no Install button.
+.rt-install-update__hint {
+  font-size: 0.8rem;
+  opacity  : 0.85;
+}

@@ -104,6 +104,11 @@ export class InstallUpdateComponent {
     return this.installableService.installable()
   }
 
+  /** E-160: manual install steps where the browser gives us no Install button. */
+  get manualHint(): string | null {
+    return this.installableService.manualInstallHint()
+  }
+
   onReload(): void {
     this.updateService.activateAndReload()
   }

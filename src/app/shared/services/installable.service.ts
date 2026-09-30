@@ -65,6 +65,26 @@ export class InstallableService {
   }
 
   /**
+   * E-160: short manual steps for browsers that can install the app but never fire
+   * `beforeinstallprompt` (Firefox on Android, Safari on iPhone/iPad). Null when the app is
+   * already installed, when the browser offered a real prompt, or for any other browser.
+   */
+  manualInstallHint(): string | null {
+    if (this.installed() || this.installable()) {
+      return null
+    }
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    if (/Android/i.test(ua) && /Firefox|FxiOS/i.test(ua)) {
+      return 'To install: open the browser menu (⋮) and choose Add to Home screen (or Install).'
+    }
+    const iOS = /iPhone|iPad|iPod/i.test(ua)
+    if (iOS && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) {
+      return 'To install: tap Share, then Add to Home Screen.'
+    }
+    return null
+  }
+
+  /**
    * Shows the browser's own install prompt. Resolves to what the user chose, or
    * 'unavailable' when there was nothing to prompt with.
    *
