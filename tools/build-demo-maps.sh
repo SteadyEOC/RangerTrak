@@ -28,7 +28,7 @@ PMTILES="${PMTILES:-pmtiles}"
 declare -A DEMOS=(
   [grand-canyon]="-112.20,36.03,-112.07,36.12"  # Bright Angel Trail to Plateau Point, Hopi to Mather Point
   [vashon]="-122.53,47.32,-122.40,47.51"         # Vashon and Maury islands
-  [state-fair]="-122.32,47.17,-122.27,47.20"     # Washington State Fair grounds, Puyallup
+  [state-fair]="-77.428,37.842,-77.411,37.854"         # State Fair of Virginia, Meadow Event Park, Doswell VA (tight: ~1.5 x 1.3 km around the grounds, bbox from OSM)
 )
 
 "$PMTILES" extract "$SRC" "$OUT/world-z5-${BUILD}.pmtiles" --maxzoom=5

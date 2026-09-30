@@ -51,8 +51,8 @@ export const SAMPLE_SCENARIOS: ReadonlyArray<SampleScenarioOption> = [
   },
   {
     id: 'state-fair',
-    label: 'State fair (Puyallup, WA)',
-    hint: 'A lost child, heat illness and a crowd-flow incident at the Washington State Fair.',
+    label: 'State fair (Doswell, VA)',
+    hint: 'A lost child, heat illness and a crowd-flow incident at the State Fair of Virginia.',
   },
   {
     id: 'near-me',
@@ -670,42 +670,42 @@ export class SampleDataService {
     }
   }
 
-  // ── Scenario 3: State fair (Washington State Fair, Puyallup, WA) ────────────────────
+  // ── Scenario 3: State fair (State Fair of Virginia, Meadow Event Park, Doswell, VA) ────────────────────
 
   /**
    * A lost child, heat illness, and a crowd-flow incident across a state fairgrounds.
-   * Uses the Washington State Fair in Puyallup, WA specifically - the project itself is
-   * WA-based, and there's no reason to invent an out-of-state fair when a real, in-state one
-   * fits the same story. Coordinates are approximate (a fairgrounds is not something this
-   * file can survey to the meter) but land within the fairgrounds' own footprint - gate,
-   * grandstand, midway, livestock barns, first aid - a several-hundred-meter cluster, exactly
-   * the walking distances CERT/first-aid teams on foot would actually cover.
+   * Uses the State Fair of Virginia at Meadow Event Park, Doswell, VA. Positions were
+   * placed from OpenStreetMap data for the park (Ticket Plaza, Meadow Pavilion, the Festival
+   * Loop, the horse stables) but are approximate - a fairgrounds is not something this
+   * file can survey to the meter. They all land within the grounds' own footprint, a
+   * several-hundred-meter cluster, exactly the walking distances CERT/first-aid teams on
+   * foot would actually cover.
    */
   private buildStateFairScenario(): ScenarioData {
-    const CP = { lat: 47.1870, lng: -122.2935, address: 'Washington State Fair - Fair Operations trailer, Puyallup, WA (approx.)' }
-    const MAIN_GATE = { lat: 47.1876, lng: -122.2937, address: 'Washington State Fair - main gate (approx.)' }
-    const GRANDSTAND = { lat: 47.1858, lng: -122.2915, address: 'Washington State Fair - grandstand (approx.)' }
-    const MIDWAY = { lat: 47.1866, lng: -122.2952, address: 'Washington State Fair - midway (approx.)' }
-    const LIVESTOCK = { lat: 47.1880, lng: -122.2920, address: 'Washington State Fair - livestock barns (approx.)' }
-    const FIRST_AID = { lat: 47.1865, lng: -122.2930, address: 'Washington State Fair - first-aid station (approx.)' }
+    const CP = { lat: 37.8521, lng: -77.4191, address: 'State Fair of Virginia - Fair Operations office, Meadow Event Park, Doswell, VA (approx.)' }
+    const MAIN_GATE = { lat: 37.8485, lng: -77.4224, address: 'State Fair of Virginia - main gate, Ticket Plaza (approx.)' }
+    const GRANDSTAND = { lat: 37.8507, lng: -77.4203, address: 'State Fair of Virginia - Meadow Pavilion seating (approx.)' }
+    const MIDWAY = { lat: 37.8513, lng: -77.4235, address: 'State Fair of Virginia - midway, Festival Loop (approx.)' }
+    const LIVESTOCK = { lat: 37.8473, lng: -77.4251, address: 'State Fair of Virginia - livestock barns and stables (approx.)' }
+    const FIRST_AID = { lat: 37.8488, lng: -77.4229, address: 'State Fair of Virginia - first-aid station (approx.)' }
 
     const rangers: RangerType[] = [
-      { callsign: 'IC-Actual', fullName: 'Fern Marigold', phone: '253-555-0100', image: 'ic-actual.jpg', id: 'IC-1', team: 'Command', role: 'Incident Commander', note: 'Overall exercise command' },
-      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '253-555-0101', image: 'CmdPost.jpg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
-      { callsign: 'OpsChief', fullName: 'Hank Cobblestone', phone: '253-555-0110', image: 'ops-chief.jpg', id: 'OPS-1', team: 'Command', role: 'Operations Section Chief', note: 'Directs field teams' },
-      { callsign: 'PIO1', fullName: 'Dahlia Brightbanner', phone: '253-555-0113', image: 'pio.jpg', id: 'PIO-1', team: 'Command', role: 'Public Information Officer', note: 'Coordinates with fair management and press' },
+      { callsign: 'IC-Actual', fullName: 'Fern Marigold', phone: '804-555-0100', image: 'ic-actual.jpg', id: 'IC-1', team: 'Command', role: 'Incident Commander', note: 'Overall exercise command' },
+      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '804-555-0101', image: 'CmdPost.jpg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
+      { callsign: 'OpsChief', fullName: 'Hank Cobblestone', phone: '804-555-0110', image: 'ops-chief.jpg', id: 'OPS-1', team: 'Command', role: 'Operations Section Chief', note: 'Directs field teams' },
+      { callsign: 'PIO1', fullName: 'Dahlia Brightbanner', phone: '804-555-0113', image: 'pio.jpg', id: 'PIO-1', team: 'Command', role: 'Public Information Officer', note: 'Coordinates with fair management and press' },
 
-      { callsign: 'Gate1', fullName: 'Milo Carousel', phone: '253-555-0121', image: 'cert1.jpg', id: 'SF-11', team: 'Gate-CERT', role: 'Team Lead', note: 'Main gate, crowd flow' },
-      { callsign: 'Gate2', fullName: 'Nora Bunting', phone: '253-555-0122', image: 'cert2.jpg', id: 'SF-12', team: 'Gate-CERT', role: 'Responder', note: 'Main gate, crowd flow' },
+      { callsign: 'Gate1', fullName: 'Milo Carousel', phone: '804-555-0121', image: 'cert1.jpg', id: 'SF-11', team: 'Gate-CERT', role: 'Team Lead', note: 'Main gate, crowd flow' },
+      { callsign: 'Gate2', fullName: 'Nora Bunting', phone: '804-555-0122', image: 'cert2.jpg', id: 'SF-12', team: 'Gate-CERT', role: 'Responder', note: 'Main gate, crowd flow' },
 
-      { callsign: 'Search1', fullName: 'Wes Thistledown', phone: '253-555-0123', image: 'recon1.jpg', id: 'SF-13', team: 'Search-CERT', role: 'Team Lead', note: 'Grounds sweep for the lost child' },
-      { callsign: 'Search2', fullName: 'Pearl Hayloft', phone: '253-555-0124', image: 'plan-chief.jpg', id: 'SF-14', team: 'Search-CERT', role: 'Responder', note: 'Grounds sweep for the lost child' },
+      { callsign: 'Search1', fullName: 'Wes Thistledown', phone: '804-555-0123', image: 'recon1.jpg', id: 'SF-13', team: 'Search-CERT', role: 'Team Lead', note: 'Grounds sweep for the lost child' },
+      { callsign: 'Search2', fullName: 'Pearl Hayloft', phone: '804-555-0124', image: 'plan-chief.jpg', id: 'SF-14', team: 'Search-CERT', role: 'Responder', note: 'Grounds sweep for the lost child' },
 
-      { callsign: 'Barn1', fullName: 'Otis Grainfield', phone: '253-555-0131', image: 'log-chief.jpg', id: 'SF-21', team: 'Barn-CERT', role: 'Team Lead', note: 'Livestock barns and perimeter' },
-      { callsign: 'Barn2', fullName: 'Ruby Cornsilk', phone: '253-555-0132', image: 'cert3.jpg', id: 'SF-22', team: 'Barn-CERT', role: 'Responder', note: 'Livestock barns and perimeter' },
+      { callsign: 'Barn1', fullName: 'Otis Grainfield', phone: '804-555-0131', image: 'log-chief.jpg', id: 'SF-21', team: 'Barn-CERT', role: 'Team Lead', note: 'Livestock barns and perimeter' },
+      { callsign: 'Barn2', fullName: 'Ruby Cornsilk', phone: '804-555-0132', image: 'cert3.jpg', id: 'SF-22', team: 'Barn-CERT', role: 'Responder', note: 'Livestock barns and perimeter' },
 
-      { callsign: 'Medic1', fullName: 'Hollis Sawdust', phone: '253-555-0133', image: 'mert1.jpg', id: 'SF-23', team: 'Medical', role: 'Team Lead', note: 'First-aid station and heat-illness response' },
-      { callsign: 'Medic2', fullName: 'Dr. Junebug Vance', phone: '253-555-0134', image: 'medic1.jpg', id: 'SF-24', team: 'Medical', role: 'Medical', note: 'First-aid station and heat-illness response' },
+      { callsign: 'Medic1', fullName: 'Hollis Sawdust', phone: '804-555-0133', image: 'mert1.jpg', id: 'SF-23', team: 'Medical', role: 'Team Lead', note: 'First-aid station and heat-illness response' },
+      { callsign: 'Medic2', fullName: 'Dr. Junebug Vance', phone: '804-555-0134', image: 'medic1.jpg', id: 'SF-24', team: 'Medical', role: 'Medical', note: 'First-aid station and heat-illness response' },
     ]
 
     const OPS = 'Hank Cobblestone'
@@ -719,7 +719,7 @@ export class SampleDataService {
 
       // ── Team A: Gate1/Gate2 - main gate crowd flow ────────────────────────────
       { callsign: 'Gate1', minutesAgo: 300, ...MAIN_GATE, statusIndex: 4, notes: 'Team checking in at the main gate, monitoring entry flow.', source: 'Voice', operator: OPS },
-      { callsign: 'Gate2', minutesAgo: 270, lat: MAIN_GATE.lat - 0.0003, lng: MAIN_GATE.lng + 0.0004, address: 'Washington State Fair - main gate queue (approx.)', statusIndex: 1, notes: 'Location report: main gate queue backing up onto the sidewalk.', source: 'Voice', operator: OPS },
+      { callsign: 'Gate2', minutesAgo: 270, lat: MAIN_GATE.lat - 0.0003, lng: MAIN_GATE.lng + 0.0004, address: 'State Fair of Virginia - main gate queue (approx.)', statusIndex: 1, notes: 'Location report: main gate queue backing up onto the sidewalk.', source: 'Voice', operator: OPS },
       {
         callsign: 'Gate1', minutesAgo: 200, ...MAIN_GATE, statusIndex: 6,
         notes: 'URGENT: crowd bottleneck forming at the main gate exit, requesting additional CERT support to redirect flow.', source: 'Phone', operator: OPS,
@@ -739,7 +739,7 @@ export class SampleDataService {
 
       // ── Team C: Barn1/Barn2 - livestock barns and perimeter ───────────────────
       { callsign: 'Barn2', minutesAgo: 288, ...LIVESTOCK, statusIndex: 4, notes: 'Team checking in at the livestock barns, beginning perimeter sweep.', source: 'Voice', operator: OPS },
-      { callsign: 'Barn1', minutesAgo: 250, lat: LIVESTOCK.lat + 0.0006, lng: LIVESTOCK.lng - 0.0006, address: 'Washington State Fair - livestock barns, parking side (approx.)', statusIndex: 0, notes: 'Barn perimeter clear, checking the nearby parking areas.', source: 'Voice', operator: OPS },
+      { callsign: 'Barn1', minutesAgo: 250, lat: LIVESTOCK.lat + 0.0006, lng: LIVESTOCK.lng - 0.0006, address: 'State Fair of Virginia - livestock barns, parking side (approx.)', statusIndex: 0, notes: 'Barn perimeter clear, checking the nearby parking areas.', source: 'Voice', operator: OPS },
       { callsign: 'Barn2', minutesAgo: 180, ...LIVESTOCK, statusIndex: 2, notes: 'Loose animal pen gate found unlatched, secured and photographed for the barn manager.', source: 'Voice', operator: OPS },
       { callsign: 'Barn1', minutesAgo: 96, ...LIVESTOCK, statusIndex: 5, notes: 'Perimeter sweep complete, no further issues. Checking out.', source: 'Voice', operator: OPS },
 

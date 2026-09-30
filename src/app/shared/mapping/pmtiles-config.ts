@@ -31,7 +31,7 @@ export type DemoDetailMap = { url: string, bbox: [west: number, south: number, e
 export const DEMO_DETAIL_MAPS: Partial<Record<SampleScenarioId, DemoDetailMap>> = {
   'grand-canyon': { url: '/assets/maps/demo-grand-canyon-20260926.pmtiles', bbox: [-112.20, 36.03, -112.07, 36.12] },
   'vashon': { url: '/assets/maps/demo-vashon-20260926.pmtiles', bbox: [-122.53, 47.32, -122.40, 47.51] },
-  'state-fair': { url: '/assets/maps/demo-state-fair-20260926.pmtiles', bbox: [-122.32, 47.17, -122.27, 47.20] },
+  'state-fair': { url: '/assets/maps/demo-state-fair-20260930.pmtiles', bbox: [-77.428, 37.842, -77.411, 37.854] },
 }
 
 /**
