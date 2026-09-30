@@ -46,6 +46,24 @@
         <span class="legend__cluster">3</span>
         <span>Several entries close together (zoom the map in to separate them)</span>
       </div>
+      @if (overlays().includes('usng')) {
+        <div class="legend__row">
+          <span class="legend__trail" style="border-top-color: #cc0066"></span>
+          <span>USNG / MGRS grid: the numbers on the lines are the digits of a grid reference; the heavy lines are 100 km</span>
+        </div>
+      }
+      @if (overlays().includes('rings')) {
+        <div class="legend__row">
+          <span class="legend__trail" style="border-top-color: #8a3ffc; border-top-style: dashed"></span>
+          <span>Range rings around the command post, labelled with their distance</span>
+        </div>
+      }
+      @if (overlays().includes('hiking')) {
+        <div class="legend__row">
+          <span class="legend__trail" style="border-top-color: #b45309; border-top-style: dotted"></span>
+          <span>Marked hiking trails (waymarkedtrails.org)</span>
+        </div>
+      }
       @if (hasTrails()) {
         <div class="legend__row">
           <span class="legend__trail"></span>

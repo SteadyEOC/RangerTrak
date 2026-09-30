@@ -365,6 +365,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private syncOverview?: () => void
 
   public legendEntries = signal<RadioLogEntryType[]>([])
+  /** E-162: which optional overlays are on, for the printed legend (see MapPrintLegendComponent.overlays). */
+  public legendOverlays = signal<string[]>([])
 
   /**
    * 2026-09-30, John: E-152 - the printed sheet gives the map a different size from the
@@ -609,6 +611,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         this.refreshUsngGrid()
       }
     })
+    // E-162: track which of the new overlays are on, for the printed legend.
+    const legendKeys = new Map<L.Layer, string>([
+      [this.usngGridLayer, 'usng'], [this.rangeRingsLayer, 'rings'], [trailsOverlay, 'hiking'],
+    ])
+    const syncLegendOverlays = () => this.legendOverlays.set(
+      [...legendKeys].filter(([layer]) => this.lMap.hasLayer(layer)).map(([, key]) => key))
+    this.lMap.on('overlayadd overlayremove', syncLegendOverlays)
     this.lMap.on('overlayadd', (e: L.LayersControlEvent) => {
       if (e.layer === this.mileGridLayer) {
         this.refreshMileGrid()

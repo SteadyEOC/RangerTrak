@@ -23,7 +23,7 @@
 </div>
 <!-- 2026-09-30, John: E-152 - the printed legend, derived from what the map is drawing (see
      MapPrintLegendComponent). Print-only. -->
-<rangertrak-map-print-legend [entries]="legendEntries()" engine="leaflet"></rangertrak-map-print-legend>
+<rangertrak-map-print-legend [entries]="legendEntries()" engine="leaflet" [overlays]="legendOverlays()"></rangertrak-map-print-legend>
 <!-- 2026-09-30, John: tidy the controls under the map (John, desktop screenshot: "a bit
      unorganized"). Top to bottom now: ONE row of actions, the offline-tile save/remove pair with
      a short note under it, and a small "Display" group holding the two switches. Nothing here

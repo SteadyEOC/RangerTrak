@@ -33,6 +33,11 @@ export class MapPrintLegendComponent {
   /** What the engine is drawing now: the All / Just-selected choice already applied. */
   entries = input.required<RadioLogEntryType[]>()
   engine = input.required<'leaflet' | 'maplibre'>()
+  /**
+   * 2026-09-30, John: E-162 - which optional map layers are switched on: 'usng' (USNG / MGRS
+   * grid), 'rings' (range rings), 'hiking' (hiking trails). Leaflet only; MapLibre has none.
+   */
+  overlays = input<readonly string[]>([])
 
   private readonly missionService = inject(MissionService)
   private readonly sanitizer = inject(DomSanitizer)
