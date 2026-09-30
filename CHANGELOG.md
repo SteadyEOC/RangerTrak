@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.2-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.1-alpha...v0.99.2-alpha) (2026-09-30)
+
+
+### Features
+
+* **map:** printed legend rows for the USNG grid, range rings and hiking trails (E-152, E-162) ([dd67628](https://github.com/SteadyEOC/RangerTrak/commit/dd67628d2328c43fa5402641635addf7fbcd821a))
+* **map:** range rings around the command post overlay (E-162) ([2f527c4](https://github.com/SteadyEOC/RangerTrak/commit/2f527c43d571f2bb1b84ba4566578f78082828a6))
+* **map:** Satellite (Esri World Imagery) base layer on the Leaflet map (E-162) ([f54abf3](https://github.com/SteadyEOC/RangerTrak/commit/f54abf323df79f46e58c2b4bfb11f1b3f5f0e9c4))
+* **map:** trails show direction - taper thin to thick, newest leg flows toward the latest position (E-163) ([9495abc](https://github.com/SteadyEOC/RangerTrak/commit/9495abc2730040a282c1a946e25ec19b58a2aeca))
+* **map:** USNG / MGRS grid overlay on the Leaflet map (E-162) ([5a0bd2a](https://github.com/SteadyEOC/RangerTrak/commit/5a0bd2a5dee445108fd127a5dbadd0aad03a857d))
+* **map:** Waymarked Trails hiking overlay on the Leaflet map (E-162) ([c4aca1a](https://github.com/SteadyEOC/RangerTrak/commit/c4aca1aaeff7911d59d985872128513f1b2454cf))
+* **map:** Zoom to offline tiles button replaces the Saved offline tiles layer checkbox (E-138) ([f5f8ef7](https://github.com/SteadyEOC/RangerTrak/commit/f5f8ef76d6710e9475a7988e717d3a9044a88f07))
+* **mission:** E-145 - Mission page autosaves; Save settings and Cancel removed ([29c41ac](https://github.com/SteadyEOC/RangerTrak/commit/29c41ac23ee49ea299c70334831faf1f295e1202))
+* **printing:** one-time printer tip, and explain when the ICS-213 is saved instead of printed ([5ed4558](https://github.com/SteadyEOC/RangerTrak/commit/5ed45585a0e34c374a4672a1a369d7c12f2b0877))
+
+
+### Bug Fixes
+
+* **entry:** the welcome panel shows by itself only on a brand-new device ([79ba61e](https://github.com/SteadyEOC/RangerTrak/commit/79ba61eac54d8fccaad2513d5792a0a13a990865))
+* **map:** Leaflet layers menu stays light in dark mode, radio buttons and checkboxes included ([180ebff](https://github.com/SteadyEOC/RangerTrak/commit/180ebffa835b4cc33e2188c33db0d584f601aa7c))
+
 ### [0.99.1-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.0-alpha...v0.99.1-alpha) (2026-09-30)
 
 
