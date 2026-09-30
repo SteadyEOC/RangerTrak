@@ -265,3 +265,13 @@ rangertrak-footer {
     line-height: 1.3;
   }
 }
+
+// 2026-09-30, John: E-152 part 1 - interactive-only lines inside a map engine's template
+// (the coordinate readout under the map, the "Radio log entries to show" filter, the
+// engine's intro text). They mean nothing on the printed sheet. Global because each map
+// engine has its own component styles and both need the identical rule.
+@media print {
+  .map-print-hide {
+    display: none !important;
+  }
+}

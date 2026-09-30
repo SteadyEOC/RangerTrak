@@ -3,10 +3,35 @@
        @media print block), shown only in a printed copy - a map on paper has no page
        title, URL bar, or app chrome to say what it is or when it was current, unlike one
        on screen. -->
+  <!-- 2026-09-30, John: E-152 part 1 - grown from a name and a timestamp into the title block
+       of a finished map sheet: what the mission is, which operational period this shows, and
+       when it was printed. Same mission settings the header pill reads (header.component.ts
+       onNewSettings()), same 24-hour times. "ID or number" is the Mission page's own label for
+       the mission field, so it is shown as the mission/incident number; the Name field is
+       the event name and leads the sheet. -->
+  @if (mission$ | async; as m) {
   <div class="map-print-header">
-    <h1>{{ (mission$ | async)?.mission || 'RangerTrak' }}</h1>
+    <h1>{{ m.event?.trim() || m.mission?.trim() || 'RangerTrak' }}</h1>
+    <dl class="map-print-header__fields">
+      @if (m.mission?.trim()) {
+      <div><dt>Mission / incident no.</dt><dd>{{ m.mission }}</dd></div>
+      }
+      @if (m.opPeriod?.trim()) {
+      <div><dt>Operational period</dt><dd>{{ m.opPeriod }}</dd></div>
+      }
+      <div>
+        <dt>Period from / to</dt>
+        <dd>{{ m.opPeriodStart | date:'MMM d, y, HH:mm' }} to {{ m.opPeriodEnd | date:'MMM d, y, HH:mm' }}</dd>
+      </div>
+      <div><dt>Printed</dt><dd>{{ printedAt() | date:'MMM d, y, HH:mm:ss' }}</dd></div>
+    </dl>
+  </div>
+  } @else {
+  <div class="map-print-header">
+    <h1>RangerTrak</h1>
     <p>Printed {{ printedAt() | date:'MMM d, y, HH:mm:ss' }}</p>
   </div>
+  }
 
   <div class="map-fullscreen-area" #fullscreenArea>
     <button type="button" class="fullscreen-toggle" (click)="toggleFullscreen()">
@@ -35,5 +60,13 @@
     } @else if (maplibreComponentType(); as MaplibreEngine) {
     <ng-container *ngComponentOutlet="MaplibreEngine; inputs: {engineSwitchTemplate: engineSwitchTpl}"></ng-container>
     }
+  </div>
+
+  <!-- 2026-09-30, John: E-152 - the sign-off line an ICS form ends with. Print-only. The app
+       does not know who is printing (the Entry page's operator name lives only in that
+       page's own form, not anywhere shared), so it is left as a line to write on. -->
+  <div class="map-print-footer">
+    <span>Prepared by: <span class="map-print-footer__line"></span></span>
+    <span>Date / time: <span class="map-print-footer__line map-print-footer__line--short"></span></span>
   </div>
 </rangertrak-page>

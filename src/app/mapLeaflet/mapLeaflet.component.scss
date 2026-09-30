@@ -282,6 +282,47 @@ mat-slide-toggle {
   .map-add-location {
     display: none;
   }
+
+  // 2026-09-30, John: E-152 part 1 - the map fills the landscape sheet. The screen height
+  // (70vh) and the page margin mean nothing on paper; a fixed millimetre height leaves room
+  // on the first page for the title block above and the start of the legend below it (the
+  // sheet is A4 or Letter, so the height is chosen to fit the shorter A4). The frame is the
+  // positioning box for the north arrow (map-print-furniture), which sits over the map's
+  // corner. A page-size print event re-measures the map - see LmapComponent.printMedia.
+  :host {
+    margin: 0;
+  }
+
+  .mapLeaflet-frame {
+    position         : relative;
+    height           : 120mm;
+    break-inside     : avoid;
+    box-sizing       : border-box;
+  }
+
+  #mapLeaflet-main {
+    height: 100%;
+  }
+
+  // The overview thumbnail and the on-screen-only zoom / layer-switcher buttons are
+  // controls, not map content. Left alone: Leaflet's scale bar (bottom-left) and its
+  // attribution (bottom-right), which a finished sheet needs.
+  #mapLeaflet-overview {
+    display: none;
+  }
+
+  :host ::ng-deep .leaflet-control-zoom,
+  :host ::ng-deep .leaflet-control-layers,
+  :host ::ng-deep .leaflet-top .leaflet-control {
+    display: none;
+  }
+
+  // Fixed dark ink on white for the two map credits, whatever scheme was on screen.
+  :host ::ng-deep .leaflet-control-scale-line,
+  :host ::ng-deep .leaflet-control-attribution {
+    background: rgba(255, 255, 255, .9);
+    color     : #000;
+  }
 }
 
 // Roadmap "Offline map area" item: saved/estimated size text, appended by

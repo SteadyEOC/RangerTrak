@@ -24,14 +24,26 @@
 // E-item 13 (2026-08-27): hidden on screen - the app already shows the mission name in the
 // header/status pill, and a live clock, so repeating both here would just be noise while
 // looking at a monitor. It earns its place only on paper, which has neither.
-.map-print-header {
+.map-print-header,
+.map-print-footer {
   display: none;
 }
 
 @media print {
+  // 2026-09-30, John: E-152 - a printed map is always light on white, whatever scheme the
+  // screen was in: the map's own overlays (status glows, overdue shades, tooltips) resolve
+  // their light-dark() tokens from here, so forcing light keeps the paper legible and keeps
+  // the legend's swatches the same shade the map drew.
+  :host {
+    color-scheme: light;
+  }
+
   .map-print-header {
     display      : block;
     margin-bottom: 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 2px solid #000;
+    color        : #000;
 
     h1 {
       margin   : 0;
@@ -44,6 +56,52 @@
                      // paper, and print output should stay legible regardless of which
                      // scheme happened to be active on screen when this was printed.
     }
+  }
+
+  // Label above value, like the boxes on an ICS form header, four to a row.
+  .map-print-header__fields {
+    display              : grid;
+    grid-template-columns: repeat(auto-fit, minmax(45mm, 1fr));
+    gap                  : 0.2rem 1rem;
+    margin               : 0.3rem 0 0;
+    font-size            : 0.85rem;
+
+    div {
+      break-inside: avoid;
+    }
+
+    dt {
+      color      : #444;
+      font-size  : 0.7rem;
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin     : 0;
+      font-weight: 600;
+    }
+  }
+
+  .map-print-footer {
+    display        : flex;
+    justify-content: space-between;
+    gap            : 2rem;
+    margin-top     : 4mm;
+    color          : #000;
+    font-size      : 0.85rem;
+    break-inside   : avoid;
+  }
+
+  .map-print-footer__line {
+    display      : inline-block;
+    min-width    : 70mm;
+    border-bottom: 1px solid #000;
+    vertical-align: bottom;
+  }
+
+  .map-print-footer__line--short {
+    min-width: 40mm;
   }
 
   // Controls that only make sense interactively - flipping engines or filling the

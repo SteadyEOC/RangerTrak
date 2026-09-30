@@ -1,4 +1,4 @@
-import { GeoJSONSource, Map as MaplibreMap, MapLayerMouseEvent, MapMouseEvent, Marker, Popup } from 'maplibre-gl'
+import { GeoJSONSource, Map as MaplibreMap, MapLayerMouseEvent, MapMouseEvent, Marker, Popup, ScaleControl } from 'maplibre-gl'
 import type { FeatureCollection, Point } from 'geojson'
 // P1-5 (offline map coverage scoping, 2026-09-14): validating a scribe-picked .pmtiles file
 // needs the SAME 'pmtiles' package map-style.ts already imports for the bundled/custom
@@ -57,6 +57,9 @@ import {
 import { Utility } from '../shared/utility'
 import { formatReportTime } from '../shared/mapping/report-time'
 import { LocationDialogComponent } from './location-dialog/location-dialog.component'
+import { MapPrintFurnitureComponent } from './map-print/map-print-furniture.component'
+import { MapPrintLegendComponent } from './map-print/map-print-legend.component'
+import { printMapSheet } from './map-print/map-print-sheet'
 
 const REPORTS_SOURCE_ID = 'field-reports'
 
@@ -82,7 +85,7 @@ function formatBytes(bytes: number): string {
   selector: 'rangertrak-mapLibre',
   standalone: true,
   imports: [NgTemplateOutlet, RouterLink, MatSlideToggleModule, MatButtonModule, MatCardModule, MatIconModule,
-    ExpandableSectionComponent],
+    ExpandableSectionComponent, MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLibre.component.html',
   styleUrls: ['./mapLibre.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -194,6 +197,20 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // E-124 "no detailed map here" notice and the copy-the-command helper. Set from MapLibre's
   // own 'moveend' (zoneless app - see numAllRows' comment for why these are signals).
+  // 2026-09-30, John: E-152 part 1 - what the printed legend describes: the entries drawn
+  // right now, All / Just-selected already applied (set in refreshMarkers()). And the map's
+  // rotation, so the printed north arrow never claims north is up on a turned map.
+  public legendEntries = signal<RadioLogEntryType[]>([])
+  public bearing = signal(0)
+
+  // The print media query flipping is the one signal every browser gives when the print
+  // layout takes over and when it hands back; MapLibre's ResizeObserver does not reliably
+  // see that change, and a WebGL canvas kept at its screen size would print cropped or
+  // stretched. See the @media print block in mapLibre.component.scss for the sheet's size.
+  private readonly printMedia = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('print') : undefined
+  private readonly onPrintMediaChange = () => { this.map?.resize() }
+
   private viewCenter = signal<{ lng: number, lat: number } | null>(null)
   private viewBounds = signal<[west: number, south: number, east: number, north: number] | null>(null)
   private noDetailDismissed = signal(false)
@@ -323,6 +340,13 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     // could agree with itself while the real source stayed stale.
     ;(this.mapContainer.nativeElement as unknown as { __rtMap?: MaplibreMap }).__rtMap = this.map
 
+    // 2026-09-30, John: E-152 part 1 - a scale bar for the printed sheet (Leaflet's engine
+    // already has one). Metric and imperial, as Leaflet's does. Hidden on screen (see
+    // mapLibre.component.scss) so the on-screen map is exactly as it was; shown in print.
+    this.map.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
+    this.map.addControl(new ScaleControl({ unit: 'imperial' }), 'bottom-left')
+    this.printMedia?.addEventListener('change', this.onPrintMediaChange)
+
     // Without a listener MapLibre swallows source/tile failures into a console warning at
     // most, so a basemap that never loads looks identical to one that loaded empty. Log
     // them: an offline map silently showing blank is the single most confusing failure
@@ -437,6 +461,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     const c = this.map.getCenter()
     const b = this.map.getBounds()
     this.viewCenter.set({ lng: c.lng, lat: c.lat })
+    this.bearing.set(this.map.getBearing())
     this.viewBounds.set([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()])
   }
 
@@ -789,6 +814,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private refreshMarkers(): void {
+    this.legendEntries.set(this.displayedEntries())
     const source = this.map?.getSource<GeoJSONSource>(REPORTS_SOURCE_ID)
     if (!source) {
       return
@@ -1047,10 +1073,9 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
    * its own lower zoom in that same run, which a genuine blank-canvas bug would not explain.
    */
   onBtnPrintMap(): void {
-    document.body.classList.add('rt-print-map')
-    window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-map'), { once: true })
-    window.print()
-    document.body.classList.remove('rt-print-map')
+    // 2026-09-30, John: E-152 - the body class, and now a landscape page, live in the shared
+    // helper so both engines print the same sheet.
+    printMapSheet()
   }
 
   ngOnDestroy(): void {
@@ -1059,6 +1084,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     this.locationsSubscription?.unsubscribe()
     this.locationMarkers.forEach(m => m.remove())
     this.retryDebounceTimersByMap.forEach(t => clearTimeout(t))
+    this.printMedia?.removeEventListener('change', this.onPrintMediaChange)
     clearTimeout(this.commandCopiedTimer)
     this.overviewMap?.remove()
     this.map?.remove()

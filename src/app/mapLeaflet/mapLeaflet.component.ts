@@ -42,6 +42,9 @@ import {
   MissionLocationType, RangerService, MissionService
 } from '../shared/services'
 import { LocationDialogComponent } from '../map/location-dialog/location-dialog.component'
+import { MapPrintFurnitureComponent } from '../map/map-print/map-print-furniture.component'
+import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.component'
+import { printMapSheet } from '../map/map-print/map-print-sheet'
 
 
 // https://www.digitalocean.com/community/tutorials/angular-angular-and-leaflet
@@ -115,7 +118,8 @@ function formatBytes(bytes: number): string {
 @Component({
   selector: 'rangertrak-mapLeaflet',
   standalone: true,
-  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatIconModule],
+  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatIconModule,
+    MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [
     './mapLeaflet.component.scss'
@@ -322,6 +326,29 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       this.lMap?.invalidateSize()
       this.overviewMapLeaflet?.invalidateSize()
     })
+    this.printMedia?.addEventListener('change', this.onPrintMediaChange)
+  }
+
+  /**
+   * 2026-09-30, John: E-152 - what the printed legend describes: the entries this map is
+   * drawing right now (the All / Just-selected choice already applied), set by
+   * displayMarkers(). A signal because that method runs from an RxJS callback, outside
+   * Angular's own bindings (zoneless - see AbstractMap's note on the same point).
+   */
+  public legendEntries = signal<RadioLogEntryType[]>([])
+
+  /**
+   * 2026-09-30, John: E-152 - the printed sheet gives the map a different size from the
+   * screen (see the @media print block in mapLeaflet.component.scss), and Leaflet only
+   * re-measures its container on a window resize, which printing does not reliably fire.
+   * The print media query flipping is the one signal every browser gives when the print
+   * layout takes over and again when it hands back, so re-measure on both. invalidateSize()
+   * keeps the map centred where it was.
+   */
+  private readonly printMedia = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('print') : undefined
+  private readonly onPrintMediaChange = () => {
+    this.lMap?.invalidateSize()
   }
 
   onInstallBtn() {
@@ -1062,6 +1089,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.clearMarkers()
 
     this.log.verbose(`displayMarkers: ${this.displayedRadioLogEntries.length} of 'em`, this.id)
+    this.legendEntries.set([...this.displayedRadioLogEntries])
     this.displayedRadioLogEntries.forEach(i => {
       if (i.location.lat && i.location.lng) {  // TODO: Do this in the FieldReports Service - or also the GMap; thewse only happened when location was broken???
         let title = `${i.callsign} at ${formatReportTime(i.date)} with ${i.status}`
@@ -1197,10 +1225,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * does).
    */
   onBtnPrintMap(): void {
-    document.body.classList.add('rt-print-map')
-    window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-map'), { once: true })
-    window.print()
-    document.body.classList.remove('rt-print-map')
+    // 2026-09-30, John: E-152 - the body class, and now a landscape page, live in the shared
+    // helper so both engines print the same sheet.
+    printMapSheet()
   }
 
   /**
@@ -1649,6 +1676,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     super.ngOnDestroy()
     this.locationsSubscription?.unsubscribe()
     clearTimeout(this.afterViewInitTimer)
+    this.printMedia?.removeEventListener('change', this.onPrintMediaChange)
     if (this.refreshSavedAreaInfo) {
       for (const layer of this.offlineTileLayers) {
         layer.off('saveend', this.refreshSavedAreaInfo)

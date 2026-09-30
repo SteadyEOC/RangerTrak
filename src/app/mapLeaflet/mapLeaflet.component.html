@@ -1,6 +1,9 @@
 <div class="mapLeaflet-container">
   <div class="mapLeaflet-frame">
     <div #mapContainer id="mapLeaflet-main" (click)="onMouseClick($event)"></div>
+    <!-- 2026-09-30, John: E-152 - north arrow and coordinate note, print-only (hidden on
+         screen by the component itself), drawn over the corner of the map. -->
+    <rangertrak-map-print-furniture></rangertrak-map-print-furniture>
   </div>
   <!-- Raised live 2026-08-30: "the mini-map should ideally be immediately underneath the
        main map if spacing allows" - was a later sibling of the WHOLE .mapLeaflet-container
@@ -9,7 +12,7 @@
        mapLeaflet.component.scss) - the lat/lng status and offline buttons below now wrap to
        its left instead of it landing further down the page. -->
   <div #overviewContainer id="mapLeaflet-overview"></div>
-  <div>
+  <div class="map-print-hide">
     Latitude: <span class="strong">{{mouseLatLng().lat.toFixed(5)}}</span> Longitude:
     <span class="strong">{{mouseLatLng().lng.toFixed(5)}}</span> Zoom:
     <span class="strong">{{zoom()}}</span>
@@ -18,8 +21,14 @@
   </div>
 
 </div>
+<!-- 2026-09-30, John: E-152 - the printed legend, derived from what the map is drawing (see
+     MapPrintLegendComponent). Print-only. -->
+<rangertrak-map-print-legend [entries]="legendEntries()" engine="leaflet"></rangertrak-map-print-legend>
 <br />
 
+<!-- 2026-09-30, John: E-152 - .map-print-hide (styles.scss) keeps this interactive filter
+     off the printed sheet. The trailing <br /> moved inside so the screen layout is unchanged. -->
+<div class="map-print-hide">
 Radio log entries to show: All ({{numAllRows()}})
 <!-- data-testid, not a class - same reason mapEngineSwitch/zoomToExtent above carry one
      (tools/e2e.js#76 needs a stable hook, and this repo has already been burned by e2e
@@ -29,6 +38,7 @@ Radio log entries to show: All ({{numAllRows()}})
 </mat-slide-toggle>
 
 <br />
+</div>
 <!-- 2026-09-28, John: AAR note - "Zoom to extent" and the save-tiles control used to sit
      in two different places on the page (this one here, the offline control down inside
      .mapLeaflet-container beside the overview map) - grouped into one place as controls

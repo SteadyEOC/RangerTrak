@@ -35,6 +35,12 @@
   width: 100%;
 }
 
+// 2026-09-30, John: E-152 part 1 - MapLibre's scale bar is added for the printed sheet only;
+// on screen this engine has never had one and the map must look as it did.
+:host ::ng-deep .maplibregl-ctrl-scale {
+  display: none;
+}
+
 #pmtiles-overview {
   position: relative;
   float: right;
@@ -124,5 +130,49 @@ mat-slide-toggle {
 @media print {
   .rt-action-bar-group {
     display: none;
+  }
+
+  // 2026-09-30, John: E-152 part 1 - the map fills the landscape sheet (same fixed height as
+  // Leaflet's engine, see mapLeaflet.component.scss for why), and its frame is the
+  // positioning box for the north arrow.
+  :host {
+    margin: 0;
+  }
+
+  .map-frame {
+    position    : relative;
+    height      : 120mm;
+    break-inside: avoid;
+  }
+
+  #pmtiles-map {
+    height: 100%;
+  }
+
+  #pmtiles-overview {
+    display: none;
+  }
+
+  // The scale bar exists for print. Fixed dark ink on white, whatever scheme was on screen.
+  :host ::ng-deep .maplibregl-ctrl-scale {
+    display   : block;
+    background: rgba(255, 255, 255, .9);
+    color     : #000;
+    border-color: #000;
+  }
+
+  // The credit must print, and MapLibre's compact form collapses it behind an (i) button,
+  // which shows nothing on paper. Open it out and drop the button.
+  :host ::ng-deep .maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-inner {
+    display: block !important;
+    color  : #000;
+  }
+
+  :host ::ng-deep .maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button {
+    display: none;
+  }
+
+  :host ::ng-deep .maplibregl-ctrl-attrib.maplibregl-compact {
+    background: rgba(255, 255, 255, .9);
   }
 }

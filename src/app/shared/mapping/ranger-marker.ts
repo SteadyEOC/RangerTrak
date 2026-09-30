@@ -43,6 +43,18 @@ export function rangerColorFor(key: string): string {
   return `hsl(${hash % 360}, 65%, 42%)`
 }
 
+/**
+ * 2026-09-30, John: E-152 - the inner shape markup (no wrapping <svg>) a given ranger key
+ * draws, or `UNASSIGNED_MARKER` for a blank key. Pulled out of `rangerIconFor()`
+ * (ranger-icon.ts) so the printed map's legend asks the very same function the marker asks,
+ * rather than repeating the hash-to-shape arithmetic where it could drift out of step.
+ */
+export function rangerShapeMarkup(key: string): string {
+  return key?.trim()
+    ? MARKER_SHAPES[Math.floor(hashString(key) / 360) % MARKER_SHAPES.length](rangerColorFor(key))
+    : UNASSIGNED_MARKER
+}
+
 // Fixed appearance, deliberately NOT drawn from the hash-based shape/color system above -
 // a report with no callsign at all isn't "a ranger who happens to hash to this look," it's a
 // data gap, and needs to read as visually different from every possible real marker, not

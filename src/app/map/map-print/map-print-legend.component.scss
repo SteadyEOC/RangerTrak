@@ -1,0 +1,130 @@
+// 2026-09-30, John: E-152 - print-only, like .map-print-header in map-page.component.scss.
+// Fixed print colours (ink on white) rather than --rt-* text tokens, which change with
+// light/dark; the swatches that must match the map (status glow, overdue shades) use the
+// map's own values, and the map page forces light colours in print so those resolve to the
+// same shade the map drew.
+:host {
+  display: none;
+}
+
+@media print {
+  :host {
+    display    : block;
+    margin-top : 3mm;
+    color      : #000;
+    font-size  : 9pt;
+    line-height: 1.25;
+  }
+
+  // The map above is a fixed height; a long legend simply continues onto the next page.
+  .legend h2 {
+    margin       : 0 0 1.5mm;
+    font-size    : 11pt;
+    border-bottom: 1px solid #000;
+  }
+
+  .legend h3 {
+    margin   : 0 0 1mm;
+    font-size: 9.5pt;
+  }
+
+  .legend__cols {
+    column-width: 55mm;
+    column-gap  : 6mm;
+  }
+
+  .legend__group {
+    break-inside: avoid-column;
+    margin-bottom: 3mm;
+  }
+
+  .legend__row {
+    display      : flex;
+    align-items  : center;
+    gap          : 2mm;
+    margin-bottom: 0.8mm;
+    break-inside : avoid;
+  }
+
+  .legend__note {
+    color     : #333;
+    font-size : 8pt;
+    font-style: italic;
+  }
+
+  .legend__icon {
+    flex           : none;
+    display        : inline-flex;
+    width          : 24px;
+    height         : 26px;
+    justify-content: center;
+    align-items    : center;
+  }
+
+  // Backgrounds must print (browsers drop them by default).
+  .legend__status,
+  .legend__cluster,
+  .legend__trail,
+  .legend__band {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust        : exact;
+  }
+
+  // Mirrors rangerIconFor()'s 55%-opacity halo (Leaflet) ...
+  .legend__status {
+    flex         : none;
+    width        : 16px;
+    height       : 16px;
+    box-sizing   : border-box;
+    border-radius: 50%;
+    background   : var(--status);
+    opacity      : .55;
+  }
+
+  // ... and MapLibre's stroke ring around the dot.
+  .legend__status--ring {
+    background: transparent;
+    border    : 3px solid var(--status);
+    opacity   : 1;
+  }
+
+  .legend__cluster {
+    flex         : none;
+    width        : 16px;
+    height       : 16px;
+    border-radius: 50%;
+    background   : #2266aa;
+    color        : #fff;
+    font-size    : 8pt;
+    line-height  : 16px;
+    text-align   : center;
+  }
+
+  .legend__trail {
+    flex      : none;
+    width     : 20px;
+    height    : 0;
+    border-top: 3px solid #555;
+  }
+
+  .legend__minutes {
+    flex       : none;
+    min-width  : 20px;
+    font-weight: 700;
+    text-align : center;
+  }
+
+  .legend__bands {
+    flex-wrap: wrap;
+    gap      : 0;
+  }
+
+  .legend__band {
+    padding    : 0 1.5mm;
+    background : var(--band);
+    border     : 1px solid #bbb;
+    font-size  : 7.5pt;
+    font-weight: 700;
+    text-align : center;
+  }
+}

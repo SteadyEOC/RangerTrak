@@ -1,7 +1,6 @@
 import * as L from 'leaflet'
 
-import { hashString } from './hash-color'
-import { MARKER_SHAPES, UNASSIGNED_MARKER, rangerColorFor, evidenceMarkerSvg } from './ranger-marker'
+import { rangerShapeMarkup, evidenceMarkerSvg } from './ranger-marker'
 
 /**
  * The Leaflet half of ranger/evidence marker drawing - `L.DivIcon` wrappers around
@@ -52,9 +51,7 @@ import { MARKER_SHAPES, UNASSIGNED_MARKER, rangerColorFor, evidenceMarkerSvg } f
  * blank status draws exactly as it always has.
  */
 export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
-  const shape = key?.trim()
-    ? MARKER_SHAPES[Math.floor(hashString(key) / 360) % MARKER_SHAPES.length](rangerColorFor(key))
-    : UNASSIGNED_MARKER
+  const shape = rangerShapeMarkup(key)
 
   if (!statusColor) {
     return L.divIcon({

@@ -1,4 +1,4 @@
-<div>Offline-capable map (MapLibre + PMTiles).
+<div class="map-print-hide">Offline-capable map (MapLibre + PMTiles).
   @if (customPmtiles.active(); as custom) {
     Using the custom map file <strong>{{ custom.name }}</strong> loaded on this device.
   } @else {
@@ -11,19 +11,25 @@
 <div class="map-container">
   <div class="map-frame">
     <div #mapContainer id="pmtiles-map"></div>
+    <!-- 2026-09-30, John: E-152 - north arrow and coordinate note, print-only (hidden on
+         screen by the component itself), drawn over the corner of the map. -->
+    <rangertrak-map-print-furniture [bearing]="bearing()"></rangertrak-map-print-furniture>
   </div>
   <!-- Raised live 2026-08-30: same move as LmapComponent's own copy of this comment - "the
        mini-map should ideally be immediately underneath the main map if spacing allows".
        Was a later sibling of the whole .map-container, floating down near the field-report
        toggle; now right after the frame so the lat/lng status wraps to its left instead. -->
   <div #overviewContainer id="pmtiles-overview"></div>
-  <div>
+  <div class="map-print-hide">
     Latitude: <span class="strong">{{mouseLatLng().lat.toFixed(5)}}</span> Longitude:
     <span class="strong">{{mouseLatLng().lng.toFixed(5)}}</span> Zoom:
     <span class="strong">{{zoomDisplay()}}</span>
     <div id="map-status">Click map to copy coordinates</div>
   </div>
 </div>
+<!-- 2026-09-30, John: E-152 - the printed legend, derived from what the map is drawing (see
+     MapPrintLegendComponent). Print-only. -->
+<rangertrak-map-print-legend [entries]="legendEntries()" engine="maplibre"></rangertrak-map-print-legend>
 <!-- Card treatment matches Radio Log's bottom sections (commit e12f718) and Mission's own
      cards - `<mat-card appearance="outlined" class="rt-mission-card">` with a real
      `<mat-card-title>`, grouped side by side at laptop-up via `.rt-action-bar-group`

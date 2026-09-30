@@ -463,6 +463,10 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             ]
           },
           {
+            heading: 'Printing the map',
+            text: 'Print map gives you a finished landscape map sheet: a title block with the mission, the operational period and when it was printed, the map with a north arrow, a scale bar and the map credit, a legend explaining every marker, team, place and shading on it, and a line at the bottom to sign as the person who prepared it. A long legend carries on to a second page.'
+          },
+          {
             heading: 'Route trails',
             text: 'Route trails join one ranger\'s reports oldest to newest, on both engines, so you can see which way a team has been moving — the label at the newest end is a snapshot from when the map was drawn, not a running clock.'
           }

@@ -1,0 +1,84 @@
+<section class="legend" aria-label="Map legend">
+  <h2>Legend</h2>
+
+  <div class="legend__cols">
+    @if (rangers().length) {
+      <div class="legend__group">
+        <h3>Teams and rangers</h3>
+        @for (r of rangers(); track r.key) {
+          <div class="legend__row">
+            <span class="legend__icon" [innerHTML]="r.swatch"></span>
+            <span>{{ r.label }} ({{ r.count }})</span>
+          </div>
+        }
+        <div class="legend__row legend__note">
+          The number in brackets is how many radio log entries are plotted for that ranger.
+        </div>
+      </div>
+    }
+
+    @if (statuses().length) {
+      <div class="legend__group">
+        <h3>Status</h3>
+        @for (s of statuses(); track s.label) {
+          <div class="legend__row">
+            <span class="legend__status" [class.legend__status--ring]="engine() === 'maplibre'"
+              [style.--status]="s.color"></span>
+            <span>{{ s.label }}</span>
+          </div>
+        }
+        <div class="legend__row legend__note">
+          {{ engine() === 'leaflet' ? 'The coloured glow behind a marker' : 'The coloured ring around a dot' }}
+          shows the status of that entry.
+        </div>
+      </div>
+    }
+
+    <div class="legend__group">
+      <h3>On the map</h3>
+      @if (hasEvidence()) {
+        <div class="legend__row">
+          <span class="legend__icon" [innerHTML]="evidenceSwatch"></span>
+          <span>Evidence or clue location</span>
+        </div>
+      }
+      <div class="legend__row">
+        <span class="legend__cluster">3</span>
+        <span>Several entries close together (zoom the map in to separate them)</span>
+      </div>
+      @if (hasTrails()) {
+        <div class="legend__row">
+          <span class="legend__trail"></span>
+          <span>Route a ranger has moved: faint at the oldest entry, strong at the newest</span>
+        </div>
+      }
+      @if (overdue(); as o) {
+        <div class="legend__row">
+          <span class="legend__minutes">42</span>
+          <span>Minutes since that ranger's newest entry, shaded by how overdue they are</span>
+        </div>
+        <div class="legend__row legend__bands">
+          @for (b of o.bands; track b.band) {
+            <span class="legend__band" [style.--band]="'var(--rt-elapsed-' + b.band + ')'">{{ b.fromMin }}+</span>
+          }
+        </div>
+        <div class="legend__row legend__note">
+          No shading until {{ o.interval }} minutes (the check-in time); each shade above starts at that
+          many minutes and red means well overdue.
+        </div>
+      }
+    </div>
+
+    @if (places().length) {
+      <div class="legend__group">
+        <h3>Places</h3>
+        @for (p of places(); track $index) {
+          <div class="legend__row">
+            <span class="legend__icon" [innerHTML]="p.swatch"></span>
+            <span>{{ p.name }}@if (p.type && p.type !== p.name) { ({{ p.type }}) }</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>
