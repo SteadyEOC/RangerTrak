@@ -1,7 +1,7 @@
 import { CommonModule, DOCUMENT, formatDate } from '@angular/common'
 import { Component, Inject, ChangeDetectionStrategy } from '@angular/core'
 
-import { LogService, MissionService, UpdateService } from '../services'
+import { FieldModeService, LogService, MissionService, UpdateService } from '../services'
 import { InstallUpdateComponent } from '../install-update/install-update.component'
 
 /**
@@ -50,8 +50,32 @@ export class FooterComponent {
       : 'This build has not yet checked for a newer version on this device'
   }
 
+  /** E-161: read-only view of two existing facts, so an operator can tell what this device is. */
+  get isFieldPhone(): boolean {
+    return this.fieldMode.enabled()
+  }
+
+  get publishingToBoard(): boolean {
+    return !!this.missionService.settings?.commandPostEnabled
+  }
+
+  get modeLabel(): string {
+    return this.isFieldPhone ? 'Field phone' : 'Full app'
+  }
+
+  get modeTitle(): string {
+    const device = this.isFieldPhone
+      ? 'This device is set up as a ranger\'s field phone (Radio Log Entry and Help only).'
+      : 'This device runs the full app.'
+    const board = this.publishingToBoard
+      ? 'It is sending this log to a RangerTrak Board.'
+      : 'It is not sending this log to a RangerTrak Board.'
+    return `${device} ${board}`
+  }
+
   constructor(
     private log: LogService,
+    private fieldMode: FieldModeService,
     private missionService: MissionService,
     private updateService: UpdateService,
     @Inject(DOCUMENT) private document: Document) {

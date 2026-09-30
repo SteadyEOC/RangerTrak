@@ -10,6 +10,8 @@
          - a normal member of this row that pins to the viewport bottom only once scrolling
          would otherwise carry it away, rather than a small pill floating in a corner over
          page content regardless of where the footer itself is. -->
+    <!-- E-161: which mode this device runs in, and whether it is sending to a Board. -->
+    <span class="rt-footer__mode" [title]="modeTitle">{{modeLabel}}@if (publishingToBoard) { &middot; Board on }</span>
     <rangertrak-install-update [stickyBottom]="true"></rangertrak-install-update>
   </div>
   <!-- E-120: steadyeoc.com has no web page - this whole line used to link there. 2026-09-27
