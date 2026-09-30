@@ -150,7 +150,7 @@ type ScenarioData = {
  * doc comment's own claim that "every status" was represented - see [[verify-the-measurement-
  * itself]]. Every scenario below deliberately includes one now.
  *
- * Every scenario reuses the same twelve `assets/imgs/rangers/` photos (no new image assets
+ * Every scenario reuses the same `assets/imgs/rangers/` photos and badge icons (no new image assets
  * shipped for this) - which photo is "the Incident Commander" vs. "a field ranger" changes
  * per scenario, since the filename is just an internal asset id, never shown as text.
  *
@@ -416,7 +416,7 @@ export class SampleDataService {
 
     const rangers: RangerType[] = [
       { callsign: 'IC-Actual', fullName: 'Hazel "Compass" Winterbourne', phone: '206-555-0100', image: 'ic-actual.jpg', id: 'IC-1', team: 'Command', role: 'Incident Commander', note: 'Overall exercise command' },
-      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '206-555-0101', image: 'CmdPost.jpg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
+      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '206-555-0101', image: 'badge-cmd.svg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
       { callsign: 'OpsChief', fullName: 'Ollie Fogbank', phone: '206-555-0110', image: 'ops-chief.jpg', id: 'OPS-1', team: 'Command', role: 'Operations Section Chief', note: 'Directs field teams' },
       { callsign: 'PIO1', fullName: 'Ivy Loudhailer', phone: '206-555-0113', image: 'pio.jpg', id: 'PIO-1', team: 'Command', role: 'Public Information Officer', note: 'Fields press and family inquiries' },
 
@@ -567,7 +567,7 @@ export class SampleDataService {
 
     const rangers: RangerType[] = [
       { callsign: 'IC-Actual', fullName: 'Dusty "Mesa" Ridgewalker', phone: '928-555-0100', image: 'ic-actual.jpg', id: 'IC-1', team: 'Command', role: 'Incident Commander', note: 'Overall exercise command' },
-      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '928-555-0101', image: 'CmdPost.jpg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
+      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '928-555-0101', image: 'badge-cmd.svg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
       { callsign: 'OpsChief', fullName: 'Rusty Sagebrush', phone: '928-555-0110', image: 'ops-chief.jpg', id: 'OPS-1', team: 'Command', role: 'Operations Section Chief', note: 'Directs field teams' },
       { callsign: 'Liaison1', fullName: 'Sunny Vermillion', phone: '928-555-0113', image: 'pio.jpg', id: 'LNO-1', team: 'Command', role: 'Liaison Officer', note: 'Stays with the hiker\'s parents; point of contact for NPS' },
 
@@ -691,7 +691,7 @@ export class SampleDataService {
 
     const rangers: RangerType[] = [
       { callsign: 'IC-Actual', fullName: 'Fern Marigold', phone: '804-555-0100', image: 'ic-actual.jpg', id: 'IC-1', team: 'Command', role: 'Incident Commander', note: 'Overall exercise command' },
-      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '804-555-0101', image: 'CmdPost.jpg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
+      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '804-555-0101', image: 'badge-cmd.svg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
       { callsign: 'OpsChief', fullName: 'Hank Cobblestone', phone: '804-555-0110', image: 'ops-chief.jpg', id: 'OPS-1', team: 'Command', role: 'Operations Section Chief', note: 'Directs field teams' },
       { callsign: 'PIO1', fullName: 'Dahlia Brightbanner', phone: '804-555-0113', image: 'pio.jpg', id: 'PIO-1', team: 'Command', role: 'Public Information Officer', note: 'Coordinates with fair management and press' },
 
@@ -795,7 +795,7 @@ export class SampleDataService {
 
     const rangers: RangerType[] = [
       { callsign: 'IC-Actual', fullName: 'Dune Basecamp', phone: '555-0100', image: 'ic-actual.jpg', id: 'IC-1', team: 'Command', role: 'Incident Commander', note: 'Overall exercise command' },
-      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '555-0101', image: 'CmdPost.jpg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
+      { callsign: '!CmdPost', fullName: 'Exercise Command Post', phone: '555-0101', image: 'badge-cmd.svg', id: 'CP-1', team: 'Command', role: 'Command', note: 'Net control for the exercise' },
       { callsign: 'OpsChief', fullName: 'Cole Fieldstone', phone: '555-0110', image: 'ops-chief.jpg', id: 'OPS-1', team: 'Command', role: 'Operations Section Chief', note: 'Directs field teams' },
       { callsign: 'PIO1', fullName: 'Ivy Waypoint', phone: '555-0113', image: 'pio.jpg', id: 'PIO-1', team: 'Command', role: 'Public Information Officer', note: 'Fields press and family inquiries' },
 

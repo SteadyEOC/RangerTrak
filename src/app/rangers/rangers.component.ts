@@ -1,6 +1,7 @@
 import { ColDef, GridOptions } from 'ag-grid-community'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 import { isAiGeneratedPhoto, withAiBadge } from '../shared/ai-photo'
+import { bundledRangerImage } from '../shared/ranger-image'
 //import { TooltipModule } from 'ng2-tooltip-directive'
 import { Subscription } from 'rxjs'
 
@@ -202,7 +203,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   photoSrc(ranger: RangerType): string {
     const local = this.photos.photoUrl(ranger)
     if (local) return local
-    if (ranger.image) return `${this.settings.imageDirectory}rangers/${ranger.image}`
+    if (ranger.image) return `${this.settings.imageDirectory}rangers/${bundledRangerImage(ranger.image)}`
     return `${this.settings.imageDirectory}rangers/androgynous.svg`
   }
 

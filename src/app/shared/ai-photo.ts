@@ -3,8 +3,8 @@
  * thispersondoesnotexist.org - commit 016dace). John asked, 2026-09-26, that this be visible
  * wherever they appear, so nobody takes a demo face for a real person.
  *
- * An explicit list, not "every image a sample scenario uses": CmdPost.jpg is also a demo image
- * but is not an AI face (it dates from 2022). The image files themselves are untouched - the
+ * An explicit list, not "every image a sample scenario uses": badge-cmd.svg is also a demo image
+ * but is an illustration, not an AI face. The image files themselves are untouched - the
  * app marks them - and a photo stored on the device by a user never gets the label.
  */
 export const AI_GENERATED_PHOTO_FILES: ReadonlySet<string> = new Set([

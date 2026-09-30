@@ -10,7 +10,7 @@ describe('ai-photo', () => {
   });
 
   it('does not label the non-AI demo image or a user\'s own file', () => {
-    expect(isAiGeneratedPhoto('CmdPost.jpg')).toBeFalse();
+    expect(isAiGeneratedPhoto('badge-cmd.svg')).toBeFalse();
     expect(isAiGeneratedPhoto('my-team.jpg')).toBeFalse();
     expect(isAiGeneratedPhoto(undefined)).toBeFalse();
   });

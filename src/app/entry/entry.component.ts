@@ -21,6 +21,7 @@ import { MatSnackBar } from '@angular/material/snack-bar'
 
 // Specific paths, not the '../shared/' barrel - see the note in location.component.ts.
 import { isAiGeneratedPhoto, withAiBadge } from '../shared/ai-photo'
+import { bundledRangerImage } from '../shared/ranger-image'
 import { Utility } from '../shared/utility'
 import { AlertsComponent } from '../shared/alerts/alerts.component'
 import { PageComponent } from '../shared/page/page.component'
@@ -180,6 +181,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // already the labels wanted (RADIO_LOG_ENTRY_SOURCES), a plain readonly re-export so the
   // template doesn't need to import the const directly.
   readonly sourceOptions = RADIO_LOG_ENTRY_SOURCES
+  /** Legacy roster icon names resolve to the badge set (shared/ranger-image.ts). */
+  readonly bundledRangerImage = bundledRangerImage
 
   private id = 'Entry Form'
   title = 'Radio Log Entry'
@@ -970,7 +973,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       const localPhoto = this.photos.photoUrl(ranger)
       const src = localPhoto
         || (ranger.image
-          ? `${this.settings.imageDirectory}rangers/${ranger.image}`
+          ? `${this.settings.imageDirectory}rangers/${bundledRangerImage(ranger.image)}`
           : `${this.settings.imageDirectory}rangers/androgynous.svg`)
 
       this.callImg.innerHTML = withAiBadge(

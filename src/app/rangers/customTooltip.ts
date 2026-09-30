@@ -1,6 +1,7 @@
 import { ITooltipComp, ITooltipParams } from 'ag-grid-community'
 
 import { AI_PHOTO_LABEL, isAiGeneratedPhoto } from '../shared/ai-photo'
+import { bundledRangerImage } from '../shared/ranger-image'
 import { BUNDLED_IMAGE_DIRECTORY } from '../shared/services/mission-migration'
 
 export class CustomTooltip implements ITooltipComp {
@@ -16,7 +17,7 @@ export class CustomTooltip implements ITooltipComp {
     eGui.innerHTML = `
     <p>
     <img class="licenseImg" style="height:256px; width:256px;" alt= "${params.data.fullName}"
-    src= "${BUNDLED_IMAGE_DIRECTORY}rangers/${params.data.image}"><br>
+    src= "${BUNDLED_IMAGE_DIRECTORY}rangers/${bundledRangerImage(params.data.image)}"><br>
     ${isAiGeneratedPhoto(params.data.image) ? `<span class="rt-ai-caption">${AI_PHOTO_LABEL}</span>` : ''}
                 <span class"name">&nbsp;&nbsp;${data.fullName}</span> - <span >callsign: </span>
                 ${data.callsign}
