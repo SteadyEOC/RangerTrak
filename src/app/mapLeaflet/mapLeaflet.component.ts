@@ -518,6 +518,19 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // scribe still turns it off from the layer switcher same as any other overlay.
     hillshadeOverlay.addTo(this.lMap)
 
+    // 2026-09-30, John: E-162 - Waymarked Trails hiking overlay: signed and mapped hiking
+    // routes drawn over whichever base is showing. Plain L.tileLayer, online only (like the
+    // hillshade), so not saved for offline use. Free, no API key. The attribution follows
+    // the wording waymarkedtrails.org asks for: map data OpenStreetMap contributors
+    // (CC-BY-SA), rendering waymarkedtrails.org. Host is in the CSP img-src (src/_headers).
+    // Off by default. Tiles go to zoom 18.
+    const trailsOverlay = L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+      maxZoom: 18, minZoom: 3, opacity: 0.85,
+      attribution: 'Hiking trails: &copy; <a href="https://hiking.waymarkedtrails.org">waymarkedtrails.org</a>, '
+        + 'data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors '
+        + '(<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+    })
+
     // E-85 phase 1/2: the base-layer switcher (Leaflet's own standard `L.control.layers`
     // widget). USGS/Esri sources surveyed in the roadmap's E-85 row are still not wired in
     // as BASE layers - adding one later is exactly this: another key here, nothing
@@ -572,6 +585,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'Mile grid': this.mileGridLayer,
       'USNG / MGRS grid': this.usngGridLayer,
       'Range rings (from command post)': this.rangeRingsLayer,
+      'Hiking trails (Waymarked Trails)': trailsOverlay,
     }
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
 

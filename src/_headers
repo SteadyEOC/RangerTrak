@@ -113,7 +113,10 @@
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
   Cross-Origin-Embedder-Policy-Report-Only: credentialless
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; connect-src 'self' https: https://nominatim.openstreetmap.org https://maps.googleapis.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  # 2026-09-30, John: E-162 - img-src gained https://tile.waymarkedtrails.org for the Leaflet
+  # map's "Hiking trails" overlay (plain <img> tiles, so img-src only; connect-src already
+  # allows any https:). The satellite layer uses server.arcgisonline.com, already listed.
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com https://tile.waymarkedtrails.org; connect-src 'self' https: https://nominatim.openstreetmap.org https://maps.googleapis.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
 
 # Only the files that MUST NOT be cached are listed below. Everything else keeps
 # Cloudflare's default ETag revalidation, which is already correct for the
