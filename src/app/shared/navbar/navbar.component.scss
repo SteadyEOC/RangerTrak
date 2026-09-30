@@ -266,6 +266,10 @@
   .main-nav {
     flex-wrap: wrap;
     row-gap  : 0;
+    // E-159: trim the bar's own top/bottom padding on a phone. The 44px (--rt-tap-min)
+    // buttons inside it are untouched, so touch targets keep their size.
+    padding-top   : 0.1em;
+    padding-bottom: 0.1em;
   }
 
   .nav-toggle {
