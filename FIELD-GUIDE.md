@@ -239,7 +239,7 @@ Setup is infrequent and considered; entry is repetitive and time-critical — th
 may do both, but they're different modes of working. See the in-app Help page for more on
 the distinction.
 
-**Entering a report.** On the **Entry** page, pick the call sign, set the location, choose a
+**Entering a report.** On the **Entry** page, pick the ranger (the **Ranger ID** field: type their ID, call sign or name), set the location, choose a
 status, add notes, and submit. Reports save to the device immediately.
 
 **Setting a location.** You can enter coordinates directly, or type an address and let

@@ -131,21 +131,23 @@
            with the field chrome. ADR D-39 decided this wasn't earning its place: the
            enter__section left-rule below now supplies the grouping cue instead. -->
       <div class="enter__section">
-        <mat-form-field class="enter__Callsign" floatLabel="always">
+        <!-- 2026-09-30, John: E-151 - label says whose ID this is; the hover text says what to put in it. -->
+        <mat-form-field class="enter__Callsign" floatLabel="always"
+          title="Pick the ranger reporting: type their ID, call sign or name. The ID is the unique number or code this mission gives each ranger on the Rangers page (for example SF-21).">
           <!-- Raised live, 2026-08-27: this picker still matches on callsign/name/id
                together (ADR D-42/D-43, see _filterRangers() in entry.component.ts) and
                still stores the ranger's callsign - only the LABEL follows Mission Setup's
                "Ranger ID field name" (settings.idFieldLabel) now, same setting the Rangers
                grid's id column already reads live, so this field reads using whatever term
                this mission actually calls a ranger's identifier instead of always "Callsign". -->
-          <mat-label>{{ settings?.idFieldLabel || 'Callsign' }}</mat-label>
+          <mat-label>{{ idLabel }}</mat-label>
           <!-- Fixed 2026-08-19: this carried BOTH [formControl]="callsignCtrl" and
                formControlName="callsign". Only one directive can be the value accessor, so
                entryControlsForm.callsign stayed '' and every saved report lost its callsign
                while the autocomplete (which reads callsignCtrl) looked perfectly fine.
                callsignCtrl is now the single source of truth for this field. -->
           <input #callsignInput matInput [formControl]="callsignCtrl" type="text" placeholder="Pick one"
-            [attr.aria-label]="settings?.idFieldLabel || 'Callsign'" [matAutocomplete]="auto"
+            [attr.aria-label]="idLabel" [matAutocomplete]="auto"
             id="enter__Callsign-input" [attr.tabindex]="callsignTabIndex" data-lpignore="true" spellcheck="false" />
           <!-- ADR D-42/D-43: falls back to the name when a ranger has no callsign. Bound to
                `ranger.callsign` alone, a no-callsign ranger's option value was the EMPTY

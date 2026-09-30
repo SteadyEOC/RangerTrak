@@ -190,6 +190,15 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   private missionSubscription!: Subscription
   public settings!: MissionType
 
+  // 2026-09-30, John: E-151 - a new mission's ID field name is the bare word "ID", which told a
+  // scribe nothing about WHOSE id. Show "Ranger ID" for that default (and only that default: a
+  // name the mission set itself, e.g. "REW", is shown as written). The Rangers grid column
+  // does the same, so the two read alike.
+  get idLabel(): string {
+    const l = (this.settings?.idFieldLabel || '').trim()
+    return l === 'ID' ? 'Ranger ID' : (l || 'Callsign')
+  }
+
   // Get time events from <timepicker> component
   //private timeSubscription!: Subscription  //! EVER USED?!
   timePickerLabel = "Enter Report Date, Time"
