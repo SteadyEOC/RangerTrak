@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.4-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.3-alpha...v0.99.4-alpha) (2026-09-30)
+
+
+### Features
+
+* **icons:** replace unlicensed roster clipart with flat-badge SVG icons (E-140) ([d4a0041](https://github.com/SteadyEOC/RangerTrak/commit/d4a00417a47ec4eb3c2f6c48d117a05918e1787d))
+* **map:** flat-badge location icons, add Base, Camp and Safety Hazard (E-140) ([a132c76](https://github.com/SteadyEOC/RangerTrak/commit/a132c764b373de4052167568fb0a507b9b7e777c))
+
 ### [0.99.3-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.2-alpha...v0.99.3-alpha) (2026-09-30)
 
 
