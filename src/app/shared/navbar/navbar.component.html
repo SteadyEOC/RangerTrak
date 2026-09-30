@@ -51,8 +51,11 @@
              identical keyframes with different names, because only a change of animation
              name restarts an already-finished animation (see the 2026-09-29 note below). -->
         <style>
+          /* 2026-09-30, John: E-146 - resting opacity 0.5 -> 0.9; at 0.5 the waves read as
+             washed-out orange. The event pulse still reads as one: it dips to 0.15 first,
+             then swells to 1. */
           .brand-icon .wave {
-            opacity: 0.5;
+            opacity: 0.9;
           }
 
           /* 2026-09-29, John: two passes on every page load and in-app page change
