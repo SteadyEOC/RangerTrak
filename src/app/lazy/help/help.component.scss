@@ -33,11 +33,16 @@
   background-image                        : url("../../../assets/imgs/veronika_andrews-hoary-marmot-6514437.jpg");
   background-size                         : cover;
   background-position                     : 25% center;
+  // 2026-09-30, John: E-148 - the marmot faces right in the source photo, i.e. off the page
+  // from a right-hand band. The whole band is mirrored (scaleX(-1)) so it faces left, into the
+  // text; the mask gradient is written `to left` because the mirror flips it back to a fade on
+  // the visible left edge. Colours and opacity untouched.
   // Fades from fully transparent on the left edge to fully opaque by 45% across the band,
   // so the photo appears to emerge from nothing rather than being clipped by a straight
   // line. Applied on top of (not instead of) the opacity below.
-  mask-image                              : linear-gradient(to right, transparent, black 45%);
-  -webkit-mask-image                      : linear-gradient(to right, transparent, black 45%);
+  mask-image                              : linear-gradient(to left, transparent, black 45%);
+  -webkit-mask-image                      : linear-gradient(to left, transparent, black 45%);
+  transform                               : scaleX(-1);
   // One value for both schemes on purpose: `light-dark()` takes colors, not numbers, and
   // a scrim that needs a per-scheme opacity is a scrim that is too strong in one of them.
   // F29-34 (2026-08-29): maintainer reported it as too dim; raised 0.15 -> 0.30 (an absolute
