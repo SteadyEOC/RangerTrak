@@ -24,28 +24,11 @@
 <!-- 2026-09-30, John: E-152 - the printed legend, derived from what the map is drawing (see
      MapPrintLegendComponent). Print-only. -->
 <rangertrak-map-print-legend [entries]="legendEntries()" engine="leaflet"></rangertrak-map-print-legend>
-<br />
-
-<!-- 2026-09-30, John: E-152 - .map-print-hide (styles.scss) keeps this interactive filter
-     off the printed sheet. The trailing <br /> moved inside so the screen layout is unchanged. -->
-<div class="map-print-hide">
-Radio log entries to show: All ({{numAllRows()}})
-<!-- data-testid, not a class - same reason mapEngineSwitch/zoomToExtent above carry one
-     (tools/e2e.js#76 needs a stable hook, and this repo has already been burned by e2e
-     selectors hanging off styling classes). -->
-<mat-slide-toggle data-testid="allSelectedSwitch" (change)="onSwitchSelectedRadioLog()">
-  Just those ({{numSelectedRows()}}) selected on the Radio Log page
-</mat-slide-toggle>
-
-<br />
-</div>
-<!-- 2026-09-28, John: AAR note - "Zoom to extent" and the save-tiles control used to sit
-     in two different places on the page (this one here, the offline control down inside
-     .mapLeaflet-container beside the overview map) - grouped into one place as controls
-     for THIS view, print map (G) joining them since it's the same kind of thing. `clear:
-     both` (mapLeaflet.component.scss) keeps this group from trying to wrap beside
-     #mapLeaflet-overview's float the way the toggle above still does - a control group
-     reads wrong squeezed into a narrow column next to a thumbnail. -->
+<!-- 2026-09-30, John: tidy the controls under the map (John, desktop screenshot: "a bit
+     unorganized"). Top to bottom now: ONE row of actions, the offline-tile save/remove pair with
+     a short note under it, and a small "Display" group holding the two switches. Nothing here
+     has a clear: both any more, so the rows rise beside the floated mini-map instead of waiting
+     below it (the tall empty gap). data-testids and ids are unchanged. -->
 <div class="map-controls">
   <!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now (reports
        honoring the All/selected switch, evidence markers, Location pins) - not the once-at-init
@@ -77,25 +60,38 @@ Radio log entries to show: All ({{numAllRows()}})
     Print map
   </button>
 
-  <!-- Maintainer, 2026-08-24: the offline-save control (Save this area / Remove saved
-       tiles / the current-view and saved-area info lines) was floating over the map tiles
-       as a Leaflet corner control - moved into normal page flow. initMainMap() re-parents
-       the control's own DOM node in here after building it. Moved again 2026-09-28 (AAR
-       note) from just below the map to sit beside Zoom to Extent/Print map instead - see
-       this block's own opening comment. -->
-  <!-- F29-21 (2026-08-30): id is a fragment-scroll target for the header readiness dot's
-       "Offline map tiles saved" row - see mission-readiness.component.ts's own comment. -->
-  <div #offlineControlsHost id="readiness-offline-tiles" class="offline-controls"></div>
+  <!-- ADR D-49: arms the next plain map click to place a Location there instead of copying
+       coordinates - see placingLocation's own comment (mapLeaflet.component.ts) for why this
+       is one-shot rather than a persistent mode. Moved up into this row 2026-09-30. -->
+  <button matButton="outlined" type="button" class="map-add-location" (click)="onToggleAddLocation()"
+    [attr.aria-pressed]="placingLocation()">
+    <mat-icon>add_location</mat-icon>
+    {{ placingLocation() ? 'Click the map to place it…' : 'Add Location' }}
+  </button>
 </div>
 
-<!-- ADR D-49: arms the next plain map click to place a Location there instead of copying
-     coordinates - see placingLocation's own comment (mapLeaflet.component.ts) for why this
-     is one-shot rather than a persistent mode. -->
-<button matButton="outlined" type="button" class="map-add-location" (click)="onToggleAddLocation()"
-  [attr.aria-pressed]="placingLocation()">
-  <mat-icon>add_location</mat-icon>
-  {{ placingLocation() ? 'Click the map to place it…' : 'Add Location' }}
-</button>
+<!-- Maintainer, 2026-08-24: the offline-save control (Save this area / Remove saved tiles)
+     was floating over the map tiles as a Leaflet corner control - moved into normal page flow.
+     initMainMap() re-parents the control's own DOM node in here after building it.
+     2026-09-30: the two buttons sit side by side and their status text is a short note line
+     under them (wireOfflineAreaInfo() appends it), no longer text inside the buttons. Now its
+     own row rather than part of the action row above. -->
+<!-- F29-21 (2026-08-30): id is a fragment-scroll target for the header readiness dot's
+     "Offline map tiles saved" row - see mission-readiness.component.ts's own comment. -->
+<div #offlineControlsHost id="readiness-offline-tiles" class="offline-controls"></div>
 
-<br />
-<ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
+<!-- 2026-09-30, John: E-152 - .map-print-hide (styles.scss) keeps these interactive switches
+     off the printed sheet. The two switches are one "Display" group now. data-testid, not a
+     class - same reason mapEngineSwitch/zoomToExtent above carry one (tools/e2e.js#76 needs a
+     stable hook, and this repo has already been burned by e2e selectors hanging off styling
+     classes). The engine switch is projected from map-page via engineSwitchTemplate. -->
+<div class="map-display map-print-hide" role="group" aria-label="Display">
+  <div class="map-display__title">Display</div>
+  <div class="map-display__row">
+    Radio log entries to show: All ({{numAllRows()}})
+    <mat-slide-toggle data-testid="allSelectedSwitch" (change)="onSwitchSelectedRadioLog()">
+      Just those ({{numSelectedRows()}}) selected on the Radio Log page
+    </mat-slide-toggle>
+  </div>
+  <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
+</div>

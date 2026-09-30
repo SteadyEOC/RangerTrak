@@ -179,6 +179,12 @@ mat-slide-toggle {
 // wrapper, since this control was never meant to float at all once out of Leaflet's corner
 // system.
 :host ::ng-deep .savetiles.leaflet-bar {
+  // 2026-09-30, John: Save and Remove side by side (they used to be two full rows), wrapping
+  // to two rows on a narrow phone; the status notes below are full-width lines under them.
+  display        : flex;
+  flex-wrap      : wrap;
+  align-items    : center;
+  gap            : 0.5rem;
   float     : none;
   // Root cause of the buttons dropping below #mapLeaflet-overview's float no matter how much
   // room was left beside it (live report, 2026-08-31, 4th attempt at this): this container
@@ -227,7 +233,7 @@ mat-slide-toggle {
     color        : var(--mat-sys-primary, var(--rt-ink));
     border       : 1px solid var(--mat-sys-outline, var(--rt-ink-3));
     border-radius: 8px;
-    margin-bottom: 0.25em;
+    margin-bottom: 0;
   }
 
   a:hover {
@@ -275,9 +281,8 @@ mat-slide-toggle {
   display    : flex;
   flex-wrap  : wrap;
   align-items: flex-start;
-  gap        : 0.75rem;
-  clear      : both;
-  margin     : 0.5em 0 1em;
+  gap        : 0.5rem;
+  margin     : 0.5em 0 0.5em;
 }
 
 // 2026-09-30, John: E-138 - "Zoom to offline tiles" while the saved-area overlay is showing:
@@ -292,6 +297,7 @@ mat-slide-toggle {
 // (a "Print map" button printed onto the page it just printed).
 @media print {
   .map-controls,
+  .offline-controls,
   .map-add-location {
     display: none;
   }
@@ -343,9 +349,33 @@ mat-slide-toggle {
 // a.rmtiles) rather than as a separate full-width row - see that method's own comment for
 // why. Inherits the button's own font/background; just dims the size text a shade and
 // spaces it off the button's label.
+// 2026-09-30, John: now a direct child of the control (a note line UNDER the two buttons),
+// not text inside a button - see wireOfflineAreaInfo(). One short line each, muted.
 :host ::ng-deep .savetiles.leaflet-bar .offline-area-info {
-  margin-left: 0.4em;
+  flex       : 1 1 100%;
+  min-width  : 0;
+  margin     : 0;
+  font-size  : 0.8125rem;
+  line-height: 1.3;
+  white-space: normal;
   color      : var(--rt-ink-2);
+}
+
+// 2026-09-30, John: the "Display" group (radio-log-entries switch + map engine switch).
+.map-display {
+  margin: 0.5rem 0 1rem;
+
+  &__title {
+    font-size     : 0.75rem;
+    font-weight   : 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color         : var(--rt-ink-2);
+  }
+
+  &__row {
+    margin: 0.25rem 0;
+  }
 }
 
 // P1-4 (offline map coverage scoping, 2026-09-14): OSM's tile usage policy forbids bulk

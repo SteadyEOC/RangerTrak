@@ -848,22 +848,24 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     let activeTiles = initialLayer
     let urlTemplate = (activeTiles as any)._url as string
 
+    // 2026-09-30, John: the two status lines are notes UNDER the Save/Remove button pair (direct
+    // children of the control, styled as muted full-width lines), no longer text inside the
+    // buttons - the long reasons made the buttons huge. See the scss for .offline-area-info.
     const savedInfo = this.document.createElement('span')
     savedInfo.className = 'offline-area-info offline-area-info--saved'
-    rmButton.appendChild(savedInfo)
-
     const estimateInfo = this.document.createElement('span')
     estimateInfo.className = 'offline-area-info offline-area-info--estimate'
-    saveButton.appendChild(estimateInfo)
+    container.appendChild(estimateInfo)
+    container.appendChild(savedInfo)
 
     this.refreshSavedAreaInfo = () => {
       getStorageInfo(urlTemplate).then((stored) => {
         if (stored.length === 0) {
-          savedInfo.textContent = '(no tiles saved yet)'
+          savedInfo.textContent = 'Saved on this device: nothing yet.'
           return
         }
         const bytes = stored.reduce((sum, t) => sum + (t.blob?.size ?? 0), 0)
-        savedInfo.textContent = `(${stored.length} tiles, ~${formatBytes(bytes)})`
+        savedInfo.textContent = `Saved on this device: ${stored.length} tiles, about ${formatBytes(bytes)}.`
       }).catch((err) => this.log.error(`refreshSavedAreaInfo(): ${err}`, this.id))
     }
 
@@ -908,13 +910,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       saveButton.classList.toggle('rt-savetiles-disabled', saveBlocked)
       saveButton.setAttribute('aria-disabled', String(saveBlocked))
       if (this.satelliteBaseActive) {
-        estimateInfo.textContent = '(switch to OpenTopoMap to save for offline use - satellite imagery is online only)'
+        estimateInfo.textContent = 'Satellite imagery is online only. Switch to OpenTopoMap to save for offline use.'
         this.saveEstimateText = ''
         return
       }
       if (this.osmBaseActive) {
         estimateInfo.textContent =
-          '(switch to OpenTopoMap to save for offline use - OpenStreetMap\'s servers don\'t allow it)'
+          'To save for offline use, switch to OpenTopoMap (OpenStreetMap does not allow bulk saving).'
         this.saveEstimateText = ''
         return
       }
@@ -945,7 +947,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
           ? stored.reduce((sum, t) => sum + (t.blob?.size ?? 0), 0) / stored.length
           : FALLBACK_TILE_BYTES
         this.saveEstimateText = `~${tileCount} tiles (zoom ${zoomLevels[0]}–${zoomLevels[zoomLevels.length - 1]}), ~${formatBytes(tileCount * avgBytes)}`
-        estimateInfo.textContent = `(${this.saveEstimateText})`
+        estimateInfo.textContent = `This view: ${this.saveEstimateText}.`
       }).catch((err) => this.log.error(`refreshEstimatedAreaInfo(): ${err}`, this.id))
     }
 
