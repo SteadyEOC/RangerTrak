@@ -292,6 +292,33 @@ mat-slide-toggle {
   color           : var(--mat-sys-on-secondary-container, inherit);
 }
 
+// 2026-09-30, John: E-163 - each ranger's newest trail leg slowly flows from the older point
+// toward the latest position. The path is drawn [older, newer], and a decreasing
+// stroke-dashoffset moves a dash pattern toward the path's end, so the offset runs 0 -> -16
+// (one 10+6 dash period). Leaflet's SVG renderer puts className on the <path>.
+:host ::ng-deep path.rt-trail-newest {
+  stroke-dasharray: 10 6;
+  animation       : rt-trail-flow 3.5s linear infinite;
+}
+
+@keyframes rt-trail-flow {
+  to { stroke-dashoffset: -16; }
+}
+
+// No motion for people who ask for none (the dash pattern stays, still), and none on paper.
+@media (prefers-reduced-motion: reduce) {
+  :host ::ng-deep path.rt-trail-newest {
+    animation: none;
+  }
+}
+
+@media print {
+  :host ::ng-deep path.rt-trail-newest {
+    animation       : none;
+    stroke-dasharray: none;
+  }
+}
+
 // G: these are interactive-only, same reasoning map-page.component.scss already applies to
 // its own .map-engine-switch/.fullscreen-toggle - inert or actively confusing on paper
 // (a "Print map" button printed onto the page it just printed).

@@ -1674,12 +1674,20 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
       for (let i = 0; i < segmentCount; i++) { // no segments at all for a lone check-in
         const opacity = segmentCount === 1 ? 0.9 : 0.25 + (0.65 * i / (segmentCount - 1))
+        // 2026-09-30, John: E-163 - trails that show direction. Weight tapers linearly from
+        // 1.5 (oldest segment) to 5 (newest): 1.5 + 3.5 * i / (segmentCount - 1); a lone
+        // segment takes the newest weight. Only each ranger's NEWEST segment carries the
+        // class that animates a slow dash flow (see .rt-trail-newest in the scss). The
+        // polyline is [older, newer], so a decreasing stroke-dashoffset moves the dashes
+        // older -> newer. Default SVG renderer (no preferCanvas anywhere), so CSS applies.
+        const isNewest = i === segmentCount - 1
+        const weight = segmentCount === 1 ? 5 : 1.5 + 3.5 * i / (segmentCount - 1)
         const segment = L.polyline(
           [
             [ordered[i].location.lat, ordered[i].location.lng],
             [ordered[i + 1].location.lat, ordered[i + 1].location.lng]
           ],
-          { color, opacity, weight: 3 }
+          { color, opacity, weight, className: isNewest ? 'rt-trail-newest' : undefined }
         )
         this.myTrailsLayer.addLayer(segment)
       }
