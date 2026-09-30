@@ -80,6 +80,41 @@ filter: brightness(30%);
 // mat-stretch-tabs="false" leaves labels at their natural width, so six of them scroll
 // rather than each being squeezed to a sixth of the viewport - Material pages them on a
 // phone, which is the behavior we want here.
+// 2026-09-30, John: E-147 - the labels read as plain words (Material's underline-only
+// indicator is easy to miss). Now outlined pills, the selected one filled. Still the stock
+// mat-tab-group - same DOM, roles and arrow-key behaviour; only Material's own tab tokens plus
+// a pill shape on each tab. Underline and divider are turned off because the fill replaces
+// them. The header's built-in overflow paging still handles six pills on a 390px phone, so
+// nothing here can widen the page.
+.help-tabs {
+  --mat-tab-active-indicator-height          : 0;
+  --mat-tab-divider-height                   : 0;
+  --mat-tab-inactive-label-text-color        : var(--rt-ink);
+  --mat-tab-inactive-hover-label-text-color  : var(--rt-ink);
+  --mat-tab-inactive-focus-label-text-color  : var(--rt-ink);
+  --mat-tab-active-label-text-color          : var(--rt-accent-ink);
+  --mat-tab-active-hover-label-text-color    : var(--rt-accent-ink);
+  --mat-tab-active-focus-label-text-color    : var(--rt-accent-ink);
+}
+
+.help-tabs .mat-mdc-tab-labels {
+  gap    : 0.5rem;
+  padding: 0.25rem 0.125rem;
+}
+
+.help-tabs .mat-mdc-tab.mdc-tab {
+  height       : 36px;
+  min-width    : 0;
+  padding-inline: 1rem;
+  border       : 1px solid var(--rt-line-strong);
+  border-radius: 999px;
+}
+
+.help-tabs .mat-mdc-tab.mdc-tab--active {
+  background-color: var(--rt-accent);
+  border-color    : var(--rt-accent);
+}
+
 .help-tabs .mat-mdc-tab-body-content {
   padding-block: 1rem;
   // Material sets overflow:hidden on the body content; prose that ends up wider than the
