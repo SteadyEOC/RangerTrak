@@ -131,6 +131,11 @@ filter: brightness(30%);
 .imgCredit {
   text-align: right;
   font-size : x-small;
+
+  // E-156: the photo band is hidden on a phone (see .help-backdrop::before), so its credit goes too.
+  @include bp.phone {
+    display: none;
+  }
 }
 
 // 2026-08-22: the open-location-code link text is a long unbroken URL (97 chars) that
