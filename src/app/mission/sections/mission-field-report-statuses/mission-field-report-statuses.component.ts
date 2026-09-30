@@ -47,13 +47,12 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
   @Input({ required: true }) rowData: RadioLogStatusType[] = []
 
   /**
-   * Asks the Mission page to save and reload (its onFormSubmit()), which is what makes an
-   * added row persist and show up. Until 2026-09-26 this happened by accident: the button had
-   * no `type`, so inside Mission's form every click ALSO submitted it. The card rework gave
-   * the button `type="button"`, which would have silently lost every added row - so the save
-   * is explicit now, with the same result users already saw.
+   * 2026-09-30, John: E-145 - tells the Mission page that a row was added or a cell edit was
+   * committed, so it autosaves. Grid edits change `rowData` in place, which the page's form
+   * model cannot see by itself, hence the explicit signal. (Before E-145 only adding a row
+   * saved - and reloaded the page; a cell edit waited for the Save button.)
    */
-  @Output() rowAdded = new EventEmitter<void>()
+  @Output() rowsChanged = new EventEmitter<void>()
 
   private gridApi: any
   private gridColumnApi: any
@@ -170,9 +169,18 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
     this.refreshStatusGrid()
   }
 
+  onCellValueChanged(): void {
+    // A renamed status or new colour changes how the row (and its colour cell) should look.
+    this.refreshStatusGrid()
+    this.rowsChanged.emit()
+  }
+
   onBtnAddFRStatus() {
     this.rowData.push({ status: 'New Status', color: '', icon: '' })
-    this.rowAdded.emit()
+    // E-145: the page no longer reloads after a save, so the grid has to be told about the
+    // new row (it was pushed in place onto the same array, which ag-Grid cannot see).
+    this.gridApi?.setGridOption('rowData', this.rowData)
+    this.rowsChanged.emit()
   }
 
   refreshStatusGrid() {

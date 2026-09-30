@@ -38,7 +38,33 @@
   </div>
   }
 
-  <form (ngSubmit)="onFormSubmit()">
+  <!-- 2026-09-30, John: E-145 - autosave. There is no Save button any more: a change is saved
+       about a second after the last keystroke, or at once when the person leaves the field
+       (focusout bubbles, so one listener here covers every field in every section). Pressing
+       Enter in a field does the same. -->
+  <form (ngSubmit)="onFocusOut()" (focusout)="onFocusOut()">
+
+    <p class="mission__save-status" role="status" aria-live="polite" data-testid="mission-save-status"
+      [class.mission__save-status--invalid]="saveState() === 'invalid'">
+      @switch (saveState()) {
+      @case ('pending') { Saving... }
+      @case ('saved') { <mat-icon aria-hidden="true">check</mat-icon> Saved }
+      @case ('invalid') { Not saved yet - fix the highlighted field and it will save. }
+      @default { Changes save automatically. }
+      }
+    </p>
+
+    <!-- E-145: the one setting the app only reads when it starts. Everything else on this page
+         takes effect as soon as it is saved, so this is shown for this field alone. -->
+    @if (keyNeedsReload()) {
+    <div class="rt-alert" role="note" data-testid="mission-reload-notice">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <div class="rt-alert__body">
+        <p>The address-search key is used when RangerTrak starts. Reload to start using the new one.</p>
+        <button matButton type="button" (click)="onBtnReloadNow()">Reload now</button>
+      </div>
+    </div>
+    }
 
     <!-- ══ 4. THE PRIMARY OBJECT - the settings themselves ══
          Two columns where the window allows, one where it doesn't. Before this the page was
@@ -60,10 +86,10 @@
         (timeEventEnd)="onNewTimeEventEnd($event)">
       </rangertrak-mission-details-section>
 
-      <rangertrak-mission-field-report-statuses [rowData]="rowData()" (rowAdded)="onFormSubmit()">
+      <rangertrak-mission-field-report-statuses [rowData]="rowData()" (rowsChanged)="onRowsChanged()">
       </rangertrak-mission-field-report-statuses>
 
-      <rangertrak-mission-location-types [rowData]="locationTypesRowData()" (rowAdded)="onFormSubmit()">
+      <rangertrak-mission-location-types [rowData]="locationTypesRowData()" (rowsChanged)="onRowsChanged()">
       </rangertrak-mission-location-types>
 
       <rangertrak-mission-locations-list></rangertrak-mission-locations-list>
@@ -80,37 +106,9 @@
       <rangertrak-mission-command-post [form]="settingsForm"></rangertrak-mission-command-post>
     </div>
 
-    <!-- ══ 5. ACTION BAR ══ `.rt-action-bar` is global now (styles/_patterns.scss) - this
-         page's own `.mission__action-bar` was the prototype for it. Sticky against the
-         <form>, which still has the danger zone below it, so it settles rather than
-         hovering once the destructive controls come into view.
-
-         2026-09-28, John: the "Mission data lives in this browser only, and is never
-         uploaded" status line that used to sit in this bar moved into Data safety's own
-         subtitle below (mission-advanced-options.component.html) - that card already said
-         almost the same thing, and a notice about data storage reads more naturally
-         attached to the card that explains data protection than floating beside Save/
-         Cancel. `.mission__action-bar--buttons-only` keeps the buttons right-aligned now
-         that they are this bar's only child (the shared `.rt-action-bar`'s
-         `justify-content: space-between` has nothing left to space them against). -->
-    <div class="rt-action-bar mission__action-bar--buttons-only">
-      <div class="rt-action-bar__buttons">
-        <!-- F29-23 (2026-08-30): only shown once there's something TO discard - Cancel doing
-             nothing when the form is already clean would just be a confusing extra button. -->
-        @if (settingsForm().dirty()) {
-        <button matButton type="button" (click)="onCancel()">Cancel</button>
-        }
-        <!-- F29-23: the dirty class is the visual half of "warn before losing unsaved work" -
-             the CanDeactivate guard/beforeunload listener (mission.component.ts) are the
-             half that actually stops a scribe from leaving by accident; this is what tells
-             them there's something to lose in the first place, before they try. -->
-        <button matButton="filled" type="submit" data-testid="mission-save"
-          class="mission__save-button" [class.mission__save-button--dirty]="settingsForm().dirty()"
-          [disabled]="settingsForm().invalid()">
-          {{ settingsForm().dirty() ? 'Save settings *' : 'Save settings' }}
-        </button>
-      </div>
-    </div>
+    <!-- ══ 5. (Action bar removed 2026-09-30, John: E-145 - settings autosave, so the Save
+         settings and Cancel buttons are gone. The 'Mission data lives in this browser only'
+         note had already moved into Data safety's subtitle on 2026-09-28.) ══ -->
 
     <!-- ══ 6. DANGER ZONE ══ (plus the non-destructive Data safety card, and now the Advanced/
          Debug card - see mission-advanced-options.component.html's own doc comment). -->

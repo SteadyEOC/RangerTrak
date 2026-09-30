@@ -2399,7 +2399,7 @@ async function checkEntryPhoto() {
 }
 
 async function checkMissionFormSave() {
-  console.log('\nMission form (Sprint D, Signal Forms): edit fields in the UI, Save, reload, values persisted')
+  console.log('\nMission form (Sprint D, Signal Forms): edit fields in the UI, autosave (E-145), values persisted')
   await goto('/mission')
   // 2026-08-26 (Material-M3 pass): all three selectors below changed, and TWO of them were
   // already broken before this suite ever noticed.
@@ -2426,80 +2426,90 @@ async function checkMissionFormSave() {
     if (mission) setNative(mission, 'E2E-SIGNAL-FORMS');
     const wasChecked = debugBox ? debugBox.checked : null;
     if (debugBox) debugBox.click();
-    const saveBtn = document.querySelector('[data-testid="mission-save"]');
     return {
       hasMission: !!mission,
       hasDebugMode: !!debugBox,
-      hasSaveBtn: !!saveBtn,
-      saveDisabled: saveBtn ? saveBtn.disabled : null,
+      hasSaveBtn: !!document.querySelector('[data-testid="mission-save"]'),
       debugModeSet: debugBox ? debugBox.checked : null,
       debugModeFlipped: debugBox ? (debugBox.checked !== wasChecked) : false
     };
   })()`)
   check('mission input found', before.hasMission, true)
   check('debugMode checkbox found', before.hasDebugMode, true)
-  check('Save button found and not disabled by required-field validation', before.hasSaveBtn && !before.saveDisabled, true)
+  // E-145 (2026-09-30): the Save settings button is gone - the page autosaves.
+  check('there is no Save settings button any more', before.hasSaveBtn, false)
   // Guards the assertion below from passing vacuously: if the click never actually moved
   // the checkbox, "the saved value matches what we set" is trivially true and proves nothing.
   check('the debugMode checkbox actually toggled', before.debugModeFlipped, true)
 
-  await evaluate(`document.querySelector('[data-testid="mission-save"]').click()`)
-  await sleep(3000) // onFormSubmit() writes localStorage synchronously, then window.location.reload()
+  // E-145: no click, no reload. The autosave fires ~800 ms after the last change.
+  await sleep(1800)
+  check('the page did not reload itself when saving',
+    await evaluate(`document.querySelector('input[placeholder="Mission #"]')?.value`), 'E2E-SIGNAL-FORMS')
+  check('the saved indicator says Saved',
+    await evaluate(`document.querySelector('[data-testid="mission-save-status"]')?.textContent.includes('Saved')`), true)
 
   const after = await evaluate(`(() => {
     const s = JSON.parse(localStorage.getItem('appSettings') || '{}');
     return { mission: s.mission, debugMode: s.debugMode };
   })()`)
-  check('edited mission value survived Save + reload', after.mission, 'E2E-SIGNAL-FORMS')
-  check('edited debugMode value survived Save + reload', after.debugMode, before.debugModeSet)
+  check('edited mission value was autosaved', after.mission, 'E2E-SIGNAL-FORMS')
+  check('edited debugMode value was autosaved', after.debugMode, before.debugModeSet)
+  // ...and still there after a reload.
+  await goto('/mission')
+  check('autosaved mission value survives a reload',
+    await evaluate(`document.querySelector('input[placeholder="Mission #"]')?.value`), 'E2E-SIGNAL-FORMS')
 }
 
 /**
- * F29-23 (2026-08-30): the shared unsavedChangesGuard (src/app/shared/guards/
- * unsaved-changes.guard.ts), wired onto the /mission route. Confirms it actually prompts -
- * dialogs[] already logs every dialog this harness auto-accepts (see the CDP client at the
- * top of this file), so a confirm() firing shows up there even though nothing here has to
- * handle it manually. Also confirms the Cancel button (only rendered while dirty) both
- * clears dirty AND lets navigation through with no prompt at all - the two halves of "Cancel
- * discarding edits" and "the guard only fires when there's something to discard."
+ * F29-23 (2026-08-30), reworked for autosave (E-145, 2026-09-30): the shared
+ * unsavedChangesGuard (src/app/shared/guards/unsaved-changes.guard.ts) is wired onto the
+ * /mission route. dialogs[] already logs every dialog this harness auto-accepts (see the CDP
+ * client at the top of this file). With autosave, an edit still waiting out its delay is
+ * saved silently on the way out (no dialog, value persisted); the guard only prompts for an
+ * edit the form refuses as invalid (a latitude out of range).
  */
 async function checkMissionUnsavedChangesGuard() {
-  console.log('\nMission: the unsaved-changes guard prompts before leaving a dirty form (F29-23)')
+  console.log('\nMission: leaving flushes a pending autosave silently; only an invalid edit prompts (F29-23 / E-145)')
   await goto('/mission')
 
-  const cancelBeforeEdit = await evaluate(`!!document.querySelector('[data-testid="mission-save"].mission__save-button--dirty')`)
-  check('Save is not marked dirty before any edit', cancelBeforeEdit, false)
-
-  await evaluate(`(() => {
+  const setMissionName = value => evaluate(`(() => {
     const mission = document.querySelector('input[placeholder="Mission #"]');
-    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(mission, 'E2E-GUARD-TEST');
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(mission, ${JSON.stringify(value)});
     mission.dispatchEvent(new Event('input', { bubbles: true }));
   })()`)
-  await sleep(200)
-  check('Save is marked dirty after an edit', await evaluate(`document.querySelector('[data-testid="mission-save"]').classList.contains('mission__save-button--dirty')`), true)
-  check('Cancel appears once the form is dirty', await evaluate(`!![...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Cancel')`), true)
+  const storedMission = () => evaluate(`JSON.parse(localStorage.getItem('appSettings') || '{}').mission`)
 
   // navigateInApp (a real routerLink click), not goto() - CanDeactivate only ever runs for
   // in-app Router navigation. goto()'s Page.navigate is a hard reload that bypasses the
-  // Router entirely, same gap navigateInApp's own doc comment already names ("Users don't do
-  // that - they click the nav... production bugs reproduce ONLY this way").
+  // Router entirely, same gap navigateInApp's own doc comment already names.
+  await setMissionName('E2E-GUARD-PENDING')
+  await sleep(100) // well inside the 800 ms delay: the edit is still pending
   const dialogsBefore = dialogs.length
   await navigateInApp('Rangers')
-  check('leaving a dirty Mission form triggers a confirm dialog', dialogs.length > dialogsBefore, true)
-  check('...and (auto-accepted) navigation actually proceeded', await evaluate(`location.pathname`), '/rangers')
+  check('leaving with an edit still pending triggers no dialog', dialogs.length, dialogsBefore)
+  check('...navigation proceeded', await evaluate(`location.pathname`), '/rangers')
+  check('...and the pending edit was saved on the way out', await storedMission(), 'E2E-GUARD-PENDING')
 
-  // Cancel: dirty -> clean, and the guard lets a clean form go with no prompt.
+  // An invalid edit is refused, so it is the one thing the guard still protects.
   await goto('/mission')
   await evaluate(`(() => {
-    const mission = document.querySelector('input[placeholder="Mission #"]');
-    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(mission, 'E2E-GUARD-TEST-2');
-    mission.dispatchEvent(new Event('input', { bubbles: true }));
+    const byLabel = text => [...document.querySelectorAll('mat-form-field')]
+      .find(f => f.querySelector('mat-label')?.textContent.trim() === text)?.querySelector('input')
+    const lat = byLabel('Default latitude');
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(lat, '999');
+    lat.dispatchEvent(new Event('input', { bubbles: true }));
   })()`)
-  await sleep(200)
-  await evaluate(`[...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Cancel')?.click()`)
-  await sleep(200)
-  check('Cancel clears the dirty state', await evaluate(`document.querySelector('[data-testid="mission-save"]').classList.contains('mission__save-button--dirty')`), false)
+  await sleep(1500)
+  check('an invalid value is not saved', await evaluate(`JSON.parse(localStorage.getItem('appSettings')).defLat < 90`), true)
+  check('the indicator says it is not saved',
+    await evaluate(`document.querySelector('[data-testid="mission-save-status"]')?.textContent.includes('Not saved')`), true)
+  const dialogsBeforeInvalid = dialogs.length
+  await navigateInApp('Rangers')
+  check('leaving with an invalid, unsaved edit triggers a confirm dialog', dialogs.length > dialogsBeforeInvalid, true)
 
+  // A clean, saved form lets go with no prompt.
+  await goto('/mission')
   const dialogsBeforeClean = dialogs.length
   await navigateInApp('Rangers')
   check('leaving a CLEAN Mission form triggers no dialog', dialogs.length, dialogsBeforeClean)
@@ -2507,9 +2517,9 @@ async function checkMissionUnsavedChangesGuard() {
 
 /**
  * 2026-09-26 card rework: Mission's two "Add new row" buttons only ever persisted a row
- * because, lacking a `type`, each click also submitted Mission's Save form. The cards gave
- * them `type="button"` and an explicit rowAdded -> onFormSubmit() save instead; this proves
- * a row added from each grid survives the reload. Restores the saved settings afterwards so
+ * because, lacking a `type`, each click also submitted Mission's Save form. Since E-145
+ * (2026-09-30) each emits rowsChanged and the page autosaves it, with no reload; this proves
+ * a row added from each grid is saved, and is still there after a reload. Restores the saved settings afterwards so
  * later checks (status colour contrast among them) see the list they expect.
  */
 async function checkMissionAddRowsPersist() {
@@ -2528,9 +2538,10 @@ async function checkMissionAddRowsPersist() {
   ]) {
     await goto('/mission')
     await evaluate(`document.querySelector('button[title="${title}"]')?.click()`)
-    await sleep(3000) // the save reloads the page
-    const after = await counts()
-    check(`an added ${label} row is still there after the save reload`, after[key], before[key] + 1)
+    await sleep(1800) // the autosave delay is 800 ms; no reload happens
+    check(`an added ${label} row is autosaved`, (await counts())[key], before[key] + 1)
+    await goto('/mission')
+    check(`an added ${label} row is still there after a reload`, (await counts())[key], before[key] + 1)
   }
 
   await evaluate(`localStorage.setItem('appSettings', ${JSON.stringify(saved)})`)
@@ -2555,11 +2566,10 @@ async function checkEntryUsesNewMissionDefault() {
     const lat = byLabel('Default latitude'), lng = byLabel('Default longitude')
     if (!lat || !lng) return false
     set(lat, 36.1234); set(lng, -112.4321)
-    document.querySelector('[data-testid="mission-save"]').click()
     return true
   })()`)
   check('Mission default latitude/longitude fields found', edited, true)
-  await sleep(3000) // Save reloads the page
+  await sleep(1800) // autosave (E-145): ~800 ms after the last change, no reload
 
   await goto('/')
   await sleep(1500)

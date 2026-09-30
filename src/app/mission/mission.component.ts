@@ -26,7 +26,7 @@ function addHours(from: Date, hours: number): Date {
 
 import { CommonModule, DOCUMENT } from '@angular/common'
 import {
-  ChangeDetectionStrategy, Component, HostListener, Inject, OnDestroy, OnInit, computed, signal
+  ChangeDetectionStrategy, Component, HostListener, Inject, OnDestroy, OnInit, computed, effect, signal, untracked
 } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 // FormField (the template directive) is gone from this component's own template: every
@@ -243,7 +243,14 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
       next: (newMission) => {
         this.log.excessive(`Received new Settings via subscription: ${JSON.stringify(newMission)}`, this.id)
         this.settings = newMission
-        this.applyMissionToForm(newMission)
+        // 2026-09-30, John: E-145 - our own autosave emits through this same subscription
+        // (updateMission() notifies synchronously). Resetting the form from that would
+        // overwrite what the person is typing right now, so only a change that came from
+        // somewhere else (Restore, Reset to defaults) re-seeds the form.
+        if (!this.savingFromHere) {
+          this.cancelPendingSave()
+          this.applyMissionToForm(newMission)
+        }
       },
       error: (e) => this.log.error('Mission Subscription got:' + e, this.id),
       complete: () => this.log.info('Mission Subscription complete', this.id)
@@ -251,7 +258,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   }
 
   /** Resets the whole editable form (and its mirror signals) to a given settings snapshot -
-   * shared by the settings subscription above and by onCancel() below, which discards
+   * shared by the settings subscription above (Restore, Reset to defaults), which discards
    * unsaved edits back to the last-saved this.settings rather than reloading the page.
    *
    * F29-23 (2026-08-30): `settingsForm().reset(newMission)`, not a raw `missionModel.set()` -
@@ -262,6 +269,11 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
    * A plain `.set()` here would have left `hasUnsavedChanges()` (below) reporting true right
    * after Cancel discarded the very edits it's supposed to be watching for. */
   private applyMissionToForm(newMission: MissionType): void {
+    // E-145: remember what is on disk BEFORE the reset below changes the model, so the
+    // autosave watcher sees "nothing new" instead of saving the mission back over itself.
+    this.lastSavedJson = JSON.stringify(this.payloadFor(newMission))
+    this.saveState.set('idle')
+    this.startupGeocodingKey ??= newMission.googleGeocodingApiKey
     this.settingsForm().reset(newMission)
     this.rowData.set(newMission.radioLogStatuses)
     this.locationTypesRowData.set(newMission.locationTypes)
@@ -279,7 +291,28 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
    * about what "unsaved" means.
    */
   hasUnsavedChanges(): boolean {
-    return this.settingsForm().dirty()
+    // 2026-09-30, John: E-145 - with autosave the only things still "unsaved" are (a) an
+    // edit waiting out its short delay, which is simply saved here and now so it never
+    // nags, and (b) an edit the form refuses because it is invalid (a value outside its
+    // allowed range, say) - the one thing a person would actually lose by leaving. Only (b)
+    // returns true. The flush is a deliberate side effect: both callers run this at the
+    // moment the page is going away, the last chance to save (a).
+    this.flushSave()
+    return this.settingsForm().invalid() && this.currentJson() !== this.lastSavedJson
+  }
+
+  /** Phones often never fire beforeunload when the app is swiped away; going to the
+   * background is the last reliable moment to flush an edit that is still waiting (E-145). */
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (this.document.visibilityState === 'hidden') {
+      this.flushSave()
+    }
+  }
+
+  /** Leaving a field saves at once instead of waiting out the delay (E-145). */
+  onFocusOut(): void {
+    this.flushSave()
   }
 
   /** Browser-level half of F29-23's guard - see hasUnsavedChanges()'s own comment for why
@@ -387,7 +420,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
    * reset and persist settings (confirmed - `updateMission(initMission())`, same as every
    * other settings write) - but this component's OWN form state (`missionModel`, what the
    * template's `[formField]`s actually bind to) is a separate signal that was never resynced,
-   * unlike `onCancel()`'s analogous `applyMissionToForm(this.settings)`. The settings this
+   * unlike the subscription's `applyMissionToForm()`. The settings this
    * button claims to reset ("return every setting above to its default value") were reset in
    * storage the whole time; the page just kept showing stale form values on top of them.
    * Reloading is the same fix already relied on elsewhere for this exact gap - see
@@ -403,39 +436,113 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   }
 
   reloadPage() {
-    // A hard reload does discard any unsaved state anywhere on the page - both current
-    // callers are safe: onBtnResetDefaults() calls this right after ResetDefaults() has
-    // already persisted, and onFormSubmit() calls this after updateMission() has already
-    // persisted AND settingsForm().reset(newMission) has already cleared the dirty flag
-    // (see onFormSubmit()'s own F29-23 comment). A future caller that reloads BEFORE saving
-    // would need its own confirmation - this method itself has none.
+    // A hard reload discards anything unsaved on the page. Both callers are safe: Reset to
+    // defaults has already persisted (and the settings subscription cancelled any pending
+    // autosave, so nothing stale is flushed over it), and onBtnReloadNow() flushes first.
+    // Since 2026-09-30 (E-145) an ordinary save no longer reloads at all.
     this.log.verbose(`Reloading window!`, this.id)
     window.location.reload()
   }
 
-  /** Discards unsaved edits, resetting the form back to the last-saved settings in place -
-   * no reload, unlike Save. */
-  onCancel(): void {
-    this.log.verbose('onCancel: discarding unsaved changes.', this.id)
-    this.applyMissionToForm(this.settings)
+  // ── Autosave (2026-09-30, John: E-145) ────────────────────────────────────────────────
+  // "Change the mission page to autosave, removing the Save settings button." Rangers already
+  // saves each edit as it is made; this does the same for Mission, with a short delay so a
+  // run of keystrokes is one save, not thirty.
+  //
+  // Saving used to reload the whole window afterwards (git log: 'fix up page reloads'), a
+  // blunt way to make everything that had read the settings once pick up the new values.
+  // Everything that shows or uses a mission setting while this page is open already
+  // subscribes to MissionService (header pill, readiness dot, Command Post publishing,
+  // alerts, the radio log service), and every other page is built fresh when opened, so none
+  // of them needs a reload. The one exception is the Google geocoding key, which the app
+  // reads once at start-up (app.config.ts) - see keyNeedsReload below.
+
+  /** How long after the last change the save happens. */
+  private static readonly AUTOSAVE_DELAY_MS = 800
+
+  /** What the quiet indicator at the top of the page says. */
+  readonly saveState = signal<'idle' | 'pending' | 'saved' | 'invalid'>('idle')
+
+  private saveTimer: ReturnType<typeof setTimeout> | undefined
+  /** True only while our own updateMission() call is notifying subscribers. */
+  private savingFromHere = false
+  /** JSON of what was last written (or loaded); an edit is anything that differs from it. */
+  private lastSavedJson = ''
+  /** The Google key as it was when this page loaded - the app only reads it at start-up. */
+  private startupGeocodingKey: string | undefined
+  readonly keyNeedsReload = computed(() =>
+    this.startupGeocodingKey !== undefined
+    && this.missionModel().googleGeocodingApiKey !== this.startupGeocodingKey)
+
+  /**
+   * Watches the form's model. Edits made through a field, the time pickers or the recipients
+   * box all land in missionModel; grid edits change their rows in place, so those call
+   * onRowsChanged() themselves. Comparing JSON to the last-saved copy means a reset from
+   * Restore / defaults (which also sets the model) is correctly seen as "nothing new".
+   */
+  private readonly autosaveWatcher = effect(() => {
+    this.missionModel()
+    untracked(() => this.scheduleSave())
+  })
+
+  /** What gets written: the model plus the fixed bundled image directory (see imgDir). */
+  private payloadFor(m: MissionType): MissionType {
+    // A bundled static asset path, not a secret - see imgDir's own comment above; not a
+    // confidentiality/encryption concern.
+    return { ...m, imageDirectory: this.imgDir }
   }
 
-  onFormSubmit(): void {
-    this.log.verbose("onFormSubmit: Update Settings...", this.id)
-    const newMission: MissionType = {
-      ...this.missionModel(),
-      // A bundled static asset path, not a secret - see imgDir's own comment above; not a
-      // confidentiality/encryption concern.
-      imageDirectory: this.imgDir,
-    }
-    this.missionService.updateMission(newMission)
-    // F29-23: without this, hasUnsavedChanges() still reads true for the brief window before
-    // reloadPage() actually navigates away, and the beforeunload listener below would show
-    // "are you sure you want to leave, you have unsaved changes" on a save that just
-    // succeeded - confusing at best, actively wrong at worst.
-    this.settingsForm().reset(newMission)
+  private currentJson(): string {
+    return JSON.stringify(this.payloadFor(this.missionModel()))
+  }
 
-    this.log.verbose(`onFormSubmit: Reloading window!`, this.id)
+  /** The grids call this after adding or editing a row (they change their rows in place). */
+  onRowsChanged(): void {
+    this.scheduleSave()
+  }
+
+  private scheduleSave(): void {
+    if (this.currentJson() === this.lastSavedJson) {
+      return
+    }
+    this.cancelPendingSave()
+    if (this.settingsForm().invalid()) {
+      // Not saved; the field shows its own message as before. Saved once it is valid again.
+      this.saveState.set('invalid')
+      return
+    }
+    this.saveState.set('pending')
+    this.saveTimer = setTimeout(() => this.flushSave(), MissionComponent.AUTOSAVE_DELAY_MS)
+  }
+
+  private cancelPendingSave(): void {
+    if (this.saveTimer !== undefined) {
+      clearTimeout(this.saveTimer)
+      this.saveTimer = undefined
+    }
+  }
+
+  /** Saves now if there is a valid, unsaved change; otherwise does nothing. */
+  private flushSave(): void {
+    this.cancelPendingSave()
+    if (this.currentJson() === this.lastSavedJson || this.settingsForm().invalid()) {
+      return
+    }
+    const newMission = this.payloadFor(this.missionModel())
+    this.log.verbose('Autosave: updating mission settings.', this.id)
+    this.savingFromHere = true
+    try {
+      this.missionService.updateMission(newMission)
+    } finally {
+      this.savingFromHere = false
+    }
+    this.lastSavedJson = JSON.stringify(newMission)
+    this.saveState.set('saved')
+  }
+
+  /** The one setting that only takes effect after a reload (see keyNeedsReload). */
+  onBtnReloadNow(): void {
+    this.flushSave()
     this.reloadPage()
   }
 
@@ -455,6 +562,8 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   }
 
   ngOnDestroy() {
+    // E-145: an edit still waiting out its delay when the page goes away is saved, not lost.
+    this.flushSave()
     this.missionSubscription?.unsubscribe()
   }
 }

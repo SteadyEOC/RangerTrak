@@ -159,13 +159,14 @@ are the real protection.
 
 **3. Load your roster.**
 On the **Rangers** page, enter your people or import them. Adding, importing and deleting
-save themselves, but edits typed into the grid are *not* saved until you press **Save
-edits**, under the grid.
+save themselves, and so do edits typed into the grid — there is no Save button to remember.
 
 **4. Set up the mission.**
 On the **Mission** page, fill in the mission and event names, the operating period start
 and end, and the default coordinates for your area. The default location is where maps and
-new reports start from, so getting it right saves work all mission.
+new reports start from, so getting it right saves work all mission. There is no Save button:
+the page saves your changes by itself about a second after you stop typing, and a small note at
+the top says **Saved**.
 
 **5. Check your statuses.**
 Still in **Mission**, review the radio log entry statuses and their colours. These drive the

@@ -9,7 +9,7 @@
       Staging Area, ...). Each draws with its own icon and color.</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <ag-grid-angular (gridReady)="onGridReady($event)" [gridOptions]="gridOptions"
+    <ag-grid-angular (gridReady)="onGridReady($event)" (cellValueChanged)="onCellValueChanged()" [gridOptions]="gridOptions"
       [defaultColDef]="defaultColDef" [tooltipShowDelay]="500" [rowData]="rowData" [columnDefs]="columnDefs">
     </ag-grid-angular>
   </mat-card-content>

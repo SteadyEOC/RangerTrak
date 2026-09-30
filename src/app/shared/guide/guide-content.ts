@@ -373,6 +373,10 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
         label: 'This page',
         blocks: [
           {
+            heading: 'Saving',
+            text: 'There is no Save button. Changes on this page save themselves about a second after you stop typing, and a note at the top says Saved when they have. If a value is not allowed (a latitude past 90, say), the note says Not saved yet and the field shows why; it saves as soon as you fix it. Everything takes effect straight away, except the address-search key, which needs a reload (the page offers a Reload now button).'
+          },
+          {
             heading: 'Starting a new incident',
             bullets: [
               'Set the mission name and operational period — both feed the header and every printed ICS form.',

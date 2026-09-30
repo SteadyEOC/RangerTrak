@@ -91,26 +91,27 @@
   color      : inherit;
 }
 
-// ── Action bar trimming ──────────────────────────────────────────────────────
-// 2026-09-28, John: the "Mission data lives in this browser only..." status line (and its
-// cloud_off icon, .mission__save-icon) that used to sit in this bar moved into Data safety's
-// subtitle - see mission.component.html's own comment. `.rt-action-bar`'s shared
-// `justify-content: space-between` (styles/_patterns.scss) has nothing left to space the
-// single remaining child against, which would otherwise left-align Save/Cancel - this pushes
-// them back to the right edge, where every other action bar's buttons already sit.
-.mission__action-bar--buttons-only {
-  justify-content: flex-end;
+// ── Autosave status (2026-09-30, John: E-145) ──────────────────────────────────────────
+// Replaces the action bar and its Save/Cancel buttons. Deliberately quiet: small, muted text,
+// only turning to the error colour when a field's value is being refused.
+.mission__save-status {
+  display    : flex;
+  align-items: center;
+  gap        : 0.25em;
+  margin     : 0 0 0.75rem;
+  min-height : 1.5em;
+  font-size  : 0.875rem;
+  color      : var(--mat-sys-on-surface-variant);
 }
 
-// F29-23 (2026-08-30): a visible "there's something to lose here" cue - the amber
-// readiness token, not a bespoke color, since it already means "attention, not done yet"
-// everywhere else in the app (readiness dot, status warnings). White label text: confirmed
-// against _tokens.scss that --rt-readiness-amber is a real dark amber/gold (#8A5A00 light,
-// #D9A300 dark), not a light pastel, so white reads on it in both schemes - no separate
-// "ink for amber" token exists to reach for instead.
-.mission__save-button--dirty {
-  --mdc-filled-button-container-color: var(--rt-readiness-amber);
-  --mdc-filled-button-label-text-color: #ffffff;
+.mission__save-status mat-icon {
+  width    : 1.1em;
+  height   : 1.1em;
+  font-size: 1.1em;
+}
+
+.mission__save-status--invalid {
+  color: var(--mat-sys-error);
 }
 
 // .mission__debug/.mission__debug-note moved 2026-09-28 to

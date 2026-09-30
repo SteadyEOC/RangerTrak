@@ -15,7 +15,7 @@
      tooltip and a dimmed, not-allowed cursor on the cells it applies to, so the warning
      doesn't need saying twice. New statuses can still be added anytime. -->
 
-    <ag-grid-angular (gridReady)="onGridReady($event)" [gridOptions]="gridOptions"
+    <ag-grid-angular (gridReady)="onGridReady($event)" (cellValueChanged)="onCellValueChanged()" [gridOptions]="gridOptions"
       [defaultColDef]="defaultColDef" [tooltipShowDelay]="500" [rowData]="rowData" [columnDefs]="columnDefs">
     </ag-grid-angular>
   </mat-card-content>

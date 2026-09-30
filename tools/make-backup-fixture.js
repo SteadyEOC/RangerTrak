@@ -152,18 +152,18 @@ async function waitForDownload(dir) {
     if (!await clickButton(b, '/Load sample mission/i')) throw new Error('no "Load sample mission" button')
     await sleep(6000)
 
-    // 2. Name the mission and save (Save reloads the page).
+    // 2. Name the mission. There is no Save button (E-145, 2026-09-30): the page autosaves about
+    //    800 ms after the last change, without reloading.
     await goto(b, '/mission')
     const named = await b.evaluate(`(() => {
       const el = document.querySelector('input[placeholder="Mission #"]')
       if (!el) return false
       Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, ${JSON.stringify('FIXTURE-' + version)})
       el.dispatchEvent(new Event('input', { bubbles: true }))
-      document.querySelector('[data-testid="mission-save"]').click()
       return true
     })()`)
     if (!named) throw new Error('no Mission # field')
-    await sleep(4000)
+    await sleep(2500) // past the autosave delay
 
     fs.mkdirSync(OUT, { recursive: true })
 
