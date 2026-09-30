@@ -293,7 +293,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       // filling in a brand-new blank ranger should land - see focusNewRangerRow() below.
       { headerName: "Image", field: "image", cellRenderer: this.imageCellRenderer, tooltipField: "image", tooltipComponentParams: { color: '#ececec' }, width: 80, maxWidth: 80, resizable: false, editable: false },
       // 2026-09-30, John: E-151 - the bare default "ID" reads "Ranger ID", same as Entry's label.
-      { headerName: (idFieldLabel || 'ID') === 'ID' ? 'Ranger ID' : idFieldLabel, field: "id", cellRenderer: this.idCellRenderer, singleClickEdit: true, maxWidth: 170 },
+      { headerName: (idFieldLabel || '').trim() === '' || idFieldLabel.trim() === 'ID' ? 'Ranger ID' : idFieldLabel, field: "id", cellRenderer: this.idCellRenderer, singleClickEdit: true, maxWidth: 170 },
       { headerName: "Call Sign", field: "callsign", cellRenderer: this.callsignCellRenderer, minWidth: 110, maxWidth: 200 },
       { headerName: "Full Name", field: "fullName", tooltipField: "FCC Licensee Name", minWidth: 150, maxWidth: 300 },
       { headerName: "Phone", field: "phone", singleClickEdit: true, maxWidth: 170 },

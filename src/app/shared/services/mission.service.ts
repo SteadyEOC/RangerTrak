@@ -319,7 +319,9 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       radioLogStatuses: [...DEFAULT_RADIO_LOG_STATUSES],
       // fieldReportKeywords: [''],  // Future...could also just search notes field
       recipientOptions213: [...DEFAULT_RECIPIENT_OPTIONS_213],
-      idFieldLabel: 'ID',
+      // 2026-09-30, John: default "Ranger ID" (was the bare "ID"). Default value only - no
+      // schema change; missions that saved "ID" still display "Ranger ID" (entry idLabel).
+      idFieldLabel: 'Ranger ID',
       // E-118: 30 min x OVERDUE_RED_MULTIPLE (3) = red at 90 minutes, the stated default.
       checkInIntervalMin: DEFAULT_CHECK_IN_INTERVAL_MIN,
       locationTypes: [...DEFAULT_LOCATION_TYPES],

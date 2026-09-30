@@ -201,7 +201,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // does the same, so the two read alike.
   get idLabel(): string {
     const l = (this.settings?.idFieldLabel || '').trim()
-    return l === 'ID' ? 'Ranger ID' : (l || 'Callsign')
+    // 2026-09-30, John: blank also means "Ranger ID" (was 'Callsign'), "if not otherwise provided".
+    return (l === '' || l === 'ID') ? 'Ranger ID' : l
   }
 
   // Get time events from <timepicker> component
