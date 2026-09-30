@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.3-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.2-alpha...v0.99.3-alpha) (2026-09-30)
+
+
+### Features
+
+* **demo:** move the state-fair demo to the State Fair of Virginia, Doswell VA (E-136) ([8807015](https://github.com/SteadyEOC/RangerTrak/commit/880701577b674db041f754865caf47f08cee4a28))
+* **footer:** show whether this device is a field phone or the full app, and whether it sends to a Board (E-161) ([76db06f](https://github.com/SteadyEOC/RangerTrak/commit/76db06fe7de4fa6485851377e090c3e4723c6cfe))
+* **install:** show manual install steps on Firefox Android and iOS Safari, which offer no Install button (E-160) ([f57c23f](https://github.com/SteadyEOC/RangerTrak/commit/f57c23f48f0870d6b59d01816885e52525e104bb))
+* **map:** E-152 pre-fill Prepared by on the printed map from the Entry operator name ([45adb84](https://github.com/SteadyEOC/RangerTrak/commit/45adb84d09719cf1f407530e367518f56401abbe))
+* **print:** ICS-213 print copies, and in-memory extra copies for auto-print (E-150) ([295a0b3](https://github.com/SteadyEOC/RangerTrak/commit/295a0b3fb43d66f28868c4af9fa5ce54957f04bb))
+* **radio-log:** E-144 size the Radio Log grid to its rows, capped at 60vh ([a77f8a6](https://github.com/SteadyEOC/RangerTrak/commit/a77f8a60988d289feab6c0696a7cc1b18e19a4c3))
+
+
+### Bug Fixes
+
+* **help:** Help tab pills actually render - selected tab was white text on the page background (E-147) ([28d0499](https://github.com/SteadyEOC/RangerTrak/commit/28d0499a1612e129c3b01f7826671d84e48baa50))
+* **help:** hide the marmot photo credit at phone width with the photo band (E-156) ([b161bec](https://github.com/SteadyEOC/RangerTrak/commit/b161bec010fd6307cd383212c2b301adf5461af5))
+* **help:** marmot keeps its size on long Help tabs - band capped at 760px, bottom edge fades, credit sits under it ([78d2725](https://github.com/SteadyEOC/RangerTrak/commit/78d27252702551f4e6d33d4dfa50262851c3503b))
+* **mission:** status colour picker opens on the status's own colour, not black ([1150523](https://github.com/SteadyEOC/RangerTrak/commit/1150523aad48a854257f6625975697f4170a860c))
+
 ### [0.99.2-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.1-alpha...v0.99.2-alpha) (2026-09-30)
 
 
