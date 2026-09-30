@@ -26,9 +26,13 @@
 .help-backdrop::before {
   content                                 : "";
   position                                : absolute;
-  inset                                   : 0 0 0 auto;
-  right                                   : 0;
+  inset                                   : 0 0 auto auto;
   width                                   : min(45%, 640px);
+  // 2026-09-30, John ("marmot positioning is awful"): the band used to run the full height of
+  // the tab, so on a long tab (Your data) `cover` scaled the landscape photo up to that height
+  // and showed a blown-up, blurred slice of fur. Capped at a height where the whole marmot
+  // fits, the photo keeps the same size and framing on every tab; a short tab still shrinks it.
+  height                                  : min(100%, 760px);
   z-index                                 : -1;
   background-image                        : url("../../../assets/imgs/veronika_andrews-hoary-marmot-6514437.jpg");
   background-size                         : cover;
@@ -40,8 +44,14 @@
   // Fades from fully transparent on the left edge to fully opaque by 45% across the band,
   // so the photo appears to emerge from nothing rather than being clipped by a straight
   // line. Applied on top of (not instead of) the opacity below.
-  mask-image                              : linear-gradient(to left, transparent, black 45%);
-  -webkit-mask-image                      : linear-gradient(to left, transparent, black 45%);
+  // A second gradient fades the bottom edge too, now that the band can end above the text;
+  // the two are intersected so each edge fades independently.
+  mask-image                              : linear-gradient(to left, transparent, black 45%),
+                                            linear-gradient(to bottom, black 85%, transparent);
+  mask-composite                          : intersect;
+  -webkit-mask-image                      : linear-gradient(to left, transparent, black 45%),
+                                            linear-gradient(to bottom, black 85%, transparent);
+  -webkit-mask-composite                  : source-in;
   transform                               : scaleX(-1);
   // One value for both schemes on purpose: `light-dark()` takes colors, not numbers, and
   // a scrim that needs a per-scheme opacity is a scrim that is too strong in one of them.
@@ -133,6 +143,11 @@ filter: brightness(30%);
 .imgCredit {
   text-align: right;
   font-size : x-small;
+  // Sits at the photo band's bottom edge (same height cap as .help-backdrop::before), not at
+  // the bottom of a long tab, where it would be a screen or two away from the photo it credits.
+  position  : absolute;
+  right     : 0.5rem;
+  top       : calc(min(100%, 760px) - 1.75em);
 
   // E-156: the photo band is hidden on a phone (see .help-backdrop::before), so its credit goes too.
   @include bp.phone {
