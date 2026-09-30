@@ -78,10 +78,10 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
     {
       headerName: "Status", field: "status", flex: 50,
       editable: (params: { data: RadioLogStatusType }) => !this.isStatusInUse(params.data.status),
-      cellStyle: (params: { value: string; }) => {
+      cellStyle: (params: { value: string; data: RadioLogStatusType }) => {
         // Same fill+ink resolution as the Radio Log entries grid - see field-reports.component.ts.
-        const stat = this.rowData.find(el => el.status == params.value)
-        const stored = stat ? stat.color : '#A3A3A3'
+        // 2026-09-30: read this row's own colour (was a lookup by status name in rowData).
+        const stored = params.data?.color || '#A3A3A3'
         const style: Record<string, string> = {
           'background-color': statusColorValue(stored), 'color': statusInkValue(stored)
         }
@@ -171,7 +171,9 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
 
   onCellValueChanged(): void {
     // A renamed status or new colour changes how the row (and its colour cell) should look.
-    this.refreshStatusGrid()
+    // 2026-09-30, John: force - a plain refreshCells() skips cells whose own value didn't
+    // change, so the Status cell kept its old tint after a Color edit until a page reload.
+    this.refreshStatusGrid(true)
     this.rowsChanged.emit()
   }
 
@@ -183,9 +185,9 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
     this.rowsChanged.emit()
   }
 
-  refreshStatusGrid() {
+  refreshStatusGrid(force = false) {
     if (this.gridApi) {
-      this.gridApi.refreshCells()
+      this.gridApi.refreshCells({ force })
       this.gridApi.sizeColumnsToFit();
     } else {
       this.log.verbose("no this.gridApi yet in refreshStatusGrid()", this.id)

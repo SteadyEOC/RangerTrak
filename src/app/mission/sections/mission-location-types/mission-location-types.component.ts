@@ -156,7 +156,9 @@ export class MissionLocationTypesComponent implements OnChanges {
     // 2026-09-30, John: E-145 - the Color cell used to call refreshGrid() from inside its own
     // cellStyle (below) to pick up edits; redrawing from inside a render pass is re-entrant.
     // Refreshing here, once the edit is committed, does the same job safely.
-    this.refreshGrid()
+    // 2026-09-30, John: force - the Icon cell previews the marker in the row's colour, and a
+    // plain refreshCells() skips it because its own value didn't change.
+    this.refreshGrid(true)
     this.rowsChanged.emit()
   }
 
@@ -168,9 +170,9 @@ export class MissionLocationTypesComponent implements OnChanges {
     this.rowsChanged.emit()
   }
 
-  refreshGrid() {
+  refreshGrid(force = false) {
     if (this.gridApi) {
-      this.gridApi.refreshCells()
+      this.gridApi.refreshCells({ force })
       this.gridApi.sizeColumnsToFit()
     }
   }
