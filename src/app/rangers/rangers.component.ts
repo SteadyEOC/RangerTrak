@@ -5,7 +5,7 @@ import { isAiGeneratedPhoto, withAiBadge } from '../shared/ai-photo'
 import { Subscription } from 'rxjs'
 
 import { CommonModule, DOCUMENT } from '@angular/common'
-import { AfterViewInit, Component, Inject, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy, signal } from '@angular/core'
+import { AfterViewInit, Component, Inject, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy, signal, computed } from '@angular/core'
 import { MatSnackBar } from '@angular/material/snack-bar'
 import { RouterLink } from '@angular/router'
 import { AgGridAngular } from 'ag-grid-angular';
@@ -56,6 +56,24 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // template binding - this app is zoneless, so a plain field written there has no
   // guaranteed path back into change detection. Signals close that gap (Sprint G).
   public rangers = signal<RangerType[]>([])
+
+  // 2026-09-30, John: E-144 - the grid was a fixed 60vh, so a 12-ranger roster on a tall monitor
+  // sat above ~150px of empty grid before the pager. domLayout 'autoHeight' would fix that but
+  // switches paginationAutoPageSize off and renders every row, which a hundreds-of-rows roster
+  // must not do. So the grid stays a normal fixed-height grid (scrolls/pages as before) and only
+  // the height is computed: enough for the rows, capped at the old 60vh. rowHeight and
+  // headerHeight are pinned in gridOptions so this arithmetic is exact, not a guess at the
+  // theme's defaults. One spare row of slack keeps auto-page-size from rounding down to a
+  // page that is a row short of the roster.
+  private static readonly GRID_ROW_PX = 42
+  private static readonly GRID_HEADER_PX = 48
+  /** Header + floating filter + pager, plus a pixel or two of border. */
+  private static readonly GRID_CHROME_PX = 48 * 3 + 2
+  readonly gridHeight = computed(() => {
+    const rows = Math.max(this.rangers().length, 3) + 1
+    const px = rows * RangersComponent.GRID_ROW_PX + RangersComponent.GRID_CHROME_PX
+    return `min(60vh, ${px}px)`
+  })
 
   private radioLogSubscription!: Subscription
   // "Not checked in" column: the most recent radio log entry date per ranger, keyed
@@ -123,6 +141,10 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       enableClickSelection: true,
     },
     // pagination: true,
+    // E-144: pinned so gridHeight() can size the grid to its rows exactly.
+    rowHeight: RangersComponent.GRID_ROW_PX,
+    headerHeight: RangersComponent.GRID_HEADER_PX,
+    floatingFiltersHeight: RangersComponent.GRID_HEADER_PX,
 
     // EVENT handlers
     // onRowClicked: event => this.log.verbose('A row was clicked'),

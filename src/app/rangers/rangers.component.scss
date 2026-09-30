@@ -274,3 +274,15 @@ label {
 .custom-tooltip p:first-of-type {
   font-weight: bold;
 }
+
+// 2026-09-30, John: E-144 - "Bulk roster tools" and "Danger zone" each took a full-width row on
+// a wide monitor. Same auto-fit/minmax pattern as Mission's .mission__grid: two columns when
+// there is room, one on a phone, no breakpoint. align-items: start so opening one section
+// does not stretch its neighbour. The 30rem floor is Mission's; min(100%, ..) keeps it from
+// widening a 390px page.
+.rangers__cards {
+  display              : grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+  gap                  : 0 var(--rt-gap);
+  align-items          : start;
+}

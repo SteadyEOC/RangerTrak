@@ -91,7 +91,7 @@
       </div>
     </div>
     }
-    <ag-grid-angular #rangerGrid rowAnimation pagination paginationAutoPageSize style="width: 100%; height: 60vh;"
+    <ag-grid-angular #rangerGrid rowAnimation pagination paginationAutoPageSize style="width: 100%;" [style.height]="gridHeight()"
       (gridReady)="onGridReady($event)" [gridOptions]="gridOptions" [rowData]="rangers()"
       [columnDefs]="columnDefs" [tooltipShowDelay]="500">
       <!--
@@ -102,7 +102,6 @@
           [showToolPanel]="showToolPanel";
         -->
     </ag-grid-angular>
-    <br />
     <!--button (click)="onBtPrinterFriendly()">Printer Friendly Layout</button>
       <button (click)="onBtNormal()">Normal Layout</button-->
 
@@ -144,6 +143,9 @@
          for day to day. Same component, same clickable-header treatment (chevron,
          hover/focus, a muted one-line description while collapsed) as Danger zone - just
          without the warning colour, since nothing here is destructive. -->
+    <!-- 2026-09-30, John: E-144 - Bulk roster tools and Danger zone share one auto-fit grid
+         (.rangers__cards) so they sit side by side when there is room. -->
+    <div class="rangers__cards">
     <rangertrak-expandable-section summary="Bulk roster tools"
       description="Import, export and photos for the whole roster">
       <div class="rangers__bulk-tools">
@@ -251,6 +253,7 @@
         </div>
       </div>
     </rangertrak-expandable-section>
+    </div>
 
   </div>
 
