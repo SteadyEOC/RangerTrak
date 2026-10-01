@@ -417,6 +417,24 @@ mat-slide-toggle {
 
 // https://www.w3.org/TR/CSS21/ui.html#propdef-cursor
 
+// 2026-09-30, John: the coordinate readout and its DD/DDM/USNG picker, on one wrapping line.
+.map-coords {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: center;
+  gap        : 4px 8px;
+
+  #Lmap-status {
+    flex-basis: 100%;
+  }
+}
+
+.map-coords__format {
+  --mat-button-toggle-height           : 28px;
+  --mat-standard-button-toggle-height  : 28px;
+  font-size                            : 12px;
+}
+
 #Lmap-status {
   // color    : #888;
   opacity     : 0;

@@ -372,6 +372,38 @@ export function bearingAndDistance(originLat: number, originLng: number, destLat
   return { distanceMeters, bearingDegrees }
 }
 
+/** The formats the main map's coordinate readout (and its click-to-copy) can show. */
+export type CoordinateFormat = 'DD' | 'DDM' | 'USNG'
+
+/**
+ * 2026-09-30, John: one line of text for a position, in the format the scribe picked under the
+ * map. DD for 911/apps, DDM for air operations, USNG for ground SAR (the same grid as MGRS,
+ * written with spaces: "18S UH 12345 67890", 1 m). USNG has no cells near the poles (the
+ * `mgrs` package throws there), so it falls back to DD rather than showing nothing.
+ */
+export function formatLatLng(lat: number, lng: number, format: CoordinateFormat): string {
+  if (format === 'DDM') {
+    const ddm = (d: number, pos: string, neg: string) => {
+      const abs = Math.abs(d)
+      let deg = Math.floor(abs)
+      let min = Math.round((abs - deg) * 60 * 1000) / 1000
+      if (min >= 60) { deg += 1; min = 0 }
+      return `${deg}° ${min.toFixed(3)}′ ${d < 0 ? neg : pos}`
+    }
+    return `${ddm(lat, 'N', 'S')}, ${ddm(lng, 'E', 'W')}`
+  }
+  if (format === 'USNG') {
+    try {
+      const { gridRef, easting, northing } = DDToMGRS(lat, lng)
+      const pad = (n: number) => String(n).padStart(5, '0')
+      return `${gridRef.slice(0, -2)} ${gridRef.slice(-2)} ${pad(easting)} ${pad(northing)}`
+    } catch {
+      // fall through to DD
+    }
+  }
+  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+}
+
 
 /*
 Use Google.geocode instead

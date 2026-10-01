@@ -12,9 +12,17 @@
        mapLeaflet.component.scss) - the lat/lng status and offline buttons below now wrap to
        its left instead of it landing further down the page. -->
   <div #overviewContainer id="mapLeaflet-overview"></div>
-  <div class="map-print-hide">
-    Latitude: <span class="strong">{{mouseLatLng().lat.toFixed(5)}}</span> Longitude:
-    <span class="strong">{{mouseLatLng().lng.toFixed(5)}}</span> Zoom:
+  <!-- 2026-09-30, John: the position under the pointer (or the last tap, on a phone) in the
+       format picked here; clicking the map copies it in the same format. -->
+  <div class="map-print-hide map-coords">
+    <mat-button-toggle-group class="map-coords__format" hideSingleSelectionIndicator
+      [value]="coordFormat()" (change)="coordFormat.set($event.value)" aria-label="Coordinate format"
+      data-testid="map-coord-format">
+      <mat-button-toggle value="DD" title="Decimal degrees">DD</mat-button-toggle>
+      <mat-button-toggle value="DDM" title="Degrees and decimal minutes (air operations)">DDM</mat-button-toggle>
+      <mat-button-toggle value="USNG" title="US National Grid, the same grid as MGRS (ground search and rescue)">USNG</mat-button-toggle>
+    </mat-button-toggle-group>
+    <span class="strong" data-testid="map-coord-readout">{{mouseCoords()}}</span> Zoom:
     <span class="strong">{{zoom()}}</span>
 
     <div id="Lmap-status">Click map to copy coordinates</div>

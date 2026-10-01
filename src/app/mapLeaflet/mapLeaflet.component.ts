@@ -25,9 +25,10 @@ import { DOCUMENT, NgTemplateOutlet } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import {
   AfterViewInit, Component, ElementRef, Inject, Input, OnDestroy, OnInit, TemplateRef, ViewChild,
-  ChangeDetectionStrategy, signal
+  ChangeDetectionStrategy, computed, signal
 } from '@angular/core'
 import { MatButtonModule } from '@angular/material/button'
+import { MatButtonToggleModule } from '@angular/material/button-toggle'
 import { MatDialog } from '@angular/material/dialog'
 import { MatIconModule } from '@angular/material/icon'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle'
@@ -37,7 +38,9 @@ import {
   locationCategoryColor, locationIconFor, resolveLocationIcon, formatReportTime, computeExtent, ExtentPoint
 } from '../shared'
 import { forward as mgrsForward } from 'mgrs'
-import { DDToUTM, DDToUTMInZone, UTMToDD, destinationPoint } from '../shared/mapping/coordinate'
+import {
+  CoordinateFormat, DDToUTM, DDToUTMInZone, UTMToDD, bearingAndDistance, destinationPoint, formatLatLng
+} from '../shared/mapping/coordinate'
 import {
   RadioLogService, RadioLogEntryType, LocationType, LogService, MissionLocationService,
   MissionLocationType, RangerService, MissionService
@@ -110,6 +113,13 @@ function zoomLevelsForSave(currentZoom: number, layerMaxZoom: number): number[] 
 // this app's own DDToUTM/UTMToDD (Sprint H) rather than adding a second projection library.
 const MILE_METERS = 1609.344
 
+// E-162 range rings: the round spacings refreshRangeRings() picks from, smallest first.
+const RING_STEPS_MILES = [0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 250, 500]
+const MAX_RANGE_RINGS = 25
+
+// See MapLeafletComponent.coordFormat.
+const coordFormat = signal<CoordinateFormat>('DD')
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
@@ -119,7 +129,7 @@ function formatBytes(bytes: number): string {
 @Component({
   selector: 'rangertrak-mapLeaflet',
   standalone: true,
-  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatIconModule,
+  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatButtonToggleModule, MatIconModule,
     MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [
@@ -188,6 +198,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // itself. One-shot, same "click, done" shape as the mini-map's Alt+click-for-evidence
   // gesture, rather than a persistent mode a scribe could forget is still on.
   placingLocation = signal(false)
+
+  // 2026-09-30, John: the readout under the map (and click-to-copy) in DD, DDM or USNG.
+  // Module-level, so the choice survives leaving and returning to the Map page; not saved,
+  // so a reload starts at DD again.
+  readonly coordFormat = coordFormat
+  readonly mouseCoords = computed(() =>
+    formatLatLng(this.mouseLatLng().lat, this.mouseLatLng().lng, this.coordFormat()))
 
   //markerClusterGroup: L.MarkerClusterGroup // MarkerClusterGroup extends FeatureGroup, retaining it's methods, e.g., clearLayers() & removeLayers()
   //markerClusterData = []
@@ -623,6 +640,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       }
       if (this.lMap.hasLayer(this.usngGridLayer)) {
         this.refreshUsngGrid()
+      }
+      // Range rings re-pick their spacing for the new view (see refreshRangeRings()).
+      if (this.lMap.hasLayer(this.rangeRingsLayer)) {
+        this.refreshRangeRings()
       }
     })
     // E-162: track which of the new overlays are on, for the printed legend.
@@ -1099,7 +1120,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       return
     }
 
-    let coords = `${Math.round(latlng.lat * 10000) / 10000}, ${Math.round(latlng.lng * 10000) / 10000}`
+    // A tap is the only way a phone (no hover, so no mousemove) updates the readout.
+    this.mouseLatLng.set({ lat: latlng.lat, lng: latlng.lng })
+    let coords = formatLatLng(latlng.lat, latlng.lng, this.coordFormat())
     navigator.clipboard.writeText(coords)
       .then(() => {
         let status = document.getElementById('Lmap-status')
@@ -1443,14 +1466,22 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   }
 
   /**
-   * 2026-09-30, John: E-162 - range rings: concentric circles at 1, 2 and 5 miles around the
-   * command post, each labelled with its distance (miles, with kilometres beside it - the
-   * app has no units setting, so both are shown, as the scale bar does). The centre is the
-   * first Location whose category resolves to the Command Post icon (the same resolution
-   * the map markers use, so a category renamed but given that icon still counts); with
-   * none, the mission's default location (defLat/defLng). Computed here, so it works
-   * offline. Redrawn when the layer is switched on and whenever the Locations change
-   * (refreshLocationMarkers()); the rings are not interactive, so map clicks pass through.
+   * 2026-09-30, John: E-162 - range rings: concentric circles around the command post, each
+   * labelled with its distance (miles, with kilometres beside it - the app has no units
+   * setting, so both are shown, as the scale bar does). The centre is the first Location
+   * whose category resolves to the Command Post icon (the same resolution the map markers
+   * use, so a category renamed but given that icon still counts); with none, the mission's
+   * default location (defLat/defLng). Computed here, so it works offline. The rings are not
+   * interactive, so map clicks pass through.
+   *
+   * 2026-09-30, John (later): the spacing fits the view, like the scale bar. The first build
+   * drew fixed 1, 2 and 5 mile rings, and at the State Fair demo's zoom (the fairground is
+   * well under a mile across) every ring was off screen. Now the spacing is a round number
+   * (RING_STEPS_MILES) about a sixth of the view's shorter side, so roughly three rings fall
+   * between the post and the edge at any zoom: tenths of a mile at a fair, miles for a
+   * wilderness search. Saved distances were considered and not built (they'd be a new stored
+   * field; John chose zoom-fit). Redrawn on pan/zoom while the layer is on, when it's switched
+   * on, and whenever the Locations change (refreshLocationMarkers()).
    */
   private refreshRangeRings(): void {
     this.rangeRingsLayer.clearLayers()
@@ -1461,20 +1492,47 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return
     }
-    for (const miles of [1, 2, 5]) {
-      const meters = miles * MILE_METERS
-      this.rangeRingsLayer.addLayer(L.circle([lat, lng], {
+    const centre = L.latLng(lat, lng)
+    const view = this.lMap.getBounds()
+    const viewMeters = Math.min(
+      this.lMap.distance(view.getNorthWest(), view.getNorthEast()),
+      this.lMap.distance(view.getNorthWest(), view.getSouthWest()))
+    const target = viewMeters / 6 / MILE_METERS
+    const stepMiles = [...RING_STEPS_MILES].reverse().find(s => s <= target) ?? RING_STEPS_MILES[0]
+    const step = stepMiles * MILE_METERS
+
+    // Only the rings that can cross the view: from the nearest point of the view (0 when the
+    // post is on screen) out to its farthest corner, capped so a post far off screen at a
+    // close zoom can't produce thousands of circles.
+    const nearest = L.latLng(
+      Math.min(Math.max(lat, view.getSouth()), view.getNorth()),
+      Math.min(Math.max(lng, view.getWest()), view.getEast()))
+    const farthest = Math.max(...[view.getNorthWest(), view.getNorthEast(), view.getSouthWest(), view.getSouthEast()]
+      .map(c => this.lMap.distance(centre, c)))
+    const first = Math.max(1, Math.floor(this.lMap.distance(centre, nearest) / step))
+    const last = Math.min(Math.ceil(farthest / step), first + MAX_RANGE_RINGS - 1)
+
+    // Labels go on the side of each ring facing the middle of the view, so they stay on
+    // screen when the post is off to one side; due north when the post is in the middle.
+    const toView = bearingAndDistance(lat, lng, view.getCenter().lat, view.getCenter().lng)
+    const labelBearing = toView.distanceMeters < step / 2 ? 0 : toView.bearingDegrees
+
+    for (let k = first; k <= last; k++) {
+      const meters = k * step
+      this.rangeRingsLayer.addLayer(L.circle(centre, {
         radius: meters, color: '#8a3ffc', weight: 1.5, opacity: 0.8, dashArray: '6 4',
-        fill: false, interactive: false,
+        fill: false, interactive: false, className: 'rt-range-ring',
       }))
-      const top = destinationPoint(lat, lng, meters, 0)
-      this.rangeRingsLayer.addLayer(L.marker([top.lat, top.lng], {
+      const at = destinationPoint(lat, lng, meters, labelBearing)
+      const miles = Math.round(k * stepMiles * 100) / 100
+      const km = meters / 1000
+      this.rangeRingsLayer.addLayer(L.marker([at.lat, at.lng], {
         interactive: false, keyboard: false,
         icon: L.divIcon({
-          className: '', iconSize: [0, 0],
+          className: 'rt-range-ring-label', iconSize: [0, 0],
           html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
             + `font:600 11px/1 sans-serif;color:#6929c4;background:rgba(255,255,255,.85);padding:1px 4px;border-radius:3px">`
-            + `${miles} mi (${(meters / 1000).toFixed(1)} km)</span>`,
+            + `${miles} mi (${km.toFixed(km < 1 ? 2 : 1)} km)</span>`,
         }),
       }))
     }

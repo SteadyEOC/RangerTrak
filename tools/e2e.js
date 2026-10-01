@@ -2870,6 +2870,64 @@ async function checkSampleMissionLoads() {
 }
 
 /**
+ * E-162 range rings, plus the map's coordinate readout formats. Runs right after
+ * checkSampleMissionLoads(), so the sample mission (and its command post) is loaded. John,
+ * 2026-09-30: "I did NOT see circular radiuses around the command post in the state fair" -
+ * the first build drew fixed 1/2/5 mile rings, all off screen at a demo's zoom, and nothing
+ * tested them. This asserts what he'd look for: with the overlay ticked, a ring label is
+ * actually inside the visible map, and zooming in re-picks the spacing. The first check (no
+ * rings while the overlay is off) shows the selector counts only rings.
+ */
+async function checkRangeRingsAndCoordReadout() {
+  console.log('\nE-162: range rings fit the view; the readout shows DD, DDM and USNG')
+  await navigateInApp('Map', 3500)
+  const ringCount = () => evaluate(`document.querySelectorAll('#mapLeaflet-main path.rt-range-ring').length`)
+  // Text of the ring labels whose centre is inside the visible map.
+  const visibleLabels = () => evaluate(`(() => {
+    const box = document.getElementById('mapLeaflet-main').getBoundingClientRect();
+    return [...document.querySelectorAll('#mapLeaflet-main .rt-range-ring-label span')]
+      .filter(s => { const r = s.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+        return x > box.left && x < box.right && y > box.top && y < box.bottom })
+      .map(s => s.textContent.trim());
+  })()`)
+  check('no range rings are drawn while the overlay is off', await ringCount(), 0)
+
+  const ticked = await evaluate(`(() => {
+    const label = [...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
+      .find(l => /Range rings/.test(l.textContent));
+    label?.querySelector('input')?.click();
+    return !!label;
+  })()`)
+  check('the layers box offers Range rings', ticked, true)
+  const before = await pollUntil(visibleLabels, v => v.length > 0)
+  const count = await ringCount()
+  check('range rings are drawn once the overlay is ticked', count > 0 && count <= 25, true)
+  check('at least one range ring label is inside the visible map', before.length > 0, true)
+
+  await evaluate(`(() => {
+    const zoomIn = document.querySelector('#mapLeaflet-main .leaflet-control-zoom-in');
+    zoomIn?.click(); setTimeout(() => zoomIn?.click(), 400);
+  })()`)
+  const after = await pollUntil(visibleLabels, v => v.length > 0 && v[0] !== before[0])
+  check('zooming in re-picks the ring spacing (labels change)', after.length > 0 && after[0] !== before[0], true)
+  note(`ring labels before zoom: ${before.join(' | ')}; after: ${after.join(' | ')}`)
+
+  const readoutIn = async (format) => {
+    await evaluate(`[...document.querySelectorAll('[data-testid="map-coord-format"] button')]
+      .find(b => b.textContent.trim() === ${JSON.stringify(format)})?.click()`)
+    await sleep(300)
+    return evaluate(`document.querySelector('[data-testid="map-coord-readout"]')?.textContent.trim() || ''`)
+  }
+  const ddm = await readoutIn('DDM')
+  check('the readout shows DDM after picking DDM', /^\d+° \d+\.\d{3}′ [NS], \d+° \d+\.\d{3}′ [EW]$/.test(ddm), true)
+  const usng = await readoutIn('USNG')
+  check('the readout shows USNG after picking USNG', /^\d{1,2}[C-X] [A-Z]{2} \d{5} \d{5}$/.test(usng), true)
+  const dd = await readoutIn('DD')
+  check('the readout shows DD after picking DD', /^-?\d+\.\d{5}, -?\d+\.\d{5}$/.test(dd), true)
+  note(`readout: ${ddm} / ${usng} / ${dd}`)
+}
+
+/**
  * E-122 Phase 2b: opt-in encryption at rest, end to end through the real UI dialogs (see
  * queueDialogs()'s own comment for why the fixed auto-accept handler alone cannot drive this).
  * Covers the maintainer's four decisions together: a fresh backup gates "Enable", the roster
@@ -3117,9 +3175,10 @@ async function main() {
         await checkBackupFixturesRestore()
         await checkReportPacketRoundTrip(downloads)
         await checkSampleMissionLoads()
+        await checkRangeRingsAndCoordReadout()
         await checkDeviceEncryption()
       } else {
-        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkSampleMissionLoads, checkDeviceEncryption (pass --full to include)')
+        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkSampleMissionLoads, checkRangeRingsAndCoordReadout, checkDeviceEncryption (pass --full to include)')
       }
       await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
     }
