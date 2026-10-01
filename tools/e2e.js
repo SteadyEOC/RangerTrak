@@ -1929,9 +1929,9 @@ async function checkTeamTrailsRender() {
         el.dispatchEvent(new Event('change', { bubbles: true }));
       };
       set('enter__Where-latI', Math.trunc(${lat}));
-      set('enter__Where-latF', Math.round((Math.abs(${lat}) % 1) * 10000));
+      set('enter__Where-latF', String(Math.round((Math.abs(${lat}) % 1) * 10000)).padStart(4, '0'));
       set('enter__Where-lngI', Math.trunc(${lng}));
-      set('enter__Where-lngF', Math.round((Math.abs(${lng}) % 1) * 10000));
+      set('enter__Where-lngF', String(Math.round((Math.abs(${lng}) % 1) * 10000)).padStart(4, '0'));
       await new Promise(r => setTimeout(r, 900));
 
       const cs = document.getElementById('enter__Callsign-input');
@@ -1997,9 +1997,9 @@ async function checkRangerMarkersAreDistinct() {
         el.dispatchEvent(new Event('change', { bubbles: true }));
       };
       set('enter__Where-latI', Math.trunc(${lat}));
-      set('enter__Where-latF', Math.round((Math.abs(${lat}) % 1) * 10000));
+      set('enter__Where-latF', String(Math.round((Math.abs(${lat}) % 1) * 10000)).padStart(4, '0'));
       set('enter__Where-lngI', Math.trunc(${lng}));
-      set('enter__Where-lngF', Math.round((Math.abs(${lng}) % 1) * 10000));
+      set('enter__Where-lngF', String(Math.round((Math.abs(${lng}) % 1) * 10000)).padStart(4, '0'));
       await new Promise(r => setTimeout(r, 900));
 
       const cs = document.getElementById('enter__Callsign-input');
@@ -2085,9 +2085,9 @@ async function checkNoCallsignRangersGetDistinctIdentity() {
         el.dispatchEvent(new Event('change', { bubbles: true }));
       };
       set('enter__Where-latI', Math.trunc(${lat}));
-      set('enter__Where-latF', Math.round((Math.abs(${lat}) % 1) * 10000));
+      set('enter__Where-latF', String(Math.round((Math.abs(${lat}) % 1) * 10000)).padStart(4, '0'));
       set('enter__Where-lngI', Math.trunc(${lng}));
-      set('enter__Where-lngF', Math.round((Math.abs(${lng}) % 1) * 10000));
+      set('enter__Where-lngF', String(Math.round((Math.abs(${lng}) % 1) * 10000)).padStart(4, '0'));
       await new Promise(r => setTimeout(r, 900));
 
       // No callsign to type - the ranger is identified by fullName, the exact case Phase 4's
@@ -2151,9 +2151,9 @@ async function checkNoCallsignRangersGetDistinctIdentity() {
         el.dispatchEvent(new Event('change', { bubbles: true }));
       };
       set('enter__Where-latI', Math.trunc(${lat}));
-      set('enter__Where-latF', Math.round((Math.abs(${lat}) % 1) * 10000));
+      set('enter__Where-latF', String(Math.round((Math.abs(${lat}) % 1) * 10000)).padStart(4, '0'));
       set('enter__Where-lngI', Math.trunc(${lng}));
-      set('enter__Where-lngF', Math.round((Math.abs(${lng}) % 1) * 10000));
+      set('enter__Where-lngF', String(Math.round((Math.abs(${lng}) % 1) * 10000)).padStart(4, '0'));
       await new Promise(r => setTimeout(r, 900));
 
       const cs = document.getElementById('enter__Callsign-input');
@@ -2239,9 +2239,9 @@ async function checkRadioLogSelectionFiltersMaps() {
         el.dispatchEvent(new Event('change', { bubbles: true }));
       };
       set('enter__Where-latI', Math.trunc(${lat}));
-      set('enter__Where-latF', Math.round((Math.abs(${lat}) % 1) * 10000));
+      set('enter__Where-latF', String(Math.round((Math.abs(${lat}) % 1) * 10000)).padStart(4, '0'));
       set('enter__Where-lngI', Math.trunc(${lng}));
-      set('enter__Where-lngF', Math.round((Math.abs(${lng}) % 1) * 10000));
+      set('enter__Where-lngF', String(Math.round((Math.abs(${lng}) % 1) * 10000)).padStart(4, '0'));
       await new Promise(r => setTimeout(r, 900));
 
       const cs = document.getElementById('enter__Callsign-input');
@@ -3178,7 +3178,7 @@ async function main() {
     } else {
       const fx = makeFixtures(path.join(tmp, 'fixtures'))
       if (FULL) {
-        if (want('roster')) await checkRosterLifecycle(fx)
+        if (want('roster') || want('entry')) await checkRosterLifecycle(fx) // entry's checks use its E2E-AA1 ranger
         if (want('roster')) await checkFieldNameAliases(fx)
         if (want('roster')) await checkSetupFileMerge(fx)
       } else {
