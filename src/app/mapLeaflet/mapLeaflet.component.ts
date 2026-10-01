@@ -29,6 +29,7 @@ import {
 } from '@angular/core'
 import { MatButtonModule } from '@angular/material/button'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
+import { MatSliderModule } from '@angular/material/slider'
 import { MatDialog } from '@angular/material/dialog'
 import { MatIconModule } from '@angular/material/icon'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle'
@@ -39,7 +40,8 @@ import {
 } from '../shared'
 import { forward as mgrsForward } from 'mgrs'
 import {
-  CoordinateFormat, DDToUTM, DDToUTMInZone, UTMToDD, bearingAndDistance, destinationPoint, formatLatLng
+  CoordinateFormat, DDToUTM, DDToUTMInZone, UTMToDD, bearingAndDistance, destinationPoint, edgeTickStep,
+  formatEdgeTick, formatLatLng
 } from '../shared/mapping/coordinate'
 import {
   RadioLogService, RadioLogEntryType, LocationType, LogService, MissionLocationService,
@@ -119,6 +121,14 @@ const MAX_RANGE_RINGS = 25
 
 // See MapLeafletComponent.coordFormat.
 const coordFormat = signal<CoordinateFormat>('DD')
+// See MapLeafletComponent.ringStepIndex: 0 = Auto, n = RING_STEPS_MILES[n - 1].
+const ringStepIndex = signal(0)
+
+/** A ring distance as its label reads: "0.25 mi (0.40 km)", "2 mi (3.2 km)". */
+function formatRingMiles(miles: number): string {
+  const km = miles * MILE_METERS / 1000
+  return `${Math.round(miles * 100) / 100} mi (${km.toFixed(km < 1 ? 2 : 1)} km)`
+}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -129,7 +139,7 @@ function formatBytes(bytes: number): string {
 @Component({
   selector: 'rangertrak-mapLeaflet',
   standalone: true,
-  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatButtonToggleModule, MatIconModule,
+  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatButtonToggleModule, MatSliderModule, MatIconModule,
     MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [
@@ -159,6 +169,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   @ViewChild('mapContainer', { static: true }) private mapContainer!: ElementRef<HTMLDivElement>
   @ViewChild('overviewContainer', { static: true }) private overviewContainer!: ElementRef<HTMLDivElement>
   @ViewChild('offlineControlsHost', { static: true }) private offlineControlsHost!: ElementRef<HTMLDivElement>
+  @ViewChild('edgeTicks', { static: true }) private edgeTicks!: ElementRef<HTMLDivElement>
 
   private lMap!: L.Map
   private overviewMapLeaflet!: L.Map
@@ -205,6 +216,44 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   readonly coordFormat = coordFormat
   readonly mouseCoords = computed(() =>
     formatLatLng(this.mouseLatLng().lat, this.mouseLatLng().lng, this.coordFormat()))
+
+  // 2026-09-30, John: the Range ring spacing slider under the map ("more accessible & useful for
+  // experimenting" than a mission setting). Stop 0 is Auto (the spacing fits the view, see
+  // refreshRangeRings()); the others are fixed RING_STEPS_MILES distances, for radio-range
+  // planning where a 2 mile ring should stay 2 miles at any zoom. Module-level like
+  // coordFormat, so it survives leaving the Map page; not saved.
+  readonly ringStepIndex = ringStepIndex
+  readonly ringStepCount = RING_STEPS_MILES.length
+  /** Whether the Range rings overlay is on (the slider only shows then). */
+  readonly ringsOn = signal(false)
+  /** The spacing Auto last picked, for the slider's label. */
+  private readonly autoRingMiles = signal<number | undefined>(undefined)
+  readonly ringSpacingLabel = computed(() => {
+    const i = this.ringStepIndex()
+    if (i > 0) {
+      return formatRingMiles(RING_STEPS_MILES[i - 1])
+    }
+    const auto = this.autoRingMiles()
+    return auto === undefined ? 'Auto (fits the zoom)' : `Auto, now ${formatRingMiles(auto)}`
+  })
+  readonly ringStepShort = (i: number) => i === 0 ? 'Auto' : `${RING_STEPS_MILES[i - 1]}`
+
+  onRingStepChange(i: number): void {
+    this.ringStepIndex.set(i)
+    if (!this.lMap?.hasLayer(this.rangeRingsLayer)) {
+      return
+    }
+    this.refreshRangeRings()
+    // John, 2026-09-30: "should rings be bolder during slider movement then settle back after
+    // a second or two? They might be hard to read for some busy maps." A class on the map
+    // container (CSS in the scss) thickens them while the slider moves; it comes off 1.5 s
+    // after the last change and the rings ease back.
+    const container = this.lMap.getContainer()
+    container.classList.add('rt-range-rings-emphasis')
+    clearTimeout(this.ringEmphasisTimer)
+    this.ringEmphasisTimer = setTimeout(() => container.classList.remove('rt-range-rings-emphasis'), 1500)
+  }
+  private ringEmphasisTimer?: ReturnType<typeof setTimeout>
 
   //markerClusterGroup: L.MarkerClusterGroup // MarkerClusterGroup extends FeatureGroup, retaining it's methods, e.g., clearLayers() & removeLayers()
   //markerClusterData = []
@@ -397,6 +446,89 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     ? window.matchMedia('print') : undefined
   private readonly onPrintMediaChange = () => {
     this.lMap?.invalidateSize()
+    this.refreshEdgeTicks()
+  }
+
+  /** The printed sheet's coordinate note: what the edge ticks are written in. */
+  readonly printCoordNote = computed(() => this.coordFormat() === 'DD'
+    ? 'Edge ticks: latitude / longitude, decimal degrees, WGS84'
+    : 'Edge ticks: latitude / longitude, degrees and decimal minutes, WGS84')
+
+  /**
+   * 2026-09-30, John: lat/long ticks around the printed map's edge, the way a USGS quad marks
+   * its margins: latitude labelled down the left edge, longitude along the top, a short mark
+   * on all four sides. Written in DD when the readout is DD, otherwise in degrees and decimal
+   * minutes (USNG already has its own grid overlay; DDM is what air operations read). Leaflet's
+   * map is north-up Web Mercator, so latitudes are horizontal lines and longitudes vertical,
+   * and one point per line places its tick exactly.
+   *
+   * Plain DOM written here rather than a template binding: it runs from the print media
+   * change, right after invalidateSize() re-measures the map for the page, and has to be in
+   * the document before the browser lays out the page - no waiting for change detection. On
+   * screen the box is empty (and hidden by CSS). A label that would sit under the north arrow
+   * or a Leaflet control (scale bar, credits) is dropped; its tick mark stays.
+   */
+  private refreshEdgeTicks(): void {
+    const host = this.edgeTicks?.nativeElement
+    if (!host) {
+      return
+    }
+    host.replaceChildren()
+    if (!this.lMap || !this.printMedia?.matches) {
+      return
+    }
+    const size = this.lMap.getSize()
+    if (!size.x || !size.y) {
+      return
+    }
+    const view = this.lMap.getBounds()
+    const format: 'DD' | 'DDM' = this.coordFormat() === 'DD' ? 'DD' : 'DDM'
+    const labels: HTMLElement[] = []
+    const add = (cls: string, style: Partial<CSSStyleDeclaration>, text?: string) => {
+      const el = document.createElement('div')
+      el.className = cls
+      Object.assign(el.style, style)
+      if (text) {
+        el.textContent = text
+        labels.push(el)
+      }
+      host.appendChild(el)
+    }
+
+    const latStep = edgeTickStep(view.getNorth() - view.getSouth(), format)
+    for (let k = Math.ceil(view.getSouth() / latStep); k * latStep <= view.getNorth(); k++) {
+      const lat = k * latStep
+      const y = this.lMap.latLngToContainerPoint([lat, view.getCenter().lng]).y
+      add('map-edge-ticks__mark map-edge-ticks__mark--left', { top: `${y}px` })
+      add('map-edge-ticks__mark map-edge-ticks__mark--right', { top: `${y}px` })
+      add('map-edge-ticks__label map-edge-ticks__label--left', { top: `${y}px` },
+        formatEdgeTick(lat, false, format, latStep))
+    }
+    const lngStep = edgeTickStep(view.getEast() - view.getWest(), format)
+    for (let k = Math.ceil(view.getWest() / lngStep); k * lngStep <= view.getEast(); k++) {
+      const lng = k * lngStep
+      const x = this.lMap.latLngToContainerPoint([view.getCenter().lat, lng]).x
+      add('map-edge-ticks__mark map-edge-ticks__mark--top', { left: `${x}px` })
+      add('map-edge-ticks__mark map-edge-ticks__mark--bottom', { left: `${x}px` })
+      add('map-edge-ticks__label map-edge-ticks__label--top', { left: `${x}px` },
+        formatEdgeTick(lng, true, format, lngStep))
+    }
+
+    const frame = host.parentElement
+    const blockers = frame
+      ? [...frame.querySelectorAll('.furniture, .leaflet-control-scale, .leaflet-control-attribution')]
+        .map(el => el.getBoundingClientRect()).filter(r => r.width && r.height)
+      : []
+    const box = host.getBoundingClientRect()
+    const overlaps = (a: DOMRect, b: DOMRect) =>
+      a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+    for (const label of labels) {
+      const r = label.getBoundingClientRect()
+      const outside = r.left < box.left || r.right > box.right || r.top < box.top || r.bottom > box.bottom
+      if (outside || blockers.some(b => overlaps(r, b))) {
+        label.remove()
+      }
+    }
   }
 
   onInstallBtn() {
@@ -653,6 +785,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const syncLegendOverlays = () => this.legendOverlays.set(
       [...legendKeys].filter(([layer]) => this.lMap.hasLayer(layer)).map(([, key]) => key))
     this.lMap.on('overlayadd overlayremove', syncLegendOverlays)
+    this.lMap.on('overlayadd overlayremove', () => this.ringsOn.set(this.lMap.hasLayer(this.rangeRingsLayer)))
     this.lMap.on('overlayadd', (e: L.LayersControlEvent) => {
       if (e.layer === this.mileGridLayer) {
         this.refreshMileGrid()
@@ -669,7 +802,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // scale legend, same as that map's own "0 ... 2 Miles" bar. Leaflet's own built-in
     // control - both units shown (its own default), a scribe can read whichever they
     // think in, rather than this app guessing which one that is.
-    L.control.scale({ position: 'bottomleft' }).addTo(this.lMap)
+    // 2026-09-30, John: "Longer scale at bottom?" - 200 px rather than Leaflet's 100 px default.
+    L.control.scale({ position: 'bottomleft', maxWidth: 200 }).addTo(this.lMap)
 
     // 2026-09-30, John: E-138 - the 2026-08-26 "zoom out to the saved extent when the layers-menu
     // checkbox goes on" behaviour moved to onBtnZoomToOfflineTiles() (the "Zoom to offline
@@ -1498,7 +1632,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       this.lMap.distance(view.getNorthWest(), view.getNorthEast()),
       this.lMap.distance(view.getNorthWest(), view.getSouthWest()))
     const target = viewMeters / 6 / MILE_METERS
-    const stepMiles = [...RING_STEPS_MILES].reverse().find(s => s <= target) ?? RING_STEPS_MILES[0]
+    const autoMiles = [...RING_STEPS_MILES].reverse().find(s => s <= target) ?? RING_STEPS_MILES[0]
+    this.autoRingMiles.set(autoMiles)
+    // A fixed spacing from the slider under the map wins over Auto (see ringStepIndex).
+    const stepMiles = this.ringStepIndex() > 0 ? RING_STEPS_MILES[this.ringStepIndex() - 1] : autoMiles
     const step = stepMiles * MILE_METERS
 
     // Only the rings that can cross the view: from the nearest point of the view (0 when the
@@ -1524,15 +1661,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         fill: false, interactive: false, className: 'rt-range-ring',
       }))
       const at = destinationPoint(lat, lng, meters, labelBearing)
-      const miles = Math.round(k * stepMiles * 100) / 100
-      const km = meters / 1000
       this.rangeRingsLayer.addLayer(L.marker([at.lat, at.lng], {
         interactive: false, keyboard: false,
         icon: L.divIcon({
           className: 'rt-range-ring-label', iconSize: [0, 0],
           html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
             + `font:600 11px/1 sans-serif;color:#6929c4;background:rgba(255,255,255,.85);padding:1px 4px;border-radius:3px">`
-            + `${miles} mi (${km.toFixed(km < 1 ? 2 : 1)} km)</span>`,
+            + `${formatRingMiles(k * stepMiles)}</span>`,
         }),
       }))
     }
@@ -2068,6 +2203,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.locationsSubscription?.unsubscribe()
     clearTimeout(this.afterViewInitTimer)
     this.printMedia?.removeEventListener('change', this.onPrintMediaChange)
+    clearTimeout(this.ringEmphasisTimer)
     if (this.refreshSavedAreaInfo) {
       for (const layer of this.offlineTileLayers) {
         layer.off('saveend', this.refreshSavedAreaInfo)

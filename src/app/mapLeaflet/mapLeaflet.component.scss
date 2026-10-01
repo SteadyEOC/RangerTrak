@@ -341,7 +341,10 @@ mat-slide-toggle {
 
   .mapLeaflet-frame {
     position         : relative;
-    height           : 120mm;
+    // 2026-09-30, John: "Max the map" - 170 mm fills the rest of page 1 under the compact
+    // title band on A4 landscape (186 mm printable, the shorter of A4/Letter); the legend
+    // and the Prepared by line follow on page 2 when they don't fit beside it.
+    height           : 170mm;
     break-inside     : avoid;
     box-sizing       : border-box;
   }
@@ -464,4 +467,78 @@ mat-slide-toggle {
 // to the layers menu only: the Save-this-area control is deliberately themed with app tokens.
 :host ::ng-deep .leaflet-control-layers {
   color-scheme: light;
+}
+
+// 2026-09-30, John: lat/long edge ticks on the printed map (refreshEdgeTicks()). Hidden on
+// screen; on paper, a box over the map frame holding short black marks at each edge and
+// white-backed labels. Below the north arrow box (1200), above Leaflet's panes and controls.
+.map-edge-ticks {
+  display: none;
+}
+
+@media print {
+  .map-edge-ticks {
+    display       : block;
+    position      : absolute;
+    inset         : 0;
+    z-index       : 1100;
+    pointer-events: none;
+    overflow      : hidden;
+    color         : #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust        : exact;
+  }
+
+  :host ::ng-deep .map-edge-ticks__mark {
+    position  : absolute;
+    background: #000;
+
+    &--left, &--right { width: 3mm; height: 0.3mm; transform: translateY(-50%); }
+    &--top, &--bottom { width: 0.3mm; height: 3mm; transform: translateX(-50%); }
+    &--left   { left: 0; }
+    &--right  { right: 0; }
+    &--top    { top: 0; }
+    &--bottom { bottom: 0; }
+  }
+
+  :host ::ng-deep .map-edge-ticks__label {
+    position   : absolute;
+    padding    : 0 0.6mm;
+    background : rgba(255, 255, 255, .85);
+    font       : 600 6.5pt/1.2 sans-serif;
+    white-space: nowrap;
+
+    &--left { left: 3.4mm; transform: translateY(-50%); }
+    &--top  { top: 3.4mm; transform: translateX(-50%); }
+  }
+}
+
+// 2026-09-30, John: range rings go bold while the ring spacing slider moves, then ease back
+// (onRingStepChange()). CSS beats the stroke attributes Leaflet writes on each path.
+:host ::ng-deep path.rt-range-ring {
+  transition: stroke-width 0.6s ease-out, stroke-opacity 0.6s ease-out;
+}
+
+:host ::ng-deep .rt-range-rings-emphasis path.rt-range-ring {
+  stroke-width  : 4px;
+  stroke-opacity: 1;
+  transition    : none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host ::ng-deep path.rt-range-ring {
+    transition: none;
+  }
+}
+
+.map-ring-spacing {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: center;
+  gap        : 0 12px;
+
+  mat-slider {
+    flex     : 1 1 220px;
+    min-width: 180px;
+  }
 }

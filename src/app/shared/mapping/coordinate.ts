@@ -372,6 +372,45 @@ export function bearingAndDistance(originLat: number, originLng: number, destLat
   return { distanceMeters, bearingDegrees }
 }
 
+/**
+ * 2026-09-30, John: lat/long edge ticks on the printed map. The spacing, in degrees, for a map
+ * edge spanning `spanDeg`: the smallest round step giving at most `maxTicks` ticks. Round in
+ * the format being printed - decimal degrees step 0.001, 0.002, 0.005 ...; degrees and decimal
+ * minutes step in whole or fractional minutes (0.1′, 0.25′, 1′, 5′, 15′ ...), then degrees.
+ */
+export function edgeTickStep(spanDeg: number, format: 'DD' | 'DDM', maxTicks = 6): number {
+  const steps = format === 'DD'
+    ? [1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 30]
+    : [...[0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10, 15, 30].map(m => m / 60), 1, 2, 5, 10, 15, 30]
+  return steps.find(s => spanDeg / s <= maxTicks) ?? 30
+}
+
+/** The fewest decimals (0-3) that write `x` exactly, e.g. 0.25 -> 2, 0.1 -> 1, 5 -> 0. */
+function decimalsFor(x: number): number {
+  for (let d = 0; d < 3; d++) {
+    if (Math.abs(Math.round(x * 10 ** d) - x * 10 ** d) < 1e-6) return d
+  }
+  return 3
+}
+
+/**
+ * The label for one edge tick at `value` degrees, with only as many decimals as `step` needs:
+ * "36.095° N" (DD) or "36° 5.25′ N" (DDM; whole degrees once the step is a degree or more).
+ */
+export function formatEdgeTick(value: number, isLng: boolean, format: 'DD' | 'DDM', step: number): string {
+  const hemi = isLng ? (value < 0 ? 'W' : 'E') : (value < 0 ? 'S' : 'N')
+  const abs = Math.abs(value)
+  if (format === 'DD') {
+    return `${abs.toFixed(decimalsFor(step))}° ${hemi}`
+  }
+  const stepMin = step * 60
+  const d = decimalsFor(stepMin)
+  let deg = Math.floor(abs + 1e-9)
+  let min = Number(((abs - deg) * 60).toFixed(d))
+  if (min >= 60) { deg += 1; min = 0 }
+  return stepMin >= 60 ? `${deg}° ${hemi}` : `${deg}° ${min.toFixed(d)}′ ${hemi}`
+}
+
 /** The formats the main map's coordinate readout (and its click-to-copy) can show. */
 export type CoordinateFormat = 'DD' | 'DDM' | 'USNG'
 

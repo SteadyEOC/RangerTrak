@@ -2912,6 +2912,25 @@ async function checkRangeRingsAndCoordReadout() {
   check('zooming in re-picks the ring spacing (labels change)', after.length > 0 && after[0] !== before[0], true)
   note(`ring labels before zoom: ${before.join(' | ')}; after: ${after.join(' | ')}`)
 
+  // The spacing slider (shown only while the overlay is on): stop 4 is a fixed 1 mile.
+  const sliderShown = await evaluate(`!!document.querySelector('[data-testid="ring-spacing"]')`)
+  check('the ring spacing slider shows while Range rings is on', sliderShown, true)
+  const fixed = await evaluate(`(async () => {
+    const el = document.querySelector('[data-testid="ring-spacing"]');
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '4');
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 300));
+    return {
+      label: document.querySelector('[data-testid="ring-spacing-label"]')?.textContent.trim(),
+      bold: document.getElementById('mapLeaflet-main').classList.contains('rt-range-rings-emphasis'),
+      rings: [...document.querySelectorAll('#mapLeaflet-main .rt-range-ring-label span')].map(s => s.textContent.trim()),
+    };
+  })()`)
+  check('moving the slider to 1 mi sets a fixed 1 mile spacing', fixed.label === '1 mi (1.6 km)' && fixed.rings[0]?.startsWith('1 mi'), true)
+  check('the rings go bold while the slider moves', fixed.bold, true)
+  await sleep(1800)
+  check('...and settle back afterwards', await evaluate(`document.getElementById('mapLeaflet-main').classList.contains('rt-range-rings-emphasis')`), false)
+
   const readoutIn = async (format) => {
     await evaluate(`[...document.querySelectorAll('[data-testid="map-coord-format"] button')]
       .find(b => b.textContent.trim() === ${JSON.stringify(format)})?.click()`)

@@ -3,7 +3,10 @@
     <div #mapContainer id="mapLeaflet-main" (click)="onMouseClick($event)"></div>
     <!-- 2026-09-30, John: E-152 - north arrow and coordinate note, print-only (hidden on
          screen by the component itself), drawn over the corner of the map. -->
-    <rangertrak-map-print-furniture></rangertrak-map-print-furniture>
+    <rangertrak-map-print-furniture [coordNote]="printCoordNote()"></rangertrak-map-print-furniture>
+    <!-- 2026-09-30, John: lat/long ticks around the printed map's edge, print-only; filled
+         in by refreshEdgeTicks() when the print layout takes over. -->
+    <div #edgeTicks class="map-edge-ticks" aria-hidden="true"></div>
   </div>
   <!-- Raised live 2026-08-30: "the mini-map should ideally be immediately underneath the
        main map if spacing allows" - was a later sibling of the WHOLE .mapLeaflet-container
@@ -102,4 +105,16 @@
     </mat-slide-toggle>
   </div>
   <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
+  <!-- 2026-09-30, John: ring spacing, shown while the Range rings overlay is on. Far left is
+       Auto (fits the zoom); the other stops are fixed distances. Not saved. -->
+  @if (ringsOn()) {
+    <div class="map-display__row map-ring-spacing">
+      <label for="map-ring-spacing">Range ring spacing: <strong data-testid="ring-spacing-label">{{ ringSpacingLabel() }}</strong></label>
+      <mat-slider min="0" [max]="ringStepCount" step="1" discrete [displayWith]="ringStepShort">
+        <input matSliderThumb id="map-ring-spacing" data-testid="ring-spacing"
+          [value]="ringStepIndex()" (input)="onRingStepChange(+$any($event.target).value)"
+          [attr.aria-valuetext]="ringSpacingLabel()">
+      </mat-slider>
+    </div>
+  }
 </div>
