@@ -6,9 +6,17 @@
   // mapLibre.component.scss both float #mapLeaflet-overview/#pmtiles-overview right) - same
   // "MDC needs an explicit width cap and label wrapping to slot in beside the float instead
   // of dropping full-width below it" fix as those two components' own copy of this toggle.
+  //
+  // 2026-09-30 (John, screenshot): the 175px cap now applies ONLY beside Leaflet's overview.
+  // MapLibre moved its controls into cards, so this switch sits in the "Show on map" card
+  // with no float beside it, and the cap squeezed the label into a ~130px column of
+  // one-or-two-word lines. Wrapping stays on for both.
+  &--beside-overview mat-slide-toggle {
+    max-width: calc(100% - 175px - 0.5rem);
+  }
+
   mat-slide-toggle {
     display  : inline-block;
-    max-width: calc(100% - 175px - 0.5rem);
 
     ::ng-deep .mdc-form-field {
       white-space: normal;

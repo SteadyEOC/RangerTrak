@@ -47,7 +47,8 @@
     <ng-template #engineSwitchTpl>
       <!-- F29-21 (2026-08-30): id is a fragment-scroll target for the header readiness dot's
            "Alternative map warmed" row - see mission-readiness.component.ts's own comment. -->
-      <div class="map-engine-switch" id="readiness-map-engine-switch">
+      <div class="map-engine-switch" id="readiness-map-engine-switch"
+        [class.map-engine-switch--beside-overview]="engine() === 'leaflet'">
         <mat-slide-toggle data-testid="mapEngineSwitch" [checked]="engine() === 'maplibre'"
           (change)="onEngineSwitchChanged($event)">
           Use MapLibre + PMTiles Map - instead of Leaflet Map

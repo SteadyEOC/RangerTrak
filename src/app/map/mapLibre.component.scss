@@ -66,12 +66,13 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-// Same fix as mapLeaflet.component.scss's own copy of this comment (live phone screenshot,
-// 2026-08-29) - MDC's slide-toggle needs an explicit width cap and label wrapping to slot
-// into the column beside the floated overview map instead of dropping full-width below it.
+// Was the same fix as mapLeaflet.component.scss's own copy (live phone screenshot,
+// 2026-08-29): a 175px width cap so the toggle slotted beside the floated overview map.
+// 2026-09-30 (John, screenshot): these toggles now live inside cards, nowhere near the
+// overview, so the cap only squeezed each label into a ~130px column. Dropped; label
+// wrapping kept so a long label still wraps at phone width.
 mat-slide-toggle {
   display  : inline-block;
-  max-width: calc(100% - 175px - 0.5rem);
 
   ::ng-deep .mdc-form-field {
     white-space: normal;
