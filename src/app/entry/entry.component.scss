@@ -752,6 +752,11 @@ mat-chip-option.enter__source-selected {
   --mdc-filled-button-disabled-label-text-color: var(--rt-ink-2);
 }
 
+// E-166 (2026-09-30): the muted "Or press Ctrl+Enter" hint beside the Add to radio log button.
+.enter__Submit-hint {
+  margin-left : 10px;
+  color       : var(--rt-ink-2);
+}
 
 #enter__Submit-info {
   margin              : 10px;

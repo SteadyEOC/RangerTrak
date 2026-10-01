@@ -89,7 +89,7 @@
   </p>
   }
 
-  <form [formGroup]="entryControlsForm" (ngSubmit)="onFormSubmit()" class="enter__form">
+  <form [formGroup]="entryControlsForm" (ngSubmit)="onFormSubmit()" (keydown)="onFormKeydown($event)" class="enter__form">
     <!-- Groups the mini-map with Who/Where so a breakpoint can reorder them together
          without touching desktop layout at all: default (undeclared) `display` here does
          nothing, so at tablet-up widths this is a no-op wrapper and the float below behaves
@@ -563,8 +563,12 @@
          background-color/color override in entry.component.scss is gone as redundant. -->
     <button matButton="filled" class="enter__Submit-button" [disabled]="!formValid()" type="submit"
       [tabIndex]="submitTabIndex">
-      Submit report
+      Add to radio log
     </button>
+    <!-- E-166 (2026-09-30): ARES feedback - nothing said how to finish an entry. Plain Enter
+         is taken (autocomplete picks, Notes newline), so Ctrl+Enter (Cmd+Enter on Mac)
+         from any box is the keyboard route; see onFormKeydown(). -->
+    <small class="enter__Submit-hint">Or press {{ submitShortcutLabel }} from any box.</small>
 
     <span id="enter__Submit-info"> </span>
 

@@ -291,20 +291,26 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       // plain-text editor (the raw filename) floating over the thumbnail. That made this
       // the grid's first EDITABLE column by definition order, which is not where a scribe
       // filling in a brand-new blank ranger should land - see focusNewRangerRow() below.
-      { headerName: "Image", field: "image", cellRenderer: this.imageCellRenderer, tooltipField: "image", tooltipComponentParams: { color: '#ececec' }, width: 80, maxWidth: 80, resizable: false, editable: false },
+      // E-166 (2026-09-30): header tooltips, ARES feedback - what each column holds and how it is filled in.
+      { headerName: "Image", headerTooltip: 'The ranger\'s photo. Hover a photo to see it larger. It cannot be edited here.', field: "image", cellRenderer: this.imageCellRenderer, tooltipField: "image", tooltipComponentParams: { color: '#ececec' }, width: 80, maxWidth: 80, resizable: false, editable: false },
       // 2026-09-30, John: E-151 - the bare default "ID" reads "Ranger ID", same as Entry's label.
-      { headerName: (idFieldLabel || '').trim() === '' || idFieldLabel.trim() === 'ID' ? 'Ranger ID' : idFieldLabel, field: "id", cellRenderer: this.idCellRenderer, singleClickEdit: true, maxWidth: 170 },
-      { headerName: "Call Sign", field: "callsign", cellRenderer: this.callsignCellRenderer, minWidth: 110, maxWidth: 200 },
-      { headerName: "Full Name", field: "fullName", tooltipField: "FCC Licensee Name", minWidth: 150, maxWidth: 300 },
-      { headerName: "Phone", field: "phone", singleClickEdit: true, maxWidth: 170 },
-      { headerName: "Role", field: "role", maxWidth: 200 },
+      { headerName: (idFieldLabel || '').trim() === '' || idFieldLabel.trim() === 'ID' ? 'Ranger ID' : idFieldLabel, field: "id", cellRenderer: this.idCellRenderer, singleClickEdit: true, maxWidth: 170,
+        headerTooltip: 'The ranger\'s ID number, issued at check-in (for example REW-0038 or TEW-1003). Blank means not checked in yet. Click to edit.' },
+      { headerName: "Call Sign", headerTooltip: 'FCC call sign, such as K7ABC. It can be blank for members who are not licensed. Double-click to edit.', field: "callsign", cellRenderer: this.callsignCellRenderer, minWidth: 110, maxWidth: 200 },
+      { headerName: "Full Name", headerTooltip: 'The ranger\'s full name. Double-click to edit.', field: "fullName", tooltipField: "FCC Licensee Name", minWidth: 150, maxWidth: 300 },
+      { headerName: "Phone", field: "phone", singleClickEdit: true, maxWidth: 170,
+        headerTooltip: 'Phone number, in any format you like (for example 206-555-0123). It is not checked. Click to edit.' },
+      { headerName: "Role", field: "role", maxWidth: 200,
+        headerTooltip: 'The ranger\'s job or position, such as Team Leader or Medic. Free text. Double-click to edit.' },
       {
         headerName: "Last Contact", colId: "lastContact",
+        headerTooltip: 'Time of this ranger\'s most recent radio log entry, in 24-hour time with how many minutes ago. A red phone mark means no entry yet. It cannot be edited.',
         valueGetter: this.lastContactValueGetter, cellRenderer: this.lastContactCellRenderer,
         editable: false, minWidth: 150, maxWidth: 220,
       },
       // The only flex column - takes whatever the content-sized columns leave over.
-      { headerName: "Notes", field: "note", flex: 1, minWidth: 150 },
+      { headerName: "Notes", field: "note", flex: 1, minWidth: 150,
+        headerTooltip: 'Anything else worth knowing about this ranger. Free text, and it can be blank. Double-click to edit.' },
     ]
   }
 

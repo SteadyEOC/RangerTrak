@@ -190,7 +190,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    */
   private buildColumnDefs(): any[] {
     return [
-      { headerName: "#", field: "id", headerTooltip: 'This report\'s line number in the radio log', maxWidth: 90, editable: false },
+      { headerName: "#", field: "id", headerTooltip: 'This entry\'s line number in the radio log. Numbered automatically; it cannot be edited.', maxWidth: 90, editable: false },
       // E-114 open question 5 (2026-08-31, decided: "yes, imported rows can have that
       // reflected"). Deliberately NOT the existing "Source" column below - that already means
       // the communications medium the report itself arrived over (Voice/Phone/Packet/APRS/
@@ -202,6 +202,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // Evidence column's own evidenceCellRenderer below.
       {
         headerName: "Origin", field: "sourceUid", maxWidth: 70, editable: false,
+        headerTooltip: 'Shows a mark if this entry was merged in from another device\'s Report Packet. Blank if it was typed on this device. It cannot be edited.',
         cellRenderer: this.originCellRenderer,
         tooltipValueGetter: (params: { data: RadioLogEntryType }) =>
           params.data.sourceUid ? 'Merged in from a Report Packet - not typed on this device' : undefined,
@@ -214,6 +215,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // hover for an unlicensed operator, whose call sign cell is blank.
       {
         headerName: 'Tactical', field: 'tacticalCall', maxWidth: 160, editable: false,
+        headerTooltip: 'The tactical call the reporting station used (for example "CERT Team 1"), from the tactical calls list on the Mission page. Blank if none was used. It cannot be edited here; enter the radio log entry again to change it.',
         tooltipValueGetter: (params: { data: RadioLogEntryType }) => this.operatorNameFor(params.data?.rangerUid),
       },
       // F29-44 (partial, 2026-08-29): headerName was `idFieldLabel || 'Callsign'` while field
@@ -223,6 +225,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // half) is a separate, still-open decision - see the handoff doc.
       {
         headerName: 'Callsign', field: "callsign", tooltipField: "team", maxWidth: 160,
+        headerTooltip: 'The reporting station\'s FCC call sign, such as K7ABC. It can be blank for members who are not licensed. Double-click to edit.',
         cellStyle: (params: { data: RadioLogEntryType }) => {
           const key = params.data.rangerUid || params.data.callsign
           return key ? { color: rangerColorFor(key), 'font-weight': 600 } : null
@@ -233,6 +236,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // recorded at save time and not re-resolved); the tooltip names the operator the same way.
       {
         headerName: 'To', colId: 'toStation', maxWidth: 200, editable: false,
+        headerTooltip: 'The station the message was sent to, shown as a tactical call and call sign such as "CERT Team 1 (K7ABC)". Blank if none was given. It cannot be edited here.',
         valueGetter: (params: { data: RadioLogEntryType }) => formatStation(params.data?.toTactical, params.data?.toCallsign),
         tooltipValueGetter: (params: { data: RadioLogEntryType }) => this.operatorNameFor(params.data?.toRangerUid),
       },
@@ -246,32 +250,37 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // pushing Status and Notes off screen.
       {
         headerName: "Address", field: "location.address", singleClickEdit: true, minWidth: 180, maxWidth: 420,
-        tooltipField: "location.address"
+        tooltipField: "location.address",
+        headerTooltip: 'Street address or place description for where the report came from. Free text, and it can be blank. Click to edit.'
       },
       {
         // valueSetter, not just field: "lat" - the real value lives at location.lat,
         // so without this an edit wrote a phantom top-level `lat` that nothing reads
         // and the displayed coordinate snapped back on the next refresh.
         headerName: "Lat", field: "lat", singleClickEdit: true, cellClass: 'number-cell', maxWidth: 130,
+        // E-166 (2026-09-30): ARES feedback asked for the format of each column on hover.
+        headerTooltip: 'Latitude in decimal degrees, shown to 4 places (for example 47.4235). Must be between -90 and 90; south is negative. Click to edit. Unlike the Entry page, this takes decimal degrees only, and a value that does not fit is ignored.',
         valueGetter: (params: { data: RadioLogEntryType }) => { return Math.round(params.data.location.lat * 10000) / 10000.0 },
         valueSetter: (params: { data: RadioLogEntryType, newValue: any }) => this.setCoordinate(params.data, 'lat', params.newValue)
       },
       {
         headerName: "Lng", field: "lng", singleClickEdit: true, cellClass: 'number-cell', maxWidth: 130,
+        headerTooltip: 'Longitude in decimal degrees, shown to 4 places (for example -122.4590). Must be between -180 and 180; west is negative. Click to edit. Unlike the Entry page, this takes decimal degrees only, and a value that does not fit is ignored.',
         valueGetter: (params: { data: RadioLogEntryType }) => { return Math.round(params.data.location.lng * 10000) / 10000.0 },
         valueSetter: (params: { data: RadioLogEntryType, newValue: any }) => this.setCoordinate(params.data, 'lng', params.newValue)
       },
-      { headerName: "Reported", headerTooltip: 'Report date', valueGetter: this.myDateGetter, maxWidth: 170, editable: false },
+      { headerName: "Reported", headerTooltip: 'The date and time the entry was logged: month-day, then the 24-hour time. It cannot be edited.', valueGetter: this.myDateGetter, maxWidth: 170, editable: false },
       // E-118 (2026-09-22): same overdue ramp as the map and the Rangers grid. cellClass
       // rather than cellStyle so the colour stays in the token layer (--rt-elapsed-N via
       // the global .rt-elapsed--N in styles/_patterns.scss) instead of becoming a third
       // hard-coded copy of the palette.
       {
-        headerName: "Elapsed", headerTooltip: 'Hrs:Min:Sec since report', valueGetter: this.myMinuteGetter,
+        headerName: "Elapsed", headerTooltip: 'How long ago the entry was logged, as hours:minutes:seconds (with days added after a day). It cannot be edited.', valueGetter: this.myMinuteGetter,
         maxWidth: 130, editable: false, cellClass: this.elapsedCellClass,
       },
       {
-        headerName: "Status", field: "status", minWidth: 130, maxWidth: 220, cellRenderer: this.statusCellRenderer,
+        headerName: "Status", field: "status",
+        headerTooltip: 'The entry\'s status. Valid values are the status list set on the Mission page. Double-click to edit.', minWidth: 130, maxWidth: 220, cellRenderer: this.statusCellRenderer,
         cellStyle: (params: { value: string; }) => {
           // Sprint E: the fill now resolves through the token layer (semantic key ->
           // --rt-status-*, custom color passes through), and an explicit ink color is set
@@ -286,12 +295,18 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // F29-46 (2026-08-29): Source was gathered on every report since E-41 phase 1 but never
       // surfaced anywhere - a live gap this column closes. Non-editable: it's how the report
       // actually arrived, not a value a later correction should change.
-      { headerName: "Source", field: "source", maxWidth: 110, editable: false },
+      {
+        headerName: "Source", field: "source", maxWidth: 110, editable: false,
+        headerTooltip: 'How the message reached you: Voice, Phone, Packet, APRS or Email. It cannot be edited.'
+      },
       // F29-48 (2026-08-29, D-44): same "captured but never surfaced" shape as Source above -
       // whoever was filing the report when Submit was pressed. Blank on any report that
       // predates this field, or where the scribe left it blank - both legitimate, never
       // substitute the current session's operator for a missing one.
-      { headerName: "Operator", field: "operator", maxWidth: 140, editable: false },
+      {
+        headerName: "Operator", field: "operator", maxWidth: 140, editable: false,
+        headerTooltip: 'Who was at the keyboard logging the entry (not who sent the report). Set when the entry is logged, blank if none was set, and it cannot be edited.'
+      },
       // The ONLY flex column, on purpose - see autoSizeStrategy above. Notes is both the
       // most variable-length field and the one a scribe most wants extra room for, so it
       // takes whatever width the content-sized columns leave behind. minWidth raised from
@@ -299,6 +314,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // the old floor by the other columns' own content-driven widths.
       {
         headerName: "Notes", field: "notes", cellRenderer: this.notesCellRenderer, flex: 1, minWidth: 260,
+        headerTooltip: 'What was said, in your own words. Free text, and it can be blank. Double-click to edit.',
         tooltipField: "notes"
       },
       // E-11 (2026-08-26): evidenceLocation was captured on Entry and visible nowhere
@@ -306,6 +322,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // gap named; see mapLeaflet.component.ts's displayMarkers() for the main-map marker.
       {
         headerName: "Evidence", field: "evidenceLocation", maxWidth: 110, editable: false,
+        headerTooltip: 'Shows a mark if the entry includes the location of evidence or a clue; hover the mark for its coordinates. Blank if none. It cannot be edited.',
         cellRenderer: this.evidenceCellRenderer,
         tooltipValueGetter: (params: { data: RadioLogEntryType }) => {
           const loc = params.data.evidenceLocation
@@ -356,6 +373,11 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     paginationAutoPageSize: true, // if set overrides paginationPageSize & forces it back to this on changes...
     //paginationPageSize: 5,
     // suppressScrollOnNewData: true, // grid to NOT scroll to the top, on page changes
+
+    // E-166 (2026-09-30): without a delay setting, AG Grid waits its default ~2 s before showing
+    // ANY tooltip, which made the new column header explanations look broken. Short, so a
+    // hover shows it, but not so short that sweeping the mouse across the header flickers.
+    tooltipShowDelay: 300,
 
     // EVENT handlers
     // onRowClicked: event => this.log.verbose('A row was clicked'),

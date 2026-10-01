@@ -8,7 +8,7 @@ import { CommonModule, DOCUMENT } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import {
   AfterViewInit, Component, computed, ElementRef, EventEmitter, Inject, Input, isDevMode, NgZone, OnDestroy,
-  OnInit, Output, signal, ViewChild,
+  OnInit, Output, signal, ViewChild, QueryList, ViewChildren,
   ChangeDetectionStrategy, effect
 } from '@angular/core'
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms'
@@ -89,6 +89,30 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // not the trigger directive attached to the input by `[matAutocomplete]="auto"` - the
   // trigger is what has closePanel(), so it needs its own ViewChild via the directive type.
   @ViewChild(MatAutocompleteTrigger) private autocompleteTriggerRef?: MatAutocompleteTrigger
+
+  // E-166 (2026-09-30): every autocomplete trigger (From and To), so Ctrl+Enter can tell
+  // whether an option list is open and leave the keystroke alone while it is.
+  @ViewChildren(MatAutocompleteTrigger) private autocompleteTriggers?: QueryList<MatAutocompleteTrigger>
+
+  // E-166 (2026-09-30): "I can't figure out how to finalize a radio log entry" (ARES user).
+  // Plain Enter must NOT submit (it picks an autocomplete option, and adds a line in Notes),
+  // so Ctrl+Enter / Cmd+Enter anywhere in the form does what the button does. Same path as
+  // the button: goes through requestSubmit(), i.e. the form's (ngSubmit), and honours the
+  // same formValid() check the button's [disabled] uses.
+  onFormKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey) || event.repeat) return
+    if (this.autocompleteTriggers?.some(t => t.panelOpen)) return
+    event.preventDefault()
+    if (!this.formValid()) return
+    ;(event.currentTarget as HTMLFormElement).requestSubmit()
+  }
+
+  // E-166: shown in the hint under the Add to radio log button; Apple keyboards say Cmd.
+  readonly submitShortcutLabel: string = (() => {
+    const nav: any = typeof navigator !== 'undefined' ? navigator : {}
+    const platform: string = nav.userAgentData?.platform || nav.platform || ''
+    return /mac|iphone|ipad/i.test(platform) ? '⌘+Enter' : 'Ctrl+Enter'
+  })()
 
   //  @ViewChild('LocationComponent') myLocationPickerInstance: any//LocationComponent;
   /** Likely NOT needed...

@@ -8,6 +8,16 @@ export class CustomTooltip implements ITooltipComp {
   eGui: any;
   init(params: ITooltipParams & { color: string }) {
     const eGui = (this.eGui = document.createElement('div'));
+    // E-166 (2026-09-30): this is the grid's defaultColDef tooltipComponent, so it is now also
+    // asked to draw column HEADER tooltips, where there is no row (or photo) to show. Those get
+    // a plain text box; only a real row cell gets the photo card below.
+    if (params.location === 'header' || params.rowIndex == null) {
+      eGui.classList.add('custom-tooltip')
+      eGui.style.padding = '8px 12px'
+      eGui.style.maxWidth = '320px'
+      eGui.textContent = String(params.value ?? '')
+      return
+    }
     const color = params.color || 'white';
     const data = params.api!.getDisplayedRowAtIndex(params.rowIndex!)!.data;
 

@@ -129,7 +129,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'The four questions',
-            text: 'Each radio log entry (a field report, if that is what your team calls it) answers four questions: who is reporting, where they are, when it happened, and what they said. Tab moves through them in radio-call order, so a whole report can be typed without touching the mouse.'
+            text: 'Each radio log entry (a field report, if that is what your team calls it) answers four questions: who is reporting, where they are, when it happened, and what they said. Tab moves through them in radio-call order, so a whole report can be typed without touching the mouse. When it is complete, log it with the "Add to radio log" button at the bottom, or press Ctrl+Enter (Cmd+Enter on a Mac) from any box.'
           },
           {
             heading: 'Operator',
