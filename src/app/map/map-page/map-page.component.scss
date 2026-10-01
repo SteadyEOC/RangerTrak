@@ -41,6 +41,13 @@
   margin-top: 0.75rem;
   font-size: 0.9rem;
 
+  // 2026-09-30 (John's screenshot): under MapLibre's cards this sat on the card borders' edge
+  // while every card's text is inset by mat-card's 16px padding, so it looked unaligned.
+  // Leaflet's controls are not in cards, so they and this line already share the page margin.
+  &--beside-cards {
+    padding-inline: 16px;
+  }
+
   input {
     margin-left: 0.5rem;
     min-width: 14rem;

@@ -63,10 +63,10 @@
     }
   </div>
 
-  <!-- 2026-09-30, John: E-152 - the sign-off line an ICS form ends with. Print-only. The app
-       does not know who is printing (the Entry page's operator name lives only in that
-       page's own form, not anywhere shared), so it is left as a line to write on. -->
-  <div class="map-prepared-by">
+  <!-- 2026-09-30, John: E-152 - the sign-off line an ICS form ends with. The input is
+       screen-only; its value prints on the sheet's footer line below. Pre-filled from the
+       Entry page's operator name (in-memory OperatorNameService, never saved). -->
+  <div class="map-prepared-by" [class.map-prepared-by--beside-cards]="engine() === 'maplibre'">
     <label>Prepared by (printed on the map sheet)
       <input type="text" [value]="preparedBy()" (input)="onPreparedByInput($event)" autocomplete="off" />
     </label>
