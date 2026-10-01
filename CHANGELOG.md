@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.14-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.13-alpha...v0.99.14-alpha) (2026-10-01)
+
+
+### Bug Fixes
+
+* update notice can appear on a page left open; USGS shaded relief has no holes ([8a05baa](https://github.com/SteadyEOC/RangerTrak/commit/8a05baa379613f7b9ef43a3192f39a5e68cdb36f))
+
 ### [0.99.13-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.12-alpha...v0.99.13-alpha) (2026-10-01)
 
 
