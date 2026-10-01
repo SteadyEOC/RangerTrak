@@ -335,15 +335,34 @@ mat-slide-toggle {
   // sheet is A4 or Letter, so the height is chosen to fit the shorter A4). The frame is the
   // positioning box for the north arrow (map-print-furniture), which sits over the map's
   // corner. A page-size print event re-measures the map - see LmapComponent.printMedia.
+  // 2026-09-30, John: "Now the entire legend is cropped off!" - it was meant to move to page 2
+  // whole, but only its heading showed, cut off at the foot of page 1. Following his "keep
+  // legends & title on the map if possible", the legend is now a slim column beside the map
+  // on page 1: the map keeps its full height and takes the rest of the width. A mission with
+  // a very long roster makes the row taller than the page and the rest follows on page 2.
   :host {
-    margin: 0;
+    margin               : 0;
+    display              : grid;
+    grid-template-columns: minmax(0, 1fr) 58mm;
+    column-gap           : 3mm;
+    align-items          : start;
+  }
+
+  .mapLeaflet-container {
+    grid-column: 1;
+    grid-row   : 1;
+  }
+
+  rangertrak-map-print-legend {
+    grid-column: 2;
+    grid-row   : 1;
   }
 
   .mapLeaflet-frame {
     position         : relative;
     // 2026-09-30, John: "Max the map" - 170 mm fills the rest of page 1 under the compact
-    // title band on A4 landscape (186 mm printable, the shorter of A4/Letter); the legend
-    // and the Prepared by line follow on page 2 when they don't fit beside it.
+    // title band on A4 landscape (186 mm printable, the shorter of A4/Letter), with the
+    // legend in a column beside it (see :host above).
     height           : 170mm;
     break-inside     : avoid;
     box-sizing       : border-box;
@@ -540,5 +559,20 @@ mat-slide-toggle {
   mat-slider {
     flex     : 1 1 220px;
     min-width: 180px;
+  }
+}
+
+// 2026-09-30, John: while Print map loads the sharper tiles (prepareSharpPrint()), the map is
+// given its printed size on screen too (landscape Letter's printable width, the print height),
+// so the tiles fetched are the ones the sheet shows. Screen only: on paper the print rules win.
+@media screen {
+  :host-context(body.rt-print-prep) .mapLeaflet-frame {
+    width    : 198mm; // 259 mm printable width, less the 58 mm legend column and its 3 mm gap
+    max-width: none;
+    height   : 170mm;
+  }
+
+  :host-context(body.rt-print-prep) #mapLeaflet-main {
+    height: 100%;
   }
 }

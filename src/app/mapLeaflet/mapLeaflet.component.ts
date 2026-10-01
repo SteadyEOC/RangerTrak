@@ -445,6 +445,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private readonly printMedia = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('print') : undefined
   private readonly onPrintMediaChange = () => {
+    this.setPrintMarkers(!!this.printMedia?.matches)
     this.lMap?.invalidateSize()
     this.refreshEdgeTicks()
   }
@@ -1511,10 +1512,110 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * copy of this method (see mapLibre.component.ts's onBtnPrintMap for why that engine
    * does).
    */
-  onBtnPrintMap(): void {
+  async onBtnPrintMap(): Promise<void> {
+    if (this.printPreparing()) {
+      return
+    }
+    const undo = await this.prepareSharpPrint()
     // 2026-09-30, John: E-152 - the body class, and now a landscape page, live in the shared
     // helper so both engines print the same sheet.
+    const started = Date.now()
     printMapSheet()
+    // window.print() blocks until the dialog closes in desktop browsers, so the map can be put
+    // back straight away. Where it returns at once, wait for afterprint instead, and as a last
+    // resort the next tap or click (a browser that never fires afterprint must not leave the
+    // map stuck in its print state).
+    if (Date.now() - started > 500) {
+      undo()
+    } else {
+      window.addEventListener('afterprint', undo, { once: true })
+      setTimeout(() => document.addEventListener('pointerdown', undo, { once: true }), 1000)
+    }
+  }
+
+  /** True while Print map is loading the sharper tiles (the button says so). */
+  readonly printPreparing = signal(false)
+
+  /**
+   * 2026-09-30, John: "printers show more resolution than screens" - base-map tiles are
+   * screen-resolution pictures, so they printed soft while everything drawn on top (markers,
+   * trails, rings, grid, ticks, text) printed sharp. Before the print dialog opens, this sizes
+   * the map like the printed sheet (`rt-print-prep`, see the scss), then reloads every tile
+   * layer on the map one zoom level deeper at half size (tileSize 128, zoomOffset 1): twice
+   * the detail in the same place on paper. It waits for those tiles (at most 8 s, the button
+   * says "Preparing...") so the print doesn't catch them half-loaded.
+   *
+   * Online only: the deeper tiles are fetched from the tile servers and are mostly not among
+   * the tiles saved for offline use, so offline the print stays as sharp as the screen rather
+   * than going blank. Returns the function that puts the map back.
+   */
+  private async prepareSharpPrint(): Promise<() => void> {
+    if (!this.lMap || !navigator.onLine) {
+      return () => { }
+    }
+    this.printPreparing.set(true)
+    document.body.classList.add('rt-print-prep')
+    this.lMap.invalidateSize()
+    type Saved = { layer: L.TileLayer, tileSize: L.TileLayerOptions['tileSize'], zoomOffset?: number, maxNativeZoom?: number }
+    const saved: Saved[] = []
+    this.lMap.eachLayer(layer => {
+      if (layer instanceof L.TileLayer) {
+        const o = layer.options
+        saved.push({ layer, tileSize: o.tileSize, zoomOffset: o.zoomOffset, maxNativeZoom: o.maxNativeZoom })
+      }
+    })
+    const loads = saved.map(({ layer }) => new Promise<void>(resolve => layer.once('load', () => resolve())))
+    for (const { layer, maxNativeZoom } of saved) {
+      const o = layer.options
+      const native = maxNativeZoom ?? o.maxZoom ?? 18
+      o.tileSize = 128
+      o.zoomOffset = (o.zoomOffset ?? 0) + 1
+      o.maxNativeZoom = native - 1 // so the deeper request never asks past the server's last level
+      this.lMap.removeLayer(layer)
+      this.lMap.addLayer(layer)
+    }
+    await Promise.race([Promise.all(loads), new Promise(r => setTimeout(r, 8000))])
+    this.printPreparing.set(false)
+
+    let undone = false
+    return () => {
+      if (undone || !this.lMap) {
+        return
+      }
+      undone = true
+      for (const { layer, tileSize, zoomOffset, maxNativeZoom } of saved) {
+        Object.assign(layer.options, { tileSize, zoomOffset, maxNativeZoom })
+        if (this.lMap.hasLayer(layer)) {
+          this.lMap.removeLayer(layer)
+          this.lMap.addLayer(layer)
+        }
+      }
+      document.body.classList.remove('rt-print-prep')
+      this.lMap.invalidateSize()
+    }
+  }
+
+  /**
+   * 2026-09-30, John: "Pdf can zoom, so should we turn off grouped markers on the printed
+   * map?" Yes: a group can't be clicked open on paper or in a PDF. While printing, every
+   * marker moves from the cluster group to a plain layer, and back afterwards. Runs from the
+   * print media change, so Ctrl+P gets it too, not just the Print map button.
+   */
+  private readonly printMarkers = L.layerGroup()
+  private setPrintMarkers(printing: boolean): void {
+    if (!this.lMap) {
+      return
+    }
+    if (printing && this.lMap.hasLayer(this.myMarkerCluster)) {
+      const markers = this.myMarkerCluster.getLayers()
+      this.lMap.removeLayer(this.myMarkerCluster)
+      markers.forEach(m => this.printMarkers.addLayer(m))
+      this.printMarkers.addTo(this.lMap)
+    } else if (!printing && this.lMap.hasLayer(this.printMarkers)) {
+      this.printMarkers.clearLayers()
+      this.lMap.removeLayer(this.printMarkers)
+      this.lMap.addLayer(this.myMarkerCluster)
+    }
   }
 
   /**

@@ -10,9 +10,9 @@
 @media print {
   :host {
     display    : block;
-    margin-top : 2mm;
+    margin-top : 0;
     color      : #000;
-    font-size  : 7.5pt;
+    font-size  : 7pt;
     // 2026-09-30, John: the legend was splitting across the page break ("Urgent is cropped
     // at bottom"); kept whole, it moves to page 2 when it doesn't fit under the map.
     break-inside: avoid;
@@ -32,13 +32,13 @@
   }
 
   .legend__cols {
-    column-width: 45mm;
+    column-width: 45mm; // one column beside the Leaflet map (58 mm), several under MapLibre's
     column-gap  : 5mm;
   }
 
   .legend__group {
     break-inside: avoid-column;
-    margin-bottom: 2mm;
+    margin-bottom: 1.5mm;
   }
 
   .legend__row {

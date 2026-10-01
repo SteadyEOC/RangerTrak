@@ -42,10 +42,14 @@
           <span>Evidence or clue location</span>
         </div>
       }
+      <!-- 2026-09-30, John: the printed Leaflet map shows every marker on its own (no groups,
+           see MapLeafletComponent.setPrintMarkers), so the group row is MapLibre's only. -->
+      @if (engine() !== 'leaflet') {
       <div class="legend__row">
         <span class="legend__cluster">3</span>
         <span>Several entries close together (zoom the map in to separate them)</span>
       </div>
+      }
       @if (overlays().includes('usng')) {
         <div class="legend__row">
           <span class="legend__trail" style="border-top-color: #cc0066"></span>

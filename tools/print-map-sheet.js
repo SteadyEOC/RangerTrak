@@ -115,6 +115,21 @@ async function main() {
       document.body.classList.add('rt-print-map');
     })()`)
     await sleep(1500)
+    // Press the real Print map button, so the sheet gets the same sharper (one zoom level
+    // deeper) tiles a user's print does. Headless Chrome has no print dialog, so the map stays
+    // in its prepared state for the capture below.
+    await evaluate(`document.querySelector('[data-testid="printMap"]')?.click()`)
+    for (let i = 0; i < 40; i++) {
+      await sleep(250)
+      if (await evaluate(`!document.querySelector('[data-testid="printMap"]')?.disabled`)) break
+    }
+    await evaluate(`(() => {
+      const style = document.createElement('style');
+      style.textContent = '@page { size: letter landscape; margin: 10mm 10mm 14mm 10mm; '
+        + '@bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9pt sans-serif; color: #000; } }';
+      document.head.appendChild(style);
+      document.body.classList.add('rt-print-map');
+    })()`) // printMapSheet() took its own copies off again when window.print() returned
     await send('Emulation.setEmulatedMedia', { media: 'print' })
     await sleep(6000) // tiles for the re-measured map
     const ticks = await evaluate(`document.querySelectorAll('.map-edge-ticks__label').length`)
