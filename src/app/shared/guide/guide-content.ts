@@ -474,7 +474,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Printing the map',
-            text: 'Print map gives you a finished landscape map sheet: a title block with the mission, the operational period and when it was printed, the map with a north arrow, a scale bar and the map credit, a legend explaining every marker, team, place and shading on it, and a line at the bottom to sign as the person who prepared it. A long legend carries on to a second page.'
+            text: 'Print map gives you a one-page landscape map sheet: a title line with the mission, the operational period and when it was printed; the map filling most of the page, with a north arrow, a scale bar, the map credit and latitude/longitude marks around its edge; a legend beside the map explaining every marker, team, place and shading on it; and a line at the bottom to sign as the person who prepared it. Every report prints as its own marker (no numbered bubbles), so a PDF can be zoomed to see them. Online, Print map spends a few seconds ("Preparing the map...") fetching a more detailed map for paper; offline it prints what is on screen. Use the Print map button, not the browser\'s own Print command, which skips that step.'
           },
           {
             // 2026-09-30, John: E-162 / E-138 - map layers and the Zoom to offline tiles button.
