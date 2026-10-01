@@ -11,7 +11,7 @@ import 'leaflet'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 import 'leaflet.markercluster'
 import {
-  getStorageInfo, getStoredTilesAsJson, getTilePoints, savetiles, tileLayerOffline
+  getStorageInfo, getStoredTilesAsJson, getTilePoints, getTileUrl, hasTile, savetiles, tileLayerOffline
 } from 'leaflet.offline' // https://github.com/allartk/leaflet.offline
 import type { SaveStatus } from 'leaflet.offline'
 //import { markerClusterGroup } from 'leaflet'
@@ -1545,25 +1545,37 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * the detail in the same place on paper. It waits for those tiles (at most 8 s, the button
    * says "Preparing...") so the print doesn't catch them half-loaded.
    *
-   * Online only: the deeper tiles are fetched from the tile servers and are mostly not among
-   * the tiles saved for offline use, so offline the print stays as sharp as the screen rather
-   * than going blank. Returns the function that puts the map back.
+   * Offline (2026-10-01, John: "Why is the offline map lower resolution?"): the deeper tiles
+   * can only come from the tiles saved on this device. "Save this area" already keeps two
+   * deeper zoom levels (LEAFLET_SAVE_EXTRA_ZOOM_LEVELS), so they are often there. Each offline
+   * base layer is sharpened only if EVERY deeper tile the printed area needs is saved
+   * (deeperTilesSaved()); otherwise it prints as sharp as the screen, never patchy with blank
+   * squares. Online-only overlays (hillshade, trails, satellite) draw nothing offline anyway
+   * and are left alone. Returns the function that puts the map back.
    */
   private async prepareSharpPrint(): Promise<() => void> {
-    if (!this.lMap || !navigator.onLine) {
+    if (!this.lMap) {
       return () => { }
     }
+    const online = navigator.onLine
     this.printPreparing.set(true)
     document.body.classList.add('rt-print-prep')
     this.lMap.invalidateSize()
     type Saved = { layer: L.TileLayer, tileSize: L.TileLayerOptions['tileSize'], zoomOffset?: number, maxNativeZoom?: number }
     const saved: Saved[] = []
+    const candidates: L.TileLayer[] = []
     this.lMap.eachLayer(layer => {
-      if (layer instanceof L.TileLayer) {
+      if (layer instanceof L.TileLayer
+        && (online || this.offlineTileLayers.includes(layer as ReturnType<typeof tileLayerOffline>))) {
+        candidates.push(layer)
+      }
+    })
+    for (const layer of candidates) {
+      if (online || await this.deeperTilesSaved(layer)) {
         const o = layer.options
         saved.push({ layer, tileSize: o.tileSize, zoomOffset: o.zoomOffset, maxNativeZoom: o.maxNativeZoom })
       }
-    })
+    }
     const loads = saved.map(({ layer }) => new Promise<void>(resolve => layer.once('load', () => resolve())))
     for (const { layer, maxNativeZoom } of saved) {
       const o = layer.options
@@ -1592,6 +1604,31 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       }
       document.body.classList.remove('rt-print-prep')
       this.lMap.invalidateSize()
+    }
+  }
+
+  /**
+   * Offline sharp print: whether every tile one zoom level deeper than the current view, over
+   * the area the print shows (the map is already at its printed size), is saved on this device.
+   * Keys are built the way leaflet.offline builds them (first subdomain, see its
+   * TileLayerOffline), so a saved tile at zoom z+1 matches what the sharpened layer will ask for.
+   */
+  private async deeperTilesSaved(layer: L.TileLayer): Promise<boolean> {
+    const z = Math.round(this.lMap.getZoom()) + 1
+    const native = layer.options.maxNativeZoom ?? layer.options.maxZoom ?? 18
+    if (z > native) {
+      return false
+    }
+    const view = this.lMap.getBounds()
+    const area = L.bounds(this.lMap.project(view.getNorthWest(), z), this.lMap.project(view.getSouthEast(), z))
+    const url = (layer as unknown as { _url: string })._url
+    const subdomain = (layer.options.subdomains as string | string[] | undefined)?.[0]
+    const keys = getTilePoints(area, layer.getTileSize())
+      .map(p => getTileUrl(url, { ...layer.options, x: p.x, y: p.y, z, s: subdomain }))
+    try {
+      return (await Promise.all(keys.map(k => hasTile(k)))).every(Boolean)
+    } catch {
+      return false
     }
   }
 
