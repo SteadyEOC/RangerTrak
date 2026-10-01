@@ -86,6 +86,29 @@
   <!-- 2026-09-30, John: print defaulted to "Save as PDF", and on one browser only a file-name
        dialog appeared. A web page cannot choose the printer or skip the dialog; see
        shared/export/print-tip.ts and ics213-print.ts. -->
+  <!-- 2026-10-01, John: a record of phone-browser behaviours found while testing the installed
+       app on Android ("Not terrible, but a record of behaviors"). -->
+  <rangertrak-expandable-section summary="Installing on a phone: how browsers differ">
+    <ul>
+      <li><strong>Chrome, Edge, Samsung Internet:</strong> open rangertrak.org, then the browser menu,
+        <em>Add to Home screen</em>, and choose <em>Install</em> (not "Create shortcut"). The app then
+        opens in its own window, and Back from its first page closes it.</li>
+      <li><strong>Chrome's "Download" button</strong> is not installing: it saves a still copy of the page
+        for reading ("Viewing an offline copy of this page"), in which the app doesn't work. Close it
+        and install as above.</li>
+      <li><strong>Firefox for Android:</strong> the home-screen RangerTrak opens as an ordinary Firefox tab.
+        Pressing Back from the app's first page shows a blank Firefox screen with no menu; that is
+        Firefox's empty tab, not RangerTrak, and your data is untouched. Use the app's own menu to move
+        between pages, or install from one of the browsers above for a true app window.</li>
+      <li><strong>"RangerTrak is already open":</strong> only one copy of the app may edit your data at a
+        time, so an older RangerTrak tab still open in the same browser brings this up. Switch to that
+        one, or press <em>Use this tab instead</em>.</li>
+      <li><strong>The keyboard:</strong> on phones and tablets the radio log entry page no longer opens the
+        on-screen keyboard by itself; tap a box when you're ready to type. (With the keyboard open,
+        Android's Back closes the keyboard first.)</li>
+    </ul>
+  </rangertrak-expandable-section>
+
   <rangertrak-expandable-section summary="I pressed Print but it saved a PDF instead.">
     Every Print button opens your browser's own print dialog, and the browser starts on the
     last place you printed to, which is often "Save as PDF". Choose your printer there once;

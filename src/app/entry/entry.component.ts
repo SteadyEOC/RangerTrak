@@ -764,6 +764,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    * its own, with nothing here between it and the browser's paint - untouched, opens normally.
    */
   private focusCallsignSuppressingAutoOpen(): void {
+    // 2026-10-01, John: on a phone the automatic cursor raises the on-screen keyboard on every
+    // visit to Entry (and after every entry added), covering the page, and Android's Back then
+    // only closes the keyboard. Touch-first devices skip it; tapping the box still focuses it.
+    // Laptops and desktops keep it - a scribe at a keyboard types the next call straight away.
+    if (this.isTouchFirstDevice) {
+      return
+    }
     this.callsignInputRef?.nativeElement.focus()
     this.autocompleteTriggerRef?.closePanel()
   }
