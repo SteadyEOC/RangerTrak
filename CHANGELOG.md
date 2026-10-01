@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.15-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.14-alpha...v0.99.15-alpha) (2026-10-01)
+
+
+### Bug Fixes
+
+* **entry:** no automatic keyboard on phones; Help records how phone browsers differ ([e31da63](https://github.com/SteadyEOC/RangerTrak/commit/e31da634402454ee426fd7bbf6187bf0ce18b719))
+
 ### [0.99.14-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.13-alpha...v0.99.14-alpha) (2026-10-01)
 
 
