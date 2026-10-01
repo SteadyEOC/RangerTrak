@@ -897,7 +897,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   }
 
   onBtnClearRadioLog() {
-    if (Utility.getConfirmation('REALLY delete all FieldReports in LocalStorage?')) {
+    if (Utility.getConfirmation('Delete every radio log entry on this device, and every ICS-213 message with it? This cannot be undone.')) {
       this.log.info("Removing all radio log entries from local storage...", this.id)
       this.radioLogService.deleteAllRadioLogEntries()
       this.refreshGrid()
