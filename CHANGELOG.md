@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.12-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.11-alpha...v0.99.12-alpha) (2026-10-01)
+
+
+### Features
+
+* **print:** sharper printed map offline too, from the tiles saved for offline use ([80aa0a0](https://github.com/SteadyEOC/RangerTrak/commit/80aa0a058bd6a9e38c6d6a7d4dd2d0440a72dac5))
+
 ### [0.99.11-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.10-alpha...v0.99.11-alpha) (2026-10-01)
 
 ### [0.99.10-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.9-alpha...v0.99.10-alpha) (2026-10-01)
