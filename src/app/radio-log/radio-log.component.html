@@ -1,10 +1,20 @@
 <rangertrak-page [title]="title" [description]="pageDescr">
   <h2 class="visually-hidden">Radio Log</h2>
   <div id="reportsgrid">
+    <!-- E-166 (2026-09-30): an ARES user tried to type a NEW line into this grid and press
+         Enter. The grid only edits existing entries; new ones come only from Entry, and nothing
+         here said so. A button above the grid (all widths, phones included) plus an empty-state
+         line say it. -->
+    <div class="rt-action-bar__buttons radio-log__add-row">
+      <a matButton="filled" routerLink="/entry">Add entry</a>
+    </div>
+    @if (radioLogEntries().length === 0) {
+      <p class="radio-log__empty">No radio log entries yet. Add one on the <a routerLink="/entry">Entry page</a>, or load a demo mission from the Mission page.</p>
+    }
     @if (!isPhone()) {
       <ag-grid-angular #reportsGrid rowAnimation style="width: 100%;" [style.height]="gridHeight()" (gridReady)="onGridReady($event)"
         [gridOptions]="gridOptions" [rowData]="radioLogEntries()" [columnDefs]="columnDefs"
-        [tooltipShowDelay]="500">
+        [tooltipShowDelay]="300">
         <!--
 [defaultColDef]="defaultColDef"
 [columnDefs]="columnDefs"

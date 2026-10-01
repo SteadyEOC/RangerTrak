@@ -276,3 +276,7 @@
   font-weight     : bold;
   background-color: var(--rt-readiness-green);
 }
+
+// E-166 (2026-09-30): the "Add entry" button row and the empty-state line above the grid.
+.radio-log__add-row { margin-bottom: 12px; }
+.radio-log__empty { margin: 0 0 12px; color: var(--rt-ink-2); }

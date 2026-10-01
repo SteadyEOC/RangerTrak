@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router'
 import { GridOptions, SelectionChangedEvent } from 'ag-grid-community'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 // , TeamService
@@ -54,6 +55,7 @@ export class myUnusedPipe implements PipeTransform {
     CommonModule,
     AgGridAngular,
     PageComponent,
+    RouterLink,
     ExpandableSectionComponent,
     ...MATERIAL_IMPORTS
   ],
@@ -65,7 +67,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
   private id = 'Radio Log'
   title = 'Radio Log — ICS-309'
-  pageDescr = `Every radio log entry, in one grid - who, where, when, and what they said.`
+  pageDescr = `Every radio log entry, in one grid - who, where, when, and what they said. Add new entries on the Entry page; edit existing ones here.`
 
   private radioLogSubscription!: Subscription
 
@@ -215,7 +217,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // hover for an unlicensed operator, whose call sign cell is blank.
       {
         headerName: 'Tactical', field: 'tacticalCall', maxWidth: 160, editable: false,
-        headerTooltip: 'The tactical call the reporting station used (for example "CERT Team 1"), from the tactical calls list on the Mission page. Blank if none was used. It cannot be edited here; enter the radio log entry again to change it.',
+        headerTooltip: 'The tactical call the reporting station used (for example "CERT Team 1"), from the tactical calls list on the Mission page. Blank if none was used. It cannot be edited here.',
         tooltipValueGetter: (params: { data: RadioLogEntryType }) => this.operatorNameFor(params.data?.rangerUid),
       },
       // F29-44 (partial, 2026-08-29): headerName was `idFieldLabel || 'Callsign'` while field
@@ -269,7 +271,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         valueGetter: (params: { data: RadioLogEntryType }) => { return Math.round(params.data.location.lng * 10000) / 10000.0 },
         valueSetter: (params: { data: RadioLogEntryType, newValue: any }) => this.setCoordinate(params.data, 'lng', params.newValue)
       },
-      { headerName: "Reported", headerTooltip: 'The date and time the entry was logged: month-day, then the 24-hour time. It cannot be edited.', valueGetter: this.myDateGetter, maxWidth: 170, editable: false },
+      { headerName: "Reported", headerTooltip: 'The date and time the entry was logged: month-day, then 24-hour time, for example 9-30 17:16:05. It cannot be edited.', valueGetter: this.myDateGetter, maxWidth: 170, editable: false },
       // E-118 (2026-09-22): same overdue ramp as the map and the Rangers grid. cellClass
       // rather than cellStyle so the colour stays in the token layer (--rt-elapsed-N via
       // the global .rt-elapsed--N in styles/_patterns.scss) instead of becoming a third
@@ -663,7 +665,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
     try {  // TODO: Use the date pipe instead?
       //weekday[d.getDay()] +
-      dt = formatDate(d, 'M-dd HH:MM:ss', 'en-US')
+      dt = formatDate(d, 'M-dd HH:mm:ss', 'en-US')
       //this.log.excessive(`Day is: ${params.data.date.toISOString()}`, this.id)
     } catch (error: any) {
       dt = `Bad date format: Error name: ${error.name}; msg: ${error.message}`
@@ -673,7 +675,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     //this.log.excessive(`Day is: ${params.data.date.toISOString()}`, this.id)
     /*
         if (this.isValidDate(d)) {
-          dt = weekday[d.getDay()] + formatDate(d, 'yyyy-MM-dd HH:MM:ss', 'en-US')
+          dt = weekday[d.getDay()] + formatDate(d, 'yyyy-MM-dd HH:mm:ss', 'en-US')
           this.log.excessive(`Day is: ${params.data.date.toISOString()}`, this.id)
         }
     */
