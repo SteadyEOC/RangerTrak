@@ -11,7 +11,8 @@ import 'leaflet'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 import 'leaflet.markercluster'
 import {
-  getStorageInfo, getStoredTilesAsJson, getTilePoints, getTileUrl, hasTile, savetiles, tileLayerOffline
+  downloadTile, getStorageInfo, getStoredTilesAsJson, getTilePoints, getTileUrl, hasTile, saveTile, savetiles,
+  tileLayerOffline
 } from 'leaflet.offline' // https://github.com/allartk/leaflet.offline
 import type { SaveStatus } from 'leaflet.offline'
 //import { markerClusterGroup } from 'leaflet'
@@ -719,6 +720,31 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const esriReference = (service: string) => L.tileLayer(
       `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/${service}/MapServer/tile/{z}/{y}/{x}`,
       { maxZoom: 19, minZoom: 3, attribution: 'Roads and labels: &copy; <a href="https://www.esri.com">Esri</a>' })
+    // 2026-10-01, John: "Can we offer ability to save hillshade, satellite, etc. layers too?"
+    // Esri's terms don't allow saving its imagery or hillshade for offline use, so those stay
+    // online only. The US government's National Map (USGS) is public-domain data with no API
+    // key: its aerial photos (tiles to zoom 16, mostly 1 m NAIP imagery in the lower 48) and
+    // its shaded relief (to zoom 13) are tileLayerOffline layers, so they auto-cache as viewed
+    // and can be saved with "Save this area" (the relief rides along with the base layer's
+    // save, see saveReliefTiles()). US only. Both URLs checked with curl (JPEG tiles, ~30 KB
+    // for photos). The relief is an opaque grey JPEG, hence the reduced opacity, as with the
+    // Esri hillshade above.
+    const usgsImageryTiles = tileLayerOffline(
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxNativeZoom: 16, maxZoom: 19, minZoom: 3,
+        attribution: 'Aerial photos: <a href="https://www.usgs.gov/programs/national-geospatial-program/national-map">USGS The National Map</a>, USDA NAIP',
+      }
+    )
+    const usgsReliefOverlay = tileLayerOffline(
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxNativeZoom: 13, maxZoom: 19, minZoom: 3, opacity: 0.45,
+        attribution: 'Shaded relief: <a href="https://www.usgs.gov/programs/national-geospatial-program/national-map">USGS The National Map</a>, 3DEP',
+      }
+    )
+    this.usgsReliefOverlay = usgsReliefOverlay
+
     const roadsLabelsOverlay = L.layerGroup([
       esriReference('World_Transportation'),
       esriReference('World_Boundaries_and_Places'),
@@ -728,6 +754,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'OpenStreetMap': tiles,
       'OpenTopoMap (contours)': openTopoTiles,
       'Satellite (Esri World Imagery)': satelliteTiles,
+      'USGS aerial photos (US only, can be saved)': usgsImageryTiles,
     }
     // Region download manager, phase A (scoped 2026-08-25, built 2026-08-26 on request):
     // "a browsable/verifiable record of which specific areas are on disk," not just the
@@ -754,6 +781,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // custom UI needed - the control already exists from E-85.
     const overlayLayers: Record<string, L.Layer> = {
       'Hillshade (terrain relief)': hillshadeOverlay,
+      'USGS shaded relief (US only, can be saved)': usgsReliefOverlay,
       'Mile grid': this.mileGridLayer,
       'USNG / MGRS grid': this.usngGridLayer,
       'Range rings (from command post)': this.rangeRingsLayer,
@@ -787,6 +815,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       [...legendKeys].filter(([layer]) => this.lMap.hasLayer(layer)).map(([, key]) => key))
     this.lMap.on('overlayadd overlayremove', syncLegendOverlays)
     this.lMap.on('overlayadd overlayremove', () => this.ringsOn.set(this.lMap.hasLayer(this.rangeRingsLayer)))
+    // 2026-10-01: the save estimate includes the USGS shaded relief while it's on.
+    this.lMap.on('overlayadd overlayremove', () => this.refreshEstimatedAreaInfo?.())
     this.lMap.on('overlayadd', (e: L.LayersControlEvent) => {
       if (e.layer === this.mileGridLayer) {
         this.refreshMileGrid()
@@ -829,7 +859,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       // OpenTopoMap's servers with however many tiles the current view/zoom-depth needs.
       confirm: (status: SaveStatus, successCallback: Function) => this.confirmSaveTiles(status, successCallback),
     }).addTo(this.lMap)
-    this.offlineTileLayers = [tiles, openTopoTiles]
+    this.offlineTileLayers = [tiles, openTopoTiles, usgsImageryTiles]
+    this.saveTilesControl = saveTilesControl
     // openTopoTiles (not tiles/OSM) - it's the layer actually .addTo()'d above and the one
     // saveTilesControl is actually bound to at construction; wireOfflineAreaInfo's info panel
     // needs to start tracking the SAME layer or its zoomlevels/maxZoom (and the OSM-disabled
@@ -993,9 +1024,11 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       alert('Switch to OpenTopoMap to save for offline use - OpenStreetMap\'s servers don\'t allow it.')
       return
     }
-    if (status.lengthToBeSaved > LEAFLET_SAVE_TILE_CAP) {
+    // The USGS shaded relief, when on, is saved too and counts toward the cap.
+    const needed = status.lengthToBeSaved + this.reliefSaveCount
+    if (needed > LEAFLET_SAVE_TILE_CAP) {
       alert(
-        `That area would need ${status.lengthToBeSaved.toLocaleString()} tiles - above the `
+        `That area would need ${needed.toLocaleString()} tiles - above the `
         + `${LEAFLET_SAVE_TILE_CAP.toLocaleString()}-tile limit per save. Zoom in to a `
         + `smaller area, or save it in a few smaller pieces, and try again.`
       )
@@ -1004,7 +1037,61 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const estimate = this.saveEstimateText || `${status.lengthToBeSaved.toLocaleString()} tiles`
     if (confirm(`Save this area for offline use (${estimate})?`)) {
       successCallback()
+      void this.saveReliefTiles()
     }
+  }
+
+  /** The USGS shaded relief overlay (see initMainMap), saved alongside the base layer. */
+  private usgsReliefOverlay?: ReturnType<typeof tileLayerOffline>
+  /** The "Save this area" control, for the zoom levels the relief save copies. */
+  private saveTilesControl?: ReturnType<typeof savetiles>
+  /** How many relief tiles the next save adds (0 when the overlay is off), for the estimate and cap. */
+  private reliefSaveCount = 0
+
+  /** The relief zoom levels a save covers: the base layer's levels, capped at the relief's last (13). */
+  private reliefSaveLevels(baseLevels: number[]): number[] {
+    const relief = this.usgsReliefOverlay
+    if (!relief || !this.lMap?.hasLayer(relief)) {
+      return []
+    }
+    const top = relief.options.maxNativeZoom ?? 13
+    return [...new Set(baseLevels.map(z => Math.min(z, top)))]
+  }
+
+  /**
+   * 2026-10-01, John: saves the USGS shaded relief for the same area and zoom levels as the
+   * base layer's save just started (leaflet.offline's save control saves one layer), when the
+   * relief overlay is on. Tiles already saved are skipped; three at a time, like the base save;
+   * a failed tile is skipped rather than stopping the rest.
+   */
+  private async saveReliefTiles(): Promise<void> {
+    const relief = this.usgsReliefOverlay
+    const levels = this.reliefSaveLevels((this.saveTilesControl?.options.zoomlevels as number[] | undefined) ?? [])
+    if (!relief || !levels.length) {
+      return
+    }
+    const url = (relief as unknown as { _url: string })._url
+    const view = this.lMap.getBounds()
+    const jobs = levels.flatMap(z => getTilePoints(
+      L.bounds(this.lMap.project(view.getNorthWest(), z), this.lMap.project(view.getSouthEast(), z)), L.point(256, 256))
+      .map(p => ({ x: p.x, y: p.y, z })))
+    let saved = 0
+    const worker = async () => {
+      for (let job = jobs.shift(); job; job = jobs.shift()) {
+        const key = getTileUrl(url, { ...relief.options, ...job })
+        try {
+          if (!(await hasTile(key))) {
+            const blob = await downloadTile(key)
+            await saveTile({ key, url: key, urlTemplate: url, ...job, createdAt: Date.now() }, blob)
+            saved++
+          }
+        } catch (err) {
+          this.log.warn(`saveReliefTiles(): skipped ${key}: ${err}`, this.id)
+        }
+      }
+    }
+    await Promise.all([worker(), worker(), worker()])
+    this.log.info(`saveReliefTiles(): saved ${saved} USGS shaded relief tiles`, this.id)
   }
 
   private wireOfflineAreaInfo(
@@ -1089,7 +1176,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       saveButton.classList.toggle('rt-savetiles-disabled', saveBlocked)
       saveButton.setAttribute('aria-disabled', String(saveBlocked))
       if (this.satelliteBaseActive) {
-        estimateInfo.textContent = 'Satellite imagery is online only. Switch to OpenTopoMap to save for offline use.'
+        estimateInfo.textContent = 'Esri satellite imagery can\'t be saved (its terms don\'t allow it). '
+          + 'Switch to OpenTopoMap, or in the US to USGS aerial photos, to save for offline use.'
         this.saveEstimateText = ''
         return
       }
@@ -1102,7 +1190,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
       // P1-2: the active layer's own maxZoom (OpenTopoMap 17, OSM 19) - a hard-coded 19 used
       // to ask OpenTopoMap for levels past its own tile-generation limit and get nothing.
-      const layerMaxZoom = activeTiles.options.maxZoom ?? this.lMap.getZoom()
+      // 2026-10-01: maxNativeZoom first - the USGS photos stop at 16 but enlarge to 19.
+      const layerMaxZoom = activeTiles.options.maxNativeZoom ?? activeTiles.options.maxZoom ?? this.lMap.getZoom()
       const zoom = this.lMap.getZoom()
       const zoomLevels = zoomLevelsForSave(zoom, layerMaxZoom)
       control.options.zoomlevels = zoomLevels
@@ -1120,12 +1209,19 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         )
         return sum + getTilePoints(area, activeTiles.getTileSize()).length
       }, 0)
+      // The USGS shaded relief, when it's on, is saved with the base layer (saveReliefTiles()).
+      const reliefCount = this.reliefSaveLevels(zoomLevels).reduce((sum, levelZoom) => sum + getTilePoints(
+        L.bounds(this.lMap.project(bounds.getNorthWest(), levelZoom), this.lMap.project(bounds.getSouthEast(), levelZoom)),
+        L.point(256, 256)).length, 0)
+      this.reliefSaveCount = reliefCount
 
       getStorageInfo(urlTemplate).then((stored) => {
         const avgBytes = stored.length > 0
           ? stored.reduce((sum, t) => sum + (t.blob?.size ?? 0), 0) / stored.length
           : FALLBACK_TILE_BYTES
-        this.saveEstimateText = `~${tileCount} tiles (zoom ${zoomLevels[0]}–${zoomLevels[zoomLevels.length - 1]}), ~${formatBytes(tileCount * avgBytes)}`
+        const total = tileCount + reliefCount
+        this.saveEstimateText = `~${total} tiles (zoom ${zoomLevels[0]}–${zoomLevels[zoomLevels.length - 1]}`
+          + `${reliefCount ? `, incl. ${reliefCount} shaded relief` : ''}), ~${formatBytes(total * avgBytes)}`
         estimateInfo.textContent = `This view: ${this.saveEstimateText}.`
       }).catch((err) => this.log.error(`refreshEstimatedAreaInfo(): ${err}`, this.id))
     }
