@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.10-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.9-alpha...v0.99.10-alpha) (2026-10-01)
+
+
+### Bug Fixes
+
+* **entry:** decimal-degree boxes no longer drop leading zeros or a "-0" (moved positions up to ~55 km) ([2f4e750](https://github.com/SteadyEOC/RangerTrak/commit/2f4e75059b80c22aa1cc72ba79d0df3c1dbd7c85))
+
 ### [0.99.9-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.8-alpha...v0.99.9-alpha) (2026-10-01)
 
 
