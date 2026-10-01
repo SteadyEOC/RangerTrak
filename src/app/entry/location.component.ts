@@ -225,27 +225,46 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   private canonical = signal<{ lat: number; lng: number }>({ lat: 0, lng: 0 })
 
   // Coordinates as Decimal Degrees (DD)
+  //
+  // 2026-10-01, BREAKING BUG fixed (found by the blog session): the fraction was a NUMBER, so
+  // 36.0524 split into 36 and 524, the box showed "36 . 524", and onDdChg() rebuilt 36.524 -
+  // editing ANY DD box moved a position whose decimals start with 0 by up to ~55 km, and a
+  // scribe typing "0524" got 524. Both parts are now digit STRINGS: the fraction keeps its
+  // leading zeros, and the degrees keep a "-0" (a number input showed -0.12, e.g. London's
+  // longitude, as 0 and rebuilt it as +0.12). Five decimals (about 1 m), trailing zeros
+  // trimmed. See LocationComponent.ddPartsToDegrees() for the way back.
   ddModel = linkedSignal(() => {
     const { lat, lng } = this.canonical()
-    const latI = Math.trunc(lat)
-    const lngI = Math.trunc(lng)
-    return {
-      latI,
-      latF: Math.abs(Math.round((lat - latI) * 10000)),
-      lngI,
-      lngF: Math.abs(Math.round((lng - lngI) * 10000)),
-    }
+    const lat2 = LocationComponent.degreesToDdParts(lat)
+    const lng2 = LocationComponent.degreesToDdParts(lng)
+    return { latI: lat2.i, latF: lat2.f, lngI: lng2.i, lngF: lng2.f }
   })
+
+  /** 36.0524 -> { i: '36', f: '0524' }; -0.12 -> { i: '-0', f: '12' }; rounded to 5 places. */
+  static degreesToDdParts(deg: number): { i: string, f: string } {
+    const [int, frac] = Math.abs(deg).toFixed(5).split('.')
+    const negative = deg < 0 && Number(`${int}.${frac}`) !== 0
+    return { i: (negative ? '-' : '') + int, f: frac.replace(/0+$/, '') || '0' }
+  }
+
+  /** The way back from the two boxes: ('36', '0524') -> 36.0524; ('-0', '12') -> -0.12. */
+  static ddPartsToDegrees(i: string, f: string): number {
+    const neg = String(i).trim().startsWith('-')
+    const magnitude = Math.abs(Number(String(i).trim())) + Number(`0.${String(f).trim() || '0'}`)
+    return neg ? -magnitude : magnitude
+  }
   // Sprint E, step 5 (2026-08-19): min/max were static HTML attributes stripped to fix
   // NG8022 ([formField] cannot coexist with them - Signal Forms owns them from schema). This
   // schema restores them as real validators AND fixes two bugs found while restoring it:
   // latI's range was -180..180 (longitude's range, copy-pasted onto latitude) rather than
   // the correct -90..90.
+  // 2026-10-01: the parts are strings now (see ddModel), so the ranges are patterns: whole
+  // degrees -90..90 / -180..180 (a "-0" allowed), and 1-6 fraction digits.
   ddForm = form(this.ddModel, (p) => {
-    min(p.latI, -90); max(p.latI, 90)
-    min(p.latF, 0); max(p.latF, 99999)
-    min(p.lngI, -180); max(p.lngI, 180)
-    min(p.lngF, 0); max(p.lngF, 99999)
+    pattern(p.latI, /^\s*-?(\d|[1-8]\d|90)\s*$/)
+    pattern(p.latF, /^\s*\d{1,6}\s*$/)
+    pattern(p.lngI, /^\s*-?(\d{1,2}|1[0-7]\d|180)\s*$/)
+    pattern(p.lngF, /^\s*\d{1,6}\s*$/)
   })
 
   // Coordinates as Degrees & Decimal Minutes (DDM)
@@ -498,10 +517,17 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
    */
   onDdChg() {
     const { latI, latF, lngI, lngF } = this.ddModel()
+    const lat = LocationComponent.ddPartsToDegrees(latI, latF)
+    const lng = LocationComponent.ddPartsToDegrees(lngI, lngF)
+    // A box holding something that isn't a number (the pattern marks it red) must not move
+    // the position to NaN; nothing is emitted until it's corrected.
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return
+    }
 
     const enteredLocation = {
-      lat: parseFloat(`${latI}.${latF}`),
-      lng: parseFloat(`${lngI}.${lngF}`),
+      lat,
+      lng,
       address: undefinedAddressFlag,
       derivedFromAddress: false
     }
@@ -651,8 +677,8 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
     switch (system) {
       case 'DD': {
         const { latI, latF, lngI, lngF } = this.ddModel()
-        // Matches onDdChg()'s own reconstruction exactly (`${latI}.${latF}`) - the display
-        // and the value a real edit here would produce are kept identical on purpose.
+        // The same two string parts onDdChg() rebuilds from (leading zeros kept), so the
+        // display and the value a real edit here would produce stay identical on purpose.
         return `${latI}.${latF}°, ${lngI}.${lngF}°`
       }
       case 'DDM': {

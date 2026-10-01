@@ -55,10 +55,10 @@
       <fieldset class="input-group rt-coord-axis" [hidden]="!isVisible('DD')">
         <legend class="enter__field-label">Latitude</legend>
         <span class="rt-coord-group">
-          <input #latI [formField]="ddForm.latI" type="number" (change)="onDdChg()" class="rt-coord-seg rt-coord-seg--deg"
+          <input #latI [formField]="ddForm.latI" type="text" autocomplete="off" (change)="onDdChg()" class="rt-coord-seg rt-coord-seg--deg"
             id="enter__Where-latI" aria-label="Latitude degrees, decimal degrees format" [attr.tabindex]="ti(0)"
             [class.border-danger]="ddForm.latI().touched() && ddForm.latI().invalid()" /><span class="rt-coord-dot">.</span>
-          <input #latF [formField]="ddForm.latF" type="number" (change)="onDdChg()" step="100" class="rt-coord-seg rt-coord-seg--frac"
+          <input #latF [formField]="ddForm.latF" type="text" inputmode="numeric" autocomplete="off" (change)="onDdChg()" class="rt-coord-seg rt-coord-seg--frac"
             id="enter__Where-latF" aria-label="Latitude decimal fraction, decimal degrees format" [attr.tabindex]="ti(1)"
             [class.border-danger]="ddForm.latF().touched() && ddForm.latF().invalid()" /><span class="rt-coord-unit">°</span>
         </span>
@@ -70,10 +70,10 @@
       <fieldset class="input-group rt-coord-axis" [hidden]="!isVisible('DD')">
         <legend class="enter__field-label">Longitude</legend>
         <span class="rt-coord-group">
-          <input #lngI [formField]="ddForm.lngI" type="number" id="enter__Where-lngI" aria-label="Longitude degrees, decimal degrees format" class="rt-coord-seg rt-coord-seg--deg"
+          <input #lngI [formField]="ddForm.lngI" type="text" autocomplete="off" id="enter__Where-lngI" aria-label="Longitude degrees, decimal degrees format" class="rt-coord-seg rt-coord-seg--deg"
             (change)="onDdChg()" [attr.tabindex]="ti(2)"
             [class.border-danger]="ddForm.lngI().touched() && ddForm.lngI().invalid()" /><span class="rt-coord-dot">.</span>
-          <input #lngF [formField]="ddForm.lngF" type="number" step="100" id="enter__Where-lngF" aria-label="Longitude decimal fraction, decimal degrees format" class="rt-coord-seg rt-coord-seg--frac"
+          <input #lngF [formField]="ddForm.lngF" type="text" inputmode="numeric" autocomplete="off" id="enter__Where-lngF" aria-label="Longitude decimal fraction, decimal degrees format" class="rt-coord-seg rt-coord-seg--frac"
             (change)="onDdChg()" [attr.tabindex]="ti(3)"
             [class.border-danger]="ddForm.lngF().touched() && ddForm.lngF().invalid()" /><span class="rt-coord-unit">°</span>
         </span>
