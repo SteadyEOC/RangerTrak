@@ -5,6 +5,8 @@ import {
   MissionService, MissionLocationService, MissionLocationType
 } from './'
 import { DEFAULT_OP_PERIOD_HOURS } from './mission-migration'
+import { newRangerUid } from './ranger-migration'
+import type { TacticalCallType } from './mission.interface'
 import { recordStore } from '../storage/record-store'
 import { setActiveDemoScenario } from '../mapping/demo-map'
 
@@ -94,6 +96,8 @@ type ScenarioData = {
   rangers: RangerType[]
   rows: Row[]
   locations: MissionLocationType[]
+  /** E-165: the demo's tactical calls; `callsign` names the roster member staffing it (none = unstaffed). */
+  tacticalCalls: { name: string, callsign?: string }[]
   /** Becomes the mission's default location (defLat/defLng), so Entry's starting position
    *  and mini-map open where the demo happens rather than wherever the device was last set
    *  up - added 2026-09-25 when Grand Canyon became the default demo on a Vashon default. */
@@ -222,8 +226,16 @@ export class SampleDataService {
     // the header read "Op period —", which made the demo and its screenshots look unfinished).
     const oldestMinutes = Math.max(0, ...data.rows.map(r => r.minutesAgo))
     const opPeriodStart = new Date(Date.now() - (oldestMinutes + 5) * 60 * 1000)
+    // E-165: the roster needs its uids NOW (not minted later on the post-load reload) so the
+    // tactical calls below can link to them. A uid is the join key and nothing else.
+    const rangers = data.rangers.map(r => ({ ...r, uid: r.uid || newRangerUid() }))
+    const tacticalCalls: TacticalCallType[] = data.tacticalCalls.map(t => {
+      const uid = t.callsign ? rangers.find(r => r.callsign === t.callsign)?.uid : undefined
+      return uid ? { name: t.name, rangerUid: uid } : { name: t.name }
+    })
     this.missionService.updateMission({
       ...this.missionService.settings,
+      tacticalCalls,
       mission: SampleDataService.sampleMissionId(),
       event: data.event,
       eventNotes: data.eventNotes,
@@ -233,8 +245,8 @@ export class SampleDataService {
       opPeriodStart,
       opPeriodEnd: new Date(opPeriodStart.getTime() + DEFAULT_OP_PERIOD_HOURS * 60 * 60 * 1000),
     })
-    this.rangerService.replaceAllRangers(data.rangers)
-    const radioLog = this.assembleRadioLog(data.rows, data.rangers, data.event)
+    this.rangerService.replaceAllRangers(rangers)
+    const radioLog = this.assembleRadioLog(data.rows, rangers, data.event, tacticalCalls)
     this.radioLogService.replaceAllRadioLog(radioLog)
     this.missionLocationService.replaceAllLocations(data.locations)
 
@@ -343,11 +355,19 @@ export class SampleDataService {
    * replaceAllRadioLog() recalculates it from the report coordinates, exactly as it does for
    * a real import.
    */
-  private assembleRadioLog(rows: Row[], rangers: RangerType[], event: string): Omit<RadioLogType, 'bounds'> {
+  private assembleRadioLog(
+    rows: Row[], rangers: RangerType[], event: string, tacticalCalls: TacticalCallType[] = [],
+  ): Omit<RadioLogType, 'bounds'> {
     const statuses = this.statusNames()
     const now = Date.now()
     const known = new Set(rangers.map(r => r.callsign))
     const logEntries: RadioLogEntryType[] = []
+    // E-165: a row from a staffed tactical call's operator is logged under that tactical call
+    // (so the Tactical column and the 309 show the demo), and field traffic is logged TO the
+    // first tactical call (the command post). Recorded the same way Entry records them.
+    const tacticalByUid = new Map(tacticalCalls.filter(t => t.rangerUid).map(t => [t.rangerUid!, t.name]))
+    const toStation = tacticalCalls[0]
+    const toOperator = toStation?.rangerUid ? rangers.find(r => r.uid === toStation.rangerUid) : undefined
 
     rows.forEach((row, index) => {
       if (!known.has(row.callsign)) {
@@ -356,9 +376,16 @@ export class SampleDataService {
         this.log.error(`Sample report ${index} references unknown callsign "${row.callsign}" - skipped.`, this.id)
         return
       }
+      const uid = rangers.find(r => r.callsign === row.callsign)?.uid
+      const tactical = uid ? tacticalByUid.get(uid) : undefined
+      const toThisStation = toStation && toOperator && toOperator.callsign !== row.callsign
       logEntries.push({
         id: logEntries.length,
         callsign: row.callsign,
+        ...(tactical ? { tacticalCall: tactical, rangerUid: uid } : {}),
+        ...(toThisStation
+          ? { toTactical: toStation.name, toCallsign: toOperator.callsign, toRangerUid: toOperator.uid }
+          : {}),
         location: { lat: row.lat, lng: row.lng, address: row.address, derivedFromAddress: false },
         date: new Date(now - row.minutesAgo * 60 * 1000),
         status: statuses[row.statusIndex] ?? statuses[0],
@@ -515,6 +542,9 @@ export class SampleDataService {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: SampleDataService.SAMPLE_EVENT_NOTES,
       rangers, rows, locations, commandPost: CP,
+      // E-165: demo tactical calls - three staffed (by roster callsign) and one deliberately left
+      // unstaffed, so the feature shows both states. See loadSampleMission().
+      tacticalCalls: [ { name: 'Vashon EOC', callsign: '!CmdPost' }, { name: 'CERT Team 1', callsign: 'CERT1' }, { name: 'CERT Team 2', callsign: 'CERT3' }, { name: 'Marine Aid', callsign: undefined } ],
     }
   }
 
@@ -667,6 +697,9 @@ export class SampleDataService {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: 'Overdue day hiker last seen starting down the Bright Angel Trail',
       rangers, rows, locations, commandPost: CP,
+      // E-165: demo tactical calls - three staffed (by roster callsign) and one deliberately left
+      // unstaffed, so the feature shows both states. See loadSampleMission().
+      tacticalCalls: [ { name: 'Command Post', callsign: '!CmdPost' }, { name: 'Rim Team 1', callsign: 'Rim1' }, { name: 'Below Rim Team', callsign: 'Below1' }, { name: 'Medical Aid', callsign: undefined } ],
     }
   }
 
@@ -777,6 +810,9 @@ export class SampleDataService {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: 'Lost child reported near the midway; heat illness and crowd-flow support ongoing',
       rangers, rows, locations, commandPost: CP,
+      // E-165: demo tactical calls - three staffed (by roster callsign) and one deliberately left
+      // unstaffed, so the feature shows both states. See loadSampleMission().
+      tacticalCalls: [ { name: 'Command Post', callsign: '!CmdPost' }, { name: 'Gate Team', callsign: 'Gate1' }, { name: 'Search Team', callsign: 'Search1' }, { name: 'First Aid Tent', callsign: undefined } ],
     }
   }
 
@@ -884,6 +920,9 @@ export class SampleDataService {
       event: SampleDataService.SAMPLE_EVENT_NAME,
       eventNotes: 'Investigate report of a lost individual near this location',
       rangers, rows, locations, commandPost: CP,
+      // E-165: demo tactical calls - three staffed (by roster callsign) and one deliberately left
+      // unstaffed, so the feature shows both states. See loadSampleMission().
+      tacticalCalls: [ { name: 'Command Post', callsign: '!CmdPost' }, { name: 'North Team', callsign: 'North1' }, { name: 'South Team', callsign: 'South1' }, { name: 'Medical Aid', callsign: undefined } ],
     }
   }
 }

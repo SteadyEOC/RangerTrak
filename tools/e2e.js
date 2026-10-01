@@ -843,7 +843,9 @@ async function checkEntryTabOrder() {
   // F29-47's subject213/operator insertion (2026-08-29) and the AM/PM segment's removal
   // (2026-08-30) each moved this number before it - see entry.component.ts's own comments on
   // all three changes, and the walkthrough just above for the full, current 1..47 accounting.
-  check('Entry exposes the expected number of keyboard stops', r.count, 47)
+  // 48, not 47: E-165 (2026-09-30) added the To station box right after the From box (stop 2),
+  // pushing Location and everything after it down by one.
+  check('Entry exposes the expected number of keyboard stops', r.count, 48)
 }
 
 async function checkEntryAutofocusAndReset() {

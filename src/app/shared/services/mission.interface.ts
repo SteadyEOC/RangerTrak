@@ -2,6 +2,17 @@ import { RadioLogStatusType } from './radio-log-entry.interface'
 import { LocationCategoryType } from './mission-location.interface'
 
 /**
+ * E-165 (2026-09-30): one mission-scoped tactical call - a position or team name ("Vashon EOC",
+ * "CERT Team 1"), optionally staffed by one roster member. `rangerUid` is a link into
+ * `RangerType.uid` and nothing else: no name or call sign is copied here (CLAUDE.md rule 5 -
+ * no new PII), and a link whose ranger has since been deleted simply reads as unstaffed.
+ */
+export type TacticalCallType = {
+  name: string,
+  rangerUid?: string,
+}
+
+/**
  * This has 'all' event data (aside from Rangers & Radio Log entries)
  * for readily serialization/dehydration
  */
@@ -136,4 +147,12 @@ export type MissionType = {
   // deliberately false, not true - silently inheriting an auto-print-every-213 behavior is
   // exactly the kind of surprise this field should never spring on an existing mission.
   autoPrint213: boolean,
+
+  // E-165 (2026-09-30): the mission's tactical call list (name + optionally the roster member
+  // staffing it). Entry's From and To station pickers offer these, and the staffed member's
+  // call sign and uid are copied onto each entry at save time (see RadioLogEntryType.
+  // tacticalCall). Additive-only field, same reasoning as recipientOptions213/
+  // checkInIntervalMin above - no MISSION_SCHEMA_VERSION bump needed, backfillMissingFields
+  // supplies `[]` (see initMission()) to any returning user whose stored settings predate it.
+  tacticalCalls: TacticalCallType[],
 }

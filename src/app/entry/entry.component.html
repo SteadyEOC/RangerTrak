@@ -135,7 +135,7 @@
       <div class="enter__section">
         <!-- 2026-09-30, John: E-151 - label says whose ID this is; the hover text says what to put in it. -->
         <mat-form-field class="enter__Callsign" floatLabel="always"
-          title="Pick the ranger reporting: type their ID, call sign or name. The ID is the unique number or code this mission gives each ranger on the Rangers page (for example SF-21).">
+          title="Pick who is reporting: a tactical call from the Mission page, or a ranger by ID, call sign or name. The ID is the unique number or code this mission gives each ranger on the Rangers page (for example SF-21).">
           <!-- Raised live, 2026-08-27: this picker still matches on callsign/name/id
                together (ADR D-42/D-43, see _filterRangers() in entry.component.ts) and
                still stores the ranger's callsign - only the LABEL follows Mission Setup's
@@ -160,18 +160,59 @@
                callsign - blank if that's the truth - rather than the displayed fallback. -->
           <!-- class= lands on the overlay panel, where styles.scss can reach it; the panel is
                rendered outside this component, so entry.component.scss cannot. -->
+          <!-- E-165: a "Tactical calls" group (this mission's list, Mission page) above the
+               roster. Picking one records the tactical name and, if someone is assigned to it,
+               that operator's call sign and roster link - see resolveStation(). The group is
+               absent when the mission has no tactical calls (or none match what was typed). -->
           <mat-autocomplete #auto="matAutocomplete" class="enter__Callsign-panel">
-            <mat-option *ngFor="let ranger of filteredRangers | async"
-              [value]="ranger.callsign || ranger.fullName">
-              <img class="enter__Callsign-img" aria-hidden="true" [src]="'./assets/imgs/rangers/'+bundledRangerImage(ranger.image)"
-                width="40" height="40">
-              <span class="enter__Callsign-text"><span>{{ranger.callsign || '(no callsign)'}}</span> |
-                <small>{{ranger.fullName}} | {{ranger.phone}}</small></span>
-            </mat-option>
+            @if ((filteredTacticalCalls | async)?.length) {
+            <mat-optgroup label="Tactical calls">
+              @for (tc of filteredTacticalCalls | async; track tc.name) {
+              <mat-option [value]="tc.name">{{ tc.name }}</mat-option>
+              }
+            </mat-optgroup>
+            }
+            <mat-optgroup label="Roster">
+              <mat-option *ngFor="let ranger of filteredRangers | async"
+                [value]="ranger.callsign || ranger.fullName">
+                <img class="enter__Callsign-img" aria-hidden="true" [src]="'./assets/imgs/rangers/'+bundledRangerImage(ranger.image)"
+                  width="40" height="40">
+                <span class="enter__Callsign-text"><span>{{ranger.callsign || '(no callsign)'}}</span> |
+                  <small>{{ranger.fullName}} | {{ranger.phone}}</small></span>
+              </mat-option>
+            </mat-optgroup>
           </mat-autocomplete>
         </mat-form-field>
         <span id="enter__Callsign-image"> </span>
         <span id="enter__Callsign-upshot"> </span>
+        <!-- E-165: the station the message went TO, over the air. Same options and rules as the
+             From box above; writes toTactical/toCallsign/toRangerUid. Not the ICS-213
+             "addressed to" checklist further down (a person/position on the 213 form), and
+             neither fills in the other. Typing a call sign or name that is not in the roster is
+             fine and is kept as typed. -->
+        <mat-form-field class="enter__Callsign enter__To-station" floatLabel="always"
+          title="The station this message was sent to: a tactical call from the Mission page, or a ranger by ID, call sign or name. Leave blank if it does not matter.">
+          <mat-label>To station</mat-label>
+          <input matInput [formControl]="toCtrl" type="text" placeholder="Optional" aria-label="To station"
+            [matAutocomplete]="autoTo" id="enter__To-input" [attr.tabindex]="toStationTabIndex"
+            data-lpignore="true" spellcheck="false" />
+          <mat-autocomplete #autoTo="matAutocomplete" class="enter__Callsign-panel">
+            @if ((filteredToTacticalCalls | async)?.length) {
+            <mat-optgroup label="Tactical calls">
+              @for (tc of filteredToTacticalCalls | async; track tc.name) {
+              <mat-option [value]="tc.name">{{ tc.name }}</mat-option>
+              }
+            </mat-optgroup>
+            }
+            <mat-optgroup label="Roster">
+              <mat-option *ngFor="let ranger of filteredToRangers | async"
+                [value]="ranger.callsign || ranger.fullName">
+                <span class="enter__Callsign-text"><span>{{ranger.callsign || '(no callsign)'}}</span> |
+                  <small>{{ranger.fullName}} | {{ranger.phone}}</small></span>
+              </mat-option>
+            </mat-optgroup>
+          </mat-autocomplete>
+        </mat-form-field>
       </div>
 
       <!-- ======================================= -->
@@ -380,7 +421,7 @@
             Reply requested
           </mat-checkbox>
           <fieldset class="enter__213-field enter__field-fieldset">
-            <legend class="enter__field-label">To (recipients)</legend>
+            <legend class="enter__field-label">ICS-213 addressed to</legend>
             <!-- E-103: per-mission definable checklist (settings.recipientOptions213).
                  Material-M3 pass: mat-chip-listbox[multiple], with each mat-chip-option's
                  selection bound manually via [selected]/(selectionChange) rather than the
@@ -392,7 +433,7 @@
                  listbox above; only the LISTBOX reserves a tab stop (recipients213
                  CheckboxesTabIndex's own comment in entry.component.ts explains why
                  individual options don't each get one). -->
-            <mat-chip-listbox [multiple]="true" aria-label="Recipients"
+            <mat-chip-listbox [multiple]="true" aria-label="ICS-213 addressed to"
               [tabIndex]="recipients213CheckboxesTabIndex">
               @for (opt of settings.recipientOptions213; track opt) {
               <mat-chip-option [selected]="selectedRecipients213().has(opt)"

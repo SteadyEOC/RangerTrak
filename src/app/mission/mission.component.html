@@ -102,6 +102,10 @@
       <rangertrak-mission-recipients213 [options]="recipientOptions213()" [form]="settingsForm"
         (optionsChange)="onRecipientOptions213Change($event)"></rangertrak-mission-recipients213>
 
+      <!-- E-165: mission-scoped tactical call list (name + optional staffing roster member). -->
+      <rangertrak-mission-tactical-calls [items]="tacticalCalls()" (itemsChange)="onTacticalCallsChange($event)">
+      </rangertrak-mission-tactical-calls>
+
       <!-- Sharing. -->
       <rangertrak-mission-command-post [form]="settingsForm"></rangertrak-mission-command-post>
     </div>

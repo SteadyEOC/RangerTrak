@@ -45,6 +45,11 @@ import { RadioLogType } from './radio-log-entry.interface'
 export type CommandPostReport = {
   id: number
   callsign: string
+  // E-165: tactical call and the To station, as recorded on the entry. Names and FCC call signs
+  // only - the roster links (rangerUid/toRangerUid) stay on the device, like the roster itself.
+  tacticalCall: string
+  toTactical: string
+  toCallsign: string
   date: string
   status: string
   source: string
@@ -128,6 +133,9 @@ export class CommandPostPublishService {
       reports: radioLog.logEntries.map((r): CommandPostReport => ({
         id: r.id,
         callsign: r.callsign,
+        tacticalCall: r.tacticalCall ?? '',
+        toTactical: r.toTactical ?? '',
+        toCallsign: r.toCallsign ?? '',
         date: new Date(r.date).toISOString(),
         status: r.status,
         source: r.source ?? '',

@@ -31,7 +31,7 @@ import { TimePickerComponent } from '../shared/time-picker/time-picker.component
 import { DDToDDM } from '../shared/mapping/coordinate'
 import {
   RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
-  LogService, RangerService, RangerType, MissionService, MissionType, SampleDataService,
+  LogService, RangerService, RangerType, MissionService, MissionType, TacticalCallType, SampleDataService,
   statusColorValue, undefinedAddressFlag, undefinedLocation, WelcomePanelService, FieldModeService
 } from '../shared/services/'
 // Direct path, not the barrel above - see the note in rangers.component.ts for why a
@@ -112,7 +112,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // that count, so the whole chain is now computed from one base plus each field's
   // own slot count - correct once, instead of five places each hardcoding an offset.
   callsignTabIndex = 1
-  locationTabIndexStart = 2
+  // E-165 (2026-09-30): the To station picker sits right after From in the Who section, so
+  // everything from Location on moved down one (locationTabIndexStart was 2). Every later slot
+  // is computed from this one, so the chain stays contiguous; the total went from 47 to 48.
+  toStationTabIndex = 2
+  locationTabIndexStart = 3
   // Raised live, 2026-08-26: evidence/clue location moved into the Where section itself
   // (entry.component.html) - it IS a location, and reading it right after the reporter's own
   // position makes more sense than finding it after the whole 213 section, far down the
@@ -191,6 +195,10 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   private rangersSubscription!: Subscription
   public rangers: RangerType[] = []
   filteredRangers!: Observable<RangerType[]>
+  // E-165: the "Tactical calls" option group above the roster, for From and for To.
+  filteredTacticalCalls!: Observable<TacticalCallType[]>
+  filteredToRangers!: Observable<RangerType[]>
+  filteredToTacticalCalls!: Observable<TacticalCallType[]>
 
   private missionSubscription!: Subscription
   public settings!: MissionType
@@ -264,6 +272,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // gets saved - see the fixed-2026-08-19 note on the [formControl]/formControlName clash in
   // entry.component.html. Typed to string so .value needs no cast.
   callsignCtrl = new FormControl<string>('', { nonNullable: true })
+  // E-165: the To station picker - same option source and rules as callsignCtrl, writing the
+  // to* fields. Deliberately NOT the ICS-213 "addressed to" checklist (recipients213): that is
+  // the addressee person/position on the 213 form, this is the station the message went to
+  // over the air, and neither auto-fills the other.
+  toCtrl = new FormControl<string>('', { nonNullable: true })
   //readonly imagePath = "'./assets/imgs/rangers/'" // not yet used by *.html
 
   // Get location events from <location> component
@@ -763,6 +776,34 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       ?? null
   }
 
+  /**
+   * E-165: resolves what the scribe typed or picked in a station box to the fields recorded on
+   * the entry. A tactical call (exact name, case-insensitive) wins over a roster row of the
+   * same text - they are offered in their own group above the roster, so picking one must mean
+   * that one. A staffed tactical call records the operator's uid and call sign RIGHT NOW (the
+   * call sign may be blank for an unlicensed operator); an unstaffed one - or one whose
+   * assigned ranger has since been deleted - records the tactical name alone. Otherwise the
+   * text resolves as a roster row, or stays raw text exactly as before.
+   */
+  private resolveStation(text: string): { tactical?: string, rangerUid: string, callsign: string } {
+    const typed = text.trim()
+    const needle = typed.toLowerCase()
+    const tc = needle ? (this.settings?.tacticalCalls ?? []).find(t => t.name.trim().toLowerCase() === needle) : undefined
+    if (tc) {
+      const operator = tc.rangerUid ? this.rangers.find(r => r.uid === tc.rangerUid) : undefined
+      return { tactical: tc.name.trim(), rangerUid: operator?.uid ?? '', callsign: operator?.callsign ?? '' }
+    }
+    const match = this.matchRanger(typed)
+    return { rangerUid: match?.uid ?? '', callsign: match ? match.callsign : typed }
+  }
+
+  /** E-165: tactical calls whose name contains what has been typed (all of them when blank). */
+  private _filterTacticalCalls(value: string): TacticalCallType[] {
+    const f = value.trim().toLowerCase()
+    const all = this.settings?.tacticalCalls ?? []
+    return f ? all.filter(t => t.name.toLowerCase().includes(f)) : all.slice()
+  }
+
   private _filterRangers(value: string): RangerType[] {
     const filterValue = value.toLowerCase()
     if (!filterValue) {
@@ -795,6 +836,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     })
     // operatorModel is deliberately NOT reset here - see its own declaration above.
     this.callsignCtrl.setValue('')
+    this.toCtrl.setValue('')
     this.entryControlsForm.setValue({
       status: this.settings.radioLogStatuses[this.settings.defRadioLogStatus].status
     })
@@ -817,13 +859,20 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // An unmatched entry keeps the raw text as the callsign and an empty uid - a scribe
     // logging a callsign that isn't in the roster yet is normal mid-incident, and losing what
     // they heard would be worse than an unresolved join.
-    const typed = (this.callsignCtrl.value ?? '').trim()
-    const match = this.matchRanger(typed)
+    // E-165: From may now be a tactical call - resolveStation() records its operator's uid and
+    // call sign at this moment (never looked up later), and To is resolved the same way.
+    // tacticalCall and the to* fields are left off entirely when empty, like every other optional field.
+    const from = this.resolveStation(this.callsignCtrl.value ?? '')
+    const to = this.resolveStation(this.toCtrl.value ?? '')
 
     return {
       ...this.entryModel(),
-      rangerUid: match?.uid ?? '',
-      callsign: match ? match.callsign : typed,
+      rangerUid: from.rangerUid,
+      callsign: from.callsign,
+      ...(from.tactical ? { tacticalCall: from.tactical } : {}),
+      ...(to.tactical ? { toTactical: to.tactical } : {}),
+      ...(to.callsign ? { toCallsign: to.callsign } : {}),
+      ...(to.rangerUid ? { toRangerUid: to.rangerUid } : {}),
       status: this.entryControlsForm.value.status,
       // D-44: stamped from whatever operatorModel holds AT SUBMIT - see its own declaration.
       // Trimmed so "typed then deleted" reads as blank, not whitespace.
@@ -867,6 +916,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       startWith(''),
       map(callsign => (callsign ? this._filterRangers(callsign) : this.rangers.slice())),
     )
+    // E-165: the same filtering for the tactical-call group, and for the To station box.
+    this.filteredTacticalCalls = this.callsignCtrl.valueChanges.pipe(
+      startWith(''), map(v => this._filterTacticalCalls(v)))
+    this.filteredToRangers = this.toCtrl.valueChanges.pipe(
+      startWith(''), map(v => (v ? this._filterRangers(v) : this.rangers.slice())))
+    this.filteredToTacticalCalls = this.toCtrl.valueChanges.pipe(
+      startWith(''), map(v => this._filterTacticalCalls(v)))
   }
 
   /**
@@ -928,6 +984,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       this.operatorEditing.set(false)
     }
     this.callsignCtrl.reset('')
+    this.toCtrl.reset('')
     this.entryControlsForm.reset({
       status: this.settings.radioLogStatuses[this.settings.defRadioLogStatus].status
     })
@@ -965,7 +1022,17 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.log.verbose(`EntryForm callsignChanged looking for ${callsign}`, this.id)
 
-      let ranger = this.rangerService.getRangerByCallsign(callsign)
+      // E-165: a tactical call resolves to its operator (by uid); an unstaffed one has no one
+      // to show, so the panel is simply cleared rather than showing the "unknown" silhouette.
+      const station = this.resolveStation(callsign)
+      if (station.tactical && !station.rangerUid) {
+        this.callImg.innerHTML = ''
+        this.callInfo.innerHTML = ''
+        return
+      }
+      let ranger = station.tactical
+        ? this.rangerService.getRangerByUid(station.rangerUid)
+        : this.rangerService.getRangerByCallsign(callsign)
 
       // E-38. This is the photo's whole purpose: confirming *who* a report is about, while
       // it is being entered. Order: a photograph stored on this device (D-35 - never in the

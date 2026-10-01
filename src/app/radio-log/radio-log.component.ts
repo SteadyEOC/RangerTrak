@@ -22,6 +22,7 @@ import { rangertrakGridTheme } from '../shared/ag-grid-theme'
 // app.routes.ts); going through the barrel would drag MapLibre into THIS chunk for no reason.
 import { rangerColorFor } from '../shared/mapping/ranger-marker'
 import { buildIcs309Log, Ics309Log } from '../shared/export/ics309-log'
+import { formatStation } from '../shared/export/station-label'
 import { parseReportPacket, REPORT_PACKET_SCHEMA_VERSION } from '../shared/export/report-packet'
 import {
   RadioLogService, RadioLogStatusType, RadioLogType, RadioLogEntryType, LogService,
@@ -205,6 +206,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         tooltipValueGetter: (params: { data: RadioLogEntryType }) =>
           params.data.sourceUid ? 'Merged in from a Report Packet - not typed on this device' : undefined,
       },
+      // E-165 (2026-09-30): the tactical call the From station used, immediately before the FCC
+      // Callsign column. Read-only for this pass - an edit here would need the operator's
+      // call sign and roster link re-resolved (and the record-at-save-time rule says an entry
+      // never re-resolves on its own), so a correction is made by re-entering the entry. The
+      // tooltip names the operator through the LIVE roster (rangerUid -> fullName): the useful
+      // hover for an unlicensed operator, whose call sign cell is blank.
+      {
+        headerName: 'Tactical', field: 'tacticalCall', maxWidth: 160, editable: false,
+        tooltipValueGetter: (params: { data: RadioLogEntryType }) => this.operatorNameFor(params.data?.rangerUid),
+      },
       // F29-44 (partial, 2026-08-29): headerName was `idFieldLabel || 'Callsign'` while field
       // stayed hardcoded "callsign" - a mission that renames its id field (e.g. to "REW")
       // rendered a column headed "REW" full of callsign data. Header now names what the
@@ -216,6 +227,14 @@ export class RadioLogComponent implements OnInit, OnDestroy {
           const key = params.data.rangerUid || params.data.callsign
           return key ? { color: rangerColorFor(key), 'font-weight': 600 } : null
         }
+      },
+      // E-165: the station the message went TO - "CERT Team 1 (K7ABC)", same shared format as the
+      // ICS-309. Read-only in the grid for the same reason as Tactical above (to* fields are
+      // recorded at save time and not re-resolved); the tooltip names the operator the same way.
+      {
+        headerName: 'To', colId: 'toStation', maxWidth: 200, editable: false,
+        valueGetter: (params: { data: RadioLogEntryType }) => formatStation(params.data?.toTactical, params.data?.toCallsign),
+        tooltipValueGetter: (params: { data: RadioLogEntryType }) => this.operatorNameFor(params.data?.toRangerUid),
       },
       // { headerName: "Team", field: "team" },
       // Dot path, not "address": the address lives on the nested location object, exactly
@@ -379,7 +398,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     private radioLogService: RadioLogService,
     private log: LogService,
     // private teamService: TeamService,
-    // private rangerService: RangerService,
+    private rangerService: RangerService,
     private missionService: MissionService,
     @Inject(DOCUMENT) private document: Document
   ) {
@@ -393,6 +412,25 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     this.phoneMediaQuery.addEventListener('change', this.onPhoneMediaChange)
   }
 
+
+  /**
+   * E-165: the operator's name for a Tactical/To cell's hover, from the live roster by uid -
+   * undefined (no tooltip) when the entry has no roster link or that member is gone.
+   */
+  private operatorNameFor(uid: string | undefined): string | undefined {
+    if (!uid) return undefined
+    return this.rangerService.rangers.find(r => r.uid === uid)?.fullName || undefined
+  }
+
+  /** E-165: From station for the phone cards - tactical and/or FCC call, in the shared format. */
+  stationFrom(report: RadioLogEntryType): string {
+    return formatStation(report.tacticalCall, report.callsign)
+  }
+
+  /** E-165: To station for the phone cards and the 309; blank when none was recorded. */
+  stationTo(report: RadioLogEntryType): string {
+    return formatStation(report.toTactical, report.toCallsign)
+  }
 
   // Initialize data or fetch external data from services or API (https://geeksarray.com/blog/angular-component-lifecycle)
   ngOnInit(): void {

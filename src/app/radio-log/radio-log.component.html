@@ -168,7 +168,7 @@
         @for (report of radioLogEntries(); track report.id) {
           <article class="radio-log-cards__card" role="listitem">
             <header class="radio-log-cards__header">
-              <span class="radio-log-cards__callsign">{{ report.callsign }}</span>
+              <span class="radio-log-cards__callsign">{{ stationFrom(report) }}</span>
               @if (report.sourceUid) {
                 <span class="radio-log-cards__origin"
                   title="Merged in from a Report Packet - not typed on this device">📦</span>
@@ -180,6 +180,9 @@
               <span class="radio-log-cards__reported">{{ myDateGetter({ data: report }) }}</span>
               <span class="radio-log-cards__elapsed">{{ myMinuteGetter({ data: report }) }}</span>
             </div>
+            @if (stationTo(report)) {
+            <div class="radio-log-cards__row">To: {{ stationTo(report) }}</div>
+            }
             <div class="radio-log-cards__row">{{ report.location.address }}</div>
             <div class="radio-log-cards__row radio-log-cards__coords">
               {{ report.location.lat | number:'1.0-4' }}, {{ report.location.lng | number:'1.0-4' }}
@@ -297,7 +300,7 @@
               <td>{{ formatLogTime(row.time) }}</td>
               <td>{{ row.from }}</td>
               <td></td>
-              <td></td>
+              <td>{{ row.to }}</td>
               <td></td>
               <td>{{ row.message }}@if (row.source) {<span class="ics309-form__via"> (via {{ row.source }})</span>}</td>
             </tr>
@@ -323,7 +326,7 @@
           <td class="ics309-form__cell ics309-form__page">Page ____ of ____</td>
         </tr>
       </table>
-      <p class="ics309-form__note">Printed from RangerTrak. TO, Msg # and boxes 3–4 are left for hand entry.</p>
+      <p class="ics309-form__note">Printed from RangerTrak. Msg # and boxes 3–4 are left for hand entry.</p>
     </div>
     } @else {
     <div class="ics309-print">
@@ -342,6 +345,7 @@
           <tr>
             <th>Time</th>
             <th>From</th>
+            <th>To</th>
             <th>Source</th>
             <th>Message</th>
           </tr>
@@ -351,11 +355,12 @@
             <tr>
               <td>{{ formatLogTime(row.time) }}</td>
               <td>{{ row.from }}</td>
+              <td>{{ row.to }}</td>
               <td>{{ row.source }}</td>
               <td>{{ row.message }}</td>
             </tr>
           } @empty {
-            <tr><td colspan="4">No reports in this range.</td></tr>
+            <tr><td colspan="5">No reports in this range.</td></tr>
           }
         </tbody>
       </table>

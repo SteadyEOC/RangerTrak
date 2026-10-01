@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib'
+import { formatStation } from './station-label'
 // `import type` only - erased at compile time, so this doesn't pull radio-log-entry.interface.ts/
 // mission.interface.ts's own runtime code (there isn't any) into whichever chunk imports this
 // module. Kept as narrow Pick<>s below rather than the full types, so this file states exactly
@@ -81,7 +82,7 @@ export async function fillIcs213Pdf(
 /** The report fields `ics213FieldsFromReport()` below actually reads - narrower than the full
  *  `RadioLogEntryType` so this file states exactly what it depends on. */
 export type Ics213SourceReport = Pick<
-  RadioLogEntryType, 'callsign' | 'date' | 'subject213' | 'message213' | 'recipients213' | 'operator'
+  RadioLogEntryType, 'callsign' | 'tacticalCall' | 'date' | 'subject213' | 'message213' | 'recipients213' | 'operator'
 >
 /** Likewise for the mission settings passed alongside the report. */
 export type Ics213SourceMission = Pick<MissionType, 'event' | 'mission'>
@@ -109,7 +110,9 @@ export function ics213FieldsFromReport(
   return {
     '1 Incident Name Optional': settings?.event || settings?.mission || '',
     '2 To Name and Position': (report.recipients213 ?? []).join(', '),
-    '3 From Name and Position': report.callsign,
+    // E-165: tactical call and FCC call both, "CERT Team 1 (K7ABC)" - the form asks for name
+    // AND position, and the tactical call is the position.
+    '3 From Name and Position': formatStation(report.tacticalCall, report.callsign),
     '4 Subject': report.subject213 ?? '',
     // E-153 (ARES review row 16): the form asks mm/dd/yyyy; toLocaleDateString() printed dd/mm
     // on a non-US device.

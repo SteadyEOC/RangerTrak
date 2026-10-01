@@ -39,7 +39,7 @@ import { RouterLink } from '@angular/router'
 import { PageComponent } from '../shared/page/page.component'
 import {
   RadioLogStatusType, LocationCategoryType, LogService, MissionReadinessService,
-  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, MissionService, MissionType
+  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, MissionService, MissionType, TacticalCallType
 } from '../shared/services/'
 import { InstallUpdateComponent } from '../shared/install-update/install-update.component'
 import { HasUnsavedChanges } from '../shared/guards/unsaved-changes.guard'
@@ -52,6 +52,7 @@ import { MissionFieldReportStatusesComponent } from './sections/mission-field-re
 import { MissionLocationTypesComponent } from './sections/mission-location-types/mission-location-types.component'
 import { MissionLocationsListComponent } from './sections/mission-locations-list/mission-locations-list.component'
 import { MissionRecipients213Component } from './sections/mission-recipients213/mission-recipients213.component'
+import { MissionTacticalCallsComponent } from './sections/mission-tactical-calls/mission-tactical-calls.component'
 import { MissionCommandPostComponent } from './sections/mission-command-post/mission-command-post.component'
 import { MissionAdvancedOptionsComponent } from './sections/mission-advanced-options/mission-advanced-options.component'
 
@@ -75,6 +76,7 @@ const blankMission: MissionType = {
   commandPostEnabled: false, commandPostServerUrl: '',
   checkInIntervalMin: DEFAULT_CHECK_IN_INTERVAL_MIN,
   autoPrint213: false,
+  tacticalCalls: [],
 }
 
 @Component({
@@ -93,6 +95,7 @@ const blankMission: MissionType = {
     MissionLocationTypesComponent,
     MissionLocationsListComponent,
     MissionRecipients213Component,
+    MissionTacticalCallsComponent,
     MissionCommandPostComponent,
     MissionAdvancedOptionsComponent,
     InstallUpdateComponent,
@@ -182,6 +185,13 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
    * replace this list, not leave a stale one from the previous mission showing).
    */
   recipientOptions213 = signal<string[]>([])
+
+  /**
+   * E-165: the working tactical-call list behind MissionTacticalCallsComponent, re-seeded from
+   * the settings subscription for the same reason as recipientOptions213 above (Restore mission
+   * / Reset Defaults must replace it, not leave the previous mission's list showing).
+   */
+  tacticalCalls = signal<TacticalCallType[]>([])
 
   /**
    * E-79: the header's readiness dot (ADR D-32) only ever showed the aggregate red/amber/
@@ -278,6 +288,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
     this.rowData.set(newMission.radioLogStatuses)
     this.locationTypesRowData.set(newMission.locationTypes)
     this.recipientOptions213.set(newMission.recipientOptions213)
+    this.tacticalCalls.set(newMission.tacticalCalls ?? [])
     this.opPeriodStart.set(newMission.opPeriodStart)
     this.opPeriodEnd.set(newMission.opPeriodEnd)
   }
@@ -412,6 +423,12 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   onRecipientOptions213Change(newList: string[]) {
     this.recipientOptions213.set(newList)
     this.missionModel.update(m => ({ ...m, recipientOptions213: newList }))
+  }
+
+  /** E-165: same child-emits, parent-writes-both pattern as onRecipientOptions213Change above. */
+  onTacticalCallsChange(newList: TacticalCallType[]) {
+    this.tacticalCalls.set(newList)
+    this.missionModel.update(m => ({ ...m, tacticalCalls: newList }))
   }
 
   /**

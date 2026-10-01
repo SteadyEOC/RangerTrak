@@ -28,7 +28,7 @@ export {
 export { LocationType, undefinedAddressFlag, undefinedLocation } from "./location.interface"
 export { LogLevel, LogLevelNames, LogType, LogHeadings } from "./log.interface"
 export { RangerType, UnknownRanger } from "./ranger.interface"
-export { MissionType } from "./mission.interface"
+export { MissionType, TacticalCallType } from "./mission.interface"
 export { AarNoteType, AarNoteAbout, AAR_NOTE_ABOUT_LABELS } from "./aar-note.interface"
 export {
   LocationCategoryType, MissionLocationType, LocationIconId, LOCATION_ICON_OPTIONS

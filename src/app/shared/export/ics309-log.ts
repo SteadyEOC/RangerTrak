@@ -1,4 +1,5 @@
 import { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import { formatStation } from './station-label'
 
 /**
  * Shapes radio log entries into an ICS-309 (Communications Log) structure - the DATA, not a
@@ -48,6 +49,11 @@ export interface Ics309LogHeader {
 export interface Ics309LogRow {
   time: Date
   from: string
+  // E-165 (2026-09-30): the station the message went TO, same `CERT Team 1 (K7ABC)` format as
+  // `from` (formatStation) but blank - not "(not given)" - when none was recorded: the paper
+  // form's TO cell is simply left empty for hand entry, which is what a blank cell already
+  // means there.
+  to: string
   // F29-46 (2026-08-29): ICS-309 has a genuine notion of how traffic arrived (radio, phone,
   // packet, ...) - a real per-contact fact, unlike `preparedBy` above which describes the log
   // as a whole. Blank for anything filed before `source` existed (E-41 phase 1).
@@ -86,7 +92,10 @@ export function buildIcs309Log(
       // E-153 (ARES review row 21): "(no callsign)" read as a missing FCC call sign, the wrong
       // word for tactical-only teams; the scribe types a tactical name there too, so blank means
       // the sender simply wasn't recorded.
-      from: r.callsign?.trim() || '(not given)',
+      // E-165: tactical call and FCC call both, `CERT Team 1 (K7ABC)`; blank still reads
+      // "(not given)", unchanged.
+      from: formatStation(r.tacticalCall, r.callsign) || '(not given)',
+      to: formatStation(r.toTactical, r.toCallsign),
       source: r.source ?? '',
       message: formatMessage(r),
     }))

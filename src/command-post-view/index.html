@@ -214,6 +214,7 @@
     if (filterText) {
       reports = reports.filter(function (r) {
         return (r.callsign || '').toLowerCase().indexOf(filterText) !== -1
+          || (r.tacticalCall || '').toLowerCase().indexOf(filterText) !== -1
           || (r.status || '').toLowerCase().indexOf(filterText) !== -1
           || (r.notes || '').toLowerCase().indexOf(filterText) !== -1;
       });
@@ -234,12 +235,19 @@
     rowsEl.innerHTML = reports.map(function (r) {
       return '<tr>'
         + '<td class="time">' + esc(fmtTime(r.date)) + '</td>'
-        + '<td class="callsign">' + esc(r.callsign || '(no callsign)') + '</td>'
+        + '<td class="callsign">' + esc(station(r.tacticalCall, r.callsign) || '(not given)')
+        + (station(r.toTactical, r.toCallsign) ? ' &rarr; ' + esc(station(r.toTactical, r.toCallsign)) : '') + '</td>'
         + '<td>' + (r.status ? '<span class="status-pill">' + esc(r.status) + '</span>' : '') + '</td>'
         + '<td>' + esc(r.source) + '</td>'
         + '<td>' + esc(r.notes) + '</td>'
         + '</tr>';
     }).join('');
+  }
+
+  // E-165: same "CERT Team 1 (K7ABC)" format as the app's own Radio Log (station-label.ts).
+  function station(tactical, callsign) {
+    var t = (tactical || '').trim(), c = (callsign || '').trim();
+    return t && c ? t + ' (' + c + ')' : (t || c);
   }
 
   function setBadge(state, text) {

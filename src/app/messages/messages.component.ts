@@ -8,6 +8,7 @@ import { PageComponent } from '../shared/page/page.component'
 import { MATERIAL_IMPORTS } from '../material-imports'
 import { formatReportTime } from '../shared'
 import { fillIcs213Pdf, ics213FieldsFromReport } from '../shared/export/ics213-pdf'
+import { formatStation } from '../shared/export/station-label'
 // 2026-09-28, John (item 8b): "one click to the print dialog" - the same iframe/print()
 // machinery entry.component.ts's auto-print-on-submit already uses (D1, 2026-09-22). Static
 // import, not the dynamic one entry.component.ts uses: /messages is already its own lazy
@@ -134,6 +135,15 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   formatTime(date: Date | string): string {
     return formatReportTime(date)
+  }
+
+  /** E-165: From / To station in the shared "CERT Team 1 (K7ABC)" format; blank when none recorded. */
+  stationFrom(report: RadioLogEntryType): string {
+    return formatStation(report.tacticalCall, report.callsign)
+  }
+
+  stationTo(report: RadioLogEntryType): string {
+    return formatStation(report.toTactical, report.toCallsign)
   }
 
   onEdit(): void {

@@ -67,6 +67,28 @@ describe('migrateMission', () => {
     }
   })
 
+  /**
+   * E-165 regression guard, same shape as the E-118 block above: `tacticalCalls` is
+   * additive-only (no MISSION_SCHEMA_VERSION bump), so a returning user's stored settings must
+   * be handed `[]` by backfillMissingFields - or the Mission page throws on first render.
+   */
+  describe('tacticalCalls backfill (E-165)', () => {
+    it('hands [] to settings saved before the field existed', () => {
+      const stored = v0Settings()
+      expect('tacticalCalls' in stored).withContext('precondition: field absent').toBe(false)
+
+      const out = migrateMission(stored, { ...v0Settings(), tacticalCalls: [] } as unknown as MissionType)
+      expect(out.tacticalCalls).toEqual([])
+    })
+
+    it('does not overwrite a list the user has already built', () => {
+      const calls = [{ name: 'CERT Team 1', rangerUid: 'uid-1' }, { name: 'Vashon EOC' }]
+      const stored = { ...v0Settings(), tacticalCalls: calls } as unknown as MissionType
+      const out = migrateMission(stored, { ...v0Settings(), tacticalCalls: [] } as unknown as MissionType)
+      expect(out.tacticalCalls).toEqual(calls)
+    })
+  })
+
   it('stamps the current schema version on settings that had none', () => {
     const out = migrateMission(v0Settings())
     expect(out.schemaVersion).toBe(MISSION_SCHEMA_VERSION)

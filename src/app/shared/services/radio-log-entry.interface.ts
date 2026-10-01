@@ -121,6 +121,24 @@ export type RadioLogEntryType = {
   // callsign matches no current ranger keeps it, with an empty `rangerId`, rather than
   // being dropped or silently attached to the wrong person.
   callsign: string,
+  // E-165 (2026-09-30): tactical call signs and a To station - field feedback from Vashon ARES
+  // ("we are logging messages to tactical call signs ... the FCC callsign of the operator at
+  // those positions is important for the paperwork but of very little importance real time").
+  // All optional/additive, no radio-log schema bump: an older entry simply lacks them.
+  //
+  // RECORDED AT SAVE TIME, never looked up later - the same rule `operator` follows (F29-47 /
+  // D-44, below). When a scribe picks the tactical call "Vashon EOC", Entry copies the assigned
+  // operator's callsign into `callsign` and their uid into `rangerUid` right then; reassigning
+  // "Vashon EOC" to someone else at shift change must not rewrite earlier entries. `callsign`
+  // / `rangerUid` above stay the FROM station's FCC call and roster link.
+  /** From station's tactical call, as chosen on Entry (the name as it was at save time). */
+  tacticalCall?: string,
+  /** To station's tactical call. */
+  toTactical?: string,
+  /** To station's FCC call - recorded from the assigned operator, or typed. */
+  toCallsign?: string,
+  /** To station's roster link, if it resolved to one. Same meaning as `rangerUid`. */
+  toRangerUid?: string,
   //team: string,
   location: LocationType,
   date: Date,

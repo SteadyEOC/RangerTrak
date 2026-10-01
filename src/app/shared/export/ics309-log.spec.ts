@@ -54,6 +54,28 @@ describe('buildIcs309Log', () => {
     expect(log.rows[0].from).toBe('(not given)')
   })
 
+  // E-165 (2026-09-30): tactical calls and a To station.
+  it('formats From as "tactical (FCC)", tactical only, or FCC only', () => {
+    const log = buildIcs309Log([
+      report({ id: 1, date: new Date('2026-08-26T14:01:00'), tacticalCall: 'CERT Team 1', callsign: 'K7ABC' }),
+      report({ id: 2, date: new Date('2026-08-26T14:02:00'), tacticalCall: 'Vashon EOC', callsign: '' }),
+      report({ id: 3, date: new Date('2026-08-26T14:03:00'), callsign: 'K7XYZ' }),
+    ], mission)
+
+    expect(log.rows.map(r => r.from)).toEqual(['CERT Team 1 (K7ABC)', 'Vashon EOC', 'K7XYZ'])
+  })
+
+  it('formats To the same way, and leaves it blank - never "(not given)" - when none was recorded', () => {
+    const log = buildIcs309Log([
+      report({ id: 1, date: new Date('2026-08-26T14:01:00'), toTactical: 'Vashon EOC', toCallsign: 'W7EOC' }),
+      report({ id: 2, date: new Date('2026-08-26T14:02:00'), toTactical: 'Vashon EOC' }),
+      report({ id: 3, date: new Date('2026-08-26T14:03:00'), toCallsign: 'K7ABC' }),
+      report({ id: 4, date: new Date('2026-08-26T14:04:00') }),
+    ], mission)
+
+    expect(log.rows.map(r => r.to)).toEqual(['Vashon EOC (W7EOC)', 'Vashon EOC', 'K7ABC', ''])
+  })
+
   it('carries the mission name and a real operational-period string through the header', () => {
     const log = buildIcs309Log([], mission)
 

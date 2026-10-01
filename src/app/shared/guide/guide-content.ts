@@ -342,7 +342,13 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             // is what gets said over the radio, which not everyone has (no amateur license);
             // the old wording implied callsign was the identifier, which stopped being true
             // once D-42 shipped.
-            text: 'Every responder is identified by their Ranger ID, not their call sign - so a responder without an amateur license still needs to be pickable on Entry. Give them a tactical sign, or leave the call sign blank and RangerTrak will fall back to their name.'
+            //
+            // E-165 (2026-09-30): rewritten for mission tactical calls. A tactical call is now a
+            // mission-level name (Mission page) that can be staffed by a roster member, and
+            // Entry has a To station - so this no longer tells people to put a tactical name in
+            // the call sign column. Existing roster rows that already hold a tactical name keep
+            // working exactly as they did.
+            text: 'A tactical call is the name of a position or team, such as "Vashon EOC" or "CERT Team 1", as opposed to a an individual FCC call sign. List them on the Mission page under Tactical call signs, and pick who is operating each one if you know. On Entry, choose a tactical call in the From box (or the To station box) and the call sign of whoever is operating it fills in for you. If you change the operator at shift change, earlier radio log entries keep the call sign they were logged with. Not everyone has a call sign: a tactical call with no call sign, or an operator without one, is perfectly fine and nothing warns about it. A responder is still identified by their Ranger ID, so someone without an amateur license can be picked on Entry by name or ID.'
           }
         ]
       },

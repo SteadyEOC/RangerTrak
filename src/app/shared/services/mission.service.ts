@@ -332,6 +332,8 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       // Maintainer ask (2026-09-22): default OFF - see MissionType.autoPrint213's own comment
       // for why silently inheriting an auto-print-every-213 behavior would be the wrong default.
       autoPrint213: false,
+      // E-165: no tactical calls until the mission defines some - see MissionType.tacticalCalls.
+      tacticalCalls: [],
     }
   }
 

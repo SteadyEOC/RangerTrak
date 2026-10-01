@@ -11,7 +11,7 @@
           <li>
             <button type="button" class="messages__list-item"
               [class.messages__list-item--selected]="m.id === selectedId()" (click)="select(m)">
-              <span class="messages__list-callsign">{{ m.callsign || '(no callsign)' }}</span>
+              <span class="messages__list-callsign">{{ stationFrom(m) || '(not given)' }}</span>
               <span class="messages__list-time">{{ formatTime(m.date) }}</span>
               <span class="messages__list-preview">{{ m.message213 }}</span>
             </button>
@@ -48,8 +48,12 @@
                   (Last edited: {{ formatTime(m.revisedAt) }})
                   }
                 </dd>
-                <dt>Ranger</dt>
-                <dd>{{ m.callsign || '(no callsign)' }}</dd>
+                <dt>From</dt>
+                <dd>{{ stationFrom(m) || '(not given)' }}</dd>
+                @if (stationTo(m)) {
+                <dt>To station</dt>
+                <dd>{{ stationTo(m) }}</dd>
+                }
                 <dt>Message</dt>
                 <dd class="messages__message-text">{{ m.message213 }}</dd>
                 <dt>Operator</dt>
@@ -73,7 +77,7 @@
                   <input matInput [ngModel]="editSubject()" (ngModelChange)="editSubject.set($event)" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
-                  <mat-label>To (recipients, comma-separated)</mat-label>
+                  <mat-label>ICS-213 addressed to (comma-separated)</mat-label>
                   <input matInput [ngModel]="editRecipients()" (ngModelChange)="editRecipients.set($event)" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
