@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.8-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.5-alpha...v0.99.8-alpha) (2026-10-01)
+
+
+### Features
+
+* **entry:** Ctrl+Enter logs an entry; "Add to radio log" button; column header tooltips (E-166) ([2da6c07](https://github.com/SteadyEOC/RangerTrak/commit/2da6c07feae0f83e38e4735dccc41f5d90c0a352))
+* **map:** lat/long edge ticks on the printed map; range ring spacing slider ([e41b016](https://github.com/SteadyEOC/RangerTrak/commit/e41b01653fb6c93d01e917e42935fe222b5013a9))
+* **map:** range rings fit the view; coordinate readout in DD, DDM or USNG (E-162) ([7d3eb78](https://github.com/SteadyEOC/RangerTrak/commit/7d3eb78c55e584f48ff03a0ce5cadb8eb94f586b))
+* **mission:** ICS-213 extra copies for the paper log is saved with the mission (E-150) ([d3a9d49](https://github.com/SteadyEOC/RangerTrak/commit/d3a9d497973ecb20ec80f6ac73ad7034537d96ce))
+* **radio-log:** Add entry button, empty state, grid-edit hint; fix minutes shown as month in Reported (E-166) ([305dedd](https://github.com/SteadyEOC/RangerTrak/commit/305dedd9bd1132034d6f10e7e8f8db7e775427d0))
+* **radio-log:** tactical call signs and a To station (E-165) ([3f5fb21](https://github.com/SteadyEOC/RangerTrak/commit/3f5fb21c0f3bafe5899b0a6a5322f6d0b139be29))
+
+
+### Bug Fixes
+
+* **map:** align Prepared by with card text under MapLibre; correct stale comment ([c6c913c](https://github.com/SteadyEOC/RangerTrak/commit/c6c913c0e984725e5ed9c4e508fbde6ae6ae60d9))
+* **map:** MapLibre page switch labels use the card's full width ([bc287fc](https://github.com/SteadyEOC/RangerTrak/commit/bc287fcf2a9521d34b4b05ed3ea20aa2183e2dce))
+* **print:** map sheet maximised - compact title band, map fills page 1, no Full screen button ([54b5dbe](https://github.com/SteadyEOC/RangerTrak/commit/54b5dbe49ef4a45a8544b6aae45fecf5280305e1))
+* **radio-log:** delete-all button says it deletes messages too (they live in radio log entries) ([17e16b0](https://github.com/SteadyEOC/RangerTrak/commit/17e16b0168b8f70d810884ccbe9b96e5e0546edf))
+* **radio-log:** tone down the delete-all wording to "Delete radio log entries and messages" ([d6d226d](https://github.com/SteadyEOC/RangerTrak/commit/d6d226da40259a7e3785c056fafc59462602c575))
+
 ### [0.99.7-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.5-alpha...v0.99.7-alpha) (2026-10-01)
 
 
