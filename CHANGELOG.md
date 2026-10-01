@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.9-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.8-alpha...v0.99.9-alpha) (2026-10-01)
+
+
+### Features
+
+* **print:** every marker printed on its own, sharper base map, legend beside the map ([3421814](https://github.com/SteadyEOC/RangerTrak/commit/3421814de9ec8b60080b0cbe374b2fa35d31d513))
+
 ### [0.99.8-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.5-alpha...v0.99.8-alpha) (2026-10-01)
 
 
