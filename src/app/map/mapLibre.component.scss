@@ -157,7 +157,7 @@ mat-slide-toggle {
 
   .map-frame {
     position    : relative;
-    height      : 120mm;
+    height      : 170mm; // 2026-09-30, John: "max the map" (same as the Leaflet sheet)
     break-inside: avoid;
   }
 

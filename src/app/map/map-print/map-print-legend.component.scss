@@ -10,39 +10,42 @@
 @media print {
   :host {
     display    : block;
-    margin-top : 3mm;
+    margin-top : 2mm;
     color      : #000;
-    font-size  : 9pt;
+    font-size  : 7.5pt;
+    // 2026-09-30, John: the legend was splitting across the page break ("Urgent is cropped
+    // at bottom"); kept whole, it moves to page 2 when it doesn't fit under the map.
+    break-inside: avoid;
     line-height: 1.25;
   }
 
   // The map above is a fixed height; a long legend simply continues onto the next page.
   .legend h2 {
-    margin       : 0 0 1.5mm;
-    font-size    : 11pt;
+    margin       : 0 0 1mm;
+    font-size    : 9pt;
     border-bottom: 1px solid #000;
   }
 
   .legend h3 {
-    margin   : 0 0 1mm;
-    font-size: 9.5pt;
+    margin   : 0 0 0.6mm;
+    font-size: 8pt;
   }
 
   .legend__cols {
-    column-width: 55mm;
-    column-gap  : 6mm;
+    column-width: 45mm;
+    column-gap  : 5mm;
   }
 
   .legend__group {
     break-inside: avoid-column;
-    margin-bottom: 3mm;
+    margin-bottom: 2mm;
   }
 
   .legend__row {
     display      : flex;
     align-items  : center;
     gap          : 2mm;
-    margin-bottom: 0.8mm;
+    margin-bottom: 0.4mm;
     break-inside : avoid;
   }
 

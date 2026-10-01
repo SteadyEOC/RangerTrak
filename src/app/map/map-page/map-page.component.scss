@@ -66,42 +66,51 @@
     color-scheme: light;
   }
 
+  // 2026-09-30, John: "Way too much white space. Max the map where possible ... title ...
+  // smaller otherwise." The title block is one compact band now: the title, then each field as
+  // a small label and value on the same line, wrapping only if a long event name needs it.
   .map-print-header {
-    display      : block;
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.3rem;
-    border-bottom: 2px solid #000;
-    color        : #000;
+    display       : flex;
+    flex-wrap     : wrap;
+    align-items   : baseline;
+    gap           : 0 6mm;
+    margin-bottom : 1.5mm;
+    padding-bottom: 1mm;
+    border-bottom : 1.5px solid #000;
+    color         : #000;
 
     h1 {
       margin   : 0;
-      font-size: 1.4rem;
+      font-size: 13pt;
     }
 
     p {
-      margin: 0.2rem 0 0;
-      color : #444; // a fixed grey, not an --rt-ink token: light-dark() has no meaning on
-                     // paper, and print output should stay legible regardless of which
-                     // scheme happened to be active on screen when this was printed.
+      margin   : 0;
+      font-size: 8pt;
+      color    : #444; // a fixed grey, not an --rt-ink token: light-dark() has no meaning on
+                       // paper, and print output should stay legible regardless of which
+                       // scheme happened to be active on screen when this was printed.
     }
   }
 
-  // Label above value, like the boxes on an ICS form header, four to a row.
   .map-print-header__fields {
-    display              : grid;
-    grid-template-columns: repeat(auto-fit, minmax(45mm, 1fr));
-    gap                  : 0.2rem 1rem;
-    margin               : 0.3rem 0 0;
-    font-size            : 0.85rem;
+    display  : flex;
+    flex-wrap: wrap;
+    gap      : 0 5mm;
+    margin   : 0;
+    font-size: 8pt;
 
     div {
+      display     : flex;
+      align-items : baseline;
+      gap         : 1.5mm;
       break-inside: avoid;
     }
 
     dt {
-      color      : #444;
-      font-size  : 0.7rem;
-      font-weight: 400;
+      color         : #444;
+      font-size     : 6.5pt;
+      font-weight   : 400;
       text-transform: uppercase;
     }
 
@@ -119,9 +128,9 @@
     display        : flex;
     justify-content: space-between;
     gap            : 2rem;
-    margin-top     : 4mm;
+    margin-top     : 3mm;
     color          : #000;
-    font-size      : 0.85rem;
+    font-size      : 8pt;
     break-inside   : avoid;
   }
 
@@ -137,9 +146,12 @@
   }
 
   // Controls that only make sense interactively - flipping engines or filling the
-  // browser viewport - printed as inert chrome otherwise.
+  // browser viewport - printed as inert chrome otherwise. 2026-09-30: the Full screen button
+  // was still printing on the map sheet - the screen `.fullscreen-toggle { display: block }`
+  // further down has the same specificity and comes later, so it won. The parent selector
+  // makes this rule the more specific one.
   .map-engine-switch,
-  .fullscreen-toggle {
+  .map-fullscreen-area .fullscreen-toggle {
     display: none;
   }
 }
