@@ -70,9 +70,17 @@ These run against a production build, in real headless Chrome:
 ```bash
 npm run build
 npm run server &          # tools/e2e.js expects the build served on :8080
-npm run e2e:full          # the full browser suite; run before every push
+npm run e2e:full          # the full browser suite (~25 min); before a release
+node tools/e2e.js --full --only=map,entry   # just the groups a change touches
 npm run e2e:offline       # does the Alternative map really work offline? (starts its own server)
 ```
+
+The suite is quiet by default: it prints only failures, each under its section heading, then
+the count (`387/387 passed`). Add `--verbose` to see every check. `--only=` picks groups:
+`shell` (navigation, layout, Help), `entry`, `map`, `radiolog` (Radio Log and Messages),
+`roster`, `mission` (Mission page, statuses, sample mission), `backup` (backups, report
+packets, old-release fixtures, device encryption). Run the groups a change touches before an
+ordinary push, and the whole suite before a release.
 
 `e2e:offline` is separate on purpose: "offline" has to mean the server is actually gone, so
 it starts its own copy of the server on port 8091, warms the device, stops that server and

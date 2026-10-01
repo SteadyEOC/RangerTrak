@@ -58,6 +58,29 @@ const BASE = (arg('base', 'http://localhost:8080')).replace(/\/$/, '')
 const READ_ONLY = args.includes('--read-only')
 const FULL = args.includes('--full')
 const KEEP_OPEN = args.includes('--keep-open')
+// 2026-09-30, John: "Minimize the test runs' token usage: make them quieter ... break them by
+// page or functionality, so all need not run." Quiet is the default: only failures print (each
+// under its section heading) plus the final count. --verbose prints every PASS and note again.
+// --only=map,entry runs just those groups (see want() at each call in main()); groups: shell,
+// entry, map, radiolog, roster, mission, backup. Combines with --full and --read-only.
+const VERBOSE = args.includes('--verbose')
+const ONLY = arg('only', '').split(',').map(g => g.trim()).filter(Boolean)
+const want = group => !ONLY.length || ONLY.includes(group)
+const rawLog = console.log
+let section = ''
+let sectionShown = false
+if (!VERBOSE) {
+  // A line starting with a newline is a check's section heading: held back, and printed only
+  // if something under it fails. Everything else routine is dropped. report() always prints.
+  console.log = (...a) => {
+    const line = a.map(String).join(' ')
+    if (line.startsWith('\n')) { section = line; sectionShown = false }
+  }
+}
+const report = (...a) => rawLog(...a)
+function showSection() {
+  if (!VERBOSE && !sectionShown && section) { report(section); sectionShown = true }
+}
 const REAL_GEOCODING = args.includes('--real-geocoding')
 const PORT = 9444
 
@@ -355,12 +378,18 @@ function check(label, actual, expected) {
   const pass = JSON.stringify(actual) === JSON.stringify(expected)
   const known = KNOWN_OPEN.has(label)
   results.push({ pass, label, actual, expected, known })
-  console.log(`  ${pass ? (known ? 'FIXED!' : 'PASS  ') : (known ? 'KNOWN ' : 'FAIL  ')}${label}`)
-  if (!pass && !known) console.log(`        expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
-  if (pass && known) console.log(`        ^ on the KNOWN_OPEN list but passing - delete it from that list`)
+  const line = `  ${pass ? (known ? 'FIXED!' : 'PASS  ') : (known ? 'KNOWN ' : 'FAIL  ')}${label}`
+  if (pass && !known) {
+    console.log(line) // dropped unless --verbose
+  } else {
+    showSection()
+    report(line)
+    if (!pass && !known) report(`        expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+    if (pass && known) report(`        ^ on the KNOWN_OPEN list but passing - delete it from that list`)
+  }
   return pass
 }
-function note(text) { console.log(`  ....  ${text}`) }
+function note(text) { console.log(`  ....  ${text}`) } // dropped unless --verbose
 
 // ── synthetic fixtures ───────────────────────────────────────────────────────
 
@@ -3119,83 +3148,83 @@ async function main() {
     }
     await send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads })
 
-    await checkRoutesRender()
-    await checkNavbarLayout()
-    await checkStickyNavbar()
+    if (want('shell')) await checkRoutesRender()
+    if (want('shell')) await checkNavbarLayout()
+    if (want('shell')) await checkStickyNavbar()
     if (FULL) {
-      await checkMapEngineSwitch()
-      await checkMapEngineSurvivesNavigation()
+      if (want('map')) await checkMapEngineSwitch()
+      if (want('map')) await checkMapEngineSurvivesNavigation()
     } else {
       note('fast run: skipping checkMapEngineSwitch, checkMapEngineSurvivesNavigation (pass --full to include)')
     }
     // Read-only: pure DOM/layout reads and in-memory form edits, nothing persisted - so these
     // are safe against production too, which is where phone-width regressions actually bite.
-    await checkEntryTabOrder()
-    await checkEntryFutureTimeWarning()
-    await checkMiniMapFillsItsBox()
-    await checkEntryPhoneWidth()
-    await checkAllRoutesPhoneWidth()
-    await checkBackToTop()
-    await checkSkinPickerPhoneScroll()
-    await checkMissionDangerZoneButtonsFit()
-    await checkWelcomePanelDismissAndReopen()
-    await checkLocationDdDdmDmsSync()
-    await checkFieldReportsPhoneLayout()
-    await checkGridThemeUsesTokens()
-    await checkHelpTabs()
+    if (want('entry')) await checkEntryTabOrder()
+    if (want('entry')) await checkEntryFutureTimeWarning()
+    if (want('entry')) await checkMiniMapFillsItsBox()
+    if (want('entry')) await checkEntryPhoneWidth()
+    if (want('shell')) await checkAllRoutesPhoneWidth()
+    if (want('shell')) await checkBackToTop()
+    if (want('shell')) await checkSkinPickerPhoneScroll()
+    if (want('mission')) await checkMissionDangerZoneButtonsFit()
+    if (want('shell')) await checkWelcomePanelDismissAndReopen()
+    if (want('entry')) await checkLocationDdDdmDmsSync()
+    if (want('radiolog')) await checkFieldReportsPhoneLayout()
+    if (want('shell')) await checkGridThemeUsesTokens()
+    if (want('shell')) await checkHelpTabs()
 
     if (READ_ONLY) {
       note('read-only: skipping roster, photo, submit and mission checks')
     } else {
       const fx = makeFixtures(path.join(tmp, 'fixtures'))
       if (FULL) {
-        await checkRosterLifecycle(fx)
-        await checkFieldNameAliases(fx)
-        await checkSetupFileMerge(fx)
+        if (want('roster')) await checkRosterLifecycle(fx)
+        if (want('roster')) await checkFieldNameAliases(fx)
+        if (want('roster')) await checkSetupFileMerge(fx)
       } else {
         note('fast run: skipping checkRosterLifecycle, checkFieldNameAliases, checkSetupFileMerge (pass --full to include)')
       }
-      await checkEntryPhoto()
-      await checkEntryAutofocusAndReset() // submits a real report, so read-write only
-      await checkOneActiveTab() // opens a second tab and submits from it, so read-write only
+      if (want('entry')) await checkEntryPhoto()
+      if (want('entry')) await checkEntryAutofocusAndReset() // submits a real report, so read-write only
+      if (want('shell')) await checkOneActiveTab() // opens a second tab and submits from it, so read-write only
       if (FULL) {
-        await checkEvidenceLocation()
-        await checkMessagesPage()
+        if (want('entry')) await checkEvidenceLocation()
+        if (want('radiolog')) await checkMessagesPage()
       } else {
         note('fast run: skipping checkEvidenceLocation, checkMessagesPage (pass --full to include)')
       }
-      await checkDerivedValuesDoNotCarryOver() // also submits, same reason
-      await checkMissionFormSave()
-      await checkMissionUnsavedChangesGuard()
-      await checkMissionAddRowsPersist()
-      await checkAarNotes()
-      await checkEntryUsesNewMissionDefault()
-      await checkStatusColorMigration()
-      await checkStatusColorsBothSchemes()
+      if (want('entry')) await checkDerivedValuesDoNotCarryOver() // also submits, same reason
+      if (want('mission')) await checkMissionFormSave()
+      if (want('mission')) await checkMissionUnsavedChangesGuard()
+      if (want('mission')) await checkMissionAddRowsPersist()
+      if (want('mission')) await checkAarNotes()
+      if (want('entry')) await checkEntryUsesNewMissionDefault()
+      if (want('mission')) await checkStatusColorMigration()
+      if (want('mission')) await checkStatusColorsBothSchemes()
 
       // Known-open production bugs - see the banner above these three.
       if (FULL) {
-        await checkCallsignIsSaved()
+        if (want('entry')) await checkCallsignIsSaved()
       } else {
         note('fast run: skipping checkCallsignIsSaved (pass --full to include)')
       }
-      await checkReportsSurviveNavigation()
+      if (want('entry')) await checkReportsSurviveNavigation()
       if (FULL) {
-        await checkTeamTrailsRender()
-        await checkRangerMarkersAreDistinct()
-        await checkNoCallsignRangersGetDistinctIdentity()
-        await checkRadioLogSelectionFiltersMaps()
+        if (want('map')) await checkTeamTrailsRender()
+        if (want('map')) await checkRangerMarkersAreDistinct()
+        if (want('map')) await checkNoCallsignRangersGetDistinctIdentity()
+        if (want('map')) await checkRadioLogSelectionFiltersMaps()
       } else {
         note('fast run: skipping checkTeamTrailsRender, checkRangerMarkersAreDistinct, checkNoCallsignRangersGetDistinctIdentity, checkRadioLogSelectionFiltersMaps (pass --full to include)')
       }
-      await checkMissionWithPersistedSettings()
+      if (want('mission')) await checkMissionWithPersistedSettings()
       if (FULL) {
-        await checkMissionRoundTrip(downloads)
-        await checkBackupFixturesRestore()
-        await checkReportPacketRoundTrip(downloads)
-        await checkSampleMissionLoads()
-        await checkRangeRingsAndCoordReadout()
-        await checkDeviceEncryption()
+        if (want('backup')) await checkMissionRoundTrip(downloads)
+        if (want('backup')) await checkBackupFixturesRestore()
+        if (want('backup')) await checkReportPacketRoundTrip(downloads)
+        if (want('mission') || want('map')) await checkSampleMissionLoads() // the ring check needs the sample
+        if (want('map')) await checkRangeRingsAndCoordReadout()
+        if (want('backup')) await checkDeviceEncryption()
       } else {
         note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkSampleMissionLoads, checkRangeRingsAndCoordReadout, checkDeviceEncryption (pass --full to include)')
       }
@@ -3212,18 +3241,18 @@ async function main() {
     const failed = results.filter(r => !r.pass && !r.known)
     const knownOpen = results.filter(r => !r.pass && r.known)
     const fixed = results.filter(r => r.pass && r.known)
-    console.log(`\n${results.filter(r => r.pass).length}/${results.length} passed`)
+    report(`\n${results.filter(r => r.pass).length}/${results.length} passed`)
     if (knownOpen.length) {
-      console.log(`\nKNOWN-OPEN (${knownOpen.length}) - already reported, not yet fixed; does not fail the run:`)
-      knownOpen.forEach(f => console.log(`  - ${f.label}`))
+      report(`\nKNOWN-OPEN (${knownOpen.length}) - already reported, not yet fixed; does not fail the run:`)
+      knownOpen.forEach(f => report(`  - ${f.label}`))
     }
     if (fixed.length) {
-      console.log(`\nNOW FIXED (${fixed.length}) - delete these from KNOWN_OPEN:`)
-      fixed.forEach(f => console.log(`  - ${f.label}`))
+      report(`\nNOW FIXED (${fixed.length}) - delete these from KNOWN_OPEN:`)
+      fixed.forEach(f => report(`  - ${f.label}`))
     }
     if (failed.length) {
-      console.log('\nFAILURES:')
-      failed.forEach(f => console.log(`  - ${f.label}: expected ${JSON.stringify(f.expected)}, got ${JSON.stringify(f.actual)}`))
+      report('\nFAILURES:')
+      failed.forEach(f => report(`  - ${f.label}: expected ${JSON.stringify(f.expected)}, got ${JSON.stringify(f.actual)}`))
     }
     try { ws && ws.close() } catch { }
     cleanup()
