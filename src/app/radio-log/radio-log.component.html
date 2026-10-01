@@ -212,21 +212,20 @@
          2026-09-28: description added (item 7c) - a muted one-line summary visible even
          while collapsed. -->
     <rangertrak-expandable-section class="rt-danger-zone-trigger"
-      description="Delete every radio log entry and its message">
+      description="Delete radio log entries and messages">
       <span rtSummary class="rt-danger-zone__summary">
         <mat-icon aria-hidden="true">warning</mat-icon>
         Danger zone
       </span>
       <div class="rt-danger-zone">
         <p class="rt-danger-zone__note">
-          Clearing reports is how you start a fresh operational period. Every ICS-213 message is
-          part of a radio log entry, so this deletes all messages too. It cannot be undone &mdash;
+          Clearing reports is how you start a fresh operational period. It cannot be undone &mdash;
           use Back up mission on the Mission page first if you need to keep this mission.
         </p>
         <div class="rt-danger-zone__actions">
           <button matButton="outlined" type="button" class="reports__danger-button"
             (click)="onBtnClearRadioLog()">
-            Delete all radio log entries and messages
+            Delete radio log entries and messages
           </button>
         </div>
       </div>

@@ -345,7 +345,7 @@ group:
 1. **Mission** → *Danger zone* → **Reset mission to defaults**, then re-enter what you want.
 2. **Rangers** → *Danger zone* → **Delete all rangers**. The roster stays empty until you
    import one or add rangers — edits save automatically as you make them.
-3. **Radio Log** → *Danger zone* → **Delete all radio log entries and messages** (every ICS-213 message is part of a radio log entry, so they go too).
+3. **Radio Log** → *Danger zone* → **Delete radio log entries and messages**.
 
 Switching to a different browser or a different device also gives you a completely fresh
 environment — RangerTrak's data is per-browser, so Firefox knows nothing about what you did
