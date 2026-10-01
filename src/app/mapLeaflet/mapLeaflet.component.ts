@@ -11,7 +11,7 @@ import 'leaflet'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../shared/overdue'
 import 'leaflet.markercluster'
 import {
-  downloadTile, getStorageInfo, getStoredTilesAsJson, getTilePoints, getTileUrl, hasTile, saveTile, savetiles,
+  downloadTile, getStorageInfo, getStoredTilesAsJson, getTileImageSource, getTilePoints, getTileUrl, hasTile, saveTile, savetiles,
   tileLayerOffline
 } from 'leaflet.offline' // https://github.com/allartk/leaflet.offline
 import type { SaveStatus } from 'leaflet.offline'
@@ -124,6 +124,49 @@ const MAX_RANGE_RINGS = 25
 const coordFormat = signal<CoordinateFormat>('DD')
 // See MapLeafletComponent.ringStepIndex: 0 = Auto, n = RING_STEPS_MILES[n - 1].
 const ringStepIndex = signal(0)
+
+// How many zoom levels up a missing USGS shaded relief tile may borrow from (see below).
+const RELIEF_FALLBACK_LEVELS = 4
+
+/**
+ * 2026-10-01, John: the USGS shaded relief's tile cache has holes that differ by place (near
+ * Vashon zooms 9-11 are missing, near Denver only 9, Atlanta none - surveyed with curl), so no
+ * fixed zoom setting can fill them. Tile by tile instead: when a tile is missing, the nearest
+ * parent tile (up to RELIEF_FALLBACK_LEVELS up) is drawn enlarged, cropped to this tile's
+ * quarter, so the shading never shows holes anywhere in the country. Saved tiles are used first
+ * (getTileImageSource), so it works offline for whatever saveReliefTiles() kept. If no level
+ * has a tile, the spot is left empty without raising a tile error.
+ */
+function reliefTileWithFallback(layer: L.TileLayer, coords: L.Coords, done: L.DoneCallback): HTMLElement {
+  const tile = document.createElement('div')
+  tile.style.overflow = 'hidden'
+  const url = (layer as unknown as { _url: string })._url
+  const size = layer.getTileSize().x
+  const urlZoom = coords.z + (layer.options.zoomOffset ?? 0)
+  const tryLevel = (up: number) => {
+    const z = urlZoom - up
+    if (up > RELIEF_FALLBACK_LEVELS || z < 0) {
+      done(undefined, tile)
+      return
+    }
+    const scale = 2 ** up
+    const x = Math.floor(coords.x / scale)
+    const y = Math.floor(coords.y / scale)
+    const src = getTileUrl(url, { ...layer.options, x, y, z })
+    const img = document.createElement('img')
+    img.alt = ''
+    img.style.position = 'absolute'
+    img.style.width = img.style.height = `${size * scale}px`
+    img.style.left = `${-(coords.x - x * scale) * size}px`
+    img.style.top = `${-(coords.y - y * scale) * size}px`
+    img.onload = () => done(undefined, tile)
+    img.onerror = () => { img.remove(); tryLevel(up + 1) }
+    tile.appendChild(img)
+    getTileImageSource(src, src).then(s => { img.src = s }).catch(() => { img.src = src })
+  }
+  tryLevel(0)
+  return tile
+}
 
 /** A ring distance as its label reads: "0.25 mi (0.40 km)", "2 mi (3.2 km)". */
 function formatRingMiles(miles: number): string {
@@ -744,6 +787,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       }
     )
     this.usgsReliefOverlay = usgsReliefOverlay
+    usgsReliefOverlay.createTile = (coords: L.Coords, done: L.DoneCallback) => reliefTileWithFallback(usgsReliefOverlay, coords, done)
 
     const roadsLabelsOverlay = L.layerGroup([
       esriReference('World_Transportation'),
@@ -1078,15 +1122,21 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     let saved = 0
     const worker = async () => {
       for (let job = jobs.shift(); job; job = jobs.shift()) {
-        const key = getTileUrl(url, { ...relief.options, ...job })
-        try {
-          if (!(await hasTile(key))) {
-            const blob = await downloadTile(key)
-            await saveTile({ key, url: key, urlTemplate: url, ...job, createdAt: Date.now() }, blob)
-            saved++
+        // A tile missing from USGS's cache: save the nearest parent instead, the one
+        // reliefTileWithFallback() will draw in its place (up to RELIEF_FALLBACK_LEVELS up).
+        for (let up = 0; up <= RELIEF_FALLBACK_LEVELS && job.z - up >= 0; up++) {
+          const t = { x: Math.floor(job.x / 2 ** up), y: Math.floor(job.y / 2 ** up), z: job.z - up }
+          const key = getTileUrl(url, { ...relief.options, ...t })
+          try {
+            if (!(await hasTile(key))) {
+              const blob = await downloadTile(key)
+              await saveTile({ key, url: key, urlTemplate: url, ...t, createdAt: Date.now() }, blob)
+              saved++
+            }
+            break
+          } catch {
+            // missing at this level (404) - try the parent
           }
-        } catch (err) {
-          this.log.warn(`saveReliefTiles(): skipped ${key}: ${err}`, this.id)
         }
       }
     }

@@ -93,6 +93,25 @@ export class UpdateService {
 
     // The service worker checks on registration and periodically after; this
     // makes the first check explicit so `lastChecked` is populated on a fresh load.
+    this.checkNow()
+
+    // 2026-10-01, John: his phone kept a page open across several releases and showed a gray
+    // map until he reloaded it - and never saw the "new version is ready" notice, because the
+    // only check ran once, at page load. Check again every 30 minutes and whenever the app comes
+    // back to the foreground (at most every 5 minutes). A page that was just loaded or refreshed
+    // is already on the newest version, so these find nothing and the notice stays hidden.
+    setInterval(() => this.checkNow(), 30 * 60 * 1000)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && Date.now() - this.lastCheckAt > 5 * 60 * 1000) {
+        this.checkNow()
+      }
+    })
+  }
+
+  private lastCheckAt = 0
+
+  private checkNow(): void {
+    this.lastCheckAt = Date.now()
     this.updates.checkForUpdate()
       .then(foundNew => {
         this.recordCheck()
