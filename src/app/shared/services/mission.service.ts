@@ -334,6 +334,8 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       autoPrint213: false,
       // E-165: no tactical calls until the mission defines some - see MissionType.tacticalCalls.
       tacticalCalls: [],
+      // E-150: see MissionType.extraCopies213 - one extra paper copy by default.
+      extraCopies213: 1,
     }
   }
 

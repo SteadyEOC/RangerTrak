@@ -89,6 +89,23 @@ describe('migrateMission', () => {
     })
   })
 
+  describe('extraCopies213 backfill (E-150)', () => {
+    it('hands 1 to settings or older backups saved before the field existed', () => {
+      const stored = v0Settings()
+      expect('extraCopies213' in stored).withContext('precondition: field absent').toBe(false)
+      const out = migrateMission(stored, { ...v0Settings(), extraCopies213: 1 } as unknown as MissionType)
+      expect(out.extraCopies213).toBe(1)
+    })
+
+    it('does not overwrite a saved value, including 0', () => {
+      for (const n of [0, 5]) {
+        const stored = { ...v0Settings(), extraCopies213: n } as unknown as MissionType
+        const out = migrateMission(stored, { ...v0Settings(), extraCopies213: 1 } as unknown as MissionType)
+        expect(out.extraCopies213).toBe(n)
+      }
+    })
+  })
+
   it('stamps the current schema version on settings that had none', () => {
     const out = migrateMission(v0Settings())
     expect(out.schemaVersion).toBe(MISSION_SCHEMA_VERSION)

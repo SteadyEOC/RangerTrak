@@ -1,22 +1,25 @@
-import { Injectable, signal } from '@angular/core'
+import { computed, inject, Injectable } from '@angular/core'
+import { MissionService } from './mission.service'
 
 /**
  * E-150: the Mission page's "Extra copies for the paper log" for ICS-213 printing.
  *
- * Deliberately in memory only - a signal that resets to 1 on page reload. The rc.1 storage
- * freeze (maintainer, "unsaved for now") forbids persisting anything new, so this is NOT a
- * MissionType/SettingsType field and never touches localStorage or backups.
+ * The value is a SAVED mission setting, `MissionType.extraCopies213` (valid 0-9, default 1),
+ * so it survives reloads and travels in mission backups. Saved under the maintainer's explicit
+ * rc.1 storage-clock exception (2026-09-30). This service is just the read side: it exposes
+ * the saved value, clamped, plus the total-copies arithmetic. The Mission page writes the field.
  */
 @Injectable({ providedIn: 'root' })
 export class PrintCopiesService {
   static readonly DEFAULT_EXTRA = 1
   static readonly MAX_EXTRA = 9
 
-  readonly extraCopies = signal(PrintCopiesService.DEFAULT_EXTRA)
+  private missionService = inject(MissionService)
 
-  setExtraCopies(value: number): void {
-    this.extraCopies.set(PrintCopiesService.clampExtra(value))
-  }
+  readonly extraCopies = computed(() => {
+    const saved = this.missionService.settings?.extraCopies213
+    return saved === undefined ? PrintCopiesService.DEFAULT_EXTRA : PrintCopiesService.clampExtra(saved)
+  })
 
   /** Total copies for one print job: the form itself plus the extras. */
   totalCopies(): number {

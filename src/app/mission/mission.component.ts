@@ -77,6 +77,7 @@ const blankMission: MissionType = {
   checkInIntervalMin: DEFAULT_CHECK_IN_INTERVAL_MIN,
   autoPrint213: false,
   tacticalCalls: [],
+  extraCopies213: 1,
 }
 
 @Component({

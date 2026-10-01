@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, inject, OnChanges, Output, SimpleChanges } from '@angular/core'
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { FieldTree } from '@angular/forms/signals'
 
@@ -38,8 +38,10 @@ export class MissionRecipients213Component implements OnChanges {
   // a second wiring style for one checkbox.
   @Input({ required: true }) form!: FieldTree<MissionType>
 
-  /** E-150: in-memory only, see PrintCopiesService. */
-  printCopies = inject(PrintCopiesService)
+  /** E-150: clamp, then write the saved `extraCopies213` field (see MissionType). */
+  setExtraCopies(value: number | string): void {
+    this.form.extraCopies213().value.set(PrintCopiesService.clampExtra(Number(value)))
+  }
 
   /** The textarea's own working text - only reconciled with `options` on external change. */
   text = ''

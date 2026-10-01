@@ -155,4 +155,13 @@ export type MissionType = {
   // checkInIntervalMin above - no MISSION_SCHEMA_VERSION bump needed, backfillMissingFields
   // supplies `[]` (see initMission()) to any returning user whose stored settings predate it.
   tacticalCalls: TacticalCallType[],
+
+  // E-150 (2026-09-30): extra paper copies printed along with each ICS-213 for the paper log
+  // (the Mission page's "Extra copies for the paper log"; Entry's auto-print and Messages'
+  // Copies box read it via PrintCopiesService). Valid 0-9, default 1. Saved under John's
+  // explicit rc.1 storage-clock exception (same exception as E-165's tacticalCalls).
+  // Additive-only field, same reasoning as autoPrint213 above - no MISSION_SCHEMA_VERSION
+  // bump needed, backfillMissingFields supplies `1` (see initMission()) to any returning
+  // user whose stored settings, or older backup, predate it.
+  extraCopies213: number,
 }
