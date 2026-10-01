@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.13-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.12-alpha...v0.99.13-alpha) (2026-10-01)
+
+
+### Features
+
+* **map:** USGS aerial photos and shaded relief, both savable for offline use (US only) ([463328f](https://github.com/SteadyEOC/RangerTrak/commit/463328febd5040912c1f2c0798164e3d7550b918))
+
 ### [0.99.12-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.11-alpha...v0.99.12-alpha) (2026-10-01)
 
 
