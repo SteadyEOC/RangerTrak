@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { formatStation } from './station-label'
 // `import type` only - erased at compile time, so this doesn't pull radio-log-entry.interface.ts/
 // mission.interface.ts's own runtime code (there isn't any) into whichever chunk imports this
@@ -54,6 +54,8 @@ export async function fillIcs213Pdf(
   templateBytes: Uint8Array,
   fields: Ics213FieldValues,
   flatten = true,
+  /** E-168: stamp EXERCISE across the top of the page (the mission is in Exercise mode). */
+  exercise = false,
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.load(templateBytes)
   const form = pdf.getForm()
@@ -74,6 +76,21 @@ export async function fillIcs213Pdf(
   // single-page would make index 1 out of range).
   for (let i = pdf.getPageCount() - 1; i >= 1; i--) {
     pdf.removePage(i)
+  }
+
+  // 2026-10-01, John: E-168 - an exercise's paper says so. Black text in a black box, centred in
+  // the top margin: legible on a greyscale or photocopied sheet, no colour needed.
+  if (exercise) {
+    const page = pdf.getPage(0)
+    const font = await pdf.embedFont(StandardFonts.HelveticaBold)
+    const size = 14
+    const text = 'EXERCISE'
+    const width = font.widthOfTextAtSize(text, size)
+    const { width: pageWidth, height: pageHeight } = page.getSize()
+    const x = (pageWidth - width) / 2
+    const y = pageHeight - 26
+    page.drawRectangle({ x: x - 10, y: y - 5, width: width + 20, height: size + 8, color: rgb(1, 1, 1), borderColor: rgb(0, 0, 0), borderWidth: 1.5 })
+    page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) })
   }
 
   return pdf.save()

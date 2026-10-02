@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core'
 import { RouterLink } from '@angular/router'
 import { MatButtonModule } from '@angular/material/button'
 
+import { DemoPickerComponent } from '../../../shared/demo-picker/demo-picker.component'
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import { FieldModeService } from '../../../shared/services/field-mode.service'
 
@@ -26,7 +27,7 @@ import { FieldModeService } from '../../../shared/services/field-mode.service'
 @Component({
   selector: 'rangertrak-help-start',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, ExpandableSectionComponent],
+  imports: [RouterLink, MatButtonModule, DemoPickerComponent, ExpandableSectionComponent],
   templateUrl: './help-start.component.html',
   styleUrls: ['./help-tab.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,

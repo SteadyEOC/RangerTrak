@@ -400,6 +400,13 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'The colored dot in the page header tracks six setup checks. When it is not green, this page lists exactly which ones are failing and links to the field that fixes each.'
           },
           {
+            heading: 'Mode: Demo, Exercise or Incident',
+            bullets: [
+              'The Mode card at the top of this page explains the three modes. The icon at the left of the header status pill shows the current one; hover it to change it.',
+              'An Exercise stamps EXERCISE on the printed radio messages, communications log, After Action report and map sheet. While a mission is under way (a report in the last 12 hours, or an operating period running or about to start) RangerTrak holds back tips, the install prompt and the Reload bar.'
+            ]
+          },
+          {
             heading: 'Backup and advanced options',
             bullets: [
               'Back up mission (Data safety card) downloads settings, rangers and radio log entries as one file — the way to back up a mission or move it to another device. Restore mission, in the Danger zone below, round-trips it back in.',

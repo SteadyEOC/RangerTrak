@@ -102,6 +102,8 @@ export class UsageStateService {
     setInterval(() => this.now.set(Date.now()), REFRESH_MS)
     // Plain-function interruptions (the first-print tip) read the flag, not this service.
     effect(() => setQuiet(this.quiet()))
+    // The printed EXERCISE banner (styles.scss) keys off this class.
+    effect(() => document.body.classList.toggle('rt-exercise', this.mode() === 'exercise'))
   }
 
   /**

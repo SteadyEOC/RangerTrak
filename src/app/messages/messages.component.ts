@@ -207,7 +207,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       throw new Error(`Fetching the ICS-213 template failed: ${res.status}`)
     }
     const templateBytes = new Uint8Array(await res.arrayBuffer())
-    return fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings))
+    return fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings), true, this.settings?.missionMode === 'exercise')
   }
 
   /**

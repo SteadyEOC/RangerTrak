@@ -16,6 +16,19 @@ describe('fillIcs213Pdf', () => {
     templateBytes = new Uint8Array(await res.arrayBuffer())
   })
 
+  // E-168: an exercise's 213 is stamped EXERCISE; an ordinary one must stay byte-for-byte as before.
+  it('stamps EXERCISE only when asked (E-168)', async () => {
+    const fields = { '4 Subject': 'Road collapse' }
+    const plain = await fillIcs213Pdf(templateBytes, fields)
+    const stampedOff = await fillIcs213Pdf(templateBytes, fields, true, false)
+    const stamped = await fillIcs213Pdf(templateBytes, fields, true, true)
+
+    expect(stampedOff.length).toBe(plain.length)
+    // Helvetica-Bold is embedded and a box + text are drawn, so the stamped file is larger.
+    expect(stamped.length).toBeGreaterThan(plain.length)
+    expect((await PDFDocument.load(stamped)).getPageCount()).toBe(1)
+  })
+
   it('fetched the real template, not an empty/missing response', () => {
     expect(templateBytes.length).toBeGreaterThan(1000)
   })

@@ -275,3 +275,29 @@ rangertrak-footer {
     display: none !important;
   }
 }
+
+// 2026-10-01, John: E-168 - an EXERCISE mission stamps its paper. UsageStateService puts the
+// `rt-exercise` class on <body> while the mission mode is Exercise; every browser print (the
+// ICS-309 log, After Action, the map sheet) then carries this banner at the top of each page,
+// so nobody mistakes the paper for a real event. Black on white inside a heavy black border
+// rather than a colour, so it survives a greyscale or photocopied printout. (The ICS-213 is a
+// PDF, stamped in shared/export/ics213-pdf.ts.)
+@media print {
+  body.rt-exercise::before {
+    content       : 'EXERCISE';
+    position      : fixed;
+    top           : 0;
+    left          : 50%;
+    transform     : translateX(-50%);
+    z-index       : 99999;
+    padding       : 0.5mm 8mm;
+    border        : 0.8mm solid #000;
+    background    : #fff;
+    color         : #000;
+    font          : 700 5mm/1.2 sans-serif;
+    letter-spacing: 0.3em;
+    pointer-events: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust        : exact;
+  }
+}

@@ -1109,7 +1109,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // Same eight-field mapping messages.component.ts's own manual "Print as ICS-213" uses -
       // lifted into ics213-pdf.ts's own ics213FieldsFromReport() so the two callers cannot
       // drift apart the way F29-47's blank Subject/Approved-by-Name once did.
-      const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings))
+      const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings), true, this.settings?.missionMode === 'exercise')
       const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies.totalCopies())
 
       // First print only - printedAt's own doc comment (radio-log-entry.interface.ts)

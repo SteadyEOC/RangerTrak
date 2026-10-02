@@ -497,14 +497,23 @@ your agency's policy on handling participant information.
 
 ## Trying it out, and known rough edges
 
-**Want to see it populated?** On a brand-new device, the Entry page's welcome panel offers
-**Load Demo Data**. Otherwise, on **Mission** → *Danger zone*, pick a **Demo scenario** and
-press **Load sample mission**. This fills the app with a demonstration roster and about thirty
+**Want to see it populated?** The Entry page shows a demo card whenever the device is empty or
+holds only demo data, and **Help** → *Start* has a **Load a demo** button. You can also go to
+**Mission** → *Danger zone*, pick a **Demo scenario** and press **Load sample mission**. This fills the app with a demonstration roster and about thirty
 reports in the demo area you pick (Grand Canyon by default) — useful for training, demonstrating to others, or just
 seeing what a busy mission looks like.
 
 > This **replaces** your current roster and reports. Export first if you have anything you
 > need.
+
+**Demo, Exercise or Incident.** The icon at the left of the status pill in the header shows what
+the mission is: a demo, an exercise, or a real incident (hover it to change it). An exercise stamps
+**EXERCISE** on the printed radio messages (ICS-213), the communications log (ICS-309), the After
+Action report and the map sheet. While a mission is under way (a report in the last 12 hours, or an
+operational period that is running or about to start) RangerTrak stays out of your way: no
+first-run tips, no install prompt, and a new version waits as a small *Update ready* note rather
+than a reload bar. Loading a demo or resetting the mission then asks you to type the mission name
+first.
 
 **Rough edges to be aware of:**
 
