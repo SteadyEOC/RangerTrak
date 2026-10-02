@@ -122,3 +122,25 @@
 // .mission__debug/.mission__debug-note moved 2026-09-28 to
 // mission-advanced-options.component.scss - the "Debug mode" checkbox now lives on that
 // component's own new Advanced card (see mission.component.html's item 7b comment).
+
+// E-168 (2026-10-01): the Mode card at the top of the page.
+.mission__mode-card {
+  margin-bottom: var(--rt-space-lg);
+}
+.mission__mode-now { margin: 0 0 0.5rem; }
+.mission__mode-buttons {
+  display  : flex;
+  flex-wrap: wrap;
+  gap      : var(--rt-space-sm);
+  margin   : 0 0 1rem;
+}
+.mission__mode-button--on {
+  font-weight: 700;
+  --mat-button-outlined-outline-color: var(--rt-ink);
+}
+.mission__mode-explain {
+  margin   : 0;
+  max-width: 70ch;
+  dt { font-weight: 700; margin-top: 0.6rem; }
+  dd { margin: 0.1rem 0 0; color: var(--rt-ink-2); }
+}
