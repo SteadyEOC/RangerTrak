@@ -20,20 +20,57 @@ export const DEMO_SCENARIO_STORAGE_KEY = 'rangertrak-demo-scenario'
 // the whole sample-data module into the eager bundle via MissionReadinessService.
 const KNOWN_SCENARIOS: readonly SampleScenarioId[] = ['vashon', 'grand-canyon', 'state-fair', 'near-me']
 
-export function activeDemoScenario(): SampleScenarioId | null {
+/**
+ * E-168a (2026-10-01, John): the stored value is now JSON - the scenario plus what the loader
+ * created, so "demo rows" can be told from real rows added later (E-168). The old value was the
+ * bare scenario id; it still reads (as a record with empty lists). Still a plain localStorage
+ * key for the same reasons as above, and the four clear paths are unchanged.
+ */
+export type DemoRecord = {
+  scenario: SampleScenarioId,
+  loadedAt: string,       // ISO time the demo was loaded
+  rangerUids: string[],   // RangerType.uid of every roster row the loader created
+  reportIds: string[],    // String(RadioLogEntryType.id) of every report the loader created
+}
+
+/** The parsed demo record, or null when no demo is loaded (or the value is unreadable). */
+export function demoRecord(): DemoRecord | null {
   try {
     const raw = localStorage.getItem(DEMO_SCENARIO_STORAGE_KEY)
-    return KNOWN_SCENARIOS.includes(raw as SampleScenarioId) ? raw as SampleScenarioId : null
+    if (!raw) return null
+    // Old format: the bare scenario id.
+    if (KNOWN_SCENARIOS.includes(raw as SampleScenarioId)) {
+      return { scenario: raw as SampleScenarioId, loadedAt: '', rangerUids: [], reportIds: [] }
+    }
+    const parsed = JSON.parse(raw) as Partial<DemoRecord> | null
+    if (!parsed || !KNOWN_SCENARIOS.includes(parsed.scenario as SampleScenarioId)) return null
+    return {
+      scenario: parsed.scenario as SampleScenarioId,
+      loadedAt: typeof parsed.loadedAt === 'string' ? parsed.loadedAt : '',
+      rangerUids: Array.isArray(parsed.rangerUids) ? parsed.rangerUids.map(String) : [],
+      reportIds: Array.isArray(parsed.reportIds) ? parsed.reportIds.map(String) : [],
+    }
   } catch {
     return null
   }
 }
 
+export function activeDemoScenario(): SampleScenarioId | null {
+  return demoRecord()?.scenario ?? null
+}
+
 /** Set by SampleDataService.loadSampleMission(), for every scenario - including `near-me`,
  *  which has no detail file, so switching to it still evicts the previous demo's. */
-export function setActiveDemoScenario(scenario: SampleScenarioId): void {
+export function setActiveDemoScenario(
+  scenario: SampleScenarioId,
+  created: { rangerUids?: string[], reportIds?: string[] } = {}
+): void {
+  const record: DemoRecord = {
+    scenario, loadedAt: new Date().toISOString(),
+    rangerUids: created.rangerUids ?? [], reportIds: created.reportIds ?? [],
+  }
   try {
-    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, scenario)
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, JSON.stringify(record))
   } catch { /* storage blocked: the demo just gets no street detail */ }
   pruneWarmCache(wantedPmtilesUrls()).catch(() => { /* best effort */ })
 }

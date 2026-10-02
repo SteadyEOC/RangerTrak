@@ -175,7 +175,8 @@ async function loadGrandCanyonDemo(b) {
   // by openChrome()'s handler, and the page reloads itself afterwards.
   await b.evaluate(`[...document.querySelectorAll('button')].find(x => /Load sample mission/i.test(x.textContent))?.click()`)
   await sleep(6000)
-  return b.evaluate(`localStorage.getItem('rangertrak-demo-scenario')`)
+  // 2026-10-01, John: E-168a - the marker is JSON now ({ scenario, ... }); the old bare id still reads.
+  return b.evaluate(`(() => { const v = localStorage.getItem('rangertrak-demo-scenario'); try { return JSON.parse(v).scenario } catch { return v } })()`)
 }
 
 /** Share of the map area's pixels that are not the style's grey background. */

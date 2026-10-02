@@ -89,6 +89,23 @@ describe('migrateMission', () => {
     })
   })
 
+  describe('missionMode (E-168a)', () => {
+    // An optional field with no default: an older mission or backup must come back as
+    // "not chosen", not as a manufactured value, and a chosen value must survive.
+    const defaults = { ...v0Settings(), tacticalCalls: [] } as unknown as MissionType
+
+    it('migrates a mission saved before the field existed to undefined', () => {
+      const out = migrateMission(v0Settings(), defaults)
+      expect(out.missionMode).toBeUndefined()
+      expect('missionMode' in out).toBe(false)
+    })
+
+    it('keeps a mode that was chosen', () => {
+      const stored = { ...v0Settings(), missionMode: 'exercise' } as unknown as MissionType
+      expect(migrateMission(stored, defaults).missionMode).toBe('exercise')
+    })
+  })
+
   describe('extraCopies213 backfill (E-150)', () => {
     it('hands 1 to settings or older backups saved before the field existed', () => {
       const stored = v0Settings()

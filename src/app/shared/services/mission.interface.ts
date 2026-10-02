@@ -164,4 +164,17 @@ export type MissionType = {
   // bump needed, backfillMissingFields supplies `1` (see initMission()) to any returning
   // user whose stored settings, or older backup, predate it.
   extraCopies213: number,
+
+  // E-168a (2026-10-01, John): what this mission is being used for - 'demo', 'exercise' or
+  // 'incident'. STORED CODES, not labels: the words shown to the operator may change later
+  // without touching storage. Belongs to the mission (not a device key) so an exercise restored
+  // from a backup on another laptop still prints EXERCISE. Genuinely optional, no default -
+  // `undefined` means "not chosen", the same treatment `lastPrintedAt` gets, so
+  // backfillMissingFields() must NOT manufacture a value (initMission() deliberately omits it)
+  // and an older backup without the field restores as `undefined`. No MISSION_SCHEMA_VERSION
+  // bump needed. The only writer for now is SampleDataService.loadSampleMission() ('demo').
+  missionMode?: MissionModeType,
 }
+
+/** E-168a: the stored codes for MissionType.missionMode. Display labels live in the UI. */
+export type MissionModeType = 'demo' | 'exercise' | 'incident'

@@ -1,5 +1,5 @@
 import {
-  DEMO_SCENARIO_STORAGE_KEY, activeDemoDetailMap, activeDemoScenario, clearActiveDemoScenario,
+  DEMO_SCENARIO_STORAGE_KEY, activeDemoDetailMap, activeDemoScenario, clearActiveDemoScenario, demoRecord,
   isInsideBbox, pruneWarmCache, setActiveDemoScenario, wantedPmtilesUrls
 } from './demo-map';
 import { buildPmtilesStyle } from './map-style';
@@ -33,6 +33,30 @@ describe('demo-map (E-124)', () => {
   it('ignores an unknown stored value rather than trusting it', () => {
     localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, 'not-a-scenario');
     expect(activeDemoScenario()).toBeNull();
+  });
+
+  it('records what the loader created (E-168a)', () => {
+    setActiveDemoScenario('vashon', { rangerUids: ['u1', 'u2'], reportIds: ['0', '1', '2'] });
+    const rec = demoRecord()!;
+    expect(rec.scenario).toBe('vashon');
+    expect(rec.rangerUids).toEqual(['u1', 'u2']);
+    expect(rec.reportIds).toEqual(['0', '1', '2']);
+    expect(Number.isNaN(Date.parse(rec.loadedAt))).toBe(false);
+    expect(activeDemoScenario()).toBe('vashon');
+  });
+
+  it('still reads the old plain-string marker, with empty lists (E-168a)', () => {
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, 'grand-canyon');
+    expect(activeDemoScenario()).toBe('grand-canyon');
+    expect(demoRecord()).toEqual({ scenario: 'grand-canyon', loadedAt: '', rangerUids: [], reportIds: [] });
+  });
+
+  it('demoRecord is null for nothing stored, garbage, or an unknown scenario (E-168a)', () => {
+    expect(demoRecord()).toBeNull();
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, '{not json');
+    expect(demoRecord()).toBeNull();
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, JSON.stringify({ scenario: 'nope' }));
+    expect(demoRecord()).toBeNull();
   });
 
   it('clearing the marker forgets the demo', () => {

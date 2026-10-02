@@ -42,13 +42,16 @@ module worker requires; **any production host needs that same MIME mapping.**
 
 ```bash
 npm test           # unit tests via Karma
-npm run lint       # tslint + typecheck
+npm run lint       # tslint + typecheck (the tslint half is dead - see below)
 npm run lint:tsc   # typecheck only (app and spec projects separately)
 ```
 
 > `ng build` passing does **not** mean the code compiles — Angular only compiles
 > *reachable* files, so an unreferenced file can carry syntax errors indefinitely while
 > builds stay green. `npm run lint:tsc` is what catches that; treat it as a real gate.
+>
+> 2026-10-01, John: `npm run lint:ts` (and so `lint` and `lint:fix`) is dead - tslint is not
+> installed and the command fails. CI runs only `lint:tsc`. ESLint is planned to replace it.
 
 The suite is expected to be **all green** (124 specs as of this writing — check the run's
 own "Executed N of N" line for the current count rather than trusting this number to stay

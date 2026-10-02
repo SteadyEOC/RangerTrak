@@ -236,6 +236,8 @@ export class SampleDataService {
     this.missionService.updateMission({
       ...this.missionService.settings,
       tacticalCalls,
+      // E-168a (2026-10-01, John): a demo says so in the mission itself, so it survives a backup.
+      missionMode: 'demo',
       mission: SampleDataService.sampleMissionId(),
       event: data.event,
       eventNotes: data.eventNotes,
@@ -257,7 +259,13 @@ export class SampleDataService {
 
     // E-124: marks this demo as the loaded mission, so the Alternative map may fetch its
     // street-detail file (and evicts the previous demo's). See shared/mapping/demo-map.ts.
-    setActiveDemoScenario(scenario)
+    // E-168a: also records what the loader created (roster uids, report numbers), so later
+    // code can tell demo rows from real ones added on top. Report `id` is the sequential
+    // number within the log, unique for the log's life.
+    setActiveDemoScenario(scenario, {
+      rangerUids: rangers.map(r => r.uid),
+      reportIds: radioLog.logEntries.map(e => String(e.id)),
+    })
 
     // E-122 Phase 2a: every caller (mission-advanced-options.component.ts,
     // entry.component.ts) reloads the page right after this resolves - rangers/radioLog/

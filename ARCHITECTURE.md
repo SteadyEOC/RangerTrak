@@ -8,6 +8,9 @@ features, and how to prepare a device so the app works when the network doesn't.
 
 ## Mapping engines
 
+> 2026-10-01, John: MapLibre is now a second-class engine. New map features are Leaflet-only
+> unless stated otherwise (ADR D-56, proposed). The Entry mini-map stays Leaflet.
+
 RangerTrak ships **two independent map engines**. This is deliberate, not a migration
 half-finished: they have genuinely different offline behaviour, and which one is the right
 default is still an open question for the Entry page.
@@ -27,6 +30,9 @@ E-64) with a toggle between them — the table below used to show them as separa
 | Offline tile caching | `leaflet.offline` — "Save this area for offline use" control (OpenTopoMap only; OSM's own policy forbids bulk saving) | Not needed for the bundled/background layer; a scribe-loaded custom file (`CustomPmtilesService`, Map page's "Load a custom .pmtiles file…") replaces coverage outright instead |
 
 ### Open decision: which engine powers the Entry page mini-map
+
+> 2026-10-01, John: settled in practice - the mini-map stays Leaflet, and MapLibre is a
+> second-class engine (see the note under "Mapping engines", ADR D-56, proposed).
 
 The Entry form has **one** mini-map slot. It currently uses `MiniMapLeafletComponent`
 (Leaflet). `MiniMapComponent` (MapLibre) is built and working but not wired into
@@ -299,6 +305,57 @@ actually defends against here is narrow, and worth being honest about:
 - **Phase 2b — ✅ opt-in encryption at rest**, tied to the IndexedDB migration so the async
   change was paid for once. See above.
 - **Phase 3 — per-mission keys**, if agencies ask for separation between missions.
+
+## Business rules: src/app/domain/
+
+2026-10-01: the pure rules the app decides things by (first one: `deriveUsageState` and its
+thresholds, E-168) live in `src/app/domain/`, one plain TypeScript file per rule set, each with a
+table-driven spec. The rule for this folder: **no Angular, Leaflet, DOM or storage imports** -
+only data in, answer out - so a rule can be tested without a browser and is never decided in two
+places. Services gather the inputs and call the rule. ESLint is planned to enforce the import
+rule (ADR D-57, proposed); until then it is by convention and review.
+
+## Data stored on the device
+
+Every persisted key, as of 2026-10-01 (E-168a). This is the input to the rc.1 storage freeze
+(ADR D-55): any change here restarts that clock. "Backup" means the mission backup file
+(`BackupService`); "Encrypted" means encrypted at rest when the operator has turned on a
+passphrase (otherwise nothing here is encrypted). When IndexedDB is unavailable (private mode),
+the `rangertrak-records` keys fall back to `localStorage` under the same names for that session.
+
+| # | Store | Key | Owner | Backup | Encrypted | Migration |
+|---|-------|-----|-------|--------|-----------|-----------|
+| 1 | localStorage | `appSettings` | `mission.service.ts` | yes (`settings`) | no | `mission-migration.ts`, schema 5, plus backfill on every load |
+| 2 | localStorage | `appSettings-BAD` | `mission.service.ts` | no | no | none; quarantine copy of unreadable settings |
+| 3 | localStorage | `rangertrak-demo-scenario` | `shared/mapping/demo-map.ts` | no | no | JSON record since E-168a; the old bare scenario id still reads |
+| 4 | localStorage | `fieldMode` | `field-mode.service.ts` | no | no | none |
+| 5 | localStorage | `skinChoice` | `skin.service.ts` | no | no | none |
+| 6 | localStorage | `themeMode` | `theme.service.ts` | no | no | none |
+| 7 | localStorage | `entryWelcomeDismissed` | `welcome-panel.service.ts` | no | no | none |
+| 8 | localStorage | `printTipShown` | `shared/export/print-tip.ts` | no | no | none |
+| 9 | localStorage | `ics213DownloadFallbackExplained` | `shared/export/ics213-print.ts` | no | no | none |
+| 10 | localStorage | `updateLastChecked` | `update.service.ts` | no | no | none |
+| 11 | localStorage | `lastCoordinateFormat` | `entry/location.component.ts` | no | no | none |
+| 12 | localStorage | `rangertrak.rangers.privacyNoticeDismissed` | `rangers/rangers.component.ts` | no | no | none |
+| 13 | IndexedDB `rangertrak-records` / `kv` | `rangers` | `ranger.service.ts` | yes | yes | `ranger-migration.ts`, schema 1 |
+| 14 | IndexedDB `rangertrak-records` / `kv` | `radioLog` | `radio-log.service.ts` | yes | yes | `radio-log-migration.ts`, schema 1 |
+| 15 | IndexedDB `rangertrak-records` / `kv` | `radioLog-BAD` | `radio-log.service.ts` | no | yes | none; quarantine copy of an unreadable log |
+| 16 | IndexedDB `rangertrak-records` / `kv` | `locations` | `mission-location.service.ts` | yes | no | `mission-location-migration.ts`, schema 1 |
+| 17 | IndexedDB `rangertrak-records` / `kv` | `aarNotes` | `aar-note.service.ts` | yes | yes | `aar-note-migration.ts`, schema 1 |
+| 18 | IndexedDB `rangertrak-records` / `kv` | `__encryption` | `shared/storage/record-store.ts` | no | no (it is the key marker) | none |
+| 19 | IndexedDB `rangertrak-photos` / `photos` | one per ranger (by call sign) | `ranger-photo.service.ts` | no (only in setup files) | yes | none |
+| 20 | IndexedDB `rangertrak-custom-pmtiles` / `files` | `active` | `custom-pmtiles.service.ts` | no | no | none |
+| 21 | IndexedDB `leaflet.offline` / `tileStore` | map tiles | the `leaflet.offline` library | no | no | library's own |
+| 22 | Cache Storage `rangertrak-pmtiles-warm` | map file URLs | `shared/mapping/demo-map.ts`, service worker | no | no | pruned by `pruneWarmCache()` |
+
+Notes for the storage freeze:
+
+- `appSettings` also holds the optional Google geocoding API key, so it is in plaintext on the
+  device and in an unencrypted backup. Roster PII is encrypted; this is not PII.
+- Mission mode (`missionMode`, E-168a) is a field inside `appSettings`, not a key of its own, so it
+  rides in backups. The demo record (row 3) is device-only on purpose: it records which rows the
+  demo loader created, which means nothing on another device.
+- Rows 2 and 15 are written but nothing reads them back or cleans them up.
 
 ## One active tab per browser
 
