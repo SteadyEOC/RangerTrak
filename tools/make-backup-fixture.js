@@ -77,6 +77,7 @@ async function openChrome(profile, downloads) {
     const m = JSON.parse(ev.data)
     if (m.method === 'Page.javascriptDialogOpening') {
       const next = dialogQueue.shift()
+      if (process.env.FIXTURE_DEBUG) console.error('DIALOG', m.params.type, JSON.stringify(m.params.message.slice(0, 60)), '->', JSON.stringify(next))
       const params = typeof next === 'string' ? { accept: true, promptText: next } : { accept: true }
       ws.send(JSON.stringify({ id: nextId++, method: 'Page.handleJavaScriptDialog', params }))
     }
@@ -100,7 +101,7 @@ async function openChrome(profile, downloads) {
     try { ws.close() } catch { }
     try { chrome.kill() } catch { }
   }
-  return { send, evaluate, close, queue: (...answers) => dialogQueue.push(...answers) }
+  return { send, evaluate, close, queue: (...answers) => dialogQueue.push(...answers), resetQueue: () => { dialogQueue.length = 0 } }
 }
 
 async function goto(b, route, settleMs = 4000) {
@@ -146,9 +147,11 @@ async function waitForDownload(dir) {
     b = await openChrome(path.join(tmp, 'profile'), downloads)
     await goto(b, '/')
 
-    // 1. The Grand Canyon demo (the picker's default). Confirm, then the "loaded" alert.
+    // 1. The Grand Canyon demo (the picker's default). Nothing queued: since E-168 (0.99.17) an
+    //    empty device loads a demo without a confirm, and an empty queue accepts whatever does open.
+    //    2026-10-02, John: the old `queue(true, true)` left two stale answers that shifted every
+    //    later dialog, so the 0.99.17 "encrypted" fixture was written in plaintext.
     await goto(b, '/mission')
-    b.queue(true, true)
     if (!await clickButton(b, '/Load sample mission/i')) throw new Error('no "Load sample mission" button')
     await sleep(6000)
 
@@ -169,6 +172,7 @@ async function waitForDownload(dir) {
 
     // 3a. Plain backup: confirm, then a blank passphrase.
     await goto(b, '/mission')
+    b.resetQueue()
     b.queue(true, '')
     if (!await clickButton(b, '/Back up mission/i')) throw new Error('no "Back up mission" button')
     const plainPath = await waitForDownload(downloads)
@@ -176,9 +180,13 @@ async function waitForDownload(dir) {
     moveFile(plainPath, path.join(OUT, 'backup.json'))
 
     // 3b. Encrypted backup: confirm, passphrase, passphrase again.
+    b.resetQueue()
     b.queue(true, PASSPHRASE, PASSPHRASE)
     if (!await clickButton(b, '/Back up mission/i')) throw new Error('no "Back up mission" button')
     const encPath = await waitForDownload(downloads)
+    // Never write a fake "encrypted" fixture: a plaintext one restores without its passphrase prompt
+    // and throws every later check's dialog answers out of step.
+    if (!JSON.parse(fs.readFileSync(encPath, 'utf8')).ciphertext) throw new Error('the "encrypted" backup came out unencrypted - dialog answers out of step?')
     moveFile(encPath, path.join(OUT, 'backup-encrypted.json'))
 
     // 4. What a restore must bring back, read from what the app actually wrote.

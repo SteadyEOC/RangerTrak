@@ -268,6 +268,17 @@ async function idbRemoveRaw(key) {
  * has no such exclusivity requirement: it runs immediately alongside whatever connection the
  * open page already holds.
  */
+// 2026-10-02, John: read from the app's own MIGRATED_KEYS instead of a hand-kept copy. The copy
+// had drifted (no 'aarNotes', and no 'secrets' after the geocoding-key fix), so a restored
+// 0.99.17 backup left its 'secrets' record behind every later "wipe", and the dialog answers
+// queued for later checks went astray (the device-encryption check failed on 0.99.17 itself).
+const RECORD_STORE_KEYS = (() => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'shared', 'storage', 'record-store.ts'), 'utf8')
+  const m = src.match(/export const MIGRATED_KEYS = \[([^\]]*)\]/)
+  if (!m) throw new Error('e2e: could not read MIGRATED_KEYS from record-store.ts')
+  return [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1])
+})()
+
 async function idbClearAll() {
   // '__encryption' (E-122 Phase 2b, ENCRYPTION_MARKER_KEY in record-encryption.ts) rides
   // along here too: it is a reserved key in the same 'kv' store, and leaving it behind would
@@ -275,7 +286,7 @@ async function idbClearAll() {
   // goto() - checkDeviceEncryption() also disables encryption itself before returning, but
   // clearing it here too means a check that throws partway through never leaves the profile
   // stuck locked for everything that runs after it.
-  for (const key of ['rangers', 'radioLog', 'radioLog-BAD', 'locations', '__encryption']) {
+  for (const key of [...RECORD_STORE_KEYS, '__encryption']) {
     await idbRemoveRaw(key)
   }
 }
@@ -2778,6 +2789,7 @@ async function checkBackupFixturesRestore() {
       await evaluate(`localStorage.clear()`)
       await idbClearAll()
       await goto('/mission')
+      dialogQueue.length = 0 // 2026-10-02: one fixture's unused answers must not leak into the next
       queueDialogs(...answers)
       await setFileInput('#importMissionFile', path.join(root, release, file))
       await sleep(2500) // the restore reloads the page
