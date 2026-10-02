@@ -37,7 +37,7 @@
         @if (usage.state() === 'empty') {
         <li class="entry-welcome__demo-line">
           <strong>Demo:</strong> or try the app first with made-up data.
-          <rangertrak-demo-picker buttonLabel="Load Demo Data"></rangertrak-demo-picker>
+          <rangertrak-demo-picker label="Load a demo"></rangertrak-demo-picker>
         </li>
         }
         @if (usage.state() === 'empty' && !fieldMode.enabled() && isTouchFirstDevice) {
@@ -67,12 +67,12 @@
     <div class="entry-welcome__text">
       @if (usage.state() === 'demo') {
       <strong>You're looking at demo data ({{ demoLabel() }}).</strong>
-      Try another demo, or start a real mission.
+      Pick another demo, or start a real mission.
       } @else {
       <strong>Demo:</strong> no mission yet? Load a demonstration with made-up data to try out the app.
       }
     </div>
-    <rangertrak-demo-picker [buttonLabel]="usage.state() === 'demo' ? 'Try another demo' : 'Load Demo Data'"></rangertrak-demo-picker>
+    <rangertrak-demo-picker [label]="usage.state() === 'demo' ? 'Switch demo' : 'Load a demo'"></rangertrak-demo-picker>
     @if (usage.state() === 'demo') {
     <button matButton="filled" type="button" (click)="onStartRealMission()"
       title="Clear the demo data and start with an empty mission">

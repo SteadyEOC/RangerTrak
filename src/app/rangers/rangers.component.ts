@@ -30,7 +30,6 @@ import {
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
 import { recordStore } from '../shared/storage/record-store'
-import { DemoPickerComponent } from '../shared/demo-picker/demo-picker.component'
 import { extractMissionZip, MissionZipManifest, MissionZipPhoto } from '../shared/export/mission-zip'
 import { mergeRangers } from '../shared/services/ranger-migration'
 import { CustomTooltip } from './customTooltip'
@@ -39,7 +38,7 @@ import { CustomTooltip } from './customTooltip'
 @Component({
   selector: 'rangertrak-rangers',
   standalone: true,
-  imports: [CommonModule, AgGridAngular, DemoPickerComponent, PageComponent, ExpandableSectionComponent, RouterLink, ...MATERIAL_IMPORTS],
+  imports: [CommonModule, AgGridAngular, PageComponent, ExpandableSectionComponent, RouterLink, ...MATERIAL_IMPORTS],
   templateUrl: './rangers.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./rangers.component.scss']

@@ -1545,26 +1545,30 @@ async function checkUsageModes() {
   check('blank device: a demo picker is offered (in the welcome panel)', await evaluate(`!!document.querySelector('rangertrak-demo-picker')`), true)
   check('blank device: the pill has no mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'none')
 
-  await evaluate(`document.querySelector('rangertrak-demo-picker > button')?.click()`)
+  // 2026-10-02, John: picking a demo loads it, no button (except Mission > Danger zone).
+  await evaluate(`document.querySelector('rangertrak-demo-picker mat-select')?.click()`)
+  await sleep(600)
+  await evaluate(`[...document.querySelectorAll('mat-option')].find(o => /Grand Canyon/.test(o.textContent))?.click()`)
   await new Promise(r => setTimeout(r, 4000)) // the picker loads the demo and reloads the page
   await goto('/')
   check('after loading a demo: the pill shows demo mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'demo')
-  check('after loading a demo: the demo card offers another demo', await evaluate(`document.querySelector('[data-testid="demo-card"]')?.textContent.includes('Try another demo') ?? false`), true)
+  check('after loading a demo: the demo card offers to switch', await evaluate(`document.querySelector('[data-testid="demo-card"]')?.textContent.includes('Switch demo') ?? false`), true)
+  check('after loading a demo: its dropdown shows the loaded demo, not just the default', await evaluate(`document.querySelector('[data-testid="demo-card"] mat-select')?.textContent.includes('Grand Canyon') ?? false`), true)
 
   // 2026-10-02, John: switching demo to demo kept the old one (State fair stayed after loading
   // Grand Canyon). Pick State fair in the card's own dropdown, load it, and check it took.
   await evaluate(`document.querySelector('[data-testid="demo-card"] mat-select')?.click()`)
   await sleep(600)
-  await evaluate(`[...document.querySelectorAll('mat-option')].find(o => /State fair/.test(o.textContent))?.click()`)
-  await sleep(600)
   queueDialogs(true, true) // the replace confirm, then the "loaded" alert
-  await evaluate(`document.querySelector('[data-testid="demo-card"] rangertrak-demo-picker > button')?.click()`)
-  await sleep(5000)
+  await evaluate(`[...document.querySelectorAll('mat-option')].find(o => /State fair/.test(o.textContent))?.click()`)
+  await sleep(5000) // picking it asks (confirm queued below) and loads straight away
   await goto('/')
   // Read what was stored, not the card's text: the card's dropdown shows the label just picked,
   // which would pass whether or not the load worked.
   check('switching demos: the stored demo is now the second one', await evaluate(`(() => { try { return JSON.parse(localStorage.getItem('rangertrak-demo-scenario')).scenario } catch { return localStorage.getItem('rangertrak-demo-scenario') } })()`), 'state-fair')
   check('switching demos: the default location moved to the State fair (about 37.8 N)', await evaluate(`Math.round(JSON.parse(localStorage.getItem('appSettings') || '{}').defLat || 0)`), 38)
+  // Discriminating: the old picker always showed the default (Grand Canyon) here.
+  check('switching demos: the dropdown shows State fair, not the default', await evaluate(`document.querySelector('[data-testid="demo-card"] mat-select')?.textContent.includes('State fair') ?? false`), true)
   dialogQueue.length = 0
 
   await evaluate(`window.confirm = () => true; document.querySelector('.rt-mode-choice[data-mode="exercise"]')?.click()`)

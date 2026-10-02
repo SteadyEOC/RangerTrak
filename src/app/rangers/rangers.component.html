@@ -56,8 +56,8 @@
     <div class="rangers__empty-state" role="status">
       <mat-icon class="rangers__empty-state__icon" aria-hidden="true">emoji_people</mat-icon>
       <p class="rangers__empty-state__text">
-        <strong>The roster is empty.</strong> Add rangers one at a time, import a roster
-        file, or load the sample mission to see the app populated with demonstration data.
+        <strong>The roster is empty.</strong> Add rangers one at a time, or import a roster
+        file.
       </p>
       <div class="rangers__empty-state__actions">
         <button matButton="filled" type="button" (click)="onBtnAddRanger()"
@@ -72,9 +72,9 @@
           Import roster
         </button>
 
-        <!-- E-168 (2026-10-01): the shared demo picker (scenario + Load button), the same one
-             Entry, Mission and Help use. -->
-        <rangertrak-demo-picker></rangertrak-demo-picker>
+        <!-- 2026-10-02, John: no demo offer here any more. After "Start a real mission" an empty
+             roster is the normal starting point, and a demo offer read as "still in demo". Demos
+             stay on Entry, Help and Mission > Danger zone. -->
       </div>
     </div>
     }
