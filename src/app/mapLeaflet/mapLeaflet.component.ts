@@ -26,7 +26,7 @@ import { DOCUMENT, NgTemplateOutlet } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import {
   AfterViewInit, Component, ElementRef, Inject, Input, OnDestroy, OnInit, TemplateRef, ViewChild,
-  ChangeDetectionStrategy, computed, signal
+  ChangeDetectionStrategy, ChangeDetectorRef, computed, inject, signal
 } from '@angular/core'
 import { MatButtonModule } from '@angular/material/button'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
@@ -52,6 +52,9 @@ import { LocationDialogComponent } from '../map/location-dialog/location-dialog.
 import { MapPrintFurnitureComponent } from '../map/map-print/map-print-furniture.component'
 import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.component'
 import { printMapSheet } from '../map/map-print/map-print-sheet'
+import {
+  PrintPoint, PrintRect, choosePanelSpot, fanPositions, groupClosePoints, padRect,
+} from '../map/map-print/map-print-layout'
 
 
 // https://www.digitalocean.com/community/tutorials/angular-angular-and-leaflet
@@ -205,6 +208,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // See map-page.component.html's own comment for why: state/handler live in one place,
   // placement is each engine's call.
   @Input() engineSwitchTemplate?: TemplateRef<unknown>
+  // 2026-10-01, John: E-152b - the printed title block, owned by MapPageComponent (it already
+  // has the mission and the print time); this component floats it on the map as a panel.
+  @Input() printTitleTemplate?: TemplateRef<unknown>
 
   // static: true - these divs sit in the template unconditionally, so the query resolves
   // before ngOnInit, which is where the maps are built. Resolved from this component's own
@@ -214,6 +220,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   @ViewChild('overviewContainer', { static: true }) private overviewContainer!: ElementRef<HTMLDivElement>
   @ViewChild('offlineControlsHost', { static: true }) private offlineControlsHost!: ElementRef<HTMLDivElement>
   @ViewChild('edgeTicks', { static: true }) private edgeTicks!: ElementRef<HTMLDivElement>
+  @ViewChild('printFrame', { static: true }) private printFrame!: ElementRef<HTMLDivElement>
+  @ViewChild('printTitle', { static: true }) private printTitle!: ElementRef<HTMLDivElement>
+  @ViewChild('printLegend', { static: true, read: ElementRef }) private printLegend!: ElementRef<HTMLElement>
+  private readonly cdr = inject(ChangeDetectorRef)
 
   private lMap!: L.Map
   private overviewMapLeaflet!: L.Map
@@ -489,8 +499,26 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private readonly printMedia = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('print') : undefined
   private readonly onPrintMediaChange = () => {
-    this.setPrintMarkers(!!this.printMedia?.matches)
+    const printing = !!this.printMedia?.matches
+    // 2026-10-01, John: E-152b - order matters. Markers become individual ones, the frame is
+    // re-measured at the sheet's size, rings go on (at that size), the legend re-renders with
+    // the ring line, markers fan out, and only then do the panels look for clear map (they
+    // need the fanned positions), before the edge ticks step round the panels.
+    if (!printing) {
+      this.unfanPrintMarkers() // before the cluster takes its markers back, so it sees their real spots
+    }
+    this.setPrintMarkers(printing)
+    this.setPrintRings(printing)
     this.lMap?.invalidateSize()
+    if (printing && this.lMap) {
+      if (this.printAddedRings) {
+        this.refreshRangeRings()
+      }
+      this.cdr.detectChanges()
+      this.layoutPrintSheet()
+    } else {
+      this.resetPrintSheet()
+    }
     this.refreshEdgeTicks()
   }
 
@@ -510,8 +538,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * Plain DOM written here rather than a template binding: it runs from the print media
    * change, right after invalidateSize() re-measures the map for the page, and has to be in
    * the document before the browser lays out the page - no waiting for change detection. On
-   * screen the box is empty (and hidden by CSS). A label that would sit under the north arrow
-   * or a Leaflet control (scale bar, credits) is dropped; its tick mark stays.
+   * screen the box is empty (and hidden by CSS). A label that would sit under the north arrow,
+   * a floating panel or a Leaflet control (scale bar, credits) is dropped; its tick mark stays.
    */
   private refreshEdgeTicks(): void {
     const host = this.edgeTicks?.nativeElement
@@ -561,7 +589,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
     const frame = host.parentElement
     const blockers = frame
-      ? [...frame.querySelectorAll('.furniture, .leaflet-control-scale, .leaflet-control-attribution')]
+      ? [...frame.querySelectorAll('.furniture, .leaflet-control-scale, .leaflet-control-attribution, .map-print-panel')]
         .map(el => el.getBoundingClientRect()).filter(r => r.width && r.height)
       : []
     const box = host.getBoundingClientRect()
@@ -1798,6 +1826,198 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       this.printMarkers.clearLayers()
       this.lMap.removeLayer(this.printMarkers)
       this.lMap.addLayer(this.myMarkerCluster)
+    }
+  }
+
+  /**
+   * 2026-10-01, John: E-152b - range rings always print: a printed map has no layers menu to
+   * switch them on later, and distance from the command post is what a paper map is read for.
+   * If the user already had them on they are left alone; otherwise they are added for the
+   * print and taken off after, so the screen map ends up as the user left it. Adding the layer
+   * fires the same overlayadd handler the menu does, so the legend gets its rings line.
+   */
+  private printAddedRings = false
+  private setPrintRings(printing: boolean): void {
+    if (!this.lMap) {
+      return
+    }
+    if (printing && !this.lMap.hasLayer(this.rangeRingsLayer)) {
+      this.lMap.addLayer(this.rangeRingsLayer)
+      this.printAddedRings = true
+    } else if (!printing && this.printAddedRings) {
+      this.printAddedRings = false
+      this.lMap.removeLayer(this.rangeRingsLayer)
+    }
+  }
+
+  /**
+   * 2026-10-01, John: E-152b - markers at (nearly) the same spot print fanned out: each group
+   * of two or more spreads round a circle centred on the group's true point, a thin leader
+   * line from every marker back to that point, and a small dot on it, the way a callout
+   * infographic does it. The markers keep their real latlngs in `fanned` so the screen map is
+   * restored exactly; the leaders and dots live in their own layer. Trails keep true positions.
+   */
+  private readonly fanned = new Map<L.Marker, L.LatLng>()
+  private readonly fanLayer = L.layerGroup()
+
+  private fanPrintMarkers(): void {
+    this.unfanPrintMarkers()
+    const markers = this.printMarkers.getLayers() as L.Marker[]
+    const points = markers.map(m => this.lMap.latLngToContainerPoint(m.getLatLng()))
+    for (const group of groupClosePoints(points)) {
+      if (group.length < 2) {
+        continue
+      }
+      const centre: PrintPoint = {
+        x: group.reduce((sum, i) => sum + points[i].x, 0) / group.length,
+        y: group.reduce((sum, i) => sum + points[i].y, 0) / group.length,
+      }
+      const truth = this.lMap.containerPointToLatLng(L.point(centre.x, centre.y))
+      const spots = fanPositions(centre, group.length)
+      group.forEach((markerIndex, k) => {
+        const marker = markers[markerIndex]
+        const at = this.lMap.containerPointToLatLng(L.point(spots[k].x, spots[k].y))
+        this.fanned.set(marker, marker.getLatLng())
+        marker.setLatLng(at)
+        this.fanLayer.addLayer(L.polyline([truth, at], { color: '#222', weight: 1, interactive: false }))
+      })
+      this.fanLayer.addLayer(L.circleMarker(truth, {
+        radius: 3, color: '#fff', weight: 1, fillColor: '#222', fillOpacity: 1, interactive: false,
+      }))
+    }
+    if (this.fanned.size) {
+      this.fanLayer.addTo(this.lMap)
+    }
+  }
+
+  private unfanPrintMarkers(): void {
+    this.fanned.forEach((latlng, marker) => marker.setLatLng(latlng))
+    this.fanned.clear()
+    this.fanLayer.clearLayers()
+    if (this.lMap?.hasLayer(this.fanLayer)) {
+      this.lMap.removeLayer(this.fanLayer)
+    }
+  }
+
+  /**
+   * 2026-10-01, John: E-152b - lays out the printed sheet: fans the markers, then floats the
+   * title and the legend over the map in clear spots (title first, so the legend avoids it).
+   * A spot is allowed only if it covers no report or location marker (or its minutes badge),
+   * the north arrow, scale bar or credits; of the allowed ones the one crossing the fewest
+   * trails and ring labels wins (choosePanelSpot). Only vector things are weighed - the map
+   * tiles are other sites' pictures whose pixels cannot be read.
+   *
+   * When no spot is clear (a crowded city map), the panel goes back where it used to be: the
+   * title as a band above the map (rt-print-title-band), the legend as a column beside it
+   * (rt-print-legend-beside). Either changes the map's size, so the map is re-measured and
+   * the markers re-fanned, and the pass repeats; two fallbacks at most, so three passes.
+   */
+  private layoutPrintSheet(): void {
+    const frame = this.printFrame.nativeElement
+    const title = this.printTitle.nativeElement
+    const legend = this.printLegend.nativeElement
+    const hasTitle = !!this.printTitleTemplate
+    let titleBand = false
+    let legendBeside = false
+    const inset = 3 / 25.4 * 96 // 3 mm, in CSS px
+    let titleSpot: { left: number, top: number } | null = null
+    let legendSpot: { left: number, top: number } | null = null
+
+    for (let pass = 0; pass < 3; pass++) {
+      frame.classList.toggle('rt-print-title-band', titleBand)
+      frame.classList.toggle('rt-print-legend-beside', legendBeside)
+      for (const el of [title, legend]) {
+        el.style.left = '0'
+        el.style.top = '0'
+      }
+      frame.style.removeProperty('--rt-print-band')
+      frame.style.removeProperty('--rt-print-legend-overflow')
+      legend.classList.add('legend--compact')
+      if (titleBand) {
+        frame.style.setProperty('--rt-print-band', `${title.getBoundingClientRect().height}px`)
+      }
+      this.lMap.invalidateSize()
+      this.fanPrintMarkers()
+
+      const origin = this.mapContainer.nativeElement.getBoundingClientRect()
+      const rel = (r: DOMRect): PrintRect => ({
+        left: r.left - origin.left, top: r.top - origin.top, right: r.right - origin.left, bottom: r.bottom - origin.top,
+      })
+      const visible = (selector: string, pad: number) => [...frame.querySelectorAll(selector)]
+        .map(el => el.getBoundingClientRect()).filter(r => r.width && r.height)
+        .map(r => padRect(rel(r), pad))
+      const hard = [
+        ...visible('.leaflet-marker-icon:not(.rt-range-ring-label)', 4),
+        ...visible('.leaflet-tooltip', 3),
+        ...visible('.furniture, .leaflet-control-scale, .leaflet-control-attribution', 2),
+      ]
+      const soft = visible('.rt-range-ring-label span', 0)
+      const segments: [PrintPoint, PrintPoint][] = []
+      this.myTrailsLayer.eachLayer(layer => {
+        if (layer instanceof L.Polyline) {
+          const pts = (layer.getLatLngs() as L.LatLng[]).map(ll => this.lMap.latLngToContainerPoint(ll))
+          for (let i = 1; i < pts.length; i++) {
+            segments.push([pts[i - 1], pts[i]])
+          }
+        }
+      })
+      const container = { width: origin.width, height: origin.height }
+      // The scale bar and credits run along the bottom edge: panels sit above them.
+      const credits = visible('.leaflet-control-scale, .leaflet-control-attribution', 0)
+      const bottomExtra = credits.length ? Math.max(0, origin.height - Math.min(...credits.map(r => r.top))) : 0
+      const place = (el: HTMLElement, extraHard: PrintRect[]) => {
+        const r = el.getBoundingClientRect()
+        return choosePanelSpot({
+          container, panel: { width: r.width, height: r.height }, inset, bottomExtra,
+          hard: [...hard, ...extraHard], soft, segments,
+        })
+      }
+
+      if (hasTitle && !titleBand) {
+        titleSpot = place(title, [])
+        if (!titleSpot) {
+          titleBand = true
+          continue
+        }
+      }
+      if (!legendBeside) {
+        const tr = title.getBoundingClientRect()
+        legendSpot = place(legend, hasTitle && !titleBand && titleSpot
+          ? [padRect({ left: titleSpot.left, top: titleSpot.top, right: titleSpot.left + tr.width, bottom: titleSpot.top + tr.height }, 3)] : [])
+        if (!legendSpot) {
+          legendBeside = true
+          continue
+        }
+      }
+      break
+    }
+
+    if (legendBeside) {
+      // The column may be taller than the map: push what follows (the "Prepared by" line) down.
+      const over = legend.getBoundingClientRect().bottom - frame.getBoundingClientRect().bottom
+      frame.style.setProperty('--rt-print-legend-overflow', `${Math.max(0, Math.ceil(over))}px`)
+    }
+    if (titleSpot && !titleBand) {
+      title.style.left = `${titleSpot.left}px`
+      title.style.top = `${titleSpot.top}px`
+    }
+    if (legendSpot && !legendBeside) {
+      legend.style.left = `${legendSpot.left}px`
+      legend.style.top = `${legendSpot.top}px`
+    }
+  }
+
+  /** Puts the screen map back after printing: markers home, panels and fallback classes off. */
+  private resetPrintSheet(): void {
+    this.unfanPrintMarkers()
+    const frame = this.printFrame?.nativeElement
+    frame?.classList.remove('rt-print-title-band', 'rt-print-legend-beside')
+    frame?.style.removeProperty('--rt-print-band')
+    frame?.style.removeProperty('--rt-print-legend-overflow')
+    this.printLegend?.nativeElement.classList.remove('legend--compact')
+    for (const el of [this.printTitle?.nativeElement, this.printLegend?.nativeElement]) {
+      el?.style.removeProperty('left')
+      el?.style.removeProperty('top')
     }
   }
 

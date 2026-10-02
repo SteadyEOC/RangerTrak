@@ -5,9 +5,9 @@
  * dialog). The blog uses it as a hero image; it is also a quick way to eyeball the sheet.
  *
  *   node tools/serve-dist.js                      (in another terminal; serves dist on :8080)
- *   node tools/print-map-sheet.js [outDir] [--base=http://localhost:8080] [--name=...]
+ *   node tools/print-map-sheet.js [outDir] [--base=http://localhost:8080] [--name=...] [--demo=grand-canyon|vashon|state-fair]
  *
- * Loads the default sample mission (Grand Canyon), opens the Leaflet map, switches on the
+ * Loads a sample mission (Grand Canyon unless --demo says otherwise), opens the Leaflet map, switches on the
  * USNG / MGRS grid, sets the readout to DDM (so the edge ticks print in degrees and decimal
  * minutes), fills "Prepared by" with a fictional name, then lays the page out as Print map
  * does (the rt-print-map body class and a landscape Letter @page, see map-print-sheet.ts).
@@ -26,6 +26,12 @@ const opt = (name, dflt) => (args.find(a => a.startsWith(`--${name}=`)) || '').s
 const outDir = path.resolve(args.find(a => !a.startsWith('--')) || '.')
 const BASE = opt('base', 'http://localhost:8080')
 const NAME = opt('name', 'Morgan Ridgeway')
+// 2026-10-01, John: E-152b - which demo mission to print: grand-canyon (default), vashon or
+// state-fair (the crowded "city" test for the floating panels). Picked the way the Mission
+// page's own Demo scenario picker does, by its visible label.
+const DEMO = opt('demo', 'grand-canyon')
+const DEMO_LABEL = { 'grand-canyon': 'Grand Canyon', 'vashon': 'Vashon Island', 'state-fair': 'State fair' }[DEMO]
+if (!DEMO_LABEL) throw new Error(`--demo must be grand-canyon, vashon or state-fair (got ${DEMO})`)
 const PORT = 9445
 const PAGE_W = 980   // CSS px: printable width of landscape Letter at 96 px/in
 const PAGE_H = 725   // CSS px: printable height (215.9 mm less 10 mm top and 14 mm bottom)
@@ -89,6 +95,12 @@ async function main() {
     await send('Page.navigate', { url: `${BASE}/mission` }); await sleep(3500)
     await evaluate(`[...document.querySelectorAll('.mat-expansion-panel-header')].find(h => h.textContent.includes('Danger zone'))?.click()`)
     await sleep(400)
+    if (DEMO !== 'grand-canyon') {
+      await evaluate(`document.querySelector('.mission__sample-scenario mat-select')?.click()`)
+      await sleep(600)
+      await evaluate(`[...document.querySelectorAll('mat-option')].find(o => o.textContent.includes(${JSON.stringify(DEMO_LABEL)}))?.click()`)
+      await sleep(600)
+    }
     await evaluate(`[...document.querySelectorAll('button')].find(b => /Load sample mission/i.test(b.textContent))?.click()`)
     await sleep(5000)
 
@@ -141,7 +153,7 @@ async function main() {
       send('Page.captureScreenshot', { format: 'png' }),
       sleep(90000).then(() => { throw new Error('screenshot timed out') }),
     ])
-    const pngPath = path.join(outDir, 'printed-map-sheet-grand-canyon.png')
+    const pngPath = path.join(outDir, `printed-map-sheet-${DEMO}.png`)
     fs.writeFileSync(pngPath, Buffer.from(png.data, 'base64'))
     // Crop to page 1, then add the page margins (10 mm sides/top, 14 mm bottom) and
     // the dpi tag, if ImageMagick is installed; the uncropped capture otherwise.
@@ -155,7 +167,7 @@ async function main() {
 
     // The PDF last: a screenshot taken after printToPDF hung in headless Chrome.
     const pdf = await send('Page.printToPDF', { preferCSSPageSize: true, printBackground: true })
-    const pdfPath = path.join(outDir, 'printed-map-sheet-grand-canyon.pdf')
+    const pdfPath = path.join(outDir, `printed-map-sheet-${DEMO}.pdf`)
     fs.writeFileSync(pdfPath, Buffer.from(pdf.data, 'base64'))
     console.log(`wrote ${pdfPath}\nwrote ${pngPath}`)
   } finally {

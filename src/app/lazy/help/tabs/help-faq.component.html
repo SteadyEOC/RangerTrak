@@ -54,8 +54,9 @@
     long ago the most recent one came in.
   </rangertrak-expandable-section>
 
-  <!-- 2026-10-01: brought in line with 0.99.8-0.99.9 (legend beside the map, every marker
-       shown, sharper base map, edge ticks). -->
+  <!-- 2026-10-01: brought in line with 0.99.8-0.99.9 (every marker
+       shown, sharper base map, edge ticks; 2026-10-01 later: title and legend on the map,
+       rings always, fanned markers). -->
   <!-- 2026-10-01, John: "briefly note in docs the service limitations on offline use". -->
   <rangertrak-expandable-section summary="Why can't I save the satellite map for offline use?">
     Each map comes from a different provider, and their rules decide what may be saved on your
@@ -68,12 +69,15 @@
   </rangertrak-expandable-section>
 
   <rangertrak-expandable-section summary="What does Print map give me?">
-    A one-page landscape map sheet you can hand out or pin up. A title line along the top gives
-    the mission, the operational period and the time it was printed. The map fills most of the
-    page, with a north arrow, a scale bar, the map credit and latitude/longitude marks around its
-    edge (on the standard map, in the format picked under the map). The legend sits beside the map
-    and explains the markers, the teams, the named places and the check-in shading; only a very
-    long roster carries it on to a second page. Every report is shown as its own marker, not
+    A one-page landscape map sheet you can hand out or pin up. The map fills the whole page, with a
+    north arrow, a scale bar, the map credit and latitude/longitude marks around its edge (on the
+    standard map, in the format picked under the map). A title box (the mission, the operational
+    period and the time it was printed) and a legend box (the markers, the teams, the named places
+    and the check-in shading) sit on top of the map, in whichever spot hides none of your markers.
+    On a very crowded map there may be no such spot; the title then goes in a line above the map
+    and the legend in a column beside it. Range rings around the command post always print, even if
+    they are switched off on screen. Reports at nearly the same spot fan out around that spot, each
+    joined to it by a thin line, so every one can be read. Every report is its own marker, not
     grouped into numbered bubbles, so if you print to PDF you can zoom in to see them. Print map
     takes a few seconds ("Preparing the map...") to load a more detailed map for paper. Online it
     fetches it; offline it uses the area you saved for offline use, which already includes two

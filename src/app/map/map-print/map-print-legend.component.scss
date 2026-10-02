@@ -36,6 +36,54 @@
     column-gap  : 5mm;
   }
 
+  // 2026-10-01, John: E-152b - floating on the map (class set by MapLeafletComponent
+  // .layoutPrintSheet()): narrower columns, a little less height per row. Same content.
+  :host(.legend--compact) {
+    .legend__cols {
+      column-width: 40mm;
+      column-gap  : 4mm;
+    }
+
+    font-size  : 6.5pt;
+    line-height: 1.15;
+
+    .legend__icon {
+      width : 16px;
+      height: 16px;
+    }
+
+    // The swatches are SVG written in by innerHTML, so they carry no component attribute.
+    .legend__icon ::ng-deep svg {
+      width : 16px;
+      height: 16px;
+    }
+
+    .legend__status,
+    .legend__cluster {
+      width : 13px;
+      height: 13px;
+    }
+
+    .legend__note {
+      font-size: 6.5pt;
+    }
+
+    // Groups may split across the columns (rows and headings still hold together), or the
+    // long Teams group alone would make one column as tall as the whole legend.
+    .legend__group {
+      break-inside: auto;
+    }
+
+    h3 {
+      break-after: avoid;
+    }
+
+    .legend__row {
+      gap          : 1.5mm;
+      margin-bottom: 0.2mm;
+    }
+  }
+
   .legend__group {
     break-inside: avoid-column;
     margin-bottom: 1.5mm;

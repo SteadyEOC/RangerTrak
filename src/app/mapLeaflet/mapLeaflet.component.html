@@ -1,5 +1,5 @@
 <div class="mapLeaflet-container">
-  <div class="mapLeaflet-frame">
+  <div class="mapLeaflet-frame" #printFrame>
     <div #mapContainer id="mapLeaflet-main" (click)="onMouseClick($event)"></div>
     <!-- 2026-09-30, John: E-152 - north arrow and coordinate note, print-only (hidden on
          screen by the component itself), drawn over the corner of the map. -->
@@ -7,6 +7,15 @@
     <!-- 2026-09-30, John: lat/long ticks around the printed map's edge, print-only; filled
          in by refreshEdgeTicks() when the print layout takes over. -->
     <div #edgeTicks class="map-edge-ticks" aria-hidden="true"></div>
+    <!-- 2026-10-01, John: E-152b - the printed title block and legend float over the map as
+         panels (layoutPrintSheet() picks clear spots), instead of a band above and a column
+         beside. Print-only. Where no spot is clear they fall back to the old band/column
+         (frame classes rt-print-title-band / rt-print-legend-beside). -->
+    <div #printTitle class="map-print-panel map-print-panel--title">
+      <ng-container *ngTemplateOutlet="printTitleTemplate ?? null"></ng-container>
+    </div>
+    <rangertrak-map-print-legend #printLegend class="map-print-panel map-print-panel--legend"
+      [entries]="legendEntries()" engine="leaflet" [overlays]="legendOverlays()"></rangertrak-map-print-legend>
   </div>
   <!-- Raised live 2026-08-30: "the mini-map should ideally be immediately underneath the
        main map if spacing allows" - was a later sibling of the WHOLE .mapLeaflet-container
@@ -32,9 +41,6 @@
   </div>
 
 </div>
-<!-- 2026-09-30, John: E-152 - the printed legend, derived from what the map is drawing (see
-     MapPrintLegendComponent). Print-only. -->
-<rangertrak-map-print-legend [entries]="legendEntries()" engine="leaflet" [overlays]="legendOverlays()"></rangertrak-map-print-legend>
 <!-- 2026-09-30, John: tidy the controls under the map (John, desktop screenshot: "a bit
      unorganized"). Top to bottom now: ONE row of actions, the offline-tile save/remove pair with
      a short note under it, and a small "Display" group holding the two switches. Nothing here

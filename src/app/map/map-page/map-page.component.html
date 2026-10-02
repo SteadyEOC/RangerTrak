@@ -9,6 +9,10 @@
        onNewSettings()), same 24-hour times. "ID or number" is the Mission page's own label for
        the mission field, so it is shown as the mission/incident number; the Name field is
        the event name and leads the sheet. -->
+  <!-- 2026-10-01, John: E-152b - the title block is a template now, because Leaflet floats it
+       as a panel ON the map (projected in as printTitleTemplate, see MapLeafletComponent) while
+       MapLibre keeps it as the band above the map, below. -->
+  <ng-template #printTitleTpl>
   @if (mission$ | async; as m) {
   <div class="map-print-header">
     <h1>{{ m.event?.trim() || m.mission?.trim() || 'RangerTrak' }}</h1>
@@ -31,6 +35,10 @@
     <h1>RangerTrak</h1>
     <p>Printed {{ printedAt() | date:'MMM d, y, HH:mm:ss' }}</p>
   </div>
+  }
+  </ng-template>
+  @if (engine() === 'maplibre') {
+  <ng-container *ngTemplateOutlet="printTitleTpl"></ng-container>
   }
 
   <div class="map-fullscreen-area" #fullscreenArea>
@@ -57,7 +65,7 @@
     </ng-template>
 
     @if (engine() === 'leaflet') {
-    <rangertrak-mapLeaflet [engineSwitchTemplate]="engineSwitchTpl"></rangertrak-mapLeaflet>
+    <rangertrak-mapLeaflet [engineSwitchTemplate]="engineSwitchTpl" [printTitleTemplate]="printTitleTpl"></rangertrak-mapLeaflet>
     } @else if (maplibreComponentType(); as MaplibreEngine) {
     <ng-container *ngComponentOutlet="MaplibreEngine; inputs: {engineSwitchTemplate: engineSwitchTpl}"></ng-container>
     }

@@ -319,6 +319,11 @@ mat-slide-toggle {
   }
 }
 
+// 2026-10-01, John: E-152b - the floating title and legend panels exist on paper only.
+.map-print-panel {
+  display: none;
+}
+
 // G: these are interactive-only, same reasoning map-page.component.scss already applies to
 // its own .map-engine-switch/.fullscreen-toggle - inert or actively confusing on paper
 // (a "Print map" button printed onto the page it just printed).
@@ -331,41 +336,129 @@ mat-slide-toggle {
 
   // 2026-09-30, John: E-152 part 1 - the map fills the landscape sheet. The screen height
   // (70vh) and the page margin mean nothing on paper; a fixed millimetre height leaves room
-  // on the first page for the title block above and the start of the legend below it (the
-  // sheet is A4 or Letter, so the height is chosen to fit the shorter A4). The frame is the
-  // positioning box for the north arrow (map-print-furniture), which sits over the map's
-  // corner. A page-size print event re-measures the map - see LmapComponent.printMedia.
-  // 2026-09-30, John: "Now the entire legend is cropped off!" - it was meant to move to page 2
-  // whole, but only its heading showed, cut off at the foot of page 1. Following his "keep
-  // legends & title on the map if possible", the legend is now a slim column beside the map
-  // on page 1: the map keeps its full height and takes the rest of the width. A mission with
-  // a very long roster makes the row taller than the page and the rest follows on page 2.
+  // on the first page for the "Prepared by" line below (the sheet is A4 or Letter, so the
+  // height is chosen to fit the shorter A4). The frame is the positioning box for the north
+  // arrow (map-print-furniture) and the floating panels. A page-size print event
+  // re-measures the map - see LmapComponent.printMedia.
+  // 2026-10-01, John: E-152b - "title and legend ON the map": the 58 mm legend column and the
+  // title band are gone from the layout. The map takes the whole width and the height the
+  // band used; both are panels over the map (below), unless layoutPrintSheet() finds no
+  // clear spot and falls back to the old band and/or column.
   :host {
-    margin               : 0;
-    display              : grid;
-    grid-template-columns: minmax(0, 1fr) 58mm;
-    column-gap           : 3mm;
-    align-items          : start;
-  }
-
-  .mapLeaflet-container {
-    grid-column: 1;
-    grid-row   : 1;
-  }
-
-  rangertrak-map-print-legend {
-    grid-column: 2;
-    grid-row   : 1;
+    margin: 0;
+    display: block;
   }
 
   .mapLeaflet-frame {
     position         : relative;
-    // 2026-09-30, John: "Max the map" - 170 mm fills the rest of page 1 under the compact
-    // title band on A4 landscape (186 mm printable, the shorter of A4/Letter), with the
-    // legend in a column beside it (see :host above).
-    height           : 170mm;
+    // 178 mm: the old 170 mm map plus the ~10 mm title band, less a little so the "Prepared
+    // by" line still lands on page 1 of A4 landscape (186 mm printable, the shorter of A4/Letter).
+    height           : 178mm;
     break-inside     : avoid;
     box-sizing       : border-box;
+  }
+
+  // Fallback 1: no clear spot for the title - it sits in a band above the map, as before.
+  // layoutPrintSheet() measures the band into --rt-print-band; the map gives up that height.
+  .mapLeaflet-frame.rt-print-title-band {
+    margin-top: var(--rt-print-band, 10mm);
+    height    : calc(178mm - var(--rt-print-band, 10mm));
+  }
+
+  // Fallback 2: no clear spot for the legend - a 58 mm column beside the map, as before.
+  // A long roster makes the column taller than the map; layoutPrintSheet() grows the frame's
+  // bottom margin by the overflow so the "Prepared by" line follows the legend, not overlaps it.
+  .mapLeaflet-frame.rt-print-legend-beside {
+    width        : calc(100% - 61mm);
+    margin-bottom: var(--rt-print-legend-overflow, 0);
+  }
+
+  // 2026-10-01, John: E-152b - the floating panels: white at 92%, a hairline black border,
+  // the same ink-on-white fonts as before. Above the edge ticks (1100) and north arrow (1200).
+  // Left/top are written by layoutPrintSheet().
+  .map-print-panel {
+    display                   : block;
+    position                  : absolute;
+    z-index                   : 1300;
+    box-sizing                : border-box;
+    padding                   : 1.5mm 2mm;
+    background                : rgba(255, 255, 255, .92);
+    border                    : 0.75pt solid #000;
+    color                     : #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust        : exact;
+  }
+
+  .map-print-panel--title {
+    width    : max-content;
+    max-width: 45%;
+  }
+
+  // Wide enough for two columns of the legend (see .legend--compact in the legend's scss),
+  // which makes it half as tall as the beside-the-map column, so it fits a corner.
+  .map-print-panel--legend {
+    width    : 92mm;
+    max-width: 45%;
+    margin   : 0;
+  }
+
+  // The title block was written as a one-line band; as a panel the fields stack under the
+  // title. Reaches into map-page's template (the title is projected in), hence ng-deep.
+  :host ::ng-deep .map-print-panel--title .map-print-header {
+    display       : block;
+    margin        : 0;
+    padding       : 0;
+    border-bottom : 0;
+
+    h1 {
+      margin-bottom: 0.8mm;
+      font-size    : 11pt;
+    }
+
+    .map-print-header__fields {
+      display: block;
+    }
+
+    .map-print-header__fields div {
+      margin-bottom: 0.2mm;
+    }
+  }
+
+  .mapLeaflet-frame.rt-print-title-band .map-print-panel--title {
+    left      : 0 !important;
+    top       : auto !important;
+    bottom    : 100%;
+    width     : auto;
+    max-width : none;
+    padding   : 0;
+    background: none;
+    border    : 0;
+  }
+
+  :host ::ng-deep .mapLeaflet-frame.rt-print-title-band .map-print-panel--title .map-print-header {
+    display       : flex;
+    margin-bottom : 1.5mm;
+    padding-bottom: 1mm;
+    border-bottom : 1.5px solid #000;
+
+    h1 {
+      margin-bottom: 0;
+      font-size    : 13pt;
+    }
+
+    .map-print-header__fields {
+      display: flex;
+    }
+  }
+
+  .mapLeaflet-frame.rt-print-legend-beside .map-print-panel--legend {
+    left      : calc(100% + 3mm) !important;
+    top       : 0 !important;
+    width     : 58mm;
+    max-width : none;
+    padding   : 0;
+    background: none;
+    border    : 0;
   }
 
   #mapLeaflet-main {
@@ -567,9 +660,9 @@ mat-slide-toggle {
 // so the tiles fetched are the ones the sheet shows. Screen only: on paper the print rules win.
 @media screen {
   :host-context(body.rt-print-prep) .mapLeaflet-frame {
-    width    : 198mm; // 259 mm printable width, less the 58 mm legend column and its 3 mm gap
+    width    : 259mm; // landscape Letter's printable width; the title and legend float on the map now
     max-width: none;
-    height   : 170mm;
+    height   : 178mm;
   }
 
   :host-context(body.rt-print-prep) #mapLeaflet-main {

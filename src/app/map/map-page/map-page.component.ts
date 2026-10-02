@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe, NgComponentOutlet } from '@angular/common'
+import { AsyncPipe, DatePipe, NgComponentOutlet, NgTemplateOutlet } from '@angular/common'
 import {
   ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, Type, ViewChild, computed, inject, signal
 } from '@angular/core'
@@ -26,7 +26,7 @@ import { MapEngineService } from '../map-engine.service'
 @Component({
   selector: 'rangertrak-map-page',
   standalone: true,
-  imports: [PageComponent, LmapComponent, NgComponentOutlet, AsyncPipe, DatePipe, MatSlideToggleModule],
+  imports: [PageComponent, LmapComponent, NgComponentOutlet, NgTemplateOutlet, AsyncPipe, DatePipe, MatSlideToggleModule],
   templateUrl: './map-page.component.html',
   styleUrls: ['./map-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
