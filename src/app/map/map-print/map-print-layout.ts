@@ -295,3 +295,84 @@ export function choosePanelSpot(input: PanelPlacementInput): PanelPlacement | nu
   }
   return best?.placement ?? null
 }
+
+/**
+ * 2026-10-01, John: E-152b - the minutes badges ride with their ranger's newest report on the
+ * printed sheet: each sits on its own icon the way it does on screen (above it, overlapping the
+ * top edge by `BADGE_OVERLAP_PX`). If that spot collides with another badge, another report's
+ * icon or a Location icon, it tries the other side of its icon (below, then left, then right);
+ * if some badge still cannot find a clear side, every badge shrinks a step (the common `scale`,
+ * down to a floor) and the sides are tried again. Deterministic: badges in input order, sides
+ * in a fixed order, scales from large to small.
+ */
+export type BadgeSide = 'top' | 'bottom' | 'left' | 'right'
+
+/** How far a badge's near edge sits from the icon's centre; the screen's own offset. */
+export const BADGE_OVERLAP_PX = 8
+/** The common scales tried, as fractions of the printed badge size (the last is about 6 pt of 7.2). */
+export const BADGE_SCALES: readonly number[] = [1, 0.92, 0.83]
+
+export interface BadgeInput {
+  /** Index into `icons` of the report icon this badge belongs to. */
+  iconIndex: number
+  /** The badge's size at scale 1. */
+  size: { width: number, height: number }
+}
+
+export interface BadgePlan { sides: BadgeSide[], scale: number }
+
+const BADGE_SIDES: readonly BadgeSide[] = ['top', 'bottom', 'left', 'right']
+
+/** The box a badge of `size` takes on `side` of `icon`. */
+export function badgeRect(icon: PrintRect, size: { width: number, height: number }, side: BadgeSide): PrintRect {
+  const cx = (icon.left + icon.right) / 2
+  const cy = (icon.top + icon.bottom) / 2
+  switch (side) {
+    case 'top': return { left: cx - size.width / 2, right: cx + size.width / 2, bottom: cy - BADGE_OVERLAP_PX, top: cy - BADGE_OVERLAP_PX - size.height }
+    case 'bottom': return { left: cx - size.width / 2, right: cx + size.width / 2, top: cy + BADGE_OVERLAP_PX, bottom: cy + BADGE_OVERLAP_PX + size.height }
+    case 'left': return { right: cx - BADGE_OVERLAP_PX, left: cx - BADGE_OVERLAP_PX - size.width, top: cy - size.height / 2, bottom: cy + size.height / 2 }
+    case 'right': return { left: cx + BADGE_OVERLAP_PX, right: cx + BADGE_OVERLAP_PX + size.width, top: cy - size.height / 2, bottom: cy + size.height / 2 }
+  }
+}
+
+/**
+ * Chooses a side for every badge and a common scale. `icons` are all report icon boxes on the
+ * map; `fixed` are other things a badge must not cover (Location icons).
+ */
+export function planBadges(badges: readonly BadgeInput[], icons: readonly PrintRect[],
+  fixed: readonly PrintRect[] = []): BadgePlan {
+  let fallback: BadgePlan | null = null
+  for (const scale of BADGE_SCALES) {
+    const placed: PrintRect[] = []
+    const sides: BadgeSide[] = []
+    let allClear = true
+    for (const badge of badges) {
+      const size = { width: badge.size.width * scale, height: badge.size.height * scale }
+      const clashes = (rect: PrintRect) =>
+        icons.filter((icon, i) => i !== badge.iconIndex && rectsOverlap(rect, icon)).length
+        + fixed.filter(f => rectsOverlap(rect, f)).length
+        + placed.filter(p => rectsOverlap(rect, p)).length
+      let chosen: { side: BadgeSide, rect: PrintRect, clashes: number } | null = null
+      for (const side of BADGE_SIDES) {
+        const rect = badgeRect(icons[badge.iconIndex], size, side)
+        const count = clashes(rect)
+        if (!chosen || count < chosen.clashes) {
+          chosen = { side, rect, clashes: count }
+        }
+        if (count === 0) {
+          break
+        }
+      }
+      sides.push(chosen!.side)
+      placed.push(chosen!.rect)
+      if (chosen!.clashes > 0) {
+        allClear = false
+      }
+    }
+    fallback = { sides, scale }
+    if (allClear) {
+      return fallback
+    }
+  }
+  return fallback ?? { sides: [], scale: 1 }
+}

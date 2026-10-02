@@ -365,12 +365,17 @@ mat-slide-toggle {
     height    : calc(178mm - var(--rt-print-band, 10mm));
   }
 
-  // Fallback 2: no clear spot for the legend - a 58 mm column beside the map, as before.
-  // A long roster makes the column taller than the map; layoutPrintSheet() grows the frame's
-  // bottom margin by the overflow so the "Prepared by" line follows the legend, not overlaps it.
-  .mapLeaflet-frame.rt-print-legend-beside {
-    width        : calc(100% - 61mm);
-    margin-bottom: var(--rt-print-legend-overflow, 0);
+  // Fallback for the legend: no clear spot on the map, so it prints whole at the top of page 2,
+  // across the page (the element is moved after the "Prepared by" line, see layoutPrintSheet()).
+  .map-print-panel.map-print-panel--page2 {
+    position    : static;
+    width       : auto;
+    max-width   : none;
+    margin      : 0;
+    padding     : 0;
+    background  : none;
+    border      : 0;
+    break-before: page;
   }
 
   // 2026-10-01, John: E-152b - the floating panels: white at 92%, a hairline black border,
@@ -451,16 +456,6 @@ mat-slide-toggle {
     }
   }
 
-  .mapLeaflet-frame.rt-print-legend-beside .map-print-panel--legend {
-    left      : calc(100% + 3mm) !important;
-    top       : 0 !important;
-    width     : 58mm;
-    max-width : none;
-    padding   : 0;
-    background: none;
-    border    : 0;
-  }
-
   #mapLeaflet-main {
     height: 100%;
   }
@@ -480,8 +475,9 @@ mat-slide-toggle {
   }
 
   // The minutes badges shrink a little too: 0.7rem is 8.4 pt, 0.6rem is 7.2 pt.
+  // (--rt-badge-scale shrinks them further, to about 6 pt, where badges crowd: placeBadges().)
   :host ::ng-deep .leaflet-tooltip.rt-trail-elapsed {
-    font-size: 0.6rem;
+    font-size: calc(0.6rem * var(--rt-badge-scale, 1));
   }
 
   // The overview thumbnail and the on-screen-only zoom / layer-switcher buttons are

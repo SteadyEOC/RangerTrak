@@ -1,5 +1,5 @@
 import {
-  choosePanelSpot, fanSlots, groupClosePoints, planFans, rectsOverlap, segmentCrossesRect, PrintRect,
+  choosePanelSpot, fanSlots, groupClosePoints, planBadges, badgeRect, planFans, rectsOverlap, segmentCrossesRect, PrintRect,
 } from './map-print-layout'
 
 describe('map print layout', () => {
@@ -115,6 +115,46 @@ describe('map print layout', () => {
       const pts = [...pile(100, 100, 3), { x: 100, y: 62 }] // lone marker where a 12 o'clock icon goes
       const plan = planFans(pts)
       noOverlaps(plan.positions)
+    })
+  })
+
+  describe('planBadges', () => {
+    // Two report icons side by side, 21 px wide and 22 px apart centre to centre, each with a 16x12 badge.
+    const icon = (cx: number, cy: number): PrintRect => ({ left: cx - 10.5, top: cy - 10.5, right: cx + 10.5, bottom: cy + 10.5 })
+    const size = { width: 16, height: 12 }
+
+    it('keeps every badge above its own icon when nothing is in the way', () => {
+      const plan = planBadges([{ iconIndex: 0, size }, { iconIndex: 1, size }], [icon(100, 100), icon(200, 100)])
+      expect(plan).toEqual({ sides: ['top', 'top'], scale: 1 })
+    })
+
+    it('moves a badge to another side when it would land on a neighbouring icon', () => {
+      // A third icon sits right above the first one's top badge position.
+      const icons = [icon(100, 100), icon(100, 78)]
+      const plan = planBadges([{ iconIndex: 0, size }], icons)
+      expect(plan.sides[0]).toBe('bottom')
+      expect(plan.scale).toBe(1)
+    })
+
+    it('puts two badges on adjacent fanned icons on different sides, or shrinks, never overlapping', () => {
+      const icons = [icon(100, 100), icon(112, 100)] // icons 12 px apart: top badges (16 wide) would collide
+      const plan = planBadges([{ iconIndex: 0, size }, { iconIndex: 1, size }], icons)
+      const s = { width: size.width * plan.scale, height: size.height * plan.scale }
+      const rects = plan.sides.map((side, i) => badgeRect(icons[i], s, side))
+      expect(plan.sides[0] === 'top' && plan.sides[1] === 'top' && plan.scale === 1).toBeFalse()
+      expect(rectsOverlap(rects[0], rects[1])).toBeFalse()
+    })
+
+    it('avoids a fixed Location icon', () => {
+      const fixed = [{ left: 88, top: 70, right: 112, bottom: 90 }]
+      const plan = planBadges([{ iconIndex: 0, size }], [icon(100, 100)], fixed)
+      expect(plan.sides[0]).not.toBe('top')
+    })
+
+    it('shrinks all badges, to the floor, when no side is clear', () => {
+      const wall = [{ left: 0, top: 0, right: 300, bottom: 300 }]
+      const plan = planBadges([{ iconIndex: 0, size }], [icon(100, 100)], wall)
+      expect(plan.scale).toBe(0.83)
     })
   })
 

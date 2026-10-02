@@ -53,7 +53,7 @@ import { MapPrintFurnitureComponent } from '../map/map-print/map-print-furniture
 import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.component'
 import { printMapSheet } from '../map/map-print/map-print-sheet'
 import {
-  PrintPoint, PrintRect, choosePanelSpot, planFans, padRect,
+  PrintPoint, PrintRect, choosePanelSpot, planFans, planBadges, padRect, BADGE_OVERLAP_PX,
 } from '../map/map-print/map-print-layout'
 
 
@@ -1504,6 +1504,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // Trails share the same redraw-from-scratch lifecycle as markers (E-80) - without
     // this they'd pile up on every toggle/new-report exactly the way markers used to.
     this.myTrailsLayer.clearLayers()
+    this.entryMarkers.clear()
+    this.badgeMarkers.clear()
   }
 
   override displayMarkers() {
@@ -1539,6 +1541,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
           title: title, icon: rangerIconFor(i.rangerUid || i.callsign, statusColor)
         })
         marker.bindPopup(title)
+        this.entryMarkers.set(i, marker)
         this.myMarkerCluster.addLayer(marker);
 
         // E-11 (2026-08-26): evidenceLocation was captured on Entry and shown only on its
@@ -1858,14 +1861,20 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * restored exactly; the leaders and dots live in their own layer. Trails keep true positions.
    */
   private readonly fanned = new Map<L.Marker, L.LatLng>()
+  // 2026-10-01, John: E-152b - which report marker each minutes badge belongs to (the ranger's
+  // newest), so the badge can ride with it while printing; and what each badge looked like
+  // before it moved. Filled by displayMarkers() / drawTrails(), emptied with the markers.
+  private readonly entryMarkers = new Map<RadioLogEntryType, L.Marker>()
+  private readonly badgeMarkers = new Map<L.Tooltip, L.Marker>()
+  private readonly movedBadges = new Map<L.Tooltip, L.LatLng>()
   private readonly fanLayer = L.layerGroup()
 
   private fanPrintMarkers(): void {
     this.unfanPrintMarkers()
     const markers = this.printMarkers.getLayers() as L.Marker[]
     const points = markers.map(m => this.lMap.latLngToContainerPoint(m.getLatLng()))
-    // What stays put and must not be fanned onto: the minutes badges (they belong to the trails
-    // and keep their true spots) and the Location icons.
+    // What stays put and must not be fanned onto: the Location icons. (The minutes badges travel
+    // with their report, see placeBadges().)
     const origin = this.mapContainer.nativeElement.getBoundingClientRect()
     const fixed: PrintRect[] = []
     const keep = (el: Element | undefined | null) => {
@@ -1874,7 +1883,6 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         fixed.push(padRect({ left: r.left - origin.left, top: r.top - origin.top, right: r.right - origin.left, bottom: r.bottom - origin.top }, 1))
       }
     }
-    this.mapContainer.nativeElement.querySelectorAll('.leaflet-tooltip').forEach(keep)
     this.locationsLayer.eachLayer(l => keep((l as L.Marker).getElement?.()))
 
     // The printed icon is a scaled-down svg inside the 28 px icon box (see the scss), so measure
@@ -1903,11 +1911,80 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     if (this.fanned.size) {
       this.fanLayer.addTo(this.lMap)
     }
+    this.placeBadges()
+  }
+
+  /**
+   * 2026-10-01, John: E-152b - "locate them with the report": while printing, each minutes
+   * badge moves onto its ranger's newest report marker (where that marker is drawn now, fanned
+   * or not), above it as on screen. Where that collides (see planBadges()) it goes to another
+   * side of its icon, and if need be all badges shrink a step. Put back by unfanPrintMarkers().
+   */
+  private placeBadges(): void {
+    const map = this.mapContainer.nativeElement
+    const origin = map.getBoundingClientRect()
+    const rel = (el: Element | null | undefined): PrintRect | null => {
+      const r = el?.getBoundingClientRect()
+      return r && r.width && r.height
+        ? { left: r.left - origin.left, top: r.top - origin.top, right: r.right - origin.left, bottom: r.bottom - origin.top }
+        : null
+    }
+    const iconOf = (m: L.Marker) => rel(m.getElement()?.querySelector('svg') ?? m.getElement())
+    const items: { badge: L.Tooltip, marker: L.Marker, size: { width: number, height: number } }[] = []
+    this.badgeMarkers.forEach((marker, badge) => {
+      if (!this.printMarkers.hasLayer(marker)) {
+        return
+      }
+      this.movedBadges.set(badge, badge.getLatLng()!)
+      badge.options.direction = 'top'
+      badge.options.offset = L.point(0, -BADGE_OVERLAP_PX)
+      badge.setLatLng(marker.getLatLng())
+      const r = badge.getElement()?.getBoundingClientRect()
+      items.push({ badge, marker, size: { width: r?.width ?? 0, height: r?.height ?? 0 } })
+    })
+    if (!items.length) {
+      return
+    }
+    // Every report icon (own and others') and every Location icon, in container px.
+    const markers = this.printMarkers.getLayers() as L.Marker[]
+    const icons: PrintRect[] = []
+    const indexOf = new Map<L.Marker, number>()
+    markers.forEach(m => {
+      const r = iconOf(m)
+      if (r) {
+        indexOf.set(m, icons.length)
+        icons.push(r)
+      }
+    })
+    const fixed: PrintRect[] = []
+    this.locationsLayer.eachLayer(l => {
+      const r = rel((l as L.Marker).getElement?.())
+      if (r) {
+        fixed.push(r)
+      }
+    })
+    const usable = items.filter(it => indexOf.has(it.marker))
+    const plan = planBadges(usable.map(it => ({ iconIndex: indexOf.get(it.marker)!, size: it.size })), icons, fixed)
+    map.style.setProperty('--rt-badge-scale', String(plan.scale))
+    usable.forEach((it, k) => {
+      const side = plan.sides[k]
+      it.badge.options.direction = side
+      it.badge.options.offset = side === 'top' ? L.point(0, -BADGE_OVERLAP_PX) : side === 'bottom' ? L.point(0, BADGE_OVERLAP_PX)
+        : side === 'left' ? L.point(-BADGE_OVERLAP_PX, 0) : L.point(BADGE_OVERLAP_PX, 0)
+      it.badge.setLatLng(it.marker.getLatLng())
+    })
   }
 
   private unfanPrintMarkers(): void {
     this.fanned.forEach((latlng, marker) => marker.setLatLng(latlng))
     this.fanned.clear()
+    this.movedBadges.forEach((latlng, badge) => {
+      badge.options.direction = 'top'
+      badge.options.offset = L.point(0, -8)
+      badge.setLatLng(latlng)
+    })
+    this.movedBadges.clear()
+    this.mapContainer?.nativeElement.style.removeProperty('--rt-badge-scale')
     this.fanLayer.clearLayers()
     if (this.lMap?.hasLayer(this.fanLayer)) {
       this.lMap.removeLayer(this.fanLayer)
@@ -1922,10 +1999,12 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * trails and ring labels wins (choosePanelSpot). Only vector things are weighed - the map
    * tiles are other sites' pictures whose pixels cannot be read.
    *
-   * When no spot is clear (a crowded city map), the panel goes back where it used to be: the
-   * title as a band above the map (rt-print-title-band), the legend as a column beside it
-   * (rt-print-legend-beside). Either changes the map's size, so the map is re-measured and
-   * the markers re-fanned, and the pass repeats; two fallbacks at most, so three passes.
+   * When no spot is clear (a crowded map): the title goes back to a band above the map
+   * (rt-print-title-band), which changes the map's size, so the map is re-measured and the
+   * markers re-fanned and the pass repeats. The legend instead prints whole at the top of page 2
+   * (John: "going to a 2 page map is fine"): the map keeps its full size on page 1, "Prepared
+   * by" stays under it, and the legend element is moved to follow that line (a CSS page break
+   * puts it on the next sheet) and moved back after printing.
    */
   private layoutPrintSheet(): void {
     const frame = this.printFrame.nativeElement
@@ -1933,20 +2012,19 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const legend = this.printLegend.nativeElement
     const hasTitle = !!this.printTitleTemplate
     let titleBand = false
-    let legendBeside = false
+    let legendOnPage2 = false
+    this.putLegendHome()
     const inset = 3 / 25.4 * 96 // 3 mm, in CSS px
     let titleSpot: { left: number, top: number } | null = null
     let legendSpot: { left: number, top: number } | null = null
 
     for (let pass = 0; pass < 3; pass++) {
       frame.classList.toggle('rt-print-title-band', titleBand)
-      frame.classList.toggle('rt-print-legend-beside', legendBeside)
       for (const el of [title, legend]) {
         el.style.left = '0'
         el.style.top = '0'
       }
       frame.style.removeProperty('--rt-print-band')
-      frame.style.removeProperty('--rt-print-legend-overflow')
       legend.classList.add('legend--compact')
       legend.style.removeProperty('width')
       if (titleBand) {
@@ -1996,11 +2074,11 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
           continue
         }
       }
-      if (!legendBeside) {
+      {
         const tr = title.getBoundingClientRect()
         const withTitle = hasTitle && !titleBand && titleSpot
           ? [padRect({ left: titleSpot.left, top: titleSpot.top, right: titleSpot.left + tr.width, bottom: titleSpot.top + tr.height }, 3)] : []
-        // A wider, shorter legend (three columns) gets a chance before the beside-the-map column.
+        // A wider, shorter legend (three or four columns) gets a chance before page 2.
         legendSpot = null
         for (const widthMm of [92, 134, 176]) {
           legend.style.width = `${widthMm}mm`
@@ -2010,25 +2088,42 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
           }
         }
         if (!legendSpot) {
-          legendBeside = true
-          continue
+          legendOnPage2 = true
         }
       }
       break
     }
 
-    if (legendBeside) {
-      // The column may be taller than the map: push what follows (the "Prepared by" line) down.
-      const over = legend.getBoundingClientRect().bottom - frame.getBoundingClientRect().bottom
-      frame.style.setProperty('--rt-print-legend-overflow', `${Math.max(0, Math.ceil(over))}px`)
+    if (legendOnPage2) {
+      legend.style.removeProperty('width')
+      legend.style.removeProperty('left')
+      legend.style.removeProperty('top')
+      legend.classList.add('map-print-panel--page2')
+      // After the "Prepared by" line, so that stays on page 1 under the map.
+      const footer = document.querySelector('.map-print-footer')
+      if (footer) {
+        footer.insertAdjacentElement('afterend', legend)
+      } else {
+        frame.insertAdjacentElement('afterend', legend)
+      }
     }
     if (titleSpot && !titleBand) {
       title.style.left = `${titleSpot.left}px`
       title.style.top = `${titleSpot.top}px`
     }
-    if (legendSpot && !legendBeside) {
+    if (legendSpot && !legendOnPage2) {
       legend.style.left = `${legendSpot.left}px`
       legend.style.top = `${legendSpot.top}px`
+    }
+  }
+
+  /** The legend lives inside the map frame; page 2 borrows it (see layoutPrintSheet()). */
+  private putLegendHome(): void {
+    const legend = this.printLegend?.nativeElement
+    const frame = this.printFrame?.nativeElement
+    legend?.classList.remove('map-print-panel--page2')
+    if (legend && frame && legend.parentElement !== frame) {
+      frame.appendChild(legend)
     }
   }
 
@@ -2036,9 +2131,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private resetPrintSheet(): void {
     this.unfanPrintMarkers()
     const frame = this.printFrame?.nativeElement
-    frame?.classList.remove('rt-print-title-band', 'rt-print-legend-beside')
+    this.putLegendHome()
+    frame?.classList.remove('rt-print-title-band')
     frame?.style.removeProperty('--rt-print-band')
-    frame?.style.removeProperty('--rt-print-legend-overflow')
     this.printLegend?.nativeElement.classList.remove('legend--compact')
     this.printLegend?.nativeElement.style.removeProperty('width')
     for (const el of [this.printTitle?.nativeElement, this.printLegend?.nativeElement]) {
@@ -2449,6 +2544,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         opacity: 1,
       }).setContent(`${elapsedMin}`)
       this.myTrailsLayer.addLayer(label)
+      const newestMarker = this.entryMarkers.get(newest)
+      if (newestMarker) {
+        this.badgeMarkers.set(label, newestMarker)
+      }
     })
   }
 

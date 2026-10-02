@@ -172,11 +172,35 @@ async function main() {
         '-splice', `${mm(10)}x0`, '-units', 'PixelsPerInch', '-density', String(Math.round(96 * SCALE)), pngPath])
     } catch { console.log('ImageMagick not found: PNG left without page margins') }
 
+    // 2026-10-01, John: E-152b - when the legend did not fit on the map it prints at the top of
+    // page 2. The screen layout is continuous, so a taller viewport shows it just below page 1;
+    // save that strip as a second PNG so it can be looked at too.
+    if (await evaluate(`!!document.querySelector('.map-print-panel--page2')`)) {
+      try {
+        await send('Emulation.setDeviceMetricsOverride', { width: PAGE_W, height: PAGE_H * 2, deviceScaleFactor: SCALE, mobile: false })
+        await sleep(2000)
+        const png2 = await Promise.race([
+          send('Page.captureScreenshot', { format: 'png' }),
+          sleep(60000).then(() => { throw new Error('page 2 screenshot timed out') }),
+        ])
+        const p2 = path.join(outDir, `printed-map-sheet-${DEMO}-page2.png`)
+        fs.writeFileSync(p2, Buffer.from(png2.data, 'base64'))
+        execFileSync('magick', [p2, '-crop', `${Math.round(PAGE_W * SCALE)}x${Math.round(PAGE_H * SCALE)}+0+${Math.round(PAGE_H * SCALE * 0.8)}`, '+repage', p2])
+        console.log(`wrote ${p2} (legend strip below page 1)`)
+        await send('Emulation.setDeviceMetricsOverride', { width: PAGE_W, height: PAGE_H, deviceScaleFactor: SCALE, mobile: false })
+        await sleep(1500)
+      } catch (e) { console.log(`page 2 picture skipped: ${e.message}`) }
+    }
+
     // The PDF last: a screenshot taken after printToPDF hung in headless Chrome.
     const pdf = await send('Page.printToPDF', { preferCSSPageSize: true, printBackground: true })
     const pdfPath = path.join(outDir, `printed-map-sheet-${DEMO}.pdf`)
     fs.writeFileSync(pdfPath, Buffer.from(pdf.data, 'base64'))
     console.log(`wrote ${pdfPath}\nwrote ${pngPath}`)
+    try {
+      const { PDFDocument } = require('pdf-lib')
+      console.log(`PDF pages: ${(await PDFDocument.load(pdf.data, { ignoreEncryption: true })).getPageCount()}`)
+    } catch (e) { console.log(`PDF page count unavailable: ${e.message}`) }
   } finally {
     try { ws?.close() } catch { }
     try { chrome.kill() } catch { }

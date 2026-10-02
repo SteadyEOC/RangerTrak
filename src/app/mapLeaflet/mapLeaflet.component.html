@@ -10,7 +10,7 @@
     <!-- 2026-10-01, John: E-152b - the printed title block and legend float over the map as
          panels (layoutPrintSheet() picks clear spots), instead of a band above and a column
          beside. Print-only. Where no spot is clear they fall back to the old band/column
-         (frame classes rt-print-title-band / rt-print-legend-beside). -->
+         (frame class rt-print-title-band; the legend moves to page 2, see layoutPrintSheet()). -->
     <div #printTitle class="map-print-panel map-print-panel--title">
       <ng-container *ngTemplateOutlet="printTitleTemplate ?? null"></ng-container>
     </div>
