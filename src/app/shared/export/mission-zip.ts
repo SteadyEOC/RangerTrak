@@ -47,6 +47,9 @@ import { RangerType } from '../services/ranger.interface'
  * 2026-08-31: a Setup file is an explicit, operator-initiated device-provisioning action, the
  * same category D-35 already sanctions for `MissionExport`, and the whole point is a receiving
  * device that works without someone re-typing a key.
+ * 2026-10-01, John: unchanged - a plain MISSION BACKUP now omits the geocoding key (it is only in
+ * passphrase-protected backups), so the difference between the two is deliberate: a backup is
+ * kept and passed around, a Setup file is a one-off provisioning hand-off.
  *
  * Photo matching reuses `RangerPhotoService`'s own filename-stem convention (a ranger's `id`
  * if set, else `callsign`, uppercased) - not reinvented here. "A wrong photo is worse than no

@@ -48,7 +48,9 @@ export const ENCRYPTION_MARKER_KEY = '__encryption'
 // 'aarNotes' added 2026-09-27 (E-116): a debrief note can name people and places, so it is
 // covered with the roster. A device that turned encryption on earlier reads its first plaintext
 // note fine (load() decides per record) and encrypts it on the next write.
-export const ENCRYPTED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'aarNotes'] as const
+// 'secrets' added 2026-10-01, John: the Google geocoding key, moved out of plaintext appSettings
+// so it is encrypted whenever device encryption is on.
+export const ENCRYPTED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'aarNotes', 'secrets'] as const
 
 const VERIFIER_PLAINTEXT = 'rangertrak-encryption-verifier-v1'
 const SALT_BYTES = 16

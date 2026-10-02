@@ -91,7 +91,9 @@ export const STORE = 'kv'
  */
 // 'aarNotes' (E-116, 2026-09-27): After Action notes. Never lived in localStorage, so there is
 // nothing to migrate; listed so load() reads it from IndexedDB like the others.
-export const MIGRATED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'locations', 'aarNotes'] as const
+// 'secrets' (2026-10-01, John): a small JSON object holding the Google geocoding key, kept out
+// of plaintext appSettings (and out of plain backups). MissionService moves a legacy key in.
+export const MIGRATED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'locations', 'aarNotes', 'secrets'] as const
 
 /**
  * The real implementation, and the module-level singleton this file exports as `recordStore`.

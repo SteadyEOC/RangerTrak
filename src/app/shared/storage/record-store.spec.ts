@@ -304,6 +304,7 @@ describe('RecordStore', () => {
         'radioLog-BAD': '{"garbage": true}',
         locations: JSON.stringify({ schemaVersion: 1, locations: [{ name: 'Command Post' }] }),
         aarNotes: JSON.stringify({ schemaVersion: 1, notes: [{ uid: 'n1', text: 'Relay out of range' }] }),
+        secrets: JSON.stringify({ googleGeocodingApiKey: 'k' }),
       };
       for (const key of MIGRATED_KEYS) localStorage.setItem(key, values[key]);
 

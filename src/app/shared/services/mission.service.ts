@@ -3,6 +3,7 @@ import { DEFAULT_CHECK_IN_INTERVAL_MIN } from '../overdue'
 
 import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 
+import { recordStore } from '../storage/record-store'
 import * as packageJson from '../../../../package.json'
 import { RadioLogStatusType, LogService, MissionType } from './'
 import {
@@ -165,6 +166,18 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
     if (needMission) {
       this.setMission(this.initMission())
     }
+
+    // 2026-10-01, John: the Google geocoding key no longer lives in plaintext appSettings. It is
+    // kept in RecordStore's `secrets` record (encrypted when device encryption is on) and merged
+    // into the in-memory settings here, so every reader of settings.googleGeocodingApiKey is
+    // unchanged. One-time migration: a key still sitting in appSettings moves to `secrets`; the
+    // updateMission() call below then rewrites appSettings without it. RecordStore is already
+    // loaded here (main.ts awaits load() before bootstrap), so the startup geocoder choice in
+    // app.config.ts still sees the key.
+    const legacyKey = this.settings.googleGeocodingApiKey
+    const storedKey = this.readSecretKey()
+    if (legacyKey && !storedKey) this.writeSecretKey(legacyKey)
+    this.settings.googleGeocodingApiKey = storedKey || legacyKey || ''
 
     // Deliberately AFTER the localStorage load above: a loaded settings object carries
     // whatever version it was stamped with, and this always overwrites it with the app's own
@@ -345,13 +358,27 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
   public updateMission(newMission: MissionType) {
     // Do any needed sanity/validation here
     //debugger
-    localStorage.setItem(this.storageLocalName, JSON.stringify(newMission))
+    // 2026-10-01, John: the geocoding key goes to the `secrets` record, never into appSettings.
+    localStorage.setItem(this.storageLocalName, JSON.stringify({ ...newMission, googleGeocodingApiKey: '' }))
+    this.writeSecretKey(newMission.googleGeocodingApiKey)
     this.setMission(newMission)
     this.log.verbose(`Notified subscribers of new Application Settings ${JSON.stringify(newMission)} `, this.id)
 
     //! Is this proper?!
     //this.log.verbose(`updateMission: Reloading window!`, this.id)
     //window.location.reload() creates endless cycle!
+  }
+
+  private readSecretKey(): string {
+    try {
+      const raw = recordStore.getItem('secrets')
+      return raw ? String(JSON.parse(raw).googleGeocodingApiKey ?? '') : ''
+    } catch { return '' }
+  }
+
+  private writeSecretKey(key: string | undefined) {
+    if (key) recordStore.setItem('secrets', JSON.stringify({ googleGeocodingApiKey: key }))
+    else if (recordStore.getItem('secrets') !== null) recordStore.removeItem('secrets')
   }
 
   /**
