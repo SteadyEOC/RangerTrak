@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.20-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.19-alpha...v0.99.20-alpha) (2026-10-02)
+
+
+### Features
+
+* **demos:** picking a demo loads it; the picker shows the loaded demo; no demo offer on an empty roster ([9ce5dca](https://github.com/SteadyEOC/RangerTrak/commit/9ce5dca65c073a9eeb373e9825d713e56d82d786))
+
 ### [0.99.19-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.18-alpha...v0.99.19-alpha) (2026-10-02)
 
 
