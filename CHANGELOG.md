@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.19-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.18-alpha...v0.99.19-alpha) (2026-10-02)
+
+
+### Bug Fixes
+
+* **e168:** one panel on an empty device; Start a real mission goes to Mission; Demo choice explains the way back; pill panel keeps hover ([46b4a7c](https://github.com/SteadyEOC/RangerTrak/commit/46b4a7cff375e968390993e9906e631b8b87247a))
+
 ### [0.99.18-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.17-alpha...v0.99.18-alpha) (2026-10-02)
 
 
