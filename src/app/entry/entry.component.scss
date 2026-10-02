@@ -79,30 +79,6 @@ $filledColor: var(--rt-surface-2);
   }
 }
 
-// 2026-09-14: the demo-scenario picker sitting inline before .entry-welcome__demo - a plain
-// native <select>, matching this banner's own plain-HTML style rather than pulling in
-// Material for one control (see the template's own comment on why).
-.entry-welcome__scenario-label {
-  display    : inline-flex;
-  flex-wrap  : wrap;
-  max-width  : 100%;
-  align-items: center;
-  gap        : 0.35em;
-  margin-inline-start: 0.5em;
-  font-weight: 600;
-}
-
-.entry-welcome__scenario {
-  max-width   : 100%;
-  min-width   : 0;
-  font        : inherit;
-  padding     : 0.15em 0.4em;
-  border      : 1px solid var(--rt-line);
-  border-radius: var(--rt-radius);
-  background  : var(--rt-surface);
-  color       : inherit;
-}
-
 // 2026-09-29, John: one numbered item per choice (command post, field phone, demo). When
 // only the command-post item is left (any real data on the device hides the other two), a
 // lone "1." reads oddly, so the list styling drops away.

@@ -22,7 +22,7 @@ import { ExpandableSectionComponent } from '../shared/expandable-section/expanda
 import { formatReportTime } from '../shared/mapping/report-time'
 import {
   RadioLogService, RadioLogEntryType, LogService, RangerService, RangerType,
-  MissionService, MissionType, SampleDataService
+  MissionService, MissionType
 } from '../shared/services'
 // Direct path, not the barrel: importing a service used as a DI token through
 // shared/services/index.ts leaves it unresolvable to the compiler ("no suitable injection
@@ -30,9 +30,7 @@ import {
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
 import { recordStore } from '../shared/storage/record-store'
-// Direct path too - plain type/const exports, but kept alongside the barrel import above
-// would mean splitting SampleDataService out of it for no real benefit.
-import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
+import { DemoPickerComponent } from '../shared/demo-picker/demo-picker.component'
 import { extractMissionZip, MissionZipManifest, MissionZipPhoto } from '../shared/export/mission-zip'
 import { mergeRangers } from '../shared/services/ranger-migration'
 import { CustomTooltip } from './customTooltip'
@@ -41,7 +39,7 @@ import { CustomTooltip } from './customTooltip'
 @Component({
   selector: 'rangertrak-rangers',
   standalone: true,
-  imports: [CommonModule, AgGridAngular, PageComponent, ExpandableSectionComponent, RouterLink, ...MATERIAL_IMPORTS],
+  imports: [CommonModule, AgGridAngular, DemoPickerComponent, PageComponent, ExpandableSectionComponent, RouterLink, ...MATERIAL_IMPORTS],
   templateUrl: './rangers.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./rangers.component.scss']
@@ -323,7 +321,6 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     private missionService: MissionService,
     private radioLogService: RadioLogService,
     private photos: RangerPhotoService,
-    private sampleDataService: SampleDataService,
     private _snackBar: MatSnackBar,
     // The confidentiality bar's "What this means" opens the Guide drawer's Privacy tab -
     // see openPrivacyDetails().
@@ -506,37 +503,6 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   private onCellEdited() {
     this.log.verbose(`Ranger edited in grid; saving.`, this.id)
     this.rangerService.updateLocalStorageAndPublish()
-  }
-
-  /** Scenario picker for "Load sample mission" below - see SAMPLE_SCENARIOS' own comment. */
-  readonly sampleScenarios = SAMPLE_SCENARIOS
-  selectedScenario = signal<SampleScenarioId>(DEFAULT_SAMPLE_SCENARIO)
-
-  /**
-   * "Load sample mission" from the empty-state block (see rangers.component.html) - the
-   * same destructive action Mission > Advanced options offers
-   * (mission-advanced-options.component.ts's onBtnLoadSampleData()), reached from here too
-   * since an empty roster is precisely the moment this is most useful. The actual data
-   * lives in SampleDataService; this only owns the confirm/reload wrapper, matching that
-   * component's own copy so the same action reads the same way from either entry point.
-   */
-  async onBtnLoadSampleMission(): Promise<void> {
-    const scenario = this.selectedScenario()
-    const label = this.sampleScenarios.find(s => s.id === scenario)?.label ?? scenario
-
-    if (!confirm(`Load the "${label}" sample mission?\n\n`
-      + `This REPLACES all rangers, radio log entries and locations currently on this device with `
-      + `demonstration data, renames the mission to make that obvious, and moves the mission's `
-      + `default location to the demo's command post.\n\n`
-      + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
-      this.log.verbose('onBtnLoadSampleMission: user cancelled.', this.id)
-      return
-    }
-
-    await this.sampleDataService.loadSampleMission(scenario)
-    this.log.warn(`Loaded the sample mission (demo data): ${scenario}.`, this.id)
-    alert('Sample mission loaded. Reloading to refresh every screen with the new data...')
-    this.reloadPage()
   }
 
   // ADR D-43: takes the surrogate uid, not a callsign - a blank or duplicated callsign could

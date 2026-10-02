@@ -29,6 +29,8 @@ export class DemoPickerComponent {
   readonly buttonLabel = input('Load sample mission')
   /** Shows the one-line description of the chosen scenario under the picker. */
   readonly showHint = input(false)
+  /** Red button, for inside Mission's Danger zone fence (this page's other replace actions are red). */
+  readonly danger = input(false)
 
   readonly scenarios = SAMPLE_SCENARIOS
   readonly selected = signal<SampleScenarioId>(DEFAULT_SAMPLE_SCENARIO)

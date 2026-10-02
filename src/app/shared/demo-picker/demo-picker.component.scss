@@ -11,6 +11,14 @@
   width: 14em;
 }
 
+// Same three lines as Mission's own .mission__danger-button, which its scoped styles cannot
+// reach into this component.
+.demo-picker__danger {
+  --mat-button-outlined-label-text-color: var(--rt-readiness-red);
+  --mat-button-outlined-outline-color   : var(--rt-readiness-red);
+  color: var(--rt-readiness-red);
+}
+
 .demo-picker__hint {
   flex-basis: 100%;
   margin    : 0;

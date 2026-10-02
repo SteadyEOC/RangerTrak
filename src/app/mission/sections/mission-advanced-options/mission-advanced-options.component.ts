@@ -1,15 +1,14 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core'
 import { FieldTree } from '@angular/forms/signals'
 
 import { MATERIAL_IMPORTS } from '../../../material-imports'
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import {
   BackupService, FieldModeService, LogService, MissionType, RadioLogService, RangerPhotoService,
-  RangerService, SampleDataService, StoragePersistenceService
+  RangerService, StoragePersistenceService
 } from '../../../shared/services/'
-// Direct path, not the barrel above - see the note in rangers.component.ts.
-import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../../../shared/services/sample-data.service'
+import { DemoPickerComponent } from '../../../shared/demo-picker/demo-picker.component'
 // E-122 Phase 2b: the DI wrapper, not the module-level singleton - see record-store.ts's own
 // comment on why this is the one Angular consumer that reaches encryption this way.
 import { RecordStore } from '../../../shared/storage/record-store'
@@ -39,7 +38,7 @@ const FRESH_BACKUP_WINDOW_MS = 10 * 60 * 1000
 @Component({
   selector: 'rangertrak-mission-advanced-options',
   standalone: true,
-  imports: [CommonModule, ExpandableSectionComponent, ...MATERIAL_IMPORTS],
+  imports: [CommonModule, DemoPickerComponent, ExpandableSectionComponent, ...MATERIAL_IMPORTS],
   templateUrl: './mission-advanced-options.component.html',
   styleUrls: ['./mission-advanced-options.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -59,7 +58,6 @@ export class MissionAdvancedOptionsComponent {
 
   constructor(
     private backupService: BackupService,
-    private sampleDataService: SampleDataService,
     public storagePersistence: StoragePersistenceService,
     private recordStore: RecordStore,
     private rangerPhotoService: RangerPhotoService,
@@ -329,37 +327,5 @@ export class MissionAdvancedOptionsComponent {
         this.log.error(`onImportFileSelected: failed to restore ${file.name}: ${error.message}`, this.id)
         alert(`Could not restore "${file.name}": ${error.message}`)
       })
-  }
-
-  /** Scenario picker for "Load sample mission" below - see SAMPLE_SCENARIOS' own comment. */
-  readonly sampleScenarios = SAMPLE_SCENARIOS
-  selectedScenario = signal<SampleScenarioId>(DEFAULT_SAMPLE_SCENARIO)
-
-  /** One-line description of whichever scenario is currently selected in the picker above. */
-  selectedScenarioHint(): string {
-    return this.sampleScenarios.find(s => s.id === this.selectedScenario())?.hint ?? ''
-  }
-
-  /**
-   * Loads the built-in demonstration mission. Destructive - replaces rangers, radio log entries,
-   * and Locations - so it confirms first, matching onImportFileSelected().
-   */
-  async onBtnLoadSampleData(): Promise<void> {
-    const scenario = this.selectedScenario()
-    const label = this.sampleScenarios.find(s => s.id === scenario)?.label ?? scenario
-
-    if (!confirm(`Load the "${label}" sample mission?\n\n`
-      + `This REPLACES all rangers, radio log entries and locations currently on this device with `
-      + `demonstration data, renames the mission to make that obvious, and moves the mission's `
-      + `default location to the demo's command post.\n\n`
-      + `This cannot be undone - back up the current mission first if you want to keep it.`)) {
-      this.log.verbose('onBtnLoadSampleData: user cancelled.', this.id)
-      return
-    }
-
-    await this.sampleDataService.loadSampleMission(scenario)
-    this.log.warn(`Loaded the sample mission (demo data): ${scenario}.`, this.id)
-    alert('Sample mission loaded. Reloading to refresh every screen with the new data...')
-    window.location.reload()
   }
 }

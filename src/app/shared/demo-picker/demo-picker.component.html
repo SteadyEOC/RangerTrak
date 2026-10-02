@@ -7,7 +7,7 @@
   </mat-select>
 </mat-form-field>
 
-<button matButton="outlined" type="button" class="mission__danger-button" (click)="onLoad()"
+<button matButton="outlined" type="button" [class.demo-picker__danger]="danger()" (click)="onLoad()"
   title="Replace rangers, radio log entries and locations with a demonstration mission">
   <mat-icon>science</mat-icon>
   {{ buttonLabel() }}

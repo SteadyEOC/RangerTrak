@@ -6,7 +6,7 @@
        (WelcomePanelService); clicking the header's status-cluster pill brings it back. -->
   <!-- 2026-09-30, John: shows by itself only on a brand-new device; once there is data, only
        when reopened from the header pill (WelcomePanelService.reopened). -->
-  @if (!welcomePanel.dismissed() && (canLoadDemoData() || welcomePanel.reopened())) {
+  @if (!welcomePanel.dismissed() && (usage.state() === 'empty' || welcomePanel.reopened())) {
   <aside class="entry-welcome" role="note">
     <div class="entry-welcome__text">
       <!-- 2026-09-29, John: the panel used to run three unrelated things together in one
@@ -24,13 +24,13 @@
         </li>
         <!-- E-114 §1a (2026-08-31): the one first-run prompt that turns this device into a
              ranger's own field phone (Entry + Help only, everything else hidden) instead of a
-             normal command-post/scribe device. Same canLoadDemoData() gate as the demo-data
-             item - once real data exists the question stops making sense to ask - plus
+             normal command-post/scribe device. Same empty-device gate (UsageStateService)
+             as the demo card - once real data exists the question stops making sense to ask - plus
              !fieldMode.enabled() so it can't fire twice.
              2026-09-29, John: phones and tablets only (isTouchFirstDevice). A laptop has no
              real GPS and no phone share sheet, so it can't do a field phone's job; there the
              same choice lives under Mission > Advanced > Field phone instead. -->
-        @if (canLoadDemoData() && !fieldMode.enabled() && isTouchFirstDevice) {
+        @if (usage.state() === 'empty' && !fieldMode.enabled() && isTouchFirstDevice) {
         <li>
           <strong>Field phone:</strong> choose this if you are a ranger sending in reports from
           the field, not working at the command post.
@@ -39,37 +39,36 @@
           </button>
         </li>
         }
-        <!-- Raised live 2026-08-30: "makes it REAL easy to do a demo/try it out" - shown only
-             on a genuinely untouched install (see canLoadDemoData()'s own comment for the
-             exact three conditions), so it never appears once there is anything real to lose.
-             No confirm() dialog, unlike every other place this same action is offered
-             (mission-advanced-options.component.ts) - those all guard a REPLACE of existing
-             data; this one is only ever offered when there is nothing to replace.
-             2026-09-14: a plain native <select>, not a mat-select, to match this whole banner's
-             own plain-HTML style. Defaults to Grand Canyon (SAMPLE_SCENARIOS' own order). -->
-        @if (canLoadDemoData()) {
-        <li>
-          <strong>Demo:</strong> or load a demonstration with made-up data to try out the app.
-          <label class="entry-welcome__scenario-label">
-            Scenario:
-            <select class="entry-welcome__scenario" [value]="selectedScenario()"
-              (change)="selectedScenario.set($any($event.target).value)"
-              title="Choose which demonstration mission to load">
-              @for (s of sampleScenarios; track s.id) {
-              <option [value]="s.id">{{ s.label }}</option>
-              }
-            </select>
-          </label>
-          <button type="button" class="entry-welcome__demo" (click)="onLoadDemoData()">
-            Load Demo Data
-          </button>
-        </li>
-        }
       </ol>
     </div>
     <button type="button" class="entry-welcome__dismiss" (click)="welcomePanel.dismiss()"
       aria-label="Dismiss this welcome panel. Bring it back any time by clicking the status pill in the header."
       title="Dismiss. Bring it back any time by clicking the status pill in the header.">×</button>
+  </aside>
+  }
+
+  <!-- E-168 (2026-10-01, John): "a tester wasn't able to find the demos." The demo card shows
+       whenever the device is empty or only holds demo data, whether or not the welcome panel
+       above was dismissed (the dismiss hides the welcome text, not the way to a demo). It
+       replaces the demo item the welcome panel used to carry. In a live mission it is gone
+       (UsageStateService). -->
+  @if (usage.state() === 'empty' || usage.state() === 'demo') {
+  <aside class="entry-welcome entry-demo-card" role="note" data-testid="demo-card">
+    <div class="entry-welcome__text">
+      @if (usage.state() === 'demo') {
+      <strong>You're looking at demo data ({{ demoLabel() }}).</strong>
+      Try another demo, or start a real mission.
+      } @else {
+      <strong>Demo:</strong> no mission yet? Load a demonstration with made-up data to try out the app.
+      }
+    </div>
+    <rangertrak-demo-picker [buttonLabel]="usage.state() === 'demo' ? 'Try another demo' : 'Load Demo Data'"></rangertrak-demo-picker>
+    @if (usage.state() === 'demo') {
+    <button matButton="filled" type="button" (click)="onStartRealMission()"
+      title="Clear the demo data and start with an empty mission">
+      Start a real mission
+    </button>
+    }
   </aside>
   }
 

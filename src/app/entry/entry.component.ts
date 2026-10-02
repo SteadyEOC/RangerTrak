@@ -31,14 +31,13 @@ import { TimePickerComponent } from '../shared/time-picker/time-picker.component
 import { DDToDDM } from '../shared/mapping/coordinate'
 import {
   RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
-  LogService, RangerService, RangerType, MissionService, MissionType, TacticalCallType, SampleDataService,
+  LogService, RangerService, RangerType, MissionService, MissionType, TacticalCallType, UsageStateService,
   statusColorValue, undefinedAddressFlag, undefinedLocation, WelcomePanelService, FieldModeService
 } from '../shared/services/'
-// Direct path, not the barrel above - see the note in rangers.component.ts for why a
-// service used as a DI token needs this; these are plain type/const exports with no such
-// constraint, but keeping the sample-scenario picker's imports together in one line is
-// clearer than splitting SampleDataService itself out of the barrel import too.
-import { DEFAULT_SAMPLE_SCENARIO, SAMPLE_SCENARIOS, SampleScenarioId } from '../shared/services/sample-data.service'
+// Direct path: a plain const export, used for the demo card's scenario name.
+import { SAMPLE_SCENARIOS } from '../shared/services/sample-data.service'
+import { activeDemoScenario } from '../shared/mapping/demo-map'
+import { DemoPickerComponent } from '../shared/demo-picker/demo-picker.component'
 //import { LocationComponent } from './location.component'
 
 import { MATERIAL_IMPORTS } from '../material-imports'
@@ -63,6 +62,7 @@ import { MiniMapLeafletComponent } from './mini-mapLeaflet.component'
     LocationComponent,
     MiniMapLeafletComponent,
     EvidenceLocationComponent,
+    DemoPickerComponent,
   ],
   templateUrl: './entry.component.html',
   styleUrls: ['./entry.component.scss'],
@@ -382,7 +382,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     private zone: NgZone,
     public welcomePanel: WelcomePanelService,
     public fieldMode: FieldModeService,
-    private sampleDataService: SampleDataService,
+    public usage: UsageStateService,
     private operatorName: OperatorNameService,
     private printCopies: PrintCopiesService,
     @Inject(DOCUMENT) private document: Document) {
@@ -499,47 +499,30 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   //
 
-  /**
-   * Raised live 2026-08-30: "makes it REAL easy to do a demo/try it out." True only on a
-   * genuinely untouched install - all three: no rangers imported, no radio log entries (which
-   * covers Messages too, a message is a radio log entry with generates213 set - there is no
-   * way to have a message without a report), and no mission name set yet. Any one of those
-   * being real means there is something a demo-data load could clobber, so the button
-   * disappears the moment any of them stops being true.
-   */
-  canLoadDemoData(): boolean {
-    return this.rangers.length === 0
-      && this.radioLogService.getCurrentRadioLog().numReport === 0
-      && !this.settings?.mission?.trim()
+  /** The loaded demo's name for the demo card ("Grand Canyon, South Rim"). */
+  demoLabel(): string {
+    const id = activeDemoScenario()
+    return (SAMPLE_SCENARIOS.find(x => x.id === id)?.label ?? 'demo').replace(/ \(default\)$/, '')
   }
 
-  /** Scenario picker for the "Load Demo Data" button below - see SAMPLE_SCENARIOS' own
-   *  comment for what each option means. Defaults to DEFAULT_SAMPLE_SCENARIO (Grand Canyon). */
-  readonly sampleScenarios = SAMPLE_SCENARIOS
-  selectedScenario = signal<SampleScenarioId>(DEFAULT_SAMPLE_SCENARIO)
-
-  /**
-   * No confirm() dialog, unlike every other place this same action is offered
-   * (mission-advanced-options.component.ts) - those guard a REPLACE of existing data;
-   * canLoadDemoData() above already guarantees there is nothing to replace here.
-   */
-  async onLoadDemoData(): Promise<void> {
-    await this.sampleDataService.loadSampleMission(this.selectedScenario())
-    // 2026-09-29, John: the panel's job is done once one of its choices is taken - left up,
-    // its "first load your rangers" line reads wrong over a fully loaded demo. Dismissed the
-    // normal way, so the header pill still brings it back.
-    this.welcomePanel.dismiss()
-    this.log.warn('Loaded the sample mission (demo data) from the Entry welcome panel.', this.id)
+  /** The demo card's "Start a real mission": clears the demo, confirms first (a demo is
+   *  replaceable, but anything typed on top of it is not). */
+  async onStartRealMission(): Promise<void> {
+    if (!confirm('Start a real mission?\n\n'
+      + 'This clears the demo data - rangers, radio log entries and locations - and resets the '
+      + 'mission settings to their defaults. Anything you added on top of the demo goes too. '
+      + 'Back up the mission first if you want to keep it.')) return
+    await this.usage.startRealMission()
     window.location.reload()
   }
 
   /**
    * E-114 §1a first-run prompt: the one place a device declares itself a ranger's own field
-   * phone rather than a command-post/scribe device. Same `canLoadDemoData()` gate as the demo
-   * data button above - this device has nothing to lose by re-scoping itself down, and once
+   * phone rather than a command-post/scribe device. Same empty-device gate (UsageStateService) as the demo
+   * card - this device has nothing to lose by re-scoping itself down, and once
    * any real data exists the question stops making sense to ask (a scribe laptop mid-mission
    * doesn't suddenly become someone's field phone). Reloads for the same reason
-   * `onLoadDemoData()` does - nav/route gating below reads `fieldMode.enabled()` at
+   * the demo picker does - nav/route gating below reads `fieldMode.enabled()` at
    * construction time in a few places, and a reload is simpler and more reliable than chasing
    * every one of them with a signal effect.
    */
@@ -553,7 +536,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onEnableFieldMode(): void {
     this.fieldMode.enable()
-    this.welcomePanel.dismiss() // same reason as in onLoadDemoData()
+    this.welcomePanel.dismiss() // the panel's job is done once a choice is taken
     window.location.reload()
   }
 

@@ -39,8 +39,9 @@ import { RouterLink } from '@angular/router'
 import { PageComponent } from '../shared/page/page.component'
 import {
   RadioLogStatusType, LocationCategoryType, LogService, MissionReadinessService,
-  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, MissionService, MissionType, TacticalCallType
+  MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, MissionService, MissionType, TacticalCallType, UsageStateService
 } from '../shared/services/'
+import { confirmReplaceMission } from '../shared/demo-picker/replace-guard'
 import { InstallUpdateComponent } from '../shared/install-update/install-update.component'
 import { HasUnsavedChanges } from '../shared/guards/unsaved-changes.guard'
 
@@ -247,6 +248,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
     private log: LogService,
     private missionService: MissionService,
     public readiness: MissionReadinessService,
+    public usage: UsageStateService,
     @Inject(DOCUMENT) private document: Document) {
     this.log.verbose('======== Constructor() ============', this.id)
 
@@ -448,6 +450,12 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
    */
   onBtnResetDefaults() {
     this.log.verbose(`onBtnResetDefaults: Reset Mission.`, this.id)
+    // E-168 (2026-10-01, John): in a live mission this is a typed confirmation, as for loading a
+    // demo; otherwise it stays one click, as before.
+    if (this.usage.state() === 'live' && !confirmReplaceMission({
+      state: 'live', missionName: this.settings.mission,
+      message: 'Reset the mission settings to their defaults?\n\nThis clears the mission name, op period and every other setting on the Mission page.',
+    })) return
     this.settings = this.missionService.ResetDefaults()
     clearActiveDemoScenario() // E-124: evicts a demo's street-detail map file
     this.reloadPage()

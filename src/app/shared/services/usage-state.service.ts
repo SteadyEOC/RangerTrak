@@ -1,7 +1,10 @@
 import { Injectable, computed, signal } from '@angular/core'
 
 import { UsageInputs, UsageState, deriveUsageState, effectiveMode } from '../../domain/usage-state'
-import { demoRecord } from '../mapping/demo-map'
+import { clearActiveDemoScenario, demoRecord } from '../mapping/demo-map'
+import { recordStore } from '../storage/record-store'
+import { AarNoteService } from './aar-note.service'
+import { MissionLocationService } from './mission-location.service'
 import { FieldModeService } from './field-mode.service'
 import { LogService } from './log.service'
 import { MissionModeType, MissionType } from './mission.interface'
@@ -60,6 +63,8 @@ export class UsageStateService {
     private missionService: MissionService,
     private rangerService: RangerService,
     private radioLogService: RadioLogService,
+    private locationService: MissionLocationService,
+    private aarNoteService: AarNoteService,
     private fieldMode: FieldModeService,
     private log: LogService,
   ) {
@@ -79,6 +84,24 @@ export class UsageStateService {
       error: e => this.log.error(`Radio log subscription error: ${e}`, this.id),
     })
     setInterval(() => this.now.set(Date.now()), REFRESH_MS)
+  }
+
+  /**
+   * "Start a real mission": clears the demo (roster, radio log entries, locations, after-action
+   * notes, settings back to defaults) rather than relabelling demo data as real, then records the
+   * chosen mode, if any. Destructive: the caller confirms first and reloads after it resolves,
+   * as for loading a demo.
+   */
+  async startRealMission(mode?: MissionModeType): Promise<void> {
+    this.rangerService.deleteAllRangers()
+    this.radioLogService.deleteAllRadioLogEntries()
+    this.locationService.deleteAllLocations()
+    this.aarNoteService.deleteAllNotes()
+    this.missionService.ResetDefaults()
+    clearActiveDemoScenario()
+    if (mode) this.setMode(mode)
+    this.log.warn(`Started a real mission (demo data cleared)${mode ? `, mode ${mode}` : ''}.`, this.id)
+    await recordStore.flush()
   }
 
   /** The operator's choice, saved on the mission so a restored backup keeps it. */
