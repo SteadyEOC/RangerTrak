@@ -19,6 +19,7 @@ export { ThemeService, ThemeMode } from "./theme.service"
 export { SkinService, Skin, SKINS } from "./skin.service"
 export { WelcomePanelService } from "./welcome-panel.service"
 export { FieldModeService } from "./field-mode.service"
+export { UsageStateService } from "./usage-state.service"
 export { OfflineBasemapService } from "./offline-basemap.service"
 
 export {
@@ -28,7 +29,7 @@ export {
 export { LocationType, undefinedAddressFlag, undefinedLocation } from "./location.interface"
 export { LogLevel, LogLevelNames, LogType, LogHeadings } from "./log.interface"
 export { RangerType, UnknownRanger } from "./ranger.interface"
-export { MissionType, TacticalCallType } from "./mission.interface"
+export { MissionType, MissionModeType, TacticalCallType } from "./mission.interface"
 export { AarNoteType, AarNoteAbout, AAR_NOTE_ABOUT_LABELS } from "./aar-note.interface"
 export {
   LocationCategoryType, MissionLocationType, LocationIconId, LOCATION_ICON_OPTIONS

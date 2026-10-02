@@ -1,0 +1,20 @@
+// E-168 (2026-10-01): the host takes no box of its own, so the field and button sit directly
+// in whatever wrapping flex row the page already gives them (Mission's danger-zone row,
+// Rangers' empty-state actions), exactly where the old copied markup was.
+:host {
+  display: contents;
+}
+
+// Fixed width, as in the three copies this replaces: keeps the field from stretching to fill
+// a flex row. (Same class name the Mission page, e2e and tools/print-map-sheet.js find it by.)
+.mission__sample-scenario {
+  width: 14em;
+}
+
+.demo-picker__hint {
+  flex-basis: 100%;
+  margin    : 0;
+  font-size : var(--rt-type-body-sm-size);
+  line-height: var(--rt-type-body-sm-line);
+  color     : var(--rt-ink-2);
+}

@@ -1,0 +1,18 @@
+<mat-form-field appearance="outline" subscriptSizing="dynamic" class="mission__sample-scenario">
+  <mat-label>Demo scenario</mat-label>
+  <mat-select [value]="selected()" (selectionChange)="selected.set($event.value)">
+    @for (s of scenarios; track s.id) {
+    <mat-option [value]="s.id">{{ s.label }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
+<button matButton="outlined" type="button" class="mission__danger-button" (click)="onLoad()"
+  title="Replace rangers, radio log entries and locations with a demonstration mission">
+  <mat-icon>science</mat-icon>
+  {{ buttonLabel() }}
+</button>
+
+@if (showHint()) {
+<p class="demo-picker__hint">{{ hint() }}</p>
+}
