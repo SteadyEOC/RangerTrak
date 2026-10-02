@@ -1,4 +1,7 @@
-@if (updateReady && showUpdate) {
+<!-- E-168 (2026-10-01, John): while real work is going on the full-width Reload bar is not shown
+     (the footer's quiet chip stays, now saying to reload when convenient), and the install offer
+     is not made. Nothing is dropped: both come back when the mission quiets down. -->
+@if (updateReady && showUpdate && !(detailed && usage.quiet())) {
   @if (detailed) {
     <!-- [stickyBottom] gets its own class so it can be pinned to the viewport (see .scss) -
          independent of whatever this instance is nested inside (currently only the footer). -->
@@ -25,7 +28,7 @@
           <svg class="rt-install-update__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M20 12a8 8 0 10-2.34 5.66M20 12V6m0 6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          Update ready
+          Update ready@if (usage.quiet()) {, reload when convenient}
         </button>
         <a class="rt-install-update__help" routerLink="/help" title="What changed? See Help.">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -48,7 +51,7 @@
       </div>
     </span>
   }
-} @else if (installable && showInstall) {
+} @else if (installable && showInstall && !usage.quiet()) {
   @if (detailed) {
     <div class="rt-install-update rt-install-update--install" [class.rt-install-update--sticky-bottom]="stickyBottom"
       [class.rt-install-update--detailed]="detailed">

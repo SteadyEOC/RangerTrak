@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
+
+import { UsageStateService } from '../services'
 
 /**
  * E-45: `www.rangertrak.org` redirects to the canonical `rangertrak.org` at the Cloudflare
@@ -45,13 +47,15 @@ export class StaleOriginNoticeComponent {
    * stranded install re-launches into a fresh session next time regardless.
    */
   private dismissed = signal(false)
+  // E-168 (2026-10-01, John): not shown while real work is going on; back when it quiets down.
+  private readonly usage = inject(UsageStateService)
 
   get isStaleOrigin(): boolean {
     return typeof window !== 'undefined' && window.location.hostname === StaleOriginNoticeComponent.STALE_HOSTNAME
   }
 
   get visible(): boolean {
-    return this.isStaleOrigin && !this.dismissed()
+    return this.isStaleOrigin && !this.dismissed() && !this.usage.quiet()
   }
 
   dismiss(): void {

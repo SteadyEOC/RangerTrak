@@ -1,3 +1,5 @@
+import { isQuiet } from '../quiet-flag'
+
 /**
  * 2026-09-30, John: printing opened the browser dialog on "Save as PDF" (browsers remember the
  * last destination, and a web page cannot choose the printer or skip the dialog). So the first
@@ -10,6 +12,9 @@
 const PRINT_TIP_KEY = 'printTipShown'
 
 export function showFirstPrintTip(): void {
+  // 2026-10-01, John: E-168 - no tips while real work is going on. Not marked as shown, so it
+  // still appears the first time after things quiet down.
+  if (isQuiet()) return
   try {
     if (localStorage.getItem(PRINT_TIP_KEY) === 'true') return
   } catch {

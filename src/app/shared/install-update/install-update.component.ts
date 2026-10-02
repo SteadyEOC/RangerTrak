@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common'
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core'
 import { RouterLink } from '@angular/router'
 
-import { InstallableService, UpdateService } from '../services'
+import { InstallableService, UpdateService, UsageStateService } from '../services'
 // E-122 Phase 2b: reload clears the in-memory encryption key (main.ts derives it fresh at
 // unlock, and nothing persists it) - see the getter below for why this pill needs to know.
 import { RecordStore } from '../storage/record-store'
@@ -81,6 +81,7 @@ export class InstallUpdateComponent {
   @Input() stickyBottom = false
 
   constructor(
+    public usage: UsageStateService,
     private installableService: InstallableService,
     private updateService: UpdateService,
     private recordStore: RecordStore) { }

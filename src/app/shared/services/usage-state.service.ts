@@ -1,6 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core'
+import { Injectable, computed, effect, signal } from '@angular/core'
 
 import { UsageInputs, UsageState, deriveUsageState, effectiveMode } from '../../domain/usage-state'
+import { setQuiet } from '../quiet-flag'
 import { clearActiveDemoScenario, demoRecord } from '../mapping/demo-map'
 import { recordStore } from '../storage/record-store'
 import { AarNoteService } from './aar-note.service'
@@ -99,6 +100,8 @@ export class UsageStateService {
       error: e => this.log.error(`Radio log subscription error: ${e}`, this.id),
     })
     setInterval(() => this.now.set(Date.now()), REFRESH_MS)
+    // Plain-function interruptions (the first-print tip) read the flag, not this service.
+    effect(() => setQuiet(this.quiet()))
   }
 
   /**
