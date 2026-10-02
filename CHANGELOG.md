@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.16-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.15-alpha...v0.99.16-alpha) (2026-10-02)
+
+
+### Features
+
+* **print:** title and legend float on the map, range rings always print, crowded markers fan out (E-152b) ([e7b9c7a](https://github.com/SteadyEOC/RangerTrak/commit/e7b9c7a08e20b471b9429fa0ae17be6e8cb6e348))
+
+
+### Bug Fixes
+
+* **print:** compact fans, smaller printed markers (E-152b) ([63481ea](https://github.com/SteadyEOC/RangerTrak/commit/63481eaa21a66f21410d03d0874a6eac3b7d375b))
+* **print:** fans keep off each other, badges and Location icons; legend tries wider shapes and any clear spot (E-152b) ([d643f54](https://github.com/SteadyEOC/RangerTrak/commit/d643f54f9d4305ba88ed4c023c8223148b5fa50d))
+* **print:** minutes badges ride with their report; legend falls back to page 2 (E-152b) ([f76bc1c](https://github.com/SteadyEOC/RangerTrak/commit/f76bc1cf6b83cf403df9dbd26a88e08cf0102108))
+
 ### [0.99.15-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.14-alpha...v0.99.15-alpha) (2026-10-01)
 
 
