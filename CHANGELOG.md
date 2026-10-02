@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.17-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.16-alpha...v0.99.17-alpha) (2026-10-02)
+
+
+### Features
+
+* **backup:** ranger photos in mission backups ([fdb6f85](https://github.com/SteadyEOC/RangerTrak/commit/fdb6f85c76187582b42e7ed69f6bde32756dcbf0))
+* **demos:** shared DemoPickerComponent, Entry demo card, typed confirm in a live mission (E-168) ([b4ca660](https://github.com/SteadyEOC/RangerTrak/commit/b4ca660e18c51e878ba3ad3581b2f770810a8f2b))
+* **exercise:** EXERCISE banner on printouts; Help, Guide and Field Guide cover demos, modes and quiet (E-168) ([61015ec](https://github.com/SteadyEOC/RangerTrak/commit/61015ec63b96885931aa752661acf1eeccdab2a3))
+* **mission:** Mode card on the Mission page (E-168) ([e60211d](https://github.com/SteadyEOC/RangerTrak/commit/e60211d6166e59ef7df64d17092f93366e5b3ab0))
+* **pill:** mode colour and icon on the header pill, mode switch in its panel (E-168) ([571245a](https://github.com/SteadyEOC/RangerTrak/commit/571245a6cb18083926a17325f3be03d804c929c3))
+* **quiet:** stay out of the way while a mission is live (E-168) ([28793c4](https://github.com/SteadyEOC/RangerTrak/commit/28793c4c7d676b36fea4b82ba236c7558cc1ca8e))
+* **storage:** geocoding key encrypted at rest, kept out of plain backups ([ed09861](https://github.com/SteadyEOC/RangerTrak/commit/ed09861a69962d6b2414617eaa4e0e74dcef627f))
+* **storage:** mission mode field and demo record (E-168a); stored-data inventory ([f835a78](https://github.com/SteadyEOC/RangerTrak/commit/f835a7849335a89d5327f6b1a32d683ec52a077d))
+* **usage:** usage state rules in domain/ and UsageStateService (E-168) ([dc09e75](https://github.com/SteadyEOC/RangerTrak/commit/dc09e75ff21ce8a7586b372f0b1705328238068e))
+
+
+### Bug Fixes
+
+* **backup:** a photo failure no longer stops a mission restore part-way ([000ec94](https://github.com/SteadyEOC/RangerTrak/commit/000ec94e1455c7f9b6ce736315f89e90a0488c0f))
+* **rangers:** column-header hints get a solid background (Kevin Mitcham's report) ([3a01548](https://github.com/SteadyEOC/RangerTrak/commit/3a015489cfd9c9e2240549cbff6ce2b9628cf4d8))
+
 ### [0.99.16-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.15-alpha...v0.99.16-alpha) (2026-10-02)
 
 
