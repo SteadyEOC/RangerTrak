@@ -70,8 +70,13 @@
     <p class="mission__note">
       Backs up this device&rsquo;s entire mission &mdash; settings, rangers and radio log entries
       &mdash; to a single file, so it survives clearing browser storage or a move to another
-      device.
+      device. Ranger photos are included.
     </p>
+    @if (form.googleGeocodingApiKey().value()) {
+    <p class="mission__note">
+      Your Google geocoding key is only included in passphrase-protected backups.
+    </p>
+    }
     <p class="mission__note mission__note--warn">
       The backup file includes the ranger roster &mdash; legal names, personal phone numbers
       and call signs. Backing up offers an optional passphrase: type one and the file is

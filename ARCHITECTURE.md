@@ -325,7 +325,7 @@ the `rangertrak-records` keys fall back to `localStorage` under the same names f
 
 | # | Store | Key | Owner | Backup | Encrypted | Migration |
 |---|-------|-----|-------|--------|-----------|-----------|
-| 1 | localStorage | `appSettings` | `mission.service.ts` | yes (`settings`) | no | `mission-migration.ts`, schema 5, plus backfill on every load |
+| 1 | localStorage | `appSettings` | `mission.service.ts` | yes (`settings`; the geocoding key only in passphrase-protected backups) | no | `mission-migration.ts`, schema 5, plus backfill on every load |
 | 2 | localStorage | `appSettings-BAD` | `mission.service.ts` | no | no | none; quarantine copy of unreadable settings |
 | 3 | localStorage | `rangertrak-demo-scenario` | `shared/mapping/demo-map.ts` | no | no | JSON record since E-168a; the old bare scenario id still reads |
 | 4 | localStorage | `fieldMode` | `field-mode.service.ts` | no | no | none |
@@ -342,16 +342,19 @@ the `rangertrak-records` keys fall back to `localStorage` under the same names f
 | 15 | IndexedDB `rangertrak-records` / `kv` | `radioLog-BAD` | `radio-log.service.ts` | no | yes | none; quarantine copy of an unreadable log |
 | 16 | IndexedDB `rangertrak-records` / `kv` | `locations` | `mission-location.service.ts` | yes | no | `mission-location-migration.ts`, schema 1 |
 | 17 | IndexedDB `rangertrak-records` / `kv` | `aarNotes` | `aar-note.service.ts` | yes | yes | `aar-note-migration.ts`, schema 1 |
+| 18a | IndexedDB `rangertrak-records` / `kv` | `secrets` (`{ googleGeocodingApiKey }`, 2026-10-01) | `mission.service.ts` | yes, as `settings.googleGeocodingApiKey`, passphrase-protected backups only | yes | one-time move out of `appSettings` on load |
 | 18 | IndexedDB `rangertrak-records` / `kv` | `__encryption` | `shared/storage/record-store.ts` | no | no (it is the key marker) | none |
-| 19 | IndexedDB `rangertrak-photos` / `photos` | one per ranger (by call sign) | `ranger-photo.service.ts` | no (only in setup files) | yes | none |
+| 19 | IndexedDB `rangertrak-photos` / `photos` | one per ranger (by call sign) | `ranger-photo.service.ts` | yes (`photos`, base64; restoring replaces the device's photos) and in setup files | yes | none |
 | 20 | IndexedDB `rangertrak-custom-pmtiles` / `files` | `active` | `custom-pmtiles.service.ts` | no | no | none |
 | 21 | IndexedDB `leaflet.offline` / `tileStore` | map tiles | the `leaflet.offline` library | no | no | library's own |
 | 22 | Cache Storage `rangertrak-pmtiles-warm` | map file URLs | `shared/mapping/demo-map.ts`, service worker | no | no | pruned by `pruneWarmCache()` |
 
 Notes for the storage freeze:
 
-- `appSettings` also holds the optional Google geocoding API key, so it is in plaintext on the
-  device and in an unencrypted backup. Roster PII is encrypted; this is not PII.
+- The optional Google geocoding API key is no longer in `appSettings` (2026-10-01): it lives in
+  the `secrets` record, encrypted when device encryption is on. A plain backup omits it, a
+  passphrase-protected one keeps it, and restoring a backup with no key keeps the device's key.
+  Setup files still carry it by the 2026-08-31 decision.
 - Mission mode (`missionMode`, E-168a) is a field inside `appSettings`, not a key of its own, so it
   rides in backups. The demo record (row 3) is device-only on purpose: it records which rows the
   demo loader created, which means nothing on another device.

@@ -4,7 +4,7 @@ import { EncryptedFile, decryptJson, encryptJson, isEncryptedFile } from '../cry
 import * as packageJson from '../../../../package.json'
 import {
   RadioLogType, RadioLogService, LogService, RangerService, RangerType, MissionService,
-  MissionType, MissionLocationService, MissionLocationType, AarNoteService, AarNoteType
+  MissionType, MissionLocationService, MissionLocationType, AarNoteService, AarNoteType, RangerPhotoService
 } from './'
 import { migrateMission } from './mission-migration'
 import { normalizeRangerIds } from './ranger-migration'
@@ -28,6 +28,10 @@ import { clearActiveDemoScenario } from '../mapping/demo-map'
  *
  * `aarNotes` (E-116, 2026-09-27): the same rule. Additive and optional, so no schema bump: a
  * backup from before After Action notes restores with none.
+ *
+ * `photos` (2026-10-01, John): the same rule. Ranger photos, one entry per stored photo, `data`
+ * base64. PRESENT (even empty) on restore means "replace this device's photos with these";
+ * ABSENT (an older backup) leaves the device's photos alone. No schema bump.
  */
 export type MissionExport = {
   schemaVersion: number,
@@ -38,6 +42,7 @@ export type MissionExport = {
   radioLog: Omit<RadioLogType, 'bounds'>,
   locations?: MissionLocationType[],
   aarNotes?: AarNoteType[],
+  photos?: { stem: string, type: string, data: string }[],
 }
 
 export const MISSION_EXPORT_SCHEMA_VERSION = 1
@@ -70,13 +75,18 @@ export class BackupService {
     private locationService: MissionLocationService,
     private aarNoteService: AarNoteService,
     private log: LogService,
+    private photoService: RangerPhotoService,
   ) { }
 
   /**
    * Pure data assembly, no DOM/file access - kept separate from
    * exportMission() so the actual export contents are easy to test.
+   *
+   * 2026-10-01, John: async because photos are read from their blobs. `includeSecrets` is true
+   * only for a passphrase-protected backup: the Google geocoding key is otherwise written as ''
+   * so a plain file never carries it. (Setup files still carry it - mission-zip.ts.)
    */
-  buildExportPayload(): MissionExport {
+  async buildExportPayload(includeSecrets = false): Promise<MissionExport> {
     const currentFieldReports = this.radioLogService.getCurrentRadioLog()
     const { bounds: _omitted, ...fieldReportsSansBounds } = currentFieldReports
 
@@ -88,19 +98,30 @@ export class BackupService {
       schemaVersion: MISSION_EXPORT_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       appVersion,
-      settings: this.missionService.settings,
+      settings: includeSecrets
+        ? this.missionService.settings
+        : { ...this.missionService.settings, googleGeocodingApiKey: '' },
       rangers: this.rangerService.rangers,
       radioLog: fieldReportsSansBounds,
       locations: this.locationService.getCurrentLocations(),
       aarNotes: this.aarNoteService.getCurrentNotes(),
+      photos: await this.photosForExport(),
     }
+  }
+
+  private async photosForExport(): Promise<NonNullable<MissionExport['photos']>> {
+    const out: NonNullable<MissionExport['photos']> = []
+    for (const { stem, blob } of await this.photoService.allPhotoBlobs()) {
+      out.push({ stem, type: blob.type || 'image/jpeg', data: await blobToBase64(blob) })
+    }
+    return out
   }
 
   /**
    * Triggers a browser download of the current mission as a JSON file.
    */
   async exportMission(passphrase?: string): Promise<void> {
-    const payload = this.buildExportPayload()
+    const payload = await this.buildExportPayload(!!passphrase)
 
     // E-122 Phase 1: the backup carries the whole roster, so it is the file most worth
     // encrypting - and the one explicitly designed to travel between devices. Encryption
@@ -164,7 +185,11 @@ export class BackupService {
     // disaster path, and a mission file may sit on a thumb drive for months), and this call
     // bypasses mission.service.ts's load path entirely - so without this the import would
     // reinstate a pre-migration shape over freshly-migrated settings. See mission-migration.ts.
-    this.missionService.updateMission(migrateMission(payload.settings, this.missionService.initMission()))
+    const incoming = migrateMission(payload.settings, this.missionService.initMission())
+    // 2026-10-01, John: a plain backup carries no geocoding key. Restoring one must not wipe
+    // the key this device already has.
+    if (!incoming.googleGeocodingApiKey) incoming.googleGeocodingApiKey = this.missionService.settings.googleGeocodingApiKey
+    this.missionService.updateMission(incoming)
     // Same reasoning as the settings migration above, for the same reason it is easy to
     // miss: an imported roster can predate D-42/D-43 entirely, so it may carry no uid and no
     // canonical id. Without this, importing a mission would put un-keyed rangers straight
@@ -176,6 +201,15 @@ export class BackupService {
     // rejecting the import, same tolerance every other additive field in this app gets.
     this.locationService.replaceAllLocations(normalizeLocationUids(payload.locations ?? []))
     this.aarNoteService.replaceAllNotes(migrateAarNotes(payload.aarNotes ?? []).notes)
+
+    // 2026-10-01, John: photos present (even empty) replace the device's; absent (older
+    // backup) leaves them alone. importFiles() matches by stem against the roster just restored
+    // and encrypts when device encryption is on, so nothing is duplicated here.
+    if (payload.photos) {
+      await this.photoService.clear()
+      const files = payload.photos.map(p => new File([base64ToBytes(p.data)], `${p.stem}.${extFor(p.type)}`, { type: p.type }))
+      await this.photoService.importFiles(files, this.rangerService.rangers)
+    }
 
     this.log.warn(`Imported mission from export dated ${payload.exportedAt} (schema v${payload.schemaVersion}, app v${payload.appVersion})`, this.id)
 
@@ -237,4 +271,22 @@ export class BackupService {
       throw new Error('Import file is not a valid mission export ("radioLog.logEntries" is not an array).')
     }
   }
+}
+
+function extFor(type: string): string {
+  return type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : type === 'image/jpeg' ? 'jpg' : 'img'
+}
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer())
+  let bin = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+  return btoa(bin)
+}
+
+function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
+  const bin = atob(b64)
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+  return out
 }

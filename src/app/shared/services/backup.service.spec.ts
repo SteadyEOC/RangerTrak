@@ -7,6 +7,7 @@ import { RadioLogService } from './radio-log.service';
 import { RangerService } from './ranger.service';
 import { MissionService } from './mission.service';
 import { AarNoteService } from './aar-note.service';
+import { RangerPhotoService } from './ranger-photo.service';
 // E-122 Phase 2a: the roster (and radio log) now live behind RecordStore, not localStorage
 // directly - see that module's own doc comment.
 import { recordStore } from '../storage/record-store';
@@ -35,7 +36,7 @@ describe('BackupService', () => {
   });
 
   describe('buildExportPayload', () => {
-    it('bundles current settings, rangers, and radio log entries with a schema version', () => {
+    it('bundles current settings, rangers, and radio log entries with a schema version', async () => {
       const settings = TestBed.inject(MissionService);
       const rangers = TestBed.inject(RangerService);
       const radioLogService = TestBed.inject(RadioLogService);
@@ -52,7 +53,7 @@ describe('BackupService', () => {
         date: new Date(), status: 'Normal', notes: 'export test report'
       }));
 
-      const payload = backup.buildExportPayload();
+      const payload = await backup.buildExportPayload();
 
       expect(payload.schemaVersion).toBe(1);
       expect(payload.settings.mission).toBe('Export Test Mission');
@@ -85,7 +86,7 @@ describe('BackupService', () => {
       }));
 
       // 2. Export.
-      const exported: MissionExport = backup.buildExportPayload();
+      const exported: MissionExport = await backup.buildExportPayload();
 
       // 3. Simulate a real "storage wiped" disaster: clear localStorage AND
       // throw away the in-memory service instances, so nothing survives
@@ -107,7 +108,7 @@ describe('BackupService', () => {
       expect(freshRangers.rangers.some(r => r.callsign === 'RT1')).toBeFalse();
 
       // 4. Import.
-      freshBackup.importMission(exported);
+      await freshBackup.importMission(exported);
 
       // 5. Reproduces the mission exactly.
       expect(freshSettings.settings.mission).toBe('Roundtrip Mission');
@@ -130,7 +131,7 @@ describe('BackupService', () => {
     it('E-126: restoring an older-format backup (settings schema v4) migrates it on the way in', async () => {
       const backup = TestBed.inject(BackupService);
       const missionService = TestBed.inject(MissionService);
-      const exported = backup.buildExportPayload();
+      const exported = await backup.buildExportPayload();
       const old = { ...exported, settings: { ...exported.settings, schemaVersion: 4, allowManualPinDrops: true } as any };
 
       await backup.importMission(old);
@@ -142,11 +143,11 @@ describe('BackupService', () => {
     it('E-124: a restored mission is not a demo - the demo marker is cleared', async () => {
       const backup = TestBed.inject(BackupService);
       setActiveDemoScenario('grand-canyon');
-      await backup.importMission(backup.buildExportPayload());
+      await backup.importMission(await backup.buildExportPayload());
       expect(activeDemoScenario()).toBeNull();
     });
 
-    it('recalculates real map bounds after import rather than restoring stale/absent bounds', () => {
+    it('recalculates real map bounds after import rather than restoring stale/absent bounds', async () => {
       const radioLogService = TestBed.inject(RadioLogService);
       const backup = TestBed.inject(BackupService);
 
@@ -155,9 +156,9 @@ describe('BackupService', () => {
         location: { lat: 48.0, lng: -121.0, derivedFromAddress: false },
         date: new Date(), status: 'Normal', notes: ''
       }));
-      const exported = backup.buildExportPayload();
+      const exported = await backup.buildExportPayload();
 
-      backup.importMission(exported);
+      await backup.importMission(exported);
 
       const bounds = radioLogService.getCurrentRadioLog().bounds;
       expect(bounds.south).toBeLessThanOrEqual(48.0);
@@ -170,7 +171,7 @@ describe('BackupService', () => {
   describe('readFileAsMissionExport', () => {
     it('parses a valid mission export file', async () => {
       const backup = TestBed.inject(BackupService);
-      const payload = backup.buildExportPayload();
+      const payload = await backup.buildExportPayload();
       const file = new File([JSON.stringify(payload)], 'mission.json', { type: 'application/json' });
 
       const parsed = await backup.readFileAsMissionExport(file);
@@ -184,7 +185,7 @@ describe('BackupService', () => {
     describe('encrypted backups', () => {
       it('still reads a plain, unencrypted backup - the blank-passphrase case', async () => {
         const backup = TestBed.inject(BackupService);
-        const payload = backup.buildExportPayload();
+        const payload = await backup.buildExportPayload();
         const file = new File([JSON.stringify(payload)], 'mission.json', { type: 'application/json' });
 
         // No passphrase callback supplied at all: a plain file must never ask for one.
@@ -194,7 +195,7 @@ describe('BackupService', () => {
 
       it('round-trips an encrypted backup through the passphrase callback', async () => {
         const backup = TestBed.inject(BackupService);
-        const payload = backup.buildExportPayload();
+        const payload = await backup.buildExportPayload();
         const envelope = await encryptJson(payload, 'a good passphrase',
           { exportedAt: payload.exportedAt, appVersion: payload.appVersion });
         const file = new File([JSON.stringify(envelope)], 'mission.rtenc.json',
@@ -208,7 +209,7 @@ describe('BackupService', () => {
 
       it('passes the plaintext hint to the prompt, so the file is identifiable while locked', async () => {
         const backup = TestBed.inject(BackupService);
-        const payload = backup.buildExportPayload();
+        const payload = await backup.buildExportPayload();
         const envelope = await encryptJson(payload, 'pw', { exportedAt: '2026-09-22', appVersion: '0.93.0' });
         const file = new File([JSON.stringify(envelope)], 'm.rtenc.json', { type: 'application/json' });
 
@@ -220,7 +221,7 @@ describe('BackupService', () => {
 
       it('fails clearly on the wrong passphrase instead of applying garbage', async () => {
         const backup = TestBed.inject(BackupService);
-        const envelope = await encryptJson(backup.buildExportPayload(), 'right');
+        const envelope = await encryptJson(await backup.buildExportPayload(), 'right');
         const file = new File([JSON.stringify(envelope)], 'm.rtenc.json', { type: 'application/json' });
 
         await expectAsync(backup.readFileAsMissionExport(file, () => 'wrong')).toBeRejected();
@@ -228,7 +229,7 @@ describe('BackupService', () => {
 
       it('treats a cancelled prompt as a cancelled restore, not a corrupt file', async () => {
         const backup = TestBed.inject(BackupService);
-        const envelope = await encryptJson(backup.buildExportPayload(), 'pw');
+        const envelope = await encryptJson(await backup.buildExportPayload(), 'pw');
         const file = new File([JSON.stringify(envelope)], 'm.rtenc.json', { type: 'application/json' });
 
         await expectAsync(backup.readFileAsMissionExport(file, () => null))
@@ -278,7 +279,7 @@ describe('BackupService', () => {
       const backup = TestBed.inject(BackupService);
       notes.addNote('Relay point out of range', 'incident', 'Map');
 
-      const payload = JSON.parse(JSON.stringify(backup.buildExportPayload()));
+      const payload = JSON.parse(JSON.stringify(await backup.buildExportPayload()));
       expect(payload.aarNotes.length).toBe(1);
 
       notes.deleteAllNotes();
@@ -289,7 +290,7 @@ describe('BackupService', () => {
     it('restores a backup made before notes existed, with none', async () => {
       const notes = TestBed.inject(AarNoteService);
       const backup = TestBed.inject(BackupService);
-      const payload = JSON.parse(JSON.stringify(backup.buildExportPayload()));
+      const payload = JSON.parse(JSON.stringify(await backup.buildExportPayload()));
       delete payload.aarNotes;
 
       notes.addNote('left over from another mission', 'incident', 'Entry');
@@ -297,4 +298,84 @@ describe('BackupService', () => {
       expect(notes.notes()).toEqual([]);
     });
   });
+  describe('geocoding key and photos (2026-10-01, John)', () => {
+    const KEY = 'AIza-test-key'
+
+    function pngBlob(): Blob {
+      // 1x1 transparent PNG
+      const b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+      const bin = atob(b64)
+      const bytes = new Uint8Array(bin.length)
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+      return new Blob([bytes], { type: 'image/png' })
+    }
+
+    it('strips the key from a plain payload but keeps it in a passphrase-protected one', async () => {
+      const mission = TestBed.inject(MissionService)
+      const backup = TestBed.inject(BackupService)
+      mission.updateMission({ ...mission.settings, googleGeocodingApiKey: KEY })
+      expect((await backup.buildExportPayload()).settings.googleGeocodingApiKey).toBe('')
+      expect((await backup.buildExportPayload(true)).settings.googleGeocodingApiKey).toBe(KEY)
+      // the live settings are untouched by the strip
+      expect(mission.settings.googleGeocodingApiKey).toBe(KEY)
+    })
+
+    it('keeps the device key when the restored backup has none', async () => {
+      const mission = TestBed.inject(MissionService)
+      const backup = TestBed.inject(BackupService)
+      mission.updateMission({ ...mission.settings, googleGeocodingApiKey: KEY })
+      const plain = await backup.buildExportPayload()
+      await backup.importMission(plain)
+      expect(mission.settings.googleGeocodingApiKey).toBe(KEY)
+    })
+
+    it('stores the key in secrets, not in appSettings', async () => {
+      const mission = TestBed.inject(MissionService)
+      mission.updateMission({ ...mission.settings, googleGeocodingApiKey: KEY })
+      expect(localStorage.getItem('appSettings')).not.toContain(KEY)
+      expect(recordStore.getItem('secrets')).toContain(KEY)
+    })
+
+    it('migrates a key still in appSettings into secrets on load', async () => {
+      const seed = TestBed.inject(MissionService)
+      const legacy = { ...seed.settings, googleGeocodingApiKey: KEY }
+      TestBed.resetTestingModule()
+      configure()
+      localStorage.setItem('appSettings', JSON.stringify(legacy))
+      recordStore.removeItem('secrets')
+      const mission = TestBed.inject(MissionService)
+      expect(mission.settings.googleGeocodingApiKey).toBe(KEY)
+      expect(localStorage.getItem('appSettings')).not.toContain(KEY)
+      expect(recordStore.getItem('secrets')).toContain(KEY)
+    })
+
+    it('round-trips photos, and an older payload without photos leaves them alone', async () => {
+      const rangers = TestBed.inject(RangerService)
+      const photos = TestBed.inject(RangerPhotoService)
+      const backup = TestBed.inject(BackupService)
+      rangers.AddRanger(JSON.stringify({
+        callsign: 'PH1', fullName: 'Photo Ranger', phone: '',
+        image: '', rew: '', team: '', role: '', note: ''
+      }))
+      await photos.importFiles([new File([pngBlob()], 'PH1.png', { type: 'image/png' })], rangers.rangers)
+      expect(photos.count()).toBe(1)
+
+      const payload = await backup.buildExportPayload()
+      expect(payload.photos?.length).toBe(1)
+      expect(payload.photos![0].stem).toBe('PH1')
+
+      await photos.clear()
+      expect(photos.count()).toBe(0)
+      await backup.importMission(payload)
+      expect(photos.count()).toBe(1)
+
+      const older = JSON.parse(JSON.stringify(payload))
+      delete older.photos
+      await backup.importMission(older)
+      expect(photos.count()).toBe(1)
+
+      await backup.importMission({ ...payload, photos: [] })
+      expect(photos.count()).toBe(0)
+    })
+  })
 });

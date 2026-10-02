@@ -225,7 +225,8 @@ Both engines live on the one **Map** page now, switched with the toggle above th
 
 **7. Take a backup.**
 On **Mission**, press **Back up mission**. This writes a single file containing your
-settings, roster, and any reports. Keep it somewhere safe — a USB stick, another device.
+settings, roster, ranger photos, and any reports. (Your Google geocoding key, if you set one,
+is included only when you protect the backup with a passphrase.) Keep it somewhere safe — a USB stick, another device.
 If the browser data is ever lost, **Restore mission** restores everything.
 
 > ⚠️ That export file contains personal information about your people — names, home
