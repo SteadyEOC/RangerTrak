@@ -16,8 +16,16 @@
          (.rt-mission-info-panel below), same proven pattern as that old per-dot tooltip used -
          no JS hover-tracking, no MatMenu open/close timing to get right. -->
     <div class="status-cluster" [class.rt-panel-open-touch]="panelOpenOnTouch()"
+    [attr.data-mode]="usage.mode() ?? null"
     (click)="onStatusClusterClick($event)"
     title="Click to go to Field Entry and reopen the welcome panel">
+    <!-- E-168 (2026-10-01, John): the mode as colour + icon, no words (the pill is crowded; the
+         words live in the tooltip, the aria-label and the panel below). Nothing shows until a
+         mode is chosen or a demo is loaded. -->
+    @if (modeInfo(); as m) {
+    <mat-icon class="rt-mode-icon" [attr.data-mode]="m.id" role="img" [attr.aria-label]="m.aria"
+      [attr.title]="m.aria">{{ m.icon }}</mat-icon>
+    }
     <rangertrak-mission-readiness (dotActivated)="panelOpenOnTouch.set(!panelOpenOnTouch())"></rangertrak-mission-readiness>
     <span class="status-divider"></span>
     <!-- 2026-09-28, John: this title gives the exact Starts/Ends date and time, same data
@@ -41,6 +49,28 @@
         <dt>Starts</dt><dd>{{ opPeriodStartDisplay() }}</dd>
         <dt>Ends</dt><dd>{{ opPeriodEndDisplay() }}</dd>
       </dl>
+
+      <!-- E-168: the mode line and the switch. Details live on the Mission page's Mode card. -->
+      <div class="rt-mission-info-panel__mode">
+        <div class="rt-mission-info-panel__mode-line">Mode: {{ modeInfo()?.label ?? 'not chosen' }}</div>
+        @if (!usage.mode() && usage.state() !== 'empty') {
+        <div class="rt-mission-info-panel__mode-ask">Exercise or real incident?</div>
+        }
+        <div class="rt-mission-info-panel__mode-buttons" role="group" aria-label="Mission mode">
+          @for (m of modes; track m.id) {
+          <button type="button" class="rt-mode-choice" [attr.data-mode]="m.id"
+            [attr.aria-pressed]="usage.mode() === m.id"
+            [class.rt-mode-choice--on]="usage.mode() === m.id"
+            [disabled]="m.id === 'demo' && usage.mode() !== 'demo'"
+            [attr.title]="m.id === 'demo' && usage.mode() !== 'demo' ? 'Load a demo from Entry or Mission to use demo mode.' : m.blurb"
+            (click)="onPickMode(m.id)">
+            <mat-icon aria-hidden="true">{{ m.icon }}</mat-icon>{{ m.label }}
+          </button>
+          }
+        </div>
+        <div class="rt-mission-info-panel__mode-blurb">{{ modeInfo()?.blurb ?? 'Choose one when real work begins.' }}</div>
+        <a class="rt-mission-info-panel__mode-more" routerLink="/mission" fragment="mode">More about modes</a>
+      </div>
 
       <div class="rt-mission-info-panel__readiness">
         <div class="rt-mission-info-panel__readiness-level">Mission readiness: {{ readiness.level() }}</div>

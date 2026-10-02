@@ -9,7 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar'
 
 import {
   ClockService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService,
-  OfflineBasemapService
+  OfflineBasemapService, UsageStateService, MissionModeType
 } from '../services'
 import { Utility } from '../'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
@@ -46,6 +46,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   readonly guide = inject(GuideService)
   readonly readiness = inject(MissionReadinessService)
+  readonly usage = inject(UsageStateService)
   readonly offlineBasemap = inject(OfflineBasemapService)
   private readonly dialog = inject(MatDialog)
   private readonly snackBar = inject(MatSnackBar)
@@ -299,6 +300,37 @@ export class HeaderComponent implements OnInit, OnDestroy {
   // Entry already exists for the primary way to get there, so trading away this pill's
   // navigation shortcut (never the only path) for actually being able to see mission
   // status on a phone is the right trade.
+  /**
+   * E-168 (2026-10-01, John): the three modes - icon, short label for the panel, the spoken
+   * label for the tooltip and aria-label, and one line of explanation. The stored codes
+   * ('demo' | 'exercise' | 'incident') never change; these words can. Icons are Material
+   * Icons already in the font: science (a trial), fitness_center (a drill), emergency (the
+   * real thing).
+   */
+  readonly modes: ReadonlyArray<{ id: MissionModeType, label: string, aria: string, icon: string, blurb: string }> = [
+    { id: 'demo', label: 'Demo', aria: 'Demo mode', icon: 'science', blurb: 'Made-up data, for trying the app.' },
+    { id: 'exercise', label: 'Exercise', aria: 'Exercise', icon: 'fitness_center', blurb: 'A drill. Printouts are marked EXERCISE.' },
+    { id: 'incident', label: 'Incident', aria: 'Real incident', icon: 'emergency', blurb: 'A real event.' },
+  ]
+
+  /** The mode in effect, with its labels; null while none is chosen and no demo is loaded. */
+  readonly modeInfo = () => this.modes.find(m => m.id === this.usage.mode()) ?? null
+
+  /** Demo data is never relabelled as real: leaving Demo for Exercise or Incident offers to
+   *  clear the demo and start a real mission instead. */
+  async onPickMode(mode: MissionModeType): Promise<void> {
+    if (mode === this.usage.mode()) return
+    if (this.usage.mode() === 'demo') {
+      if (!confirm('Start a real mission?\n\nThis clears the demo data (rangers, radio log entries and '
+        + 'locations) and resets the mission settings to their defaults. Demo data is not '
+        + 'relabelled as real.')) return
+      await this.usage.startRealMission(mode)
+      window.location.reload()
+      return
+    }
+    this.usage.setMode(mode)
+  }
+
   panelOpenOnTouch = signal(false)
   private readonly isTouchOnly = () => matchMedia('(hover: none)').matches
 

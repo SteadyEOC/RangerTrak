@@ -81,6 +81,15 @@
   --rt-readiness-amber: #{light-dark(#8A5A00, #D9A300)};
   --rt-readiness-green: #{light-dark(#3C6E2A, #7CC96A)};
 
+  // ── Mission mode (E-168) ───────────────────────────────────────────
+  // The header pill's colour cue for Demo / Exercise / Incident (the icon carries the meaning;
+  // this is the second cue, never the only one). Deliberately NOT the readiness red/amber/green
+  // or the status colours, which mean something else; NOT per-skin, same argument as readiness:
+  // "exercise" must look the same under every skin. Grey-violet, blue, deep orange.
+  --rt-mode-demo: #{light-dark(#6B5B95, #B4A7D6)};
+  --rt-mode-exercise: #{light-dark(#1565C0, #6CB0FF)};
+  --rt-mode-incident: #{light-dark(#BF360C, #FF8A65)};
+
   // ── Overdue check-in escalation (E-118) ───────────────────────────
   // Band 0 is "not due yet" and has no background at all - see shared/overdue.ts for why
   // the normal state must not look like a warning. 1..7 run from just-due to fully overdue.

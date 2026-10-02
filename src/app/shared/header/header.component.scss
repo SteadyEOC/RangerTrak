@@ -162,6 +162,65 @@
     }
   }
 
+  // E-168: the pill takes the mode's colour as a ring and a faint tint, plus the icon at its
+  // start. A box-shadow ring rather than a thicker border, so the pill's size never changes.
+  .status-cluster[data-mode] {
+    border-color: var(--rt-mode-colour);
+    box-shadow  : 0 0 0 1px var(--rt-mode-colour);
+    background  : color-mix(in srgb, var(--rt-mode-colour) 10%, var(--rt-surface));
+  }
+  .status-cluster[data-mode='demo']     { --rt-mode-colour: var(--rt-mode-demo); }
+  .status-cluster[data-mode='exercise'] { --rt-mode-colour: var(--rt-mode-exercise); }
+  .status-cluster[data-mode='incident'] { --rt-mode-colour: var(--rt-mode-incident); }
+
+  .rt-mode-icon {
+    flex  : none;
+    width : 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+  .rt-mode-icon[data-mode='demo']     { color: var(--rt-mode-demo); }
+  .rt-mode-icon[data-mode='exercise'] { color: var(--rt-mode-exercise); }
+  .rt-mode-icon[data-mode='incident'] { color: var(--rt-mode-incident); }
+
+  .rt-mission-info-panel__mode {
+    margin-top : 0.6em;
+    padding-top: 0.5em;
+    border-top : 1px solid var(--rt-line);
+  }
+  .rt-mission-info-panel__mode-line { font-weight: 700; margin-bottom: 0.3em; }
+  .rt-mission-info-panel__mode-ask  { color: var(--rt-ink-2); margin-bottom: 0.3em; }
+  .rt-mission-info-panel__mode-buttons {
+    display: flex;
+    gap    : 0.3em;
+    flex-wrap: wrap;
+  }
+  .rt-mode-choice {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 0.2em;
+    padding      : 0.2em 0.55em;
+    border       : 1px solid var(--rt-line-strong);
+    border-radius: var(--rt-radius);
+    background   : var(--rt-surface);
+    color        : var(--rt-ink);
+    font         : inherit;
+    cursor       : pointer;
+
+    mat-icon { width: 18px; height: 18px; font-size: 18px; }
+    &[data-mode='demo']     mat-icon { color: var(--rt-mode-demo); }
+    &[data-mode='exercise'] mat-icon { color: var(--rt-mode-exercise); }
+    &[data-mode='incident'] mat-icon { color: var(--rt-mode-incident); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+  .rt-mode-choice--on {
+    font-weight: 700;
+    border-color: var(--rt-ink);
+    box-shadow  : inset 0 0 0 1px var(--rt-ink);
+  }
+  .rt-mission-info-panel__mode-blurb { margin-top: 0.3em; color: var(--rt-ink-2); }
+  .rt-mission-info-panel__mode-more  { display: inline-block; margin-top: 0.2em; }
+
   .rt-mission-info-panel__readiness {
     margin-top : 0.6em;
     padding-top: 0.5em;
