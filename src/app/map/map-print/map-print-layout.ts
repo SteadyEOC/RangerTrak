@@ -13,13 +13,6 @@ export interface PrintPoint { x: number, y: number }
 /** A box in container pixels. */
 export interface PrintRect { left: number, top: number, right: number, bottom: number }
 
-/** Markers closer than this (container px) fan out together. */
-export const FAN_GROUP_PX = 18
-/** Smallest fan circle radius (px); grows with the count so the icons never touch. */
-export const FAN_MIN_RADIUS_PX = 22
-/** Room each fanned icon is given along the circle: a 28 px icon plus a gap. */
-const FAN_ICON_SPACING_PX = 32
-
 export function rectsOverlap(a: PrintRect, b: PrintRect): boolean {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
 }
@@ -53,41 +46,30 @@ export function segmentCrossesRect(a: PrintPoint, b: PrintPoint, r: PrintRect): 
 }
 
 /**
- * Greedy grouping: each point joins the first existing group that has a member within
- * `threshold` px, otherwise starts its own. Returns groups of indexes into `points`, in
- * input order, so a group's members stay in radio-log order.
+ * 2026-10-01, John: E-152b (third pass) - fanning, the way Leaflet.markercluster spiderfies a
+ * cluster, but compact: markers are grouped transitively (single linkage) when their true points
+ * are within 1.5 icon widths, and each group is laid out round its centroid on the smallest
+ * circle the icons fit on (up to 8), or on an Archimedean spiral (more than 8). Members take the
+ * slots in the order of the angle from the centroid to their own true point, turned to whichever
+ * start gives the shortest leaders, so the leaders do not cross. Nothing grows to dodge
+ * something: if a fanned icon lands on a marker outside its group, that group is merged into
+ * this one and the lot laid out again (three passes at most). The minutes badges are not
+ * markers; each group's start angle is turned to keep icons off them where it can.
  */
-export function groupClosePoints(points: readonly PrintPoint[], threshold = FAN_GROUP_PX): number[][] {
-  const groups: number[][] = []
-  points.forEach((p, i) => {
-    const home = groups.find(g => g.some(j => Math.hypot(points[j].x - p.x, points[j].y - p.y) <= threshold))
-    if (home) {
-      home.push(i)
-    } else {
-      groups.push([i])
-    }
-  })
-  return groups
-}
 
-/**
- * Where each of `count` markers goes on the fan around `centre`: evenly round a circle,
- * the first at 12 o'clock (turned by `turn` radians) and the rest clockwise. The radius
- * grows with the count, plus `radiusExtra` px.
- */
-export function fanPositions(centre: PrintPoint, count: number, radiusExtra = 0, turn = 0): PrintPoint[] {
-  if (count < 2) {
-    return [{ ...centre }]
-  }
-  const radius = radiusExtra + Math.max(FAN_MIN_RADIUS_PX, FAN_ICON_SPACING_PX / 2 / Math.sin(Math.PI / count))
-  return Array.from({ length: count }, (_, i) => {
-    const angle = turn + 2 * Math.PI * i / count
-    return { x: centre.x + radius * Math.sin(angle), y: centre.y - radius * Math.cos(angle) }
-  })
-}
+/** A marker's printed icon is this wide unless the caller measures it (28 px at 75%). */
+export const PRINT_ICON_PX = 21
+/** Gap kept between neighbouring icons on a fan. */
+const FAN_GAP_PX = 3
+/** Most icons on a single circle; beyond this the group goes on a spiral. */
+const FAN_MAX_ON_CIRCLE = 8
 
-/** Half the width of a marker icon (28 px) plus a little air, for fan collision checks. */
-const FAN_ICON_HALF_PX = 15
+export interface FanOptions {
+  /** Printed icon width, container px. */
+  icon?: number
+  /** Boxes that stay put and should not be fanned onto (the minutes badges). */
+  fixed?: readonly PrintRect[]
+}
 
 export interface FanPlan {
   /** Final container position of every input point, same order (lone markers stay put). */
@@ -96,75 +78,141 @@ export interface FanPlan {
   groups: { members: number[], centre: PrintPoint }[]
 }
 
-const iconBox = (p: PrintPoint): PrintRect =>
-  ({ left: p.x - FAN_ICON_HALF_PX, top: p.y - FAN_ICON_HALF_PX, right: p.x + FAN_ICON_HALF_PX, bottom: p.y + FAN_ICON_HALF_PX })
-
-/**
- * 2026-10-01, John: E-152b (review fix) - fans every group of close markers, and keeps the fans
- * off each other: a fan's icons may not land on another group's icons, on a lone marker, or on
- * anything in `fixed` (the minutes badges and Location icons, which stay at their true spots).
- *
- * Each group is first fanned at its default radius, starting at 12 o'clock. A group that
- * collides then tries bigger radii (8 px steps) and, at each radius, start angles turned by a
- * quarter, half and three quarters of a step, and takes the first that is clear of everything
- * else as it stands. Two sweeps over the groups, so a group moved in the first sweep can still
- * make room for one that follows. If nothing clears, the group keeps the candidate that
- * collides least; the map is never printed with a marker dropped. Each marker keeps a leader to
- * its OWN true point (the caller draws them), so groups are never merged.
- */
-export function planFans(points: readonly PrintPoint[], fixed: readonly PrintRect[] = []): FanPlan {
-  const positions = points.map(p => ({ ...p }))
-  const groups = groupClosePoints(points).filter(g => g.length > 1).map(members => ({
-    members,
-    centre: {
-      x: members.reduce((sum, i) => sum + points[i].x, 0) / members.length,
-      y: members.reduce((sum, i) => sum + points[i].y, 0) / members.length,
-    },
-  }))
-  const place = (g: typeof groups[number], radiusExtra: number, turn: number) =>
-    fanPositions(g.centre, g.members.length, radiusExtra, turn)
-  groups.forEach(g => place(g, 0, 0).forEach((p, k) => positions[g.members[k]] = p))
-
-  // How many of group g's icons, at candidate spots, overlap something else.
-  const collisions = (g: typeof groups[number], spots: PrintPoint[]): number => {
-    const mine = new Set(g.members)
-    const others: PrintRect[] = [...fixed]
-    positions.forEach((p, i) => { if (!mine.has(i)) others.push(iconBox(p)) })
-    let count = 0
-    spots.forEach((s, a) => {
-      const box = iconBox(s)
-      count += others.filter(o => rectsOverlap(box, o)).length
-      for (let b = a + 1; b < spots.length; b++) {
-        if (rectsOverlap(box, iconBox(spots[b]))) count++
+/** Single-linkage grouping: points within `threshold` of ANY member share a group. Groups in input order. */
+export function groupClosePoints(points: readonly PrintPoint[], threshold: number): number[][] {
+  const parent = points.map((_, i) => i)
+  const find = (i: number): number => parent[i] === i ? i : (parent[i] = find(parent[i]))
+  for (let a = 0; a < points.length; a++) {
+    for (let b = a + 1; b < points.length; b++) {
+      if (Math.hypot(points[a].x - points[b].x, points[a].y - points[b].y) <= threshold) {
+        parent[find(b)] = find(a)
       }
-    })
-    return count
-  }
-
-  for (let sweep = 0; sweep < 2; sweep++) {
-    for (const g of groups) {
-      if (collisions(g, g.members.map(i => positions[i])) === 0) {
-        continue
-      }
-      const step = 2 * Math.PI / g.members.length
-      let best: { spots: PrintPoint[], count: number } | null = null
-      search:
-      for (let extra = 0; extra <= 64; extra += 8) {
-        for (const turn of [0, 0.5, 0.25, 0.75]) {
-          const spots = place(g, extra, turn * step)
-          const count = collisions(g, spots)
-          if (!best || count < best.count) {
-            best = { spots, count }
-          }
-          if (count === 0) {
-            break search
-          }
-        }
-      }
-      best!.spots.forEach((p, k) => positions[g.members[k]] = p)
     }
   }
-  return { positions, groups }
+  const byRoot = new Map<number, number[]>()
+  points.forEach((_, i) => {
+    const root = find(i)
+    byRoot.set(root, [...(byRoot.get(root) ?? []), i])
+  })
+  return [...byRoot.values()]
+}
+
+/** Clockwise angle from 12 o'clock, 0 to 2 pi. */
+const clockAngle = (from: PrintPoint, to: PrintPoint): number => {
+  const a = Math.atan2(to.x - from.x, -(to.y - from.y))
+  return a < 0 ? a + 2 * Math.PI : a
+}
+
+/**
+ * The slots for `count` icons round `centre`: one circle just big enough for the icons not to
+ * touch (circumference rule, never under 1.2 icon widths), else markercluster's spiral. Sorted
+ * clockwise from 12 o'clock.
+ */
+export function fanSlots(centre: PrintPoint, count: number, icon = PRINT_ICON_PX, turn = 0): PrintPoint[] {
+  const slots: PrintPoint[] = []
+  if (count <= FAN_MAX_ON_CIRCLE) {
+    const radius = Math.max(count * (icon + FAN_GAP_PX) / (2 * Math.PI), 1.2 * icon)
+    for (let i = 0; i < count; i++) {
+      const angle = turn + 2 * Math.PI * i / count
+      slots.push({ x: centre.x + radius * Math.sin(angle), y: centre.y - radius * Math.cos(angle) })
+    }
+  } else {
+    // An Archimedean spiral like markercluster's _generatePointsSpiral, started at the circle's
+    // minimum radius and widening by one icon (and gap) per turn; each step is one icon along
+    // the curve.
+    const footprint = 1.3 * icon // roomier than the circle: square icons touch on a diagonal
+    const start = 1.2 * icon
+    let angle = 0
+    for (let i = 0; i < count; i++) {
+      const leg = start + footprint * angle / (2 * Math.PI)
+      slots.push({ x: centre.x + leg * Math.sin(angle + turn), y: centre.y - leg * Math.cos(angle + turn) })
+      angle += footprint / leg
+    }
+  }
+  return slots.sort((a, b) => clockAngle(centre, a) - clockAngle(centre, b))
+}
+
+const iconBox = (p: PrintPoint, icon: number): PrintRect =>
+  ({ left: p.x - icon / 2, top: p.y - icon / 2, right: p.x + icon / 2, bottom: p.y + icon / 2 })
+
+/** Lays one group out: where each member goes (parallel to `members`). */
+function layoutGroup(points: readonly PrintPoint[], members: number[], centre: PrintPoint, icon: number,
+  fixed: readonly PrintRect[]): PrintPoint[] {
+  const n = members.length
+  const step = 2 * Math.PI / n
+  // Members in clockwise order of the angle from the centroid to their own true point.
+  const order = members.map((m, k) => ({ k, angle: clockAngle(centre, points[m]) })).sort((a, b) => a.angle - b.angle)
+  let best: { cost: number, spots: PrintPoint[] } | null = null
+  const turns = n <= FAN_MAX_ON_CIRCLE ? [0, 0.25, 0.5, 0.75].map(f => f * step) : [0]
+  for (const turn of turns) {
+    const slots = fanSlots(centre, n, icon, turn)
+    for (let shift = 0; shift < n; shift++) {
+      const spots = new Array<PrintPoint>(n)
+      let length = 0
+      order.forEach((o, rank) => {
+        const slot = slots[(rank + shift) % n]
+        spots[o.k] = slot
+        length += Math.hypot(slot.x - points[members[o.k]].x, slot.y - points[members[o.k]].y)
+      })
+      const blocked = spots.filter(s => fixed.some(f => rectsOverlap(iconBox(s, icon), f))).length
+      const cost = length + blocked * 1000
+      if (!best || cost < best.cost) {
+        best = { cost, spots }
+      }
+    }
+  }
+  return best!.spots
+}
+
+export function planFans(points: readonly PrintPoint[], options: FanOptions = {}): FanPlan {
+  const icon = options.icon ?? PRINT_ICON_PX
+  const fixed = options.fixed ?? []
+  const threshold = 1.5 * icon
+  let groups = groupClosePoints(points, threshold)
+  let positions = points.map(p => ({ ...p }))
+  let plans: { members: number[], centre: PrintPoint }[] = []
+
+  for (let pass = 0; pass < 4; pass++) {
+    positions = points.map(p => ({ ...p }))
+    plans = groups.filter(g => g.length > 1).map(members => ({
+      members,
+      centre: {
+        x: members.reduce((sum, i) => sum + points[i].x, 0) / members.length,
+        y: members.reduce((sum, i) => sum + points[i].y, 0) / members.length,
+      },
+    }))
+    for (const g of plans) {
+      layoutGroup(points, g.members, g.centre, icon, fixed).forEach((p, k) => positions[g.members[k]] = p)
+    }
+    // A fanned icon on a marker outside its group: merge the two groups and lay out again.
+    const groupOf = new Map<number, number>()
+    groups.forEach((g, gi) => g.forEach(i => groupOf.set(i, gi)))
+    const merge = new Set<string>()
+    for (const g of plans) {
+      for (const i of g.members) {
+        const box = iconBox(positions[i], icon)
+        positions.forEach((p, j) => {
+          if (groupOf.get(j) !== groupOf.get(i) && rectsOverlap(box, iconBox(p, icon))) {
+            const [x, y] = [groupOf.get(i)!, groupOf.get(j)!].sort((a, b) => a - b)
+            merge.add(`${x},${y}`)
+          }
+        })
+      }
+    }
+    if (!merge.size || pass === 3) {
+      break
+    }
+    const parent = groups.map((_, gi) => gi)
+    const find = (i: number): number => parent[i] === i ? i : (parent[i] = find(parent[i]))
+    merge.forEach(key => {
+      const [x, y] = key.split(',').map(Number)
+      parent[find(y)] = find(x)
+    })
+    const merged = new Map<number, number[]>()
+    groups.forEach((g, gi) => merged.set(find(gi), [...(merged.get(find(gi)) ?? []), ...g]))
+    groups = [...merged.values()].map(g => g.sort((a, b) => a - b))
+  }
+  return { positions, groups: plans }
 }
 
 export interface PanelPlacementInput {

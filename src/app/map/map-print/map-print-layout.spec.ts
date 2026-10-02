@@ -1,5 +1,5 @@
 import {
-  choosePanelSpot, fanPositions, groupClosePoints, planFans, rectsOverlap, segmentCrossesRect, PrintRect,
+  choosePanelSpot, fanSlots, groupClosePoints, planFans, rectsOverlap, segmentCrossesRect, PrintRect,
 } from './map-print-layout'
 
 describe('map print layout', () => {
@@ -23,50 +23,55 @@ describe('map print layout', () => {
   })
 
   describe('groupClosePoints', () => {
-    it('groups points within 18 px and keeps input order', () => {
-      const pts = [{ x: 100, y: 100 }, { x: 300, y: 300 }, { x: 108, y: 105 }, { x: 112, y: 112 }, { x: 301, y: 310 }]
-      expect(groupClosePoints(pts)).toEqual([[0, 2, 3], [1, 4]])
-    })
-    it('chains through a member, not only the first point', () => {
-      const pts = [{ x: 0, y: 0 }, { x: 15, y: 0 }, { x: 30, y: 0 }]
-      expect(groupClosePoints(pts)).toEqual([[0, 1, 2]])
+    it('groups transitively within the threshold and keeps input order', () => {
+      const pts = [{ x: 100, y: 100 }, { x: 300, y: 300 }, { x: 125, y: 100 }, { x: 150, y: 100 }, { x: 301, y: 310 }]
+      expect(groupClosePoints(pts, 30)).toEqual([[0, 2, 3], [1, 4]]) // 0-2 and 2-3 are 25 apart; 0-3 is 50
     })
     it('leaves distant points alone', () => {
-      expect(groupClosePoints([{ x: 0, y: 0 }, { x: 50, y: 0 }])).toEqual([[0], [1]])
+      expect(groupClosePoints([{ x: 0, y: 0 }, { x: 50, y: 0 }], 30)).toEqual([[0], [1]])
     })
   })
 
-  describe('fanPositions', () => {
-    it('starts at 12 o\'clock and goes clockwise', () => {
-      const [a, b, c, d] = fanPositions({ x: 100, y: 100 }, 4)
-      expect(a.x).toBeCloseTo(100)
-      expect(a.y).toBeLessThan(100)    // 12 o'clock (y grows downward)
-      expect(b.x).toBeGreaterThan(100) // 3 o'clock
-      expect(c.y).toBeGreaterThan(100) // 6 o'clock
-      expect(d.x).toBeLessThan(100)    // 9 o'clock
-    })
-    it('keeps every icon on one circle and apart from its neighbours', () => {
-      for (const n of [2, 3, 5, 9, 14]) {
-        const pts = fanPositions({ x: 0, y: 0 }, n)
-        const radius = Math.hypot(pts[0].x, pts[0].y)
-        expect(radius).toBeGreaterThanOrEqual(22 - 1e-9)
-        pts.forEach(p => expect(Math.hypot(p.x, p.y)).toBeCloseTo(radius, 6))
-        if (n > 2) {
-          for (let i = 0; i < n; i++) {
-            const q = pts[(i + 1) % n]
-            expect(Math.hypot(pts[i].x - q.x, pts[i].y - q.y)).toBeGreaterThanOrEqual(28)
-          }
-        }
+  describe('fanSlots', () => {
+    const centre = { x: 100, y: 100 }
+    it('puts up to 8 icons on one circle, just wide enough not to touch', () => {
+      const slots = fanSlots(centre, 5)
+      const radius = Math.hypot(slots[0].x - 100, slots[0].y - 100)
+      expect(radius).toBeGreaterThanOrEqual(1.2 * 21 - 1e-9)
+      slots.forEach(s => expect(Math.hypot(s.x - 100, s.y - 100)).toBeCloseTo(radius, 6))
+      for (let i = 0; i < 5; i++) {
+        const q = slots[(i + 1) % 5]
+        expect(Math.hypot(slots[i].x - q.x, slots[i].y - q.y)).toBeGreaterThanOrEqual(21)
       }
     })
-    it('leaves a lone marker where it is', () => {
-      expect(fanPositions({ x: 5, y: 6 }, 1)).toEqual([{ x: 5, y: 6 }])
+    it('starts at 12 o\'clock and goes clockwise', () => {
+      const [a, b, c, d] = fanSlots(centre, 4)
+      expect(a.x).toBeCloseTo(100); expect(a.y).toBeLessThan(100)
+      expect(b.x).toBeGreaterThan(100)
+      expect(c.y).toBeGreaterThan(100)
+      expect(d.x).toBeLessThan(100)
+    })
+    it('uses a spiral beyond 8, with every icon clear of the others', () => {
+      const slots = fanSlots(centre, 14)
+      expect(slots.length).toBe(14)
+      for (let a = 0; a < 14; a++) {
+        for (let b = a + 1; b < 14; b++) {
+          expect(Math.hypot(slots[a].x - slots[b].x, slots[a].y - slots[b].y)).withContext(`${a},${b}`).toBeGreaterThan(18)
+        }
+      }
     })
   })
 
   describe('planFans', () => {
-    const box = (p: { x: number, y: number }): PrintRect => ({ left: p.x - 14, top: p.y - 14, right: p.x + 14, bottom: p.y + 14 })
+    const box = (p: { x: number, y: number }): PrintRect => ({ left: p.x - 10.5, top: p.y - 10.5, right: p.x + 10.5, bottom: p.y + 10.5 })
     const pile = (x: number, y: number, n: number) => Array.from({ length: n }, (_, i) => ({ x: x + i * 0.5, y }))
+    const noOverlaps = (positions: { x: number, y: number }[]) => {
+      for (let a = 0; a < positions.length; a++) {
+        for (let b = a + 1; b < positions.length; b++) {
+          expect(rectsOverlap(box(positions[a]), box(positions[b]))).withContext(`icons ${a} and ${b}`).toBeFalse()
+        }
+      }
+    }
 
     it('leaves lone markers where they are', () => {
       const plan = planFans([{ x: 10, y: 10 }, { x: 200, y: 200 }])
@@ -74,30 +79,42 @@ describe('map print layout', () => {
       expect(plan.positions).toEqual([{ x: 10, y: 10 }, { x: 200, y: 200 }])
     })
 
-    it('keeps two adjacent fans off each other', () => {
-      const pts = [...pile(100, 100, 5), ...pile(100, 150, 5)] // true points 50 px apart: default fans collide
+    it('keeps a fan compact: icons close to their true points', () => {
+      const pts = pile(100, 100, 5)
       const plan = planFans(pts)
-      expect(plan.groups.length).toBe(2)
-      for (let a = 0; a < pts.length; a++) {
-        for (let b = a + 1; b < pts.length; b++) {
-          expect(rectsOverlap(box(plan.positions[a]), box(plan.positions[b])))
-            .withContext(`icons ${a} and ${b}`).toBeFalse()
-        }
-      }
+      noOverlaps(plan.positions)
+      plan.positions.forEach(p => expect(Math.hypot(p.x - 100, p.y - 100)).toBeLessThan(35))
     })
 
-    it('keeps a fan off a fixed obstacle such as a minutes badge', () => {
-      const badge = { left: 88, top: 74, right: 112, bottom: 92 } // sits where the 12 o'clock icon would
-      const plan = planFans(pile(100, 100, 5), [badge])
-      plan.positions.forEach((p, i) => expect(rectsOverlap(box(p), badge)).withContext(`icon ${i}`).toBeFalse())
+    it('merges adjacent groups whose fans would collide, instead of growing', () => {
+      const pts = [...pile(100, 100, 5), ...pile(100, 140, 5)] // 40 px apart: separate groups, colliding fans
+      const plan = planFans(pts)
+      expect(plan.groups.length).toBe(1)
+      expect(plan.groups[0].members.length).toBe(10)
+      noOverlaps(plan.positions)
+      plan.positions.forEach(p => expect(Math.hypot(p.x - 100, p.y - 120)).toBeLessThan(60))
     })
 
-    it('keeps a fan off a lone marker nearby', () => {
-      const pts = [...pile(100, 100, 3), { x: 100, y: 70 }] // lone marker at 12 o'clock, 30 px away
+    it('orders icons by the angle to their own true points, so leaders do not cross', () => {
+      // True points at N, E, S, W of the centroid, handed over in a scrambled order.
+      const pts = [{ x: 120, y: 100 }, { x: 100, y: 80 }, { x: 80, y: 100 }, { x: 100, y: 120 }]
       const plan = planFans(pts)
-      for (let i = 0; i < 3; i++) {
-        expect(rectsOverlap(box(plan.positions[i]), box(plan.positions[3]))).toBeFalse()
-      }
+      const c = { x: 100, y: 100 }
+      const sector = (p: { x: number, y: number }) => Math.abs(p.x - c.x) > Math.abs(p.y - c.y) ? (p.x > c.x ? 'E' : 'W') : (p.y < c.y ? 'N' : 'S')
+      expect(plan.positions.map(sector)).toEqual(['E', 'N', 'W', 'S'])
+    })
+
+    it('turns a fan away from a fixed obstacle such as a minutes badge, as far as it can', () => {
+      const badge = { left: 88, top: 70, right: 112, bottom: 88 }
+      const hits = (positions: { x: number, y: number }[]) => positions.filter(p => rectsOverlap(box(p), badge)).length
+      const pts = pile(100, 100, 5)
+      expect(hits(planFans(pts, { fixed: [badge] }).positions)).toBeLessThan(hits(planFans(pts).positions))
+    })
+
+    it('merges a lone marker the fan would land on', () => {
+      const pts = [...pile(100, 100, 3), { x: 100, y: 62 }] // lone marker where a 12 o'clock icon goes
+      const plan = planFans(pts)
+      noOverlaps(plan.positions)
     })
   })
 

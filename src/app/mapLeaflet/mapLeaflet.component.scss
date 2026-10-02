@@ -465,6 +465,25 @@ mat-slide-toggle {
     height: 100%;
   }
 
+  // 2026-10-01, John: E-152b - report markers (and their status glow, which is part of the same
+  // svg) print at 75%: a crowded sheet reads better with smaller icons and tighter fans. The
+  // 28 px icon box and its anchor are left alone, so the position is exact; only the drawing
+  // inside is scaled, about its own centre (the evidence flag, anchored at its tip, about that).
+  :host ::ng-deep .rt-ranger-marker svg {
+    transform       : scale(.75);
+    transform-origin: 50% 50%;
+  }
+
+  :host ::ng-deep .rt-evidence-marker svg {
+    transform       : scale(.75);
+    transform-origin: 3px 25px;
+  }
+
+  // The minutes badges shrink a little too: 0.7rem is 8.4 pt, 0.6rem is 7.2 pt.
+  :host ::ng-deep .leaflet-tooltip.rt-trail-elapsed {
+    font-size: 0.6rem;
+  }
+
   // The overview thumbnail and the on-screen-only zoom / layer-switcher buttons are
   // controls, not map content. Left alone: Leaflet's scale bar (bottom-left) and its
   // attribution (bottom-right), which a finished sheet needs.

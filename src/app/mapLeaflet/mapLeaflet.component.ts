@@ -1877,7 +1877,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.mapContainer.nativeElement.querySelectorAll('.leaflet-tooltip').forEach(keep)
     this.locationsLayer.eachLayer(l => keep((l as L.Marker).getElement?.()))
 
-    const plan = planFans(points, fixed)
+    // The printed icon is a scaled-down svg inside the 28 px icon box (see the scss), so measure
+    // that, now that the print styles are on: the grouping and spacing follow the printed size.
+    const sample = markers.map(m => m.getElement()?.querySelector('svg')?.getBoundingClientRect().width).find(w => !!w)
+    const plan = planFans(points, { icon: sample || undefined, fixed })
     const dots = new Set<string>()
     for (const group of plan.groups) {
       for (const i of group.members) {
@@ -1887,7 +1890,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         const at = this.lMap.containerPointToLatLng(L.point(plan.positions[i].x, plan.positions[i].y))
         this.fanned.set(marker, truth)
         marker.setLatLng(at)
-        this.fanLayer.addLayer(L.polyline([truth, at], { color: '#222', weight: 1, interactive: false }))
+        this.fanLayer.addLayer(L.polyline([truth, at], { color: '#222', weight: 1, interactive: false, className: 'rt-fan-leader' }))
         const key = `${Math.round(points[i].x)},${Math.round(points[i].y)}`
         if (!dots.has(key)) {
           dots.add(key)
@@ -1960,7 +1963,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         .map(el => el.getBoundingClientRect()).filter(r => r.width && r.height)
         .map(r => padRect(rel(r), pad))
       const hard = [
-        ...visible('.leaflet-marker-icon:not(.rt-range-ring-label)', 4),
+        ...visible('.leaflet-marker-icon:not(.rt-range-ring-label) > svg, .leaflet-marker-icon:not(.rt-range-ring-label):not(.rt-ranger-marker):not(.rt-evidence-marker)', 3),
         ...visible('.leaflet-tooltip', 3),
         ...visible('.furniture, .leaflet-control-scale, .leaflet-control-attribution', 2),
       ]

@@ -146,6 +146,13 @@ async function main() {
     await sleep(6000) // tiles for the re-measured map
     const ticks = await evaluate(`document.querySelectorAll('.map-edge-ticks__label').length`)
     console.log(`edge tick labels on the sheet: ${ticks}`)
+    // 2026-10-01, John: E-152b - how far the fanned-out icons sit from their true points (the
+    // length of the longest leader line, in CSS px).
+    const longest = await evaluate(`Math.round(Math.max(0, ...[...document.querySelectorAll('path.rt-fan-leader')].map(p => {
+      const n = (p.getAttribute('d') || '').match(/-?[0-9.]+/g)?.map(Number) || []
+      return n.length >= 4 ? Math.hypot(n[2] - n[0], n[3] - n[1]) : 0
+    })))`)
+    console.log(`longest fan leader: ${longest} px`)
 
     // A plain viewport screenshot (a clipped beyond-viewport capture hung under emulated print
     // media), cropped to page 1 below. Timed out rather than left to hang.
