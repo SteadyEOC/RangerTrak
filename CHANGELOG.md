@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.18-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.17-alpha...v0.99.18-alpha) (2026-10-02)
+
+
+### Features
+
+* **storage:** loggedAt on each radio log entry, groundwork for replay (E-07) ([32af47f](https://github.com/SteadyEOC/RangerTrak/commit/32af47f6e20450ff9e3556cdc53a2754adb9ec82))
+
+
+### Bug Fixes
+
+* **test:** 0.99.17 encrypted fixture was plaintext; fixture tool and e2e can no longer drift that way ([b05e16e](https://github.com/SteadyEOC/RangerTrak/commit/b05e16e6280552c9bfcd6e18fd4074188e34cd01))
+
 ### [0.99.17-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.16-alpha...v0.99.17-alpha) (2026-10-02)
 
 
