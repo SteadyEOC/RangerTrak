@@ -88,7 +88,9 @@ export function migrateRadioLog(raw: unknown): RadioLogType | null {
 const RADIO_LOG_DATE_FIELDS = ['date'] as const
 
 /** `RadioLogEntryType`'s Date-typed fields; `revisedAt`/`printedAt` are optional. */
-const RADIO_LOG_ENTRY_DATE_FIELDS = ['date', 'revisedAt', 'printedAt'] as const
+// 2026-10-01, John: exported so RadioLogService restores the same list (it had its own copies).
+// `loggedAt` (E-07 replay groundwork) joined it 2026-10-02.
+export const RADIO_LOG_ENTRY_DATE_FIELDS = ['date', 'revisedAt', 'printedAt', 'loggedAt'] as const
 
 /**
  * Restores the store's own `date` and every entry's timestamps after a JSON round-trip -

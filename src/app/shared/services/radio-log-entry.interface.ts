@@ -196,6 +196,13 @@ export type RadioLogEntryType = {
   // no-migration treatment as every other field added this way - a report with none simply
   // has never been edited there.
   revisedAt?: Date,
+  // 2026-10-02, John (E-07 replay groundwork): when this entry was typed in on its own device,
+  // stamped once by RadioLogService.addRadioLogEntry() and never edited (not a grid column).
+  // `date` above is when the traffic happened and may be set back by a scribe catching up, so
+  // the two together let a replay show late entries for what they are. A Report Packet entry
+  // keeps the phone's own `loggedAt`, by that phone's clock. Optional/additive, no schema bump:
+  // entries from before 0.99.18 have none.
+  loggedAt?: Date,
   // Set the first time Print OR Save PDF succeeds for this report (messages.component.ts's
   // printAsIcs213()/saveIcs213Pdf(), split from one combined button 2026-09-28), and never
   // overwritten by a later reprint/re-save - it answers "has this gone out at all," not

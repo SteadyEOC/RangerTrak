@@ -11,7 +11,7 @@ import {
 } from './'
 // ADR D-42: versioned storage seam for radio log entries. Direct import, not via the barrel,
 // to avoid a cycle - the barrel re-exports this service.
-import { migrateRadioLog } from './radio-log-migration'
+import { migrateRadioLog, RADIO_LOG_ENTRY_DATE_FIELDS } from './radio-log-migration'
 import { rehydrateDateFields } from './json-dates'
 // Direct path, not the barrel: a SERVICE used as a DI token through shared/services/index.ts
 // is unresolvable to the compiler ("no suitable injection token") - the same reason
@@ -269,8 +269,12 @@ export class RadioLogService {
     // make buildIcs309Log() throw. See json-dates.ts.
     let newReport: RadioLogEntryType = rehydrateDateFields(
       JSON.parse(formData) as RadioLogEntryType, //"[object Object]" is not valid JSON
-      ['date', 'revisedAt', 'printedAt'])
+      [...RADIO_LOG_ENTRY_DATE_FIELDS])
     newReport.id = this.radioLog.maxId++
+    // 2026-10-02, John (E-07 replay groundwork): when the entry was actually typed in, stamped
+    // here and never edited. `date` is when the traffic happened, which the scribe may set back;
+    // the gap between the two is what lets a replay flag an entry that was logged late.
+    newReport.loggedAt = new Date()
     this.radioLog.numReport++
     this.radioLog.logEntries.push(newReport)
 
@@ -347,7 +351,7 @@ export class RadioLogService {
         id: this.radioLog.maxId++,
         rangerUid: entry.rangerUid || resolvedUid,
         sourceUid,
-      }, ['date', 'revisedAt', 'printedAt']))
+      }, [...RADIO_LOG_ENTRY_DATE_FIELDS]))
       seen.add(sourceUid)
       added++
     }

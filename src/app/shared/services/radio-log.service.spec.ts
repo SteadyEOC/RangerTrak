@@ -102,6 +102,19 @@ describe('RadioLogService', () => {
       expect(r2.id).toBe(r1.id + 1);
     });
 
+    // 2026-10-02, John (E-07 replay groundwork): loggedAt is when it was typed, not the
+    // traffic time, and the form can never supply it.
+    it('stamps loggedAt with the time it was typed, separate from a back-dated date', () => {
+      const service = TestBed.inject(RadioLogService);
+      const backDated = new Date(Date.now() - 10 * 60 * 1000)
+      const before = Date.now()
+      const r = service.addRadioLogEntry(makeReport({ date: backDated, loggedAt: new Date(0) }));
+
+      expect(r.loggedAt instanceof Date).toBe(true);
+      expect(r.loggedAt!.getTime()).toBeGreaterThanOrEqual(before);
+      expect(r.date.getTime()).toBe(backDated.getTime());
+    });
+
     it('publishes the updated set to subscribers', () => {
       const service = TestBed.inject(RadioLogService);
       let latest!: RadioLogType;
