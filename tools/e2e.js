@@ -1485,6 +1485,41 @@ async function checkMissionDangerZoneButtonsFit() {
  * fighting over the same click if the guard in onStatusClusterClick() ever regresses.
  */
 /**
+ * 2026-10-01, John (Kevin Mitcham's report): the column-header hints on the Rangers and Radio Log
+ * grids showed with a see-through background, so long ones ran over the cells and borders.
+ * Hovers a real header with the mouse and checks the hint's background is opaque.
+ */
+async function checkGridHeaderTooltipsOpaque() {
+  console.log('\nGrid header hints have a solid background (Kevin, 2026-10-01)')
+  for (const route of ['/rangers', '/radio-log']) {
+    await goto(route)
+    const rect = JSON.parse(await evaluate(`(() => {
+      const cells = [...document.querySelectorAll('.ag-header-cell')].filter(c => c.offsetWidth > 40)
+      const c = cells[1] || cells[0]
+      if (!c) return 'null'
+      const r = c.getBoundingClientRect()
+      return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 })
+    })()`))
+    if (!rect) { check(`${route}: a grid header to hover`, false, true); continue }
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: rect.x - 5, y: rect.y })
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: rect.x, y: rect.y })
+    await new Promise(r => setTimeout(r, 2500))
+    const probe = await evaluate(`(() => {
+      // Rangers draws its own (customTooltip.ts, .custom-tooltip); Radio Log uses AG Grid's (.ag-tooltip)
+      const t = document.querySelector('.custom-tooltip') || document.querySelector('.ag-tooltip')
+      if (!t) return 'no tooltip'
+      const cs = getComputedStyle(t)
+      return [cs.backgroundColor, cs.getPropertyValue('--ag-tooltip-background-color'), t.parentElement?.className].join(' | ')
+    })()`)
+    console.log(`  probe ${route}: ${probe}`)
+    const bg = String(probe).split(' | ')[0]
+    const opaque = /^rgb\(/.test(bg) || /^rgba\(.*,\s*1\)$/.test(bg)
+    check(`${route}: the header hint has a solid background (got ${bg})`, opaque, true)
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 })
+  }
+}
+
+/**
  * 2026-10-01, John (E-168): the mission mode through the real UI, on a blank device: the demo
  * card shows; loading a demo from it marks the pill "demo"; choosing Exercise in the pill's
  * panel clears the demo (never relabels it) and records the mode. The finer rules (when a
@@ -3213,6 +3248,7 @@ async function main() {
       if (want('entry')) await checkUsageModes() // E-168; wipes storage, so before checkRosterLifecycle creates the E2E-AA1 ranger
       if (FULL) {
         if (want('roster') || want('entry')) await checkRosterLifecycle(fx) // entry's checks use its E2E-AA1 ranger
+        if (want('roster')) await checkGridHeaderTooltipsOpaque()
         if (want('roster')) await checkFieldNameAliases(fx)
         if (want('roster')) await checkSetupFileMerge(fx)
       } else {

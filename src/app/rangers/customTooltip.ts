@@ -12,9 +12,22 @@ export class CustomTooltip implements ITooltipComp {
     // asked to draw column HEADER tooltips, where there is no row (or photo) to show. Those get
     // a plain text box; only a real row cell gets the photo card below.
     if (params.location === 'header' || params.rowIndex == null) {
+      // 2026-10-01, John (Kevin Mitcham's report): the header box had no background, so long
+      // hints ran see-through over the cells and borders. Styled inline from the theme tokens:
+      // .custom-tooltip in rangers.component.scss never reaches this element, because component
+      // styles are scoped and AG Grid creates it outside Angular.
       eGui.classList.add('custom-tooltip')
-      eGui.style.padding = '8px 12px'
-      eGui.style.maxWidth = '320px'
+      Object.assign(eGui.style, {
+        padding: '8px 12px',
+        maxWidth: '320px',
+        background: 'var(--rt-surface)',
+        color: 'var(--rt-ink)',
+        border: '1px solid var(--rt-line)',
+        borderRadius: 'var(--rt-radius)',
+        boxShadow: '0 2px 8px rgb(0 0 0 / 25%)',
+        whiteSpace: 'normal',
+        lineHeight: '1.35',
+      })
       eGui.textContent = String(params.value ?? '')
       return
     }
