@@ -1542,20 +1542,36 @@ async function checkUsageModes() {
   await evaluate(`localStorage.clear()`)
   await idbClearAll()
   await goto('/')
-  check('blank device: the demo card shows', await evaluate(`!!document.querySelector('[data-testid="demo-card"]')`), true)
+  check('blank device: a demo picker is offered (in the welcome panel)', await evaluate(`!!document.querySelector('rangertrak-demo-picker')`), true)
   check('blank device: the pill has no mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'none')
 
-  await evaluate(`document.querySelector('[data-testid="demo-card"] rangertrak-demo-picker > button')?.click()`)
+  await evaluate(`document.querySelector('rangertrak-demo-picker > button')?.click()`)
   await new Promise(r => setTimeout(r, 4000)) // the picker loads the demo and reloads the page
   await goto('/')
   check('after loading a demo: the pill shows demo mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'demo')
   check('after loading a demo: the demo card offers another demo', await evaluate(`document.querySelector('[data-testid="demo-card"]')?.textContent.includes('Try another demo') ?? false`), true)
 
+  // 2026-10-02, John: switching demo to demo kept the old one (State fair stayed after loading
+  // Grand Canyon). Pick State fair in the card's own dropdown, load it, and check it took.
+  await evaluate(`document.querySelector('[data-testid="demo-card"] mat-select')?.click()`)
+  await sleep(600)
+  await evaluate(`[...document.querySelectorAll('mat-option')].find(o => /State fair/.test(o.textContent))?.click()`)
+  await sleep(600)
+  queueDialogs(true, true) // the replace confirm, then the "loaded" alert
+  await evaluate(`document.querySelector('[data-testid="demo-card"] rangertrak-demo-picker > button')?.click()`)
+  await sleep(5000)
+  await goto('/')
+  // Read what was stored, not the card's text: the card's dropdown shows the label just picked,
+  // which would pass whether or not the load worked.
+  check('switching demos: the stored demo is now the second one', await evaluate(`(() => { try { return JSON.parse(localStorage.getItem('rangertrak-demo-scenario')).scenario } catch { return localStorage.getItem('rangertrak-demo-scenario') } })()`), 'state-fair')
+  check('switching demos: the default location moved to the State fair (about 37.8 N)', await evaluate(`Math.round(JSON.parse(localStorage.getItem('appSettings') || '{}').defLat || 0)`), 38)
+  dialogQueue.length = 0
+
   await evaluate(`window.confirm = () => true; document.querySelector('.rt-mode-choice[data-mode="exercise"]')?.click()`)
   await new Promise(r => setTimeout(r, 4000)) // startRealMission() clears the demo and reloads
   await goto('/')
   check('choosing Exercise: the pill shows exercise mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'exercise')
-  check('choosing Exercise: the demo roster was cleared, not relabelled', await evaluate(`document.querySelector('[data-testid="demo-card"]')?.textContent.includes('Load Demo Data') ?? false`), true)
+  check('choosing Exercise: the demo was cleared, not relabelled (no demo banner)', await evaluate(`!document.querySelector('[data-testid="demo-card"]')`), true)
   await evaluate(`localStorage.clear()`)
   await idbClearAll()
 }

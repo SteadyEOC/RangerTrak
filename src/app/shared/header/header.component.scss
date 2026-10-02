@@ -95,6 +95,19 @@
     position     : absolute;
     top          : calc(100% + 8px);
     left         : 0;
+
+    // 2026-10-02, John: "there's a gap below the mission pill that loses the hoverdown". The
+    // 8 px gap above isn't part of the pill or the panel, so moving the mouse down to the panel
+    // dropped the hover and closed it. This invisible strip belongs to the panel and spans the
+    // gap, so the pointer never leaves the hover area on the way down.
+    &::before {
+      content : '';
+      position: absolute;
+      left    : 0;
+      right   : 0;
+      bottom  : 100%;
+      height  : 10px;
+    }
     // Matches the readiness dot own former tooltip - see that component history for why
     // (Leaflet internal panes and zoom control both compete for z-index near the map).
     z-index      : 1100;

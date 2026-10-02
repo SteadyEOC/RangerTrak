@@ -30,6 +30,16 @@
              2026-09-29, John: phones and tablets only (isTouchFirstDevice). A laptop has no
              real GPS and no phone share sheet, so it can't do a field phone's job; there the
              same choice lives under Mission > Advanced > Field phone instead. -->
+        <!-- 2026-10-02, John: on an empty device the demo offer lives here again, as one line, while
+             the welcome panel is up. Two stacked panels (welcome + demo card) read as "still in
+             demo mode" after Start a real mission. The separate card below is for when this panel
+             has been dismissed (Kevin couldn't find the demos then). -->
+        @if (usage.state() === 'empty') {
+        <li class="entry-welcome__demo-line">
+          <strong>Demo:</strong> or try the app first with made-up data.
+          <rangertrak-demo-picker buttonLabel="Load Demo Data"></rangertrak-demo-picker>
+        </li>
+        }
         @if (usage.state() === 'empty' && !fieldMode.enabled() && isTouchFirstDevice) {
         <li>
           <strong>Field phone:</strong> choose this if you are a ranger sending in reports from
@@ -52,7 +62,7 @@
        above was dismissed (the dismiss hides the welcome text, not the way to a demo). It
        replaces the demo item the welcome panel used to carry. In a live mission it is gone
        (UsageStateService). -->
-  @if (usage.state() === 'empty' || usage.state() === 'demo') {
+  @if (usage.state() === 'demo' || (usage.state() === 'empty' && welcomePanel.dismissed())) {
   <aside class="entry-welcome entry-demo-card" role="note" data-testid="demo-card">
     <div class="entry-welcome__text">
       @if (usage.state() === 'demo') {

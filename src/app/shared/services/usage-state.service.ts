@@ -128,6 +128,16 @@ export class UsageStateService {
    *  clear the demo and start a real mission instead. Anything else just records the choice. */
   async pickMode(mode: MissionModeType): Promise<void> {
     if (mode === this.mode()) return
+    // 2026-10-02, John: the Demo choice used to be disabled outside demo mode, and a disabled
+    // button shows no hover text, so there was no way to learn how to get back. Demo mode only
+    // comes from loading a demo (it replaces the mission), so say how instead of switching.
+    if (mode === 'demo') {
+      alert('To get back to demo mode, load a demo.\n\n'
+        + 'On the Mission page, open "Danger zone", pick a Demo scenario and press "Load sample '
+        + 'mission". That replaces everything on this device with made-up demo data, so back up '
+        + 'this mission first if you want to keep it.')
+      return
+    }
     if (this.mode() === 'demo') {
       if (!confirm('Start a real mission?\n\nThis clears the demo data (rangers, radio log entries and '
         + 'locations) and resets the mission settings to their defaults. Demo data is not '

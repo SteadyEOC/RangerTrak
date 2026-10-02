@@ -69,7 +69,6 @@
           @for (m of usage.modes; track m.id) {
           <button matButton="outlined" type="button" [attr.aria-pressed]="usage.mode() === m.id"
             [class.mission__mode-button--on]="usage.mode() === m.id"
-            [disabled]="m.id === 'demo' && usage.mode() !== 'demo'"
             [attr.title]="m.id === 'demo' && usage.mode() !== 'demo' ? 'Load a demo from Entry or Mission to use demo mode.' : m.blurb"
             (click)="usage.pickMode(m.id)">
             <mat-icon aria-hidden="true">{{ m.icon }}</mat-icon>

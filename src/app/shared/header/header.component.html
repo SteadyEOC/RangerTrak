@@ -61,7 +61,6 @@
           <button type="button" class="rt-mode-choice" [attr.data-mode]="m.id"
             [attr.aria-pressed]="usage.mode() === m.id"
             [class.rt-mode-choice--on]="usage.mode() === m.id"
-            [disabled]="m.id === 'demo' && usage.mode() !== 'demo'"
             [attr.title]="m.id === 'demo' && usage.mode() !== 'demo' ? 'Load a demo from Entry or Mission to use demo mode.' : m.blurb"
             (click)="onPickMode(m.id)">
             <mat-icon aria-hidden="true">{{ m.icon }}</mat-icon>{{ m.label }}

@@ -513,7 +513,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       + 'mission settings to their defaults. Anything you added on top of the demo goes too. '
       + 'Back up the mission first if you want to keep it.')) return
     await this.usage.startRealMission()
-    window.location.reload()
+    // 2026-10-02, John: reloading Entry put the empty-device demo offer straight back in front of
+    // him ("came back to the home page still showing the demo bar"). A real mission starts with
+    // setup, so go to the Mission page. A full load, not a router hop: every service re-reads the
+    // cleared data.
+    window.location.assign('/mission')
   }
 
   /**

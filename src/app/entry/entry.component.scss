@@ -792,3 +792,11 @@ mat-chip-option.enter__source-selected {
   content   : '';
   transform : rotate(45deg);
 }
+// 2026-10-02, John: the demo picker sits on its own line inside the welcome list (empty device).
+.entry-welcome__demo-line rangertrak-demo-picker {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: center;
+  gap        : 8px;
+  margin-top : 6px;
+}
