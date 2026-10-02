@@ -24,7 +24,7 @@ long as you like.
 | **Radio Log** | Every report so far, in a sortable, filterable table. Select rows here to focus the maps on just those reports. |
 | **Rangers** | Your roster — call signs, names, contact details, teams. |
 | **Map** | Leaflet by default, using standard online road maps — best detail, anywhere in the world, but needs Internet. The Leaflet layers box (top right of the map) also offers a satellite base map with optional roads and place names on top, marked hiking trails and terrain relief (all need Internet; their providers don't allow saving them for offline use), USGS aerial photos and USGS shaded relief (US only, and they can be saved for offline use, at roughly twice OpenTopoMap's size), plus a USNG / MGRS grid and range rings around the command post (both work with no Internet); **Zoom to offline tiles** shows the areas you have saved. On the Leaflet map each ranger's route trail runs thin and faint (older) to thick and bright (newest), and the newest leg slowly flows toward the latest position. An on-page switch tries the Alternative engine (MapLibre) instead: map data built into the app, works with no Internet at all — a low-detail world map everywhere, plus real street-level detail in each demo area while that demo is loaded, and wherever you load your own map file (see step 6 below). **Print map** produces a one-page landscape map sheet: a title line (mission, operational period, time printed), the map filling most of the page with a north arrow, scale bar, map credit and latitude/longitude marks around the edge, a legend of the markers, teams and places beside the map, and a "Prepared by" line. Every report prints as its own marker, so a PDF can be zoomed. The button takes a few seconds to load a more detailed map for paper: online it fetches it, offline it uses your saved area (which includes two closer zoom levels, so print at about the zoom you saved at); use it rather than the browser's own Print command. Every Print button opens the browser's own print dialog: pick your printer there once (it often starts on "Save as PDF") and the browser remembers it. |
-| **Mission** | Mission name, operating period, expected check-in interval, default location, status labels and colours, backup and restore. |
+| **Mission** | Mission name, operating period, expected check-in interval, default location, tactical call signs, status labels and colours, backup and restore. |
 | **Log** | A running record of what the app did, including warnings and crashes. Export it when reporting a problem. |
 
 ### Who it's for
@@ -168,6 +168,11 @@ new reports start from, so getting it right saves work all mission. There is no 
 the page saves your changes by itself about a second after you stop typing, and a small note at
 the top says **Saved**.
 
+If your net uses **tactical call signs** (names for positions and teams, such as "Gate 3" or
+"Vashon EOC"), list them in the Mission page's **Tactical call signs** card, and optionally pick
+who is operating each one. Change the operator at shift change; earlier entries keep the call
+sign they were logged with.
+
 **5. Check your statuses.**
 Still in **Mission**, review the radio log entry statuses and their colours. These drive the
 colour coding on the Radio Log table. Rename them to match your agency's terminology now,
@@ -243,6 +248,11 @@ the distinction.
 **Entering a report.** On the **Entry** page, pick the ranger (the **Ranger ID** field: type their ID, call sign or name), set the location, choose a
 status, add notes, and submit. Reports save to the device immediately.
 
+The same box also offers the mission's tactical calls. Pick one and the operator's call sign is
+filled in for you (left blank if they have none). The optional **To station** box
+records which station the message went to, with the same choices; leave it blank if it does not
+matter. It is separate from **ICS-213 addressed to**, further down.
+
 **Setting a location.** You can enter coordinates directly, or type an address and let
 RangerTrak look it up. The small "Current Location" map right on the Entry page is the
 fastest way — click anywhere on it and that position is set immediately, no typing or
@@ -300,7 +310,7 @@ new device - from the welcome panel on a phone or tablet, or **Mission** > **Adv
 either device, but is still reached from the AAR note button, see below). RangerTrak never sends a
 report over the network by itself. Every report saves on the phone straight away. **Send my
 reports** bundles them into one file and opens the phone's share sheet, and the ranger picks
-the route: email or a messaging app over cell data or WiFi, or AirDrop / Nearby Share to a
+the route: email or a messaging app over cell data or WiFi, or AirDrop / Quick Share to a
 station device nearby. At the command post, **Load Report Packet** on the Radio Log page
 merges it, skipping reports it already has. With no data path, read the report over the radio
 as always. Do the same for anything urgent, because the phone gets no receipt. Install the
