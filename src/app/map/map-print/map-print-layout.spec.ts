@@ -1,5 +1,5 @@
 import {
-  choosePanelSpot, fanPositions, groupClosePoints, rectsOverlap, segmentCrossesRect, PrintRect,
+  choosePanelSpot, fanPositions, groupClosePoints, planFans, rectsOverlap, segmentCrossesRect, PrintRect,
 } from './map-print-layout'
 
 describe('map print layout', () => {
@@ -64,6 +64,43 @@ describe('map print layout', () => {
     })
   })
 
+  describe('planFans', () => {
+    const box = (p: { x: number, y: number }): PrintRect => ({ left: p.x - 14, top: p.y - 14, right: p.x + 14, bottom: p.y + 14 })
+    const pile = (x: number, y: number, n: number) => Array.from({ length: n }, (_, i) => ({ x: x + i * 0.5, y }))
+
+    it('leaves lone markers where they are', () => {
+      const plan = planFans([{ x: 10, y: 10 }, { x: 200, y: 200 }])
+      expect(plan.groups).toEqual([])
+      expect(plan.positions).toEqual([{ x: 10, y: 10 }, { x: 200, y: 200 }])
+    })
+
+    it('keeps two adjacent fans off each other', () => {
+      const pts = [...pile(100, 100, 5), ...pile(100, 150, 5)] // true points 50 px apart: default fans collide
+      const plan = planFans(pts)
+      expect(plan.groups.length).toBe(2)
+      for (let a = 0; a < pts.length; a++) {
+        for (let b = a + 1; b < pts.length; b++) {
+          expect(rectsOverlap(box(plan.positions[a]), box(plan.positions[b])))
+            .withContext(`icons ${a} and ${b}`).toBeFalse()
+        }
+      }
+    })
+
+    it('keeps a fan off a fixed obstacle such as a minutes badge', () => {
+      const badge = { left: 88, top: 74, right: 112, bottom: 92 } // sits where the 12 o'clock icon would
+      const plan = planFans(pile(100, 100, 5), [badge])
+      plan.positions.forEach((p, i) => expect(rectsOverlap(box(p), badge)).withContext(`icon ${i}`).toBeFalse())
+    })
+
+    it('keeps a fan off a lone marker nearby', () => {
+      const pts = [...pile(100, 100, 3), { x: 100, y: 70 }] // lone marker at 12 o'clock, 30 px away
+      const plan = planFans(pts)
+      for (let i = 0; i < 3; i++) {
+        expect(rectsOverlap(box(plan.positions[i]), box(plan.positions[3]))).toBeFalse()
+      }
+    })
+  })
+
   describe('choosePanelSpot', () => {
     const base = {
       container: { width: 1000, height: 600 }, panel: { width: 200, height: 100 }, inset: 10,
@@ -95,6 +132,19 @@ describe('map print layout', () => {
       const got = choosePanelSpot({ ...base, hard })!
       expect(got.left).toBeGreaterThanOrEqual(330)
       expect(got.left + 200).toBeLessThanOrEqual(670)
+    })
+
+    it('finds clear room away from the edges when every edge spot is blocked', () => {
+      // A frame of obstacles round the whole map; the middle is free.
+      const hard = [
+        { left: 0, top: 0, right: 1000, bottom: 120 }, { left: 0, top: 480, right: 1000, bottom: 600 },
+        { left: 0, top: 0, right: 40, bottom: 600 }, { left: 960, top: 0, right: 1000, bottom: 600 },
+      ]
+      const got = choosePanelSpot({ ...base, hard })!
+      expect(got).not.toBeNull()
+      expect(rectsOverlap({ left: got.left, top: got.top, right: got.left + 200, bottom: got.top + 100 }, hard[0])).toBeFalse()
+      expect(got.top).toBeGreaterThanOrEqual(120)
+      expect(got.top + 100).toBeLessThanOrEqual(480)
     })
 
     it('sits above the bottom credits when told how tall they are', () => {

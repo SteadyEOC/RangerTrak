@@ -53,7 +53,7 @@ import { MapPrintFurnitureComponent } from '../map/map-print/map-print-furniture
 import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.component'
 import { printMapSheet } from '../map/map-print/map-print-sheet'
 import {
-  PrintPoint, PrintRect, choosePanelSpot, fanPositions, groupClosePoints, padRect,
+  PrintPoint, PrintRect, choosePanelSpot, planFans, padRect,
 } from '../map/map-print/map-print-layout'
 
 
@@ -1864,26 +1864,38 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.unfanPrintMarkers()
     const markers = this.printMarkers.getLayers() as L.Marker[]
     const points = markers.map(m => this.lMap.latLngToContainerPoint(m.getLatLng()))
-    for (const group of groupClosePoints(points)) {
-      if (group.length < 2) {
-        continue
+    // What stays put and must not be fanned onto: the minutes badges (they belong to the trails
+    // and keep their true spots) and the Location icons.
+    const origin = this.mapContainer.nativeElement.getBoundingClientRect()
+    const fixed: PrintRect[] = []
+    const keep = (el: Element | undefined | null) => {
+      const r = el?.getBoundingClientRect()
+      if (r && r.width && r.height) {
+        fixed.push(padRect({ left: r.left - origin.left, top: r.top - origin.top, right: r.right - origin.left, bottom: r.bottom - origin.top }, 1))
       }
-      const centre: PrintPoint = {
-        x: group.reduce((sum, i) => sum + points[i].x, 0) / group.length,
-        y: group.reduce((sum, i) => sum + points[i].y, 0) / group.length,
-      }
-      const truth = this.lMap.containerPointToLatLng(L.point(centre.x, centre.y))
-      const spots = fanPositions(centre, group.length)
-      group.forEach((markerIndex, k) => {
-        const marker = markers[markerIndex]
-        const at = this.lMap.containerPointToLatLng(L.point(spots[k].x, spots[k].y))
-        this.fanned.set(marker, marker.getLatLng())
+    }
+    this.mapContainer.nativeElement.querySelectorAll('.leaflet-tooltip').forEach(keep)
+    this.locationsLayer.eachLayer(l => keep((l as L.Marker).getElement?.()))
+
+    const plan = planFans(points, fixed)
+    const dots = new Set<string>()
+    for (const group of plan.groups) {
+      for (const i of group.members) {
+        // Each marker's leader runs to its OWN true spot; one dot per distinct spot.
+        const marker = markers[i]
+        const truth = marker.getLatLng()
+        const at = this.lMap.containerPointToLatLng(L.point(plan.positions[i].x, plan.positions[i].y))
+        this.fanned.set(marker, truth)
         marker.setLatLng(at)
         this.fanLayer.addLayer(L.polyline([truth, at], { color: '#222', weight: 1, interactive: false }))
-      })
-      this.fanLayer.addLayer(L.circleMarker(truth, {
-        radius: 3, color: '#fff', weight: 1, fillColor: '#222', fillOpacity: 1, interactive: false,
-      }))
+        const key = `${Math.round(points[i].x)},${Math.round(points[i].y)}`
+        if (!dots.has(key)) {
+          dots.add(key)
+          this.fanLayer.addLayer(L.circleMarker(truth, {
+            radius: 3, color: '#fff', weight: 1, fillColor: '#222', fillOpacity: 1, interactive: false,
+          }))
+        }
+      }
     }
     if (this.fanned.size) {
       this.fanLayer.addTo(this.lMap)
@@ -1933,6 +1945,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       frame.style.removeProperty('--rt-print-band')
       frame.style.removeProperty('--rt-print-legend-overflow')
       legend.classList.add('legend--compact')
+      legend.style.removeProperty('width')
       if (titleBand) {
         frame.style.setProperty('--rt-print-band', `${title.getBoundingClientRect().height}px`)
       }
@@ -1982,8 +1995,17 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       }
       if (!legendBeside) {
         const tr = title.getBoundingClientRect()
-        legendSpot = place(legend, hasTitle && !titleBand && titleSpot
-          ? [padRect({ left: titleSpot.left, top: titleSpot.top, right: titleSpot.left + tr.width, bottom: titleSpot.top + tr.height }, 3)] : [])
+        const withTitle = hasTitle && !titleBand && titleSpot
+          ? [padRect({ left: titleSpot.left, top: titleSpot.top, right: titleSpot.left + tr.width, bottom: titleSpot.top + tr.height }, 3)] : []
+        // A wider, shorter legend (three columns) gets a chance before the beside-the-map column.
+        legendSpot = null
+        for (const widthMm of [92, 134, 176]) {
+          legend.style.width = `${widthMm}mm`
+          legendSpot = place(legend, withTitle)
+          if (legendSpot) {
+            break
+          }
+        }
         if (!legendSpot) {
           legendBeside = true
           continue
@@ -2015,6 +2037,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     frame?.style.removeProperty('--rt-print-band')
     frame?.style.removeProperty('--rt-print-legend-overflow')
     this.printLegend?.nativeElement.classList.remove('legend--compact')
+    this.printLegend?.nativeElement.style.removeProperty('width')
     for (const el of [this.printTitle?.nativeElement, this.printLegend?.nativeElement]) {
       el?.style.removeProperty('left')
       el?.style.removeProperty('top')

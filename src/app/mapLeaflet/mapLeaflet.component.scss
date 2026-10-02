@@ -398,7 +398,7 @@ mat-slide-toggle {
   // which makes it half as tall as the beside-the-map column, so it fits a corner.
   .map-print-panel--legend {
     width    : 92mm;
-    max-width: 45%;
+    max-width: 75%; // layoutPrintSheet() tries 92 mm (two columns), then 134 (three), then 176 (four)
     margin   : 0;
   }
 
