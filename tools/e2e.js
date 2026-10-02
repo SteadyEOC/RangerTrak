@@ -1484,27 +1484,60 @@ async function checkMissionDangerZoneButtonsFit() {
  * rather than being hijacked by the pill's own click handler - the two are easy to get
  * fighting over the same click if the guard in onStatusClusterClick() ever regresses.
  */
+/**
+ * 2026-10-01, John (E-168): the mission mode through the real UI, on a blank device: the demo
+ * card shows; loading a demo from it marks the pill "demo"; choosing Exercise in the pill's
+ * panel clears the demo (never relabels it) and records the mode. The finer rules (when a
+ * mission counts as live) are table-tested in src/app/domain/usage-state.spec.ts.
+ */
+async function checkUsageModes() {
+  console.log('\nE-168: demo card, demo mode on the pill, Exercise clears the demo')
+  await goto('/')
+  await evaluate(`localStorage.clear()`)
+  await idbClearAll()
+  await goto('/')
+  check('blank device: the demo card shows', await evaluate(`!!document.querySelector('[data-testid="demo-card"]')`), true)
+  check('blank device: the pill has no mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'none')
+
+  await evaluate(`document.querySelector('[data-testid="demo-card"] rangertrak-demo-picker > button')?.click()`)
+  await new Promise(r => setTimeout(r, 4000)) // the picker loads the demo and reloads the page
+  await goto('/')
+  check('after loading a demo: the pill shows demo mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'demo')
+  check('after loading a demo: the demo card offers another demo', await evaluate(`document.querySelector('[data-testid="demo-card"]')?.textContent.includes('Try another demo') ?? false`), true)
+
+  await evaluate(`window.confirm = () => true; document.querySelector('.rt-mode-choice[data-mode="exercise"]')?.click()`)
+  await new Promise(r => setTimeout(r, 4000)) // startRealMission() clears the demo and reloads
+  await goto('/')
+  check('choosing Exercise: the pill shows exercise mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'exercise')
+  check('choosing Exercise: the demo roster was cleared, not relabelled', await evaluate(`document.querySelector('[data-testid="demo-card"]')?.textContent.includes('Load Demo Data') ?? false`), true)
+  await evaluate(`localStorage.clear()`)
+  await idbClearAll()
+}
+
 async function checkWelcomePanelDismissAndReopen() {
   console.log('\nE-83: Entry welcome panel dismisses, persists dismissed, and reopens via the header pill')
   await goto('/')
   await evaluate(`localStorage.removeItem('entryWelcomeDismissed')`)
   await goto('/')
 
-  check('the welcome panel is visible by default', await evaluate(`!!document.querySelector('.entry-welcome')`), true)
+  check('the welcome panel is visible by default', await evaluate(`!!document.querySelector('.entry-welcome:not(.entry-demo-card)')`), true)
 
   await evaluate(`document.querySelector('.entry-welcome__dismiss')?.click()`)
   await sleep(300)
-  check('dismissing it hides the panel', await evaluate(`!!document.querySelector('.entry-welcome')`), false)
+  check('dismissing it hides the panel', await evaluate(`!!document.querySelector('.entry-welcome:not(.entry-demo-card)')`), false)
   check('the dismissed flag persisted', await evaluate(`localStorage.getItem('entryWelcomeDismissed')`), 'true')
 
   await goto('/')
-  check('stays hidden after a fresh navigation to Entry', await evaluate(`!!document.querySelector('.entry-welcome')`), false)
+  check('stays hidden after a fresh navigation to Entry', await evaluate(`!!document.querySelector('.entry-welcome:not(.entry-demo-card)')`), false)
+  // 2026-10-01, John (E-168): a tester couldn't find the demos once the welcome panel was gone.
+  // On an empty device the demo card stays, whatever the welcome panel's dismissed flag says.
+  check('E-168: the demo card stays after the welcome panel is dismissed', await evaluate(`!!document.querySelector('[data-testid="demo-card"]')`), true)
 
   await navigateInApp('Rangers')
   await evaluate(`document.querySelector('.status-cluster')?.click()`)
   await sleep(1500)
   check('clicking the status-cluster pill navigates to Entry', await evaluate(`location.pathname`), '/')
-  check('...and reopens the welcome panel', await evaluate(`!!document.querySelector('.entry-welcome')`), true)
+  check('...and reopens the welcome panel', await evaluate(`!!document.querySelector('.entry-welcome:not(.entry-demo-card)')`), true)
   check('...and cleared the dismissed flag', await evaluate(`localStorage.getItem('entryWelcomeDismissed')`), null)
 
   // The readiness dot inside the pill must still reach its own destination, not be
@@ -3177,6 +3210,7 @@ async function main() {
       note('read-only: skipping roster, photo, submit and mission checks')
     } else {
       const fx = makeFixtures(path.join(tmp, 'fixtures'))
+      if (want('entry')) await checkUsageModes() // E-168; wipes storage, so before checkRosterLifecycle creates the E2E-AA1 ranger
       if (FULL) {
         if (want('roster') || want('entry')) await checkRosterLifecycle(fx) // entry's checks use its E2E-AA1 ranger
         if (want('roster')) await checkFieldNameAliases(fx)
