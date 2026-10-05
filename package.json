@@ -79,7 +79,7 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^22.2.0",
     "@angular/compiler-cli": "^22.2.0",
-    "@types/google.maps": "^3.66.4",
+    "@types/google.maps": "^3.66.5",
     "@types/jasmine": "^6.0.0",
     "@types/node": "^26.6.1",
     "@types/utm": "^1.1.4",
