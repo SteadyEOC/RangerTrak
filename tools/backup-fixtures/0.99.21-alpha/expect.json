@@ -1,0 +1,16 @@
+{
+  "version": "0.99.21-alpha",
+  "madeAt": "2026-10-05T22:49:29.581Z",
+  "appVersion": "0.99.21-alpha",
+  "passphrase": "fixture-passphrase-fake-data",
+  "mission": "FIXTURE-0.99.21-alpha",
+  "rangers": 12,
+  "sampleRangerCallsign": "!CmdPost",
+  "radioLogEntries": 38,
+  "sampleEntry": {
+    "callsign": "!CmdPost",
+    "status": "Incident Check-in"
+  },
+  "locations": 2,
+  "sampleLocationName": "Last Known Point - Bright Angel Trailhead"
+}
