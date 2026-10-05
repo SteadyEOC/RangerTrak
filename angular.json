@@ -45,6 +45,11 @@
                 "output": "./"
               },
               {
+                "glob": "sitemap.xml",
+                "input": "./src",
+                "output": "./"
+              },
+              {
                 "glob": "**/*",
                 "input": "./src/assets",
                 "output": "./assets",
