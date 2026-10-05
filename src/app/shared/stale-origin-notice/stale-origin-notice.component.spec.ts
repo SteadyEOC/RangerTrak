@@ -1,6 +1,8 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { StaleOriginNoticeComponent } from './stale-origin-notice.component';
+import { UsageStateService } from '../services';
 
 describe('StaleOriginNoticeComponent', () => {
   let component: StaleOriginNoticeComponent;
@@ -8,7 +10,10 @@ describe('StaleOriginNoticeComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ StaleOriginNoticeComponent ]
+      imports: [ StaleOriginNoticeComponent ],
+      // UsageStateService.quiet() reads the radio log in localStorage, which other specs leave
+      // behind; in a random order it turns 'live' and hides this component. Pin it not-quiet.
+      providers: [{ provide: UsageStateService, useValue: { quiet: signal(false) } }]
     })
     .compileComponents();
   });

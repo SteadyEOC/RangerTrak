@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { provideSwUpdateStub } from '../../../testing/sw-update.stub';
 import { InstallUpdateComponent } from './install-update.component';
-import { UpdateService } from '../services';
+import { UpdateService, UsageStateService } from '../services';
 
 describe('InstallUpdateComponent', () => {
   let component: InstallUpdateComponent;
@@ -17,7 +18,10 @@ describe('InstallUpdateComponent', () => {
       // disabled here (same reasoning as footer.component.spec.ts, which this
       // component's update-ready state used to live in). provideRouter is for the
       // compact pill's routerLink="/help" help zone (E-57(1)).
-      providers: [provideHttpClient(), provideSwUpdateStub(), provideRouter([])]
+      providers: [provideHttpClient(), provideSwUpdateStub(), provideRouter([]),
+        // UsageStateService.quiet() reads the radio log in localStorage, which other specs leave
+        // behind; in a random order it turns 'live' and hides the pill. Pin it not-quiet.
+        { provide: UsageStateService, useValue: { quiet: signal(false) } }]
     })
       .compileComponents();
   });
