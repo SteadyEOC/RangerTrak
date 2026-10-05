@@ -160,8 +160,10 @@
 }
 
 .rt-datetime__step {
+  // E-171 (2026-10-05): Lighthouse flagged these as too small - 18px tall, stacked flush. 24px is
+  // WCAG 2.5.8's minimum target; still stacked, so the row gets no wider at 360px.
   min-width    : 1.5rem;
-  min-height   : 1.125rem;
+  min-height   : 1.5rem;
   padding      : 0;
   line-height  : 1;
   font-size    : 0.65rem;
