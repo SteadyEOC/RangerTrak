@@ -81,6 +81,8 @@
   </div>
   <div class="map-print-footer">
     <span>Prepared by: <span class="map-print-footer__line">{{ preparedBy() }}</span></span>
-    <span>Date / time: <span class="map-print-footer__line map-print-footer__line--short"></span></span>
+    <!-- 2026-10-05, John: E-172 - never blank: the print time, in the title block's PRINTED format.
+         Still ruled, so a hand-corrected time can be written over it. -->
+    <span>Date / time: <span class="map-print-footer__line map-print-footer__line--short">{{ printedAt() | date:'MMM d, y, HH:mm:ss' }}</span></span>
   </div>
 </rangertrak-page>

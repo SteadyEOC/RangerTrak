@@ -1,4 +1,5 @@
 import { showFirstPrintTip } from '../../shared/export/print-tip'
+import { armPrintTitle, PrintTitleMission } from '../../shared/export/print-title'
 
 /**
  * 2026-09-30, John: E-152 part 1 - what "Print map" does, shared by both map engines.
@@ -30,13 +31,16 @@ const PAGE_CSS = `
   }
 `
 
-export function printMapSheet(): void {
+export function printMapSheet(mission?: PrintTitleMission): void {
   showFirstPrintTip() // 2026-09-30, John: once per device, see print-tip.ts
   const style = document.createElement('style')
   style.textContent = PAGE_CSS
   document.head.appendChild(style)
   document.body.classList.add('rt-print-map')
 
+  // 2026-10-05, John: E-172 - the print header and the saved PDF's file name carry the mission
+  // and the time (print-title.ts).
+  const untitle = armPrintTitle('Map', mission)
   const done = () => {
     document.body.classList.remove('rt-print-map')
     style.remove()
@@ -44,4 +48,5 @@ export function printMapSheet(): void {
   window.addEventListener('afterprint', done, { once: true })
   window.print()
   done()
+  untitle()
 }

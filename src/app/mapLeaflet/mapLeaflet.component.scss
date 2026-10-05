@@ -349,11 +349,16 @@ mat-slide-toggle {
     display: block;
   }
 
+  // 2026-10-05, John: E-172 - "the map uses only the top 45% of the sheet". The height was a fixed
+  // 178 mm (sized for the shorter A4 landscape page); on Letter, or in portrait, the rest of the
+  // page sat empty. In print layout 100vh IS the page's printable height, whichever size and
+  // orientation the page is, so the frame takes all of it less --rt-print-reserve: the "Prepared
+  // by" line under the map, plus a little slack so a few px of rounding can never push that line
+  // (and a blank second sheet) onto the next page. print-map-sheet.js measures the result.
   .mapLeaflet-frame {
+    --rt-print-reserve: 11mm;
     position         : relative;
-    // 178 mm: the old 170 mm map plus the ~10 mm title band, less a little so the "Prepared
-    // by" line still lands on page 1 of A4 landscape (186 mm printable, the shorter of A4/Letter).
-    height           : 178mm;
+    height           : calc(100vh - var(--rt-print-reserve));
     break-inside     : avoid;
     box-sizing       : border-box;
   }
@@ -362,7 +367,12 @@ mat-slide-toggle {
   // layoutPrintSheet() measures the band into --rt-print-band; the map gives up that height.
   .mapLeaflet-frame.rt-print-title-band {
     margin-top: var(--rt-print-band, 10mm);
-    height    : calc(178mm - var(--rt-print-band, 10mm));
+    height    : calc(100vh - var(--rt-print-reserve) - var(--rt-print-band, 10mm));
+  }
+
+  // Paper is white (E-172): a Leaflet container's own grey shows wherever no tile was drawn.
+  #mapLeaflet-main.leaflet-container {
+    background: #fff;
   }
 
   // Fallback for the legend: no clear spot on the map, so it prints whole at the top of page 2,

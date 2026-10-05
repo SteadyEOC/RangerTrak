@@ -1075,7 +1075,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   onBtnPrintMap(): void {
     // 2026-09-30, John: E-152 - the body class, and now a landscape page, live in the shared
     // helper so both engines print the same sheet.
-    printMapSheet()
+    printMapSheet(this.missionService.settings)
   }
 
   ngOnDestroy(): void {

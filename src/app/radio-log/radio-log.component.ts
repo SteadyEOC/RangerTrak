@@ -32,6 +32,7 @@ import {
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
 import { recordStore } from '../shared/storage/record-store'
 import { showFirstPrintTip } from '../shared/export/print-tip'
+import { armPrintTitle } from '../shared/export/print-title'
 
 @Pipe({ name: 'myUnusedPipe' })
 export class myUnusedPipe implements PipeTransform {
@@ -907,7 +908,9 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       showFirstPrintTip() // 2026-09-30, John: once per device, see print-tip.ts
       document.body.classList.add('rt-print-309')
       window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-309'), { once: true })
+      const untitle = armPrintTitle('ICS-309', this.settings) // E-172, see print-title.ts
       window.print()
+      untitle()
       document.body.classList.remove('rt-print-309')
       // First print of THIS batch only marks the log, same "first print only" precedent
       // messages.component.ts's printAsIcs213() already established for printedAt - a

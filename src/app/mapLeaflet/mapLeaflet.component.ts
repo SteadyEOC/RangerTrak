@@ -1697,7 +1697,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // 2026-09-30, John: E-152 - the body class, and now a landscape page, live in the shared
     // helper so both engines print the same sheet.
     const started = Date.now()
-    printMapSheet()
+    printMapSheet(this.settings)
     // window.print() blocks until the dialog closes in desktop browsers, so the map can be put
     // back straight away. Where it returns at once, wait for afterprint instead, and as a last
     // resort the next tap or click (a browser that never fires afterprint must not leave the

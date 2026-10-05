@@ -3076,6 +3076,35 @@ async function checkRangeRingsAndCoordReadout() {
 }
 
 /**
+ * 2026-10-05, John: E-172 item 6 - every printout carries the mission and print time in its
+ * document title (the browser's print header and the default "Save as PDF" name), restored after.
+ * window.print() is replaced for this check by a stand-in that fires the browser's own
+ * beforeprint/afterprint events around a read of document.title - no dialog in headless Chrome,
+ * but the real wiring (print-title.ts, from the Print map button) is what answers.
+ */
+async function checkPrintDocumentTitle() {
+  console.log('\nE-172: a printout is titled with the mission and time, and the title comes back')
+  await goto('/')
+  await navigateInApp('Map', 3500)
+  const before = await evaluate(`document.title`)
+  await evaluate(`(() => {
+    window.__printTitle = null;
+    window.print = () => {
+      window.dispatchEvent(new Event('beforeprint'));
+      window.__printTitle = document.title;
+      window.dispatchEvent(new Event('afterprint'));
+    };
+    document.querySelector('[data-testid="printMap"]')?.click();
+  })()`)
+  const during = await pollUntil(() => evaluate(`window.__printTitle`), v => !!v, 70)
+  check('the document title during the print is "<mission> - Map - YYYY-MM-DD HHmm"', /^.+ - Map - \d{4}-\d{2}-\d{2} \d{4}$/.test(during || ''), true)
+  check('...and has no : or / (it becomes a file name)', /[:\/]/.test(during || ''), false)
+  check('the title is restored after the print', await evaluate(`document.title`), before)
+  note(`print title: ${during}`)
+  await evaluate(`delete window.__printTitle`)
+}
+
+/**
  * E-122 Phase 2b: opt-in encryption at rest, end to end through the real UI dialogs (see
  * queueDialogs()'s own comment for why the fixed auto-accept handler alone cannot drive this).
  * Covers the maintainer's four decisions together: a fresh backup gates "Enable", the roster
@@ -3311,6 +3340,7 @@ async function main() {
         note('fast run: skipping checkCallsignIsSaved (pass --full to include)')
       }
       if (want('entry')) await checkReportsSurviveNavigation()
+      if (want('map')) await checkPrintDocumentTitle()
       if (FULL) {
         if (want('map')) await checkTeamTrailsRender()
         if (want('map')) await checkRangerMarkersAreDistinct()

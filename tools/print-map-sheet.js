@@ -5,7 +5,7 @@
  * dialog). The blog uses it as a hero image; it is also a quick way to eyeball the sheet.
  *
  *   node tools/serve-dist.js                      (in another terminal; serves dist on :8080)
- *   node tools/print-map-sheet.js [outDir] [--base=http://localhost:8080] [--name=...] [--demo=grand-canyon|vashon|state-fair]
+ *   node tools/print-map-sheet.js [outDir] [--base=http://localhost:8080] [--name=...] [--demo=grand-canyon|vashon|state-fair] [--orientation=landscape|portrait]
  *
  * Loads a sample mission (Grand Canyon unless --demo says otherwise), opens the Leaflet map, switches on the
  * USNG / MGRS grid, sets the readout to DDM (so the edge ticks print in degrees and decimal
@@ -33,8 +33,12 @@ const DEMO = opt('demo', 'grand-canyon')
 const DEMO_LABEL = { 'grand-canyon': 'Grand Canyon', 'vashon': 'Vashon Island', 'state-fair': 'State fair' }[DEMO]
 if (!DEMO_LABEL) throw new Error(`--demo must be grand-canyon, vashon or state-fair (got ${DEMO})`)
 const PORT = 9445
-const PAGE_W = 980   // CSS px: printable width of landscape Letter at 96 px/in
-const PAGE_H = 725   // CSS px: printable height (215.9 mm less 10 mm top and 14 mm bottom)
+// 2026-10-05, John: E-172 - --orientation=portrait prints the same sheet on a portrait Letter page.
+const PORTRAIT = opt('orientation', 'landscape') === 'portrait'
+const PAGE_W = PORTRAIT ? 741 : 980   // CSS px: printable width of Letter at 96 px/in (216 or 279.4 mm less 2 x 10 mm)
+const PAGE_H = PORTRAIT ? 965 : 725   // CSS px: printable height (279.4 or 215.9 mm less 10 mm top and 14 mm bottom)
+const ORIENT = PORTRAIT ? 'portrait' : 'landscape'
+const SUFFIX = PORTRAIT ? '-portrait' : ''
 // Device pixels per CSS px. 2 = 192 dpi: at 300/96 (300 dpi) headless Chrome's screenshot hung
 // every time (2026-09-30), at any viewport height; 2 is the largest tried that works.
 const SCALE = Number(opt('scale', 2))
@@ -115,14 +119,13 @@ async function main() {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(NAME)});
       input.dispatchEvent(new Event('input', { bubbles: true }));
       const style = document.createElement('style');
-      style.textContent = '@page { size: letter landscape; margin: 10mm 10mm 14mm 10mm; '
+      style.textContent = '@page { size: letter ${ORIENT}; margin: 10mm 10mm 14mm 10mm; '
         + '@bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9pt sans-serif; color: #000; } }';
       document.head.appendChild(style);
-      // Paper is white: the PNG is a screen capture, which would otherwise show the app's
-      // page background and scrollbar (a real print drops backgrounds by default).
+      // Only the scrollbar is hidden here: the PNG is a screen capture. The page background is
+      // NOT forced white, so the app's own print CSS (styles.scss, E-172) is what shows.
       const paper = document.createElement('style');
-      paper.textContent = '@media print { html, body, body * { scrollbar-width: none !important; } '
-        + 'html, body, .mat-drawer-container, .mat-drawer-content, .mat-sidenav-content, main { background: #fff !important; } }';
+      paper.textContent = '@media print { html, body, body * { scrollbar-width: none !important; } }';
       document.head.appendChild(paper);
       document.body.classList.add('rt-print-map');
     })()`)
@@ -137,7 +140,7 @@ async function main() {
     }
     await evaluate(`(() => {
       const style = document.createElement('style');
-      style.textContent = '@page { size: letter landscape; margin: 10mm 10mm 14mm 10mm; '
+      style.textContent = '@page { size: letter ${ORIENT}; margin: 10mm 10mm 14mm 10mm; '
         + '@bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9pt sans-serif; color: #000; } }';
       document.head.appendChild(style);
       document.body.classList.add('rt-print-map');
@@ -146,6 +149,18 @@ async function main() {
     await sleep(6000) // tiles for the re-measured map
     const ticks = await evaluate(`document.querySelectorAll('.map-edge-ticks__label').length`)
     console.log(`edge tick labels on the sheet: ${ticks}`)
+    // 2026-10-05, John: E-172 - does page 1 end where it should? The map frame's height and where
+    // the sign-off line ends, against the page's printable height (innerHeight in print media).
+    // overflow > 0 would be a second sheet.
+    console.log(await evaluate(`(() => {
+      const f = document.querySelector('.mapLeaflet-frame')?.getBoundingClientRect();
+      const foot = document.querySelector('.map-print-footer')?.getBoundingClientRect();
+      const page2 = document.querySelector('.map-print-panel--page2');
+      const end = foot ? Math.round(foot.bottom + scrollY) : 0;
+      return 'page ' + innerWidth + 'x' + innerHeight + ' px; map frame ' + Math.round(f?.width) + 'x' + Math.round(f?.height)
+        + ' px (' + Math.round(100 * f?.height / innerHeight) + '% of page height); sign-off line ends at ' + end
+        + ' px (overflow ' + (end - innerHeight) + ' px)' + (page2 ? '; legend on page 2' : '')
+    })()`))
     // 2026-10-01, John: E-152b - how far the fanned-out icons sit from their true points (the
     // length of the longest leader line, in CSS px).
     const longest = await evaluate(`Math.round(Math.max(0, ...[...document.querySelectorAll('path.rt-fan-leader')].map(p => {
@@ -160,7 +175,7 @@ async function main() {
       send('Page.captureScreenshot', { format: 'png' }),
       sleep(90000).then(() => { throw new Error('screenshot timed out') }),
     ])
-    const pngPath = path.join(outDir, `printed-map-sheet-${DEMO}.png`)
+    const pngPath = path.join(outDir, `printed-map-sheet-${DEMO}${SUFFIX}.png`)
     fs.writeFileSync(pngPath, Buffer.from(png.data, 'base64'))
     // Crop to page 1, then add the page margins (10 mm sides/top, 14 mm bottom) and
     // the dpi tag, if ImageMagick is installed; the uncropped capture otherwise.
@@ -183,9 +198,9 @@ async function main() {
           send('Page.captureScreenshot', { format: 'png' }),
           sleep(60000).then(() => { throw new Error('page 2 screenshot timed out') }),
         ])
-        const p2 = path.join(outDir, `printed-map-sheet-${DEMO}-page2.png`)
+        const p2 = path.join(outDir, `printed-map-sheet-${DEMO}${SUFFIX}-page2.png`)
         fs.writeFileSync(p2, Buffer.from(png2.data, 'base64'))
-        execFileSync('magick', [p2, '-crop', `${Math.round(PAGE_W * SCALE)}x${Math.round(PAGE_H * SCALE)}+0+${Math.round(PAGE_H * SCALE * 0.8)}`, '+repage', p2])
+        execFileSync('magick', [p2, '-crop', `${Math.round(PAGE_W * SCALE)}x${Math.round(PAGE_H * SCALE)}+0+${Math.round(PAGE_H * SCALE * 0.95)}`, '+repage', p2])
         console.log(`wrote ${p2} (legend strip below page 1)`)
         await send('Emulation.setDeviceMetricsOverride', { width: PAGE_W, height: PAGE_H, deviceScaleFactor: SCALE, mobile: false })
         await sleep(1500)
@@ -193,8 +208,11 @@ async function main() {
     }
 
     // The PDF last: a screenshot taken after printToPDF hung in headless Chrome.
-    const pdf = await send('Page.printToPDF', { preferCSSPageSize: true, printBackground: true })
-    const pdfPath = path.join(outDir, `printed-map-sheet-${DEMO}.pdf`)
+    const pdf = await Promise.race([
+      send('Page.printToPDF', { preferCSSPageSize: true, printBackground: true }),
+      sleep(60000).then(() => { throw new Error('printToPDF timed out') }),
+    ])
+    const pdfPath = path.join(outDir, `printed-map-sheet-${DEMO}${SUFFIX}.pdf`)
     fs.writeFileSync(pdfPath, Buffer.from(pdf.data, 'base64'))
     console.log(`wrote ${pdfPath}\nwrote ${pngPath}`)
     try {

@@ -20,6 +20,7 @@
 import { PDFDocument } from 'pdf-lib'
 
 import { showFirstPrintTip } from './print-tip'
+import { armPrintTitle, printTitle, PrintTitleMission } from './print-title'
 
 export type Ics213PrintOutcome = 'printed' | 'downloaded'
 
@@ -40,8 +41,15 @@ export async function repeatPdfPages(pdfBytes: Uint8Array, copies: number): Prom
   return out.save()
 }
 
-export async function printIcs213(pdfBytes: Uint8Array, filename: string, copies = 1): Promise<Ics213PrintOutcome> {
+export async function printIcs213(pdfBytes: Uint8Array, filename: string, copies = 1, mission?: PrintTitleMission): Promise<Ics213PrintOutcome> {
   pdfBytes = await repeatPdfPages(pdfBytes, copies)
+  // 2026-10-05, John: E-172 - a browser's PDF viewer names a "Save as PDF" and titles its print
+  // header from the PDF's own Title, not from this page, so the title goes into the file too
+  // (print-title.ts). The page's own title is armed as well, in tryPrintViaIframe(). No mission
+  // passed reads as "RangerTrak - ICS-213 - <time>".
+  const doc = await PDFDocument.load(pdfBytes)
+  doc.setTitle(printTitle('ICS-213', mission))
+  pdfBytes = await doc.save()
   // Uint8Array's `.buffer` types as ArrayBufferLike (stricter BlobPart wants ArrayBuffer) -
   // same type-only mismatch messages.component.ts's own Blob construction already notes;
   // pdf-lib's save() is always backed by a plain ArrayBuffer at runtime.
@@ -51,7 +59,7 @@ export async function printIcs213(pdfBytes: Uint8Array, filename: string, copies
   // 2026-09-30, John: once per device, before the first print dialog - see print-tip.ts.
   showFirstPrintTip()
 
-  if (await tryPrintViaIframe(url)) {
+  if (await tryPrintViaIframe(url, mission)) {
     return 'printed'
   }
 
@@ -95,7 +103,7 @@ function explainDownloadFallbackOnce(): void {
  * back to a download, not to propagate an error out of what is meant to be a convenience
  * on top of an already-successful report submission.
  */
-function tryPrintViaIframe(url: string): Promise<boolean> {
+function tryPrintViaIframe(url: string, mission?: PrintTitleMission): Promise<boolean> {
   return new Promise((resolve) => {
     const iframe = document.createElement('iframe')
     // Off-screen, not display:none - some browsers refuse to run print() from a display:none
@@ -108,6 +116,8 @@ function tryPrintViaIframe(url: string): Promise<boolean> {
         if (!iframe.contentWindow) {
           throw new Error('iframe.contentWindow is null')
         }
+        // The print events fire in the iframe's window or this one, depending on the browser.
+        const untitles = [armPrintTitle('ICS-213', mission), armPrintTitle('ICS-213', mission, iframe.contentWindow)]
         iframe.contentWindow.print()
         // Revoking too early kills the print preview mid-render - messages.component.ts's
         // own revokeObjectURL() runs immediately after a.click(), which is fine for a plain
@@ -115,6 +125,7 @@ function tryPrintViaIframe(url: string): Promise<boolean> {
         // scribe to dismiss it, so a generous timeout stands in for "probably done with it"
         // rather than tearing the iframe/URL down synchronously right after the call returns.
         setTimeout(() => {
+          untitles.forEach(untitle => untitle())
           iframe.remove()
           URL.revokeObjectURL(url)
         }, 60_000)

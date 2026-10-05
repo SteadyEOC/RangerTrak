@@ -9,6 +9,7 @@ import {
   AAR_NOTE_ABOUT_LABELS, AarNoteAbout, AarNoteService, AarNoteType, LogService, MissionService
 } from '../shared/services'
 import { showFirstPrintTip } from '../shared/export/print-tip'
+import { armPrintTitle } from '../shared/export/print-title'
 
 type Filter = 'all' | AarNoteAbout
 
@@ -99,7 +100,9 @@ export class AfterActionComponent {
     showFirstPrintTip() // 2026-09-30, John: once per device, see print-tip.ts
     document.body.classList.add('rt-print-aar')
     window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-aar'), { once: true })
+    const untitle = armPrintTitle('After Action', this.mission.settings) // E-172, see print-title.ts
     window.print()
+    untitle()
     document.body.classList.remove('rt-print-aar')
   }
 

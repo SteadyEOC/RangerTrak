@@ -234,6 +234,29 @@ rangertrak-footer {
   }
 }
 
+// 2026-10-05, John: E-172 - "that grey block is a background colour being printed". The app's
+// page background (a skin token, grey in the dark and tinted schemes) must not reach paper:
+// every print of ours is ink on white, and a coloured page wastes toner and looks like an error.
+@media print {
+  body.rt-print-309,
+  body.rt-print-aar,
+  body.rt-print-map {
+    &,
+    .mat-drawer-container,
+    .mat-drawer-content,
+    .mat-sidenav-content,
+    main {
+      background: #fff !important;
+    }
+  }
+
+  html:has(body.rt-print-309),
+  html:has(body.rt-print-aar),
+  html:has(body.rt-print-map) {
+    background: #fff !important;
+  }
+}
+
 // Sprint A gate check (D-26): with a real token layer in place, changing the active skin
 // must visibly change the whole app. Originally verified by editing one value in
 // styles/_active-skin.scss (a compile-time choice, since removed); now the same fact holds

@@ -239,7 +239,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.printing.set(true)
     try {
       const filled = await this.buildIcs213Pdf(report)
-      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies())
+      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies(), this.settings)
       this.markPrintedOnce(report)
       this.log.info(`ICS-213 for report ${report.id}: ${outcome}.`, this.id)
     } catch (e) {
