@@ -63,13 +63,13 @@
       </mat-card-header>
       <mat-card-content>
         <p class="mission__mode-now">
-          Now: <strong>{{ usage.modeInfo()?.label ?? 'not chosen' }}</strong>
+          Now: <strong>{{ usage.modeInfo()?.label }}</strong>
         </p>
         <div class="mission__mode-buttons" role="group" aria-label="Mission mode">
           @for (m of usage.modes; track m.id) {
-          <button matButton="outlined" type="button" [attr.aria-pressed]="usage.mode() === m.id"
+          <button matButton="outlined" type="button" [attr.data-mode]="m.id" [attr.aria-pressed]="usage.mode() === m.id"
             [class.mission__mode-button--on]="usage.mode() === m.id"
-            [attr.title]="m.id === 'demo' && usage.mode() !== 'demo' ? 'Load a demo from Entry or Mission to use demo mode.' : m.blurb"
+            [attr.title]="m.id === 'demo' && usage.mode() !== 'demo' ? 'Go to the demo picker (Mission, Danger zone).' : m.blurb"
             (click)="usage.pickMode(m.id)">
             <mat-icon aria-hidden="true">{{ m.icon }}</mat-icon>
             {{ m.label }}

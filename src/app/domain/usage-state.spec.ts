@@ -52,9 +52,9 @@ describe('deriveUsageState (E-168)', () => {
     it(`${c.name} -> ${c.want}`, () => expect(deriveUsageState(c.input, now)).toBe(c.want))
   }
 
-  it('effectiveMode: the choice wins, else demo when a demo is loaded, else not chosen', () => {
+  it('effectiveMode: the choice wins, else demo when a demo is loaded, else incident', () => {
     expect(effectiveMode({ explicitMode: 'exercise', demo })).toBe('exercise')
     expect(effectiveMode({ demo })).toBe('demo')
-    expect(effectiveMode({ demo: null })).toBeUndefined()
+    expect(effectiveMode({ demo: null })).toBe('incident')
   })
 })

@@ -202,7 +202,6 @@
     border-top : 1px solid var(--rt-line);
   }
   .rt-mission-info-panel__mode-line { font-weight: 700; margin-bottom: 0.3em; }
-  .rt-mission-info-panel__mode-ask  { color: var(--rt-ink-2); margin-bottom: 0.3em; }
   .rt-mission-info-panel__mode-buttons {
     display: flex;
     gap    : 0.3em;
@@ -226,11 +225,17 @@
     &[data-mode='incident'] mat-icon { color: var(--rt-mode-incident); }
     &:disabled { opacity: 0.5; cursor: not-allowed; }
   }
+  // 2026-10-05, John: the chosen mode's outline was too weak to see. Filled in the mode colour.
   .rt-mode-choice--on {
-    font-weight: 700;
-    border-color: var(--rt-ink);
-    box-shadow  : inset 0 0 0 1px var(--rt-ink);
+    font-weight     : 700;
+    border-color    : var(--rt-mode-colour);
+    background-color: var(--rt-mode-colour);
+    color           : var(--rt-surface);
+    &[data-mode] mat-icon { color: inherit; }
   }
+  .rt-mode-choice[data-mode='demo']     { --rt-mode-colour: var(--rt-mode-demo); }
+  .rt-mode-choice[data-mode='exercise'] { --rt-mode-colour: var(--rt-mode-exercise); }
+  .rt-mode-choice[data-mode='incident'] { --rt-mode-colour: var(--rt-mode-incident); }
   .rt-mission-info-panel__mode-blurb { margin-top: 0.3em; color: var(--rt-ink-2); }
   .rt-mission-info-panel__mode-more  { display: inline-block; margin-top: 0.2em; }
 

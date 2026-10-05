@@ -1,4 +1,5 @@
-import { Injectable, computed, effect, signal } from '@angular/core'
+import { Injectable, computed, effect, inject, signal } from '@angular/core'
+import { Router } from '@angular/router'
 
 import { UsageInputs, UsageState, deriveUsageState, effectiveMode } from '../../domain/usage-state'
 import { setQuiet } from '../quiet-flag'
@@ -69,11 +70,13 @@ export class UsageStateService {
   /** empty / demo / setup / live. */
   readonly state = computed<UsageState>(() => deriveUsageState(this.inputs(), this.now()))
   /** The mode in effect: the operator's choice, else demo when a demo is loaded, else undefined. */
-  readonly mode = computed<MissionModeType | undefined>(() => effectiveMode(this.inputs()))
+  readonly mode = computed<MissionModeType>(() => effectiveMode(this.inputs()))
   /** The mode in effect, with its labels; null while none is chosen and no demo is loaded. */
   readonly modeInfo = computed(() => this.modes.find(m => m.id === this.mode()) ?? null)
   /** True when the app should stay out of the way (first-run tips, install prompt, ...). */
   readonly quiet = computed(() => this.state() === 'live')
+
+  private router = inject(Router)
 
   constructor(
     private missionService: MissionService,
@@ -128,14 +131,12 @@ export class UsageStateService {
    *  clear the demo and start a real mission instead. Anything else just records the choice. */
   async pickMode(mode: MissionModeType): Promise<void> {
     if (mode === this.mode()) return
-    // 2026-10-02, John: the Demo choice used to be disabled outside demo mode, and a disabled
-    // button shows no hover text, so there was no way to learn how to get back. Demo mode only
-    // comes from loading a demo (it replaces the mission), so say how instead of switching.
+    // Demo mode only comes from loading a demo (it replaces the mission). 2026-10-02 this
+    // explained the way in an alert; 2026-10-05, John: take the scribe there instead - Mission,
+    // Danger zone opened, focus on the demo picker (mission-advanced-options, #demo). The
+    // picker's own confirm is the guard; nothing is replaced by this click.
     if (mode === 'demo') {
-      alert('To get back to demo mode, load a demo.\n\n'
-        + 'On the Mission page, open "Danger zone", pick a Demo scenario and press "Load sample '
-        + 'mission". That replaces everything on this device with made-up demo data, so back up '
-        + 'this mission first if you want to keep it.')
+      void this.router.navigate(['/mission'], { fragment: 'demo' })
       return
     }
     if (this.mode() === 'demo') {

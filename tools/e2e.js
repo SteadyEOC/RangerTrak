@@ -1543,7 +1543,7 @@ async function checkUsageModes() {
   await idbClearAll()
   await goto('/')
   check('blank device: a demo picker is offered (in the welcome panel)', await evaluate(`!!document.querySelector('rangertrak-demo-picker')`), true)
-  check('blank device: the pill has no mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'none')
+  check('blank device: the pill shows the default mode, Incident (2026-10-05: one mode is always active)', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'incident')
 
   // 2026-10-02, John: picking a demo loads it, no button (except Mission > Danger zone).
   await evaluate(`document.querySelector('rangertrak-demo-picker mat-select')?.click()`)

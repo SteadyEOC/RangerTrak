@@ -91,7 +91,9 @@ export function deriveUsageState(i: UsageInputs, now: number): UsageState {
 }
 
 /** The mode in effect: the operator's choice, else 'demo' when a demo is loaded, else
- *  undefined (not chosen - the header panel asks, once there is real data). */
-export function effectiveMode(i: Pick<UsageInputs, 'explicitMode' | 'demo'>): MissionModeType | undefined {
-  return i.explicitMode ?? (i.demo ? 'demo' : undefined)
+ *  'incident'. 2026-10-05, John: one mode is always active - "not chosen" left the pill with no
+ *  icon and the buttons with nothing pressed. Incident is the safe default: quiet, and no
+ *  EXERCISE stamp on anything printed. Derived only - nothing new is stored. */
+export function effectiveMode(i: Pick<UsageInputs, 'explicitMode' | 'demo'>): MissionModeType {
+  return i.explicitMode ?? (i.demo ? 'demo' : 'incident')
 }

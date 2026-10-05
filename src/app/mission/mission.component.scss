@@ -135,8 +135,14 @@
   margin   : 0 0 1rem;
 }
 .mission__mode-button--on {
+  // 2026-10-05, John: the chosen mode's outline was too weak to see. Filled in the mode colour.
   font-weight: 700;
-  --mat-button-outlined-outline-color: var(--rt-ink);
+  --mat-button-outlined-outline-color: var(--rt-mode-colour);
+  --mat-button-outlined-label-text-color: var(--rt-surface);
+  background-color: var(--rt-mode-colour);
+  &[data-mode='demo']     { --rt-mode-colour: var(--rt-mode-demo); }
+  &[data-mode='exercise'] { --rt-mode-colour: var(--rt-mode-exercise); }
+  &[data-mode='incident'] { --rt-mode-colour: var(--rt-mode-incident); }
 }
 .mission__mode-explain {
   margin   : 0;

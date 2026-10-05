@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core'
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, signal } from '@angular/core'
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
+import { ActivatedRoute } from '@angular/router'
 import { FieldTree } from '@angular/forms/signals'
 
 import { MATERIAL_IMPORTS } from '../../../material-imports'
@@ -45,6 +47,26 @@ const FRESH_BACKUP_WINDOW_MS = 10 * 60 * 1000
 })
 export class MissionAdvancedOptionsComponent {
   private id = 'Mission Advanced Options Component'
+
+  // E-168 follow-up (2026-10-05, John): the Mode card's and header panel's "Demo" choice now
+  // brings the scribe here (/mission#demo) instead of only explaining the way. Opens the Danger
+  // zone and puts focus on the demo picker; the picker's own confirm still guards the load.
+  // Also fires when already on /mission (the Mode card's own Demo button): same component,
+  // new fragment.
+  private host = inject(ElementRef<HTMLElement>)
+  readonly openForDemo = signal(false)
+  private fragmentSub = inject(ActivatedRoute).fragment
+    .pipe(takeUntilDestroyed())
+    .subscribe(f => {
+      if (f !== 'demo') return
+      this.openForDemo.set(true)
+      // After the expansion panel has opened, so the picker has a size to scroll to.
+      setTimeout(() => {
+        const picker = this.host.nativeElement.querySelector('rangertrak-demo-picker') as HTMLElement | null
+        picker?.scrollIntoView({ block: 'center' })
+        ;(picker?.querySelector('mat-select') as HTMLElement | null)?.focus()
+      }, 300)
+    })
 
   // 2026-09-28, John: the "Debug mode" checkbox moved here from mission.component.html (see
   // this component's own doc comment on the new Advanced card) - it needs the same settings

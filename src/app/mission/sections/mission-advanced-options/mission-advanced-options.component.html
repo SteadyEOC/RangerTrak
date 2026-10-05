@@ -187,7 +187,7 @@
      deliberate, named exception to the 2026-08-25 "no collapsible sections" removal.
      2026-09-28: description added (item 7c) - a muted one-line summary visible even while
      collapsed, so "what's in here" doesn't require opening it first. -->
-<rangertrak-expandable-section class="rt-danger-zone-trigger rt-mission-card"
+<rangertrak-expandable-section class="rt-danger-zone-trigger rt-mission-card" id="demo" [startOpen]="openForDemo()"
   description="Reset, restore, or load a sample mission">
   <span rtSummary class="rt-danger-zone__summary">
     <mat-icon aria-hidden="true">warning</mat-icon>
