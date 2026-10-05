@@ -389,6 +389,15 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.log.excessive(`======== constructor() ============`, this.id)
 
+    // 2026-10-05 (tester: "I have to keep typing my name"): this component is destroyed whenever
+    // the scribe visits another page, so the operator went blank on every return to Entry. Seed it
+    // from the shared in-memory copy - still never persisted, still blank after a reload (D-44).
+    const carried = this.operatorName.name()
+    if (carried) {
+      this.operatorModel.set({ operator: carried })
+      this.operatorEditing.set(false)
+    }
+
     // Share the operator name, in memory only, so the Print map sheet can pre-fill "Prepared by".
     effect(() => this.operatorName.name.set(this.operatorModel().operator.trim()))
 
@@ -1114,7 +1123,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // lifted into ics213-pdf.ts's own ics213FieldsFromReport() so the two callers cannot
       // drift apart the way F29-47's blank Subject/Approved-by-Name once did.
       const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings), true, this.settings?.missionMode === 'exercise')
-      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies.totalCopies())
+      const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies.totalCopies(), this.settings)
 
       // First print only - printedAt's own doc comment (radio-log-entry.interface.ts)
       // and messages.component.ts's manual print button both already establish this: it

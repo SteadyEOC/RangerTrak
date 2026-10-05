@@ -6,10 +6,10 @@
          here said so. A button above the grid (all widths, phones included) plus an empty-state
          line say it. -->
     <div class="rt-action-bar__buttons radio-log__add-row">
-      <a matButton="filled" routerLink="/entry">Add entry</a>
+      <a matButton="filled" routerLink="/">Add entry</a>
     </div>
     @if (radioLogEntries().length === 0) {
-      <p class="radio-log__empty">No radio log entries yet. Add one on the <a routerLink="/entry">Entry page</a>, or load a demo mission from the Mission page.</p>
+      <p class="radio-log__empty">No radio log entries yet. Add one on the <a routerLink="/">Entry page</a>, or load a demo mission from the Mission page.</p>
     }
     @if (!isPhone()) {
       <ag-grid-angular #reportsGrid rowAnimation style="width: 100%;" [style.height]="gridHeight()" (gridReady)="onGridReady($event)"

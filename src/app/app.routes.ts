@@ -39,7 +39,10 @@ import { fieldModeGuard } from './shared/guards/field-mode.guard'
  */
 export const APP_ROUTES: Routes = [
   // EAGER: the landing page, so it must not be a separate round trip.
-  { path: '', component: EntryComponent },
+  // 2026-10-05: a title per page (Angular's default TitleStrategy sets document.title), now that
+  // search engines may index / and /help (robots.txt) - one shared title made every result look
+  // identical. Printing still overrides it on beforeprint (shared print-title helper).
+  { path: '', component: EntryComponent, title: 'RangerTrak - radio log and ranger tracking, offline' },
 
   // LAZY: loaded on first navigation (and preloaded in the background - see above).
   // 2026-08-27: was 'reports' - renamed to match the page's new "Radio Log" nav label/title
@@ -51,6 +54,7 @@ export const APP_ROUTES: Routes = [
   // shortcut gap that hiding a link alone leaves open.
   {
     path: 'radio-log',
+    title: 'Radio Log - RangerTrak',
     loadComponent: () => import('./radio-log/radio-log.component').then(m => m.RadioLogComponent),
     canActivate: [fieldModeGuard],
   },
@@ -58,6 +62,7 @@ export const APP_ROUTES: Routes = [
   // view rather than a second grid - see the roadmap's ICS-309/213 scoping note.
   {
     path: 'messages',
+    title: 'Messages - RangerTrak',
     loadComponent: () => import('./messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [fieldModeGuard],
   },
@@ -68,11 +73,13 @@ export const APP_ROUTES: Routes = [
   // installs pointing at it are a discounted, power-user-only edge case).
   {
     path: 'map',
+    title: 'Map - RangerTrak',
     loadComponent: () => import('./map/map-page/map-page.component').then(m => m.MapPageComponent),
     canActivate: [fieldModeGuard],
   },
   {
     path: 'rangers',
+    title: 'Rangers - RangerTrak',
     loadComponent: () => import('./rangers/rangers.component').then(m => m.RangersComponent),
     canActivate: [fieldModeGuard],
   },
@@ -81,6 +88,7 @@ export const APP_ROUTES: Routes = [
   // break, since this route predates that rename and may be bookmarked.
   {
     path: 'mission',
+    title: 'Mission - RangerTrak',
     loadComponent: () => import('./mission/mission.component').then(m => m.MissionComponent),
     // F29-23 (2026-08-30): warns before navigating away with unsaved Mission edits - the
     // shared guard (src/app/shared/guards/unsaved-changes.guard.ts) only needs the target
@@ -92,10 +100,12 @@ export const APP_ROUTES: Routes = [
   // E-116: no fieldModeGuard - a field-mode phone captures notes from the header too.
   {
     path: 'after-action',
+    title: 'AAR notes - RangerTrak',
     loadComponent: () => import('./after-action/after-action.component').then(m => m.AfterActionComponent),
   },
   {
     path: 'log',
+    title: 'Log - RangerTrak',
     loadComponent: () => import('./log/log.component').then(m => m.LogComponent),
     canActivate: [fieldModeGuard],
   },
@@ -105,6 +115,7 @@ export const APP_ROUTES: Routes = [
   // already made) - linked from Rangers' roster-management controls instead.
   {
     path: 'prep',
+    title: 'Prep - RangerTrak',
     loadComponent: () => import('./prep/prep.component').then(m => m.PrepComponent),
     canActivate: [fieldModeGuard],
   },
@@ -114,6 +125,7 @@ export const APP_ROUTES: Routes = [
   // "Help" (E-57(1)) but the URL never followed; redirect below covers old bookmarks.
   {
     path: 'help',
+    title: 'Help - RangerTrak',
     loadChildren: () => import('./lazy/lazy.routes').then(m => m.LAZY_ROUTES)
   },
 
@@ -121,6 +133,9 @@ export const APP_ROUTES: Routes = [
   { path: 'settings', redirectTo: 'mission' },
   { path: 'about', redirectTo: 'help' },
   { path: 'reports', redirectTo: 'radio-log' },
+  // 2026-10-05: tester hit a 404 on /entry (the Radio Log's links pointed there; Entry is the
+  // root route). Links fixed; this keeps typed or bookmarked /entry URLs working too.
+  { path: 'entry', redirectTo: '' },
 
   // Page not found route
   {

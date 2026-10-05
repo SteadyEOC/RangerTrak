@@ -175,6 +175,11 @@
   </span>
 
   <ul id="mainNavLinks" [class.open]="navOpen()">
+    <!-- E-175 (2026-10-05, John): two testers couldn't find Entry - the brand mark alone didn't
+         read as "this is where reports go in". An explicit first item, shown in field mode too.
+         The brand link above still goes to the same page. -->
+    <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+        (click)="closeNav()" title="Log a new radio report">Entry</a></li>
     <!-- E-114 §1a (2026-08-31): a "field phone" device (FieldModeService.enable(), set once
          via the Entry welcome panel's first-run prompt) only ever needs Entry (reached via
          the brand/Home link above, not an <li> here) and Help - everything else is a
