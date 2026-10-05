@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.21-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.20-alpha...v0.99.21-alpha) (2026-10-05)
+
+
+### Features
+
+* **mode:** E-168 follow-ups - Incident is the derived default mode; Demo goes to the Mission demo picker; the chosen mode is filled in its colour ([a76a2ab](https://github.com/SteadyEOC/RangerTrak/commit/a76a2ab42c60b72056a39d5184848750c0ba8806))
+* **seo:** E-171 indexing - robots.txt, sitemap.xml, per-route titles are in the nav commit, new meta description ([00c33c0](https://github.com/SteadyEOC/RangerTrak/commit/00c33c03db614acfbbcb5492bbe2bc104f8c7404))
+
+
+### Bug Fixes
+
+* **a11y:** E-171 time stepper buttons are 24px, WCAG 2.5.8 minimum target ([86e9726](https://github.com/SteadyEOC/RangerTrak/commit/86e972659ff83b4bf671c93fc8cf6bb1a627cdb9))
+* **nav:** E-176 /entry redirects and Radio Log links work; E-178 operator kept across pages; E-175 Entry is the first nav item ([3ddc24f](https://github.com/SteadyEOC/RangerTrak/commit/3ddc24fa8150bc5be2e3572fa97f3a8d169a5a28))
+* **print:** E-172 printed map fills the page; white page; titled printouts; Date/time defaults to print time ([1c21838](https://github.com/SteadyEOC/RangerTrak/commit/1c21838110655ee17191e12dada795ef16c0eea0))
+
 ### [0.99.20-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.19-alpha...v0.99.20-alpha) (2026-10-02)
 
 
