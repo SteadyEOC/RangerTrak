@@ -298,9 +298,11 @@ export type RangerMergeResult = {
  * additively - E-109 Setup files v2 (2026-08-31). Unlike `replaceAllRangers()`, nothing already
  * present is discarded unless an incoming row actually matches it.
  *
- * Match key: normalized `id` first, `callsign` (case-insensitive, trimmed) as the fallback -
- * `incoming` is run through `normalizeRangerIds()` first so ids/uids are canonical before any
- * matching happens. A row with neither a usable `id` nor `callsign` match is appended as new.
+ * Match key: an exact `uid` first, then normalized `id` (callsign picks between several rangers
+ * who share one), then `callsign` (case-insensitive, trimmed) as the fallback - `incoming` is run
+ * through `normalizeRangerIds()` first so ids/uids are canonical before any matching happens. A
+ * row with no match is appended as new. Each existing row is matched at most once per import, so
+ * two incoming people who share an `id` both survive (2026-10-05).
  *
  * **Ambiguous match**: if an incoming row's `id` matches existing ranger A while its `callsign`
  * matches a DIFFERENT existing ranger B, `id` wins (A is overwritten, B is untouched) - real id
@@ -322,12 +324,21 @@ export function mergeRangers(existing: readonly RangerType[], incoming: readonly
   const normalizedIncoming = normalizeRangerIds(incoming).rangers
 
   const rangers = existing.map(r => ({ ...r }))
-  const byId = new Map<string, number>()
-  const byCallsign = new Map<string, number>()
+  const byUid = new Map<string, number>()
+  const byId = new Map<string, number[]>()
+  const byCallsign = new Map<string, number[]>()
+  const push = (map: Map<string, number[]>, key: string, i: number) => map.set(key, [...(map.get(key) ?? []), i])
   rangers.forEach((r, i) => {
-    if (r.id) byId.set(r.id, i)
-    if (r.callsign.trim()) byCallsign.set(r.callsign.trim().toUpperCase(), i)
+    if (r.uid) byUid.set(r.uid, i)
+    if (r.id) push(byId, r.id, i)
+    if (r.callsign.trim()) push(byCallsign, r.callsign.trim().toUpperCase(), i)
   })
+
+  // Rows this import has already written. A later incoming row never lands on one: two people
+  // who share an `id` on purpose (Vashon's VI-0007 is on a husband and wife) used to collapse
+  // into one, the second overwriting the first, even on an empty device.
+  const claimed = new Set<number>()
+  const unclaimed = (list: number[] | undefined) => (list ?? []).filter(i => !claimed.has(i))
 
   const added: RangerMergeNote[] = []
   const overwritten: RangerMergeNote[] = []
@@ -335,27 +346,32 @@ export function mergeRangers(existing: readonly RangerType[], incoming: readonly
 
   for (const inc of normalizedIncoming) {
     const note: RangerMergeNote = { callsign: inc.callsign, id: inc.id ?? '' }
-    const idMatch = inc.id ? byId.get(inc.id) : undefined
-    const callsignMatch = inc.callsign.trim() ? byCallsign.get(inc.callsign.trim().toUpperCase()) : undefined
+    const uidMatch = inc.uid ? byUid.get(inc.uid) : undefined
+    const idMatches = inc.id ? unclaimed(byId.get(inc.id)) : []
+    const callsignMatches = inc.callsign.trim() ? unclaimed(byCallsign.get(inc.callsign.trim().toUpperCase())) : []
 
-    let matchIndex = idMatch
-    if (idMatch !== undefined && callsignMatch !== undefined && idMatch !== callsignMatch) {
-      ambiguous.push(note)
-    } else if (matchIndex === undefined) {
-      matchIndex = callsignMatch
+    // uid first: a roster file that carries the roster-tooling crosswalk's uids names the
+    // person exactly. Then id, with callsign choosing between several people who share it.
+    // Then callsign alone.
+    let matchIndex: number | undefined
+    if (uidMatch !== undefined && !claimed.has(uidMatch)) {
+      matchIndex = uidMatch
+    } else if (idMatches.length) {
+      matchIndex = idMatches.find(i => callsignMatches.includes(i)) ?? idMatches[0]
+      if (callsignMatches.length && !callsignMatches.includes(matchIndex)) ambiguous.push(note)
+    } else {
+      matchIndex = callsignMatches[0]
     }
 
     if (matchIndex !== undefined) {
       const uid = rangers[matchIndex].uid
       rangers[matchIndex] = { ...inc, uid }
+      claimed.add(matchIndex)
       overwritten.push(note)
-      if (inc.id) byId.set(inc.id, matchIndex)
-      if (inc.callsign.trim()) byCallsign.set(inc.callsign.trim().toUpperCase(), matchIndex)
     } else {
       rangers.push({ ...inc })
+      claimed.add(rangers.length - 1)
       added.push(note)
-      if (inc.id) byId.set(inc.id, rangers.length - 1)
-      if (inc.callsign.trim()) byCallsign.set(inc.callsign.trim().toUpperCase(), rangers.length - 1)
     }
   }
 

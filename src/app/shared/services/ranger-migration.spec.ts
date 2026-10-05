@@ -362,6 +362,52 @@ describe('ranger-migration (ADR D-42)', () => {
       expect(result.ambiguous).toEqual([{ callsign: 'NEW-CALL', id: 'REW-1' }]);
     });
 
+    it('keeps two incoming people who share an id, even on an empty device (Vashon VI-0007)', () => {
+      const incoming = [
+        ranger('K7AAA', { id: 'VI-0007', fullName: 'First Person' }),
+        ranger('K7BBB', { id: 'VI-0007', fullName: 'Second Person' }),
+      ];
+
+      const result = mergeRangers([], incoming);
+
+      expect(result.rangers.map(r => r.fullName)).toEqual(['First Person', 'Second Person']);
+      expect(result.added.length).toBe(2);
+      expect(result.overwritten).toEqual([]);
+    });
+
+    it('uses callsign to pick between existing rangers who share an id', () => {
+      const existing = [
+        ranger('K7AAA', { id: 'VI-0007', uid: 'u-a' }),
+        ranger('K7BBB', { id: 'VI-0007', uid: 'u-b' }),
+      ];
+      const incoming = [
+        ranger('K7BBB', { id: 'VI-0007', fullName: 'B Updated' }),
+        ranger('K7AAA', { id: 'VI-0007', fullName: 'A Updated' }),
+      ];
+
+      const result = mergeRangers(existing, incoming);
+
+      expect(result.rangers.length).toBe(2);
+      expect(result.rangers[0]).toEqual(jasmine.objectContaining({ uid: 'u-a', fullName: 'A Updated' }));
+      expect(result.rangers[1]).toEqual(jasmine.objectContaining({ uid: 'u-b', fullName: 'B Updated' }));
+      expect(result.ambiguous).toEqual([]);
+    });
+
+    it('matches an exact uid before id or callsign', () => {
+      const existing = [
+        ranger('OLD-CALL', { id: 'REW-1', uid: 'crosswalk-uid-1' }),
+        ranger('NEW-CALL', { id: 'REW-2', uid: 'u-other' }),
+      ];
+      // Same person, new callsign and new credential - only the uid ties them together.
+      const incoming = [ranger('NEW-CALL', { id: 'REW-2', uid: 'crosswalk-uid-1', fullName: 'Moved' })];
+
+      const result = mergeRangers(existing, incoming);
+
+      expect(result.rangers.length).toBe(2);
+      expect(result.rangers[0]).toEqual(jasmine.objectContaining({ uid: 'crosswalk-uid-1', fullName: 'Moved' }));
+      expect(result.rangers[1].uid).toBe('u-other');
+    });
+
     it('does not mutate either input array', () => {
       const existing = [ranger('A1', { id: 'REW-1', uid: 'u-a1' })];
       const incoming = [ranger('A1', { id: 'REW-1', fullName: 'Changed' })];

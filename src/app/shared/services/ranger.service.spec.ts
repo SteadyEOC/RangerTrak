@@ -87,6 +87,16 @@ describe('RangerService', () => {
       })).length).toBe(1);
     });
 
+    it('keeps a uid the file supplies, and mints one where it is missing', () => {
+      const service = TestBed.inject(RangerService);
+      const parsed = service.parseRosterJson(JSON.stringify([
+        { ...one, uid: '3f2b8c1e-0000-4000-8000-000000000001' },
+        { callsign: 'BB2' },
+      ]));
+      expect(parsed[0].uid).toBe('3f2b8c1e-0000-4000-8000-000000000001');
+      expect(parsed[1].uid).toBeTruthy();
+    });
+
     it('fills missing optional fields with empty strings rather than undefined', () => {
       const service = TestBed.inject(RangerService);
       const parsed = service.parseRosterJson(JSON.stringify([one]));

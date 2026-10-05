@@ -297,6 +297,10 @@ export class RangerService implements OnInit {
           `Entry ${i + 1} has no callsign and no id/rew - there is nothing to attribute a radio log entry to.`)
       }
       return {
+        // Kept when the file carries one (the roster-tooling crosswalk mints one per person), so
+        // the same person has the same uid on every device fed from that file. Opaque - any
+        // string will do; normalizeRangerIds() below mints one where it is missing or repeated.
+        uid: String(entry.uid ?? '').trim() || undefined,
         callsign,
         id,
         // Field-name aliases. Real rosters in hand do not use this app's field names: an
