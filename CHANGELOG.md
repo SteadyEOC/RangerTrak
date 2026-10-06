@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.26-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.25-alpha...v0.99.26-alpha) (2026-10-06)
+
+
+### Bug Fixes
+
+* **app:** pages no longer jump down when their header appears on first load ([15c7937](https://github.com/SteadyEOC/RangerTrak/commit/15c7937))
+
 ### [0.99.25-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.24-alpha...v0.99.25-alpha) (2026-10-06)
 
 
