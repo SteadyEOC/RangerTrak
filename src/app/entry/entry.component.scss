@@ -39,7 +39,13 @@ $filledColor: var(--rt-surface-2);
 }
 
 .entry-welcome__text {
-  flex: 1 1 20em;
+  // 2026-10-05 (layout shift, 0.24 on a Slow-4G first visit): the 20em basis plus the dismiss
+  // button (below) sat within a pixel or two of the panel's width on a phone, so the button's
+  // own width - which moves when Roboto replaces the fallback font - decided whether it wrapped
+  // onto its own row. When Roboto arrived it jumped up beside the text, narrowing every line
+  // by ~36px and rewrapping the list. A smaller basis leaves room beside the button at any phone
+  // width, so the wrap decision no longer sits on that edge.
+  flex: 1 1 14em;
   // 2026-09-29: e2e caught the demo item's scenario <select> (sized to its longest option)
   // widening the page to 417px on a 390px phone. min-width: 0 lets this flex item shrink
   // below that, and the label/select below are allowed to wrap and shrink with it.
@@ -55,7 +61,11 @@ $filledColor: var(--rt-surface-2);
   font         : inherit;
   font-size    : 1.25em;
   line-height  : 1;
-  padding      : 0.1em 0.45em;
+  padding      : 0.1em 0;
+  // Fixed width, not padding around a glyph, so its size is the same in the fallback font
+  // and in Roboto.
+  width        : 1.6em;
+  text-align   : center;
 }
 
 // Raised live 2026-08-30: only ever shown on a genuinely untouched install
