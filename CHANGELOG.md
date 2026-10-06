@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.24-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.23-alpha...v0.99.24-alpha) (2026-10-06)
+
+
+### Features
+
+* **rangers:** Export changes since import ([0a5f074](https://github.com/SteadyEOC/RangerTrak/commit/0a5f074456ef8357787917c54dd753f11ed824e5))
+
 ### [0.99.23-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.22-alpha...v0.99.23-alpha) (2026-10-06)
 
 
