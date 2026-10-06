@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.25-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.24-alpha...v0.99.25-alpha) (2026-10-06)
+
+
+### Bug Fixes
+
+* **entry:** welcome panel no longer rewraps when Roboto loads ([1a03384](https://github.com/SteadyEOC/RangerTrak/commit/1a03384))
+
+### Dependencies
+
+* Angular 22.2.1, maplibre-gl 6.12.0, @types/node 26.6.4 ([6b81ac3](https://github.com/SteadyEOC/RangerTrak/commit/6b81ac3))
+
 ### [0.99.24-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.23-alpha...v0.99.24-alpha) (2026-10-06)
 
 
