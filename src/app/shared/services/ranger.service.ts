@@ -7,11 +7,14 @@ import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 import { LogService, RangerType, UnknownRanger } from './'
 // ADR D-42/D-43: identity + versioned storage for the roster. Kept as a direct import (not
 // via the barrel) to avoid a cycle - the barrel re-exports this service.
-import { migrateRangers, normalizeRangerIds, RANGER_SCHEMA_VERSION } from './ranger-migration'
+import { migrateRangers, normalizeRangerIds, RANGER_SCHEMA_VERSION, RangerMergeResult } from './ranger-migration'
 // E-122 Phase 2a: the roster is PII, and now lives behind RecordStore (in-memory + IndexedDB)
 // rather than directly in localStorage. Direct import (not the barrel), same reasoning as the
 // migration import above.
 import { recordStore } from '../storage/record-store'
+import {
+  baselineAfterImport, parseRosterImportBaseline, rosterChanges, RosterChanges, RosterImportBaseline
+} from '../../domain/roster-changes'
 
 // TODO: Update server with new/deleted Rangers:  https://angular.io/tutorial/toh-pt6#heroes-and-http
 
@@ -238,6 +241,46 @@ export class RangerService implements OnInit {
   replaceAllRangers(newRangers: RangerType[]) {
     this.rangers = [...newRangers]
     this.updateLocalStorageAndPublish()
+  }
+
+  //--------------------------------------------------------------------------
+  // "Export changes since import" (2026-10-05, John): the rules are in domain/roster-changes.ts;
+  // this keeps the baseline. It sits in RecordStore beside the roster (and is encrypted with it
+  // when the device is), because its row keys are the roster's uids.
+  //
+  // Called by the import paths only - the Rangers page's Import roster (JSON or Setup file),
+  // the Setup files page, and loading a sample mission. NOT by Restore mission: a restore
+  // puts back a device's state mid-event, and re-baselining there would hide the very edits
+  // the coordinator needs. With no baseline at all, the page offers the whole roster instead.
+
+  private importBaselineKey = 'rangersImported'
+
+  /**
+   * Records an import that has just been applied with replaceAllRangers(). `replace` takes the
+   * whole roster as the new baseline; `merge` re-baselines only `touchedUids`, the rows the
+   * file wrote (RangerMergeResult's notes carry them).
+   */
+  recordImport(source: string, mode: 'replace' | 'merge', touchedUids?: readonly string[]) {
+    const baseline = baselineAfterImport(this.rangers, source, Date.now(), mode, this.importBaseline(), touchedUids)
+    recordStore.setItem(this.importBaselineKey, JSON.stringify(baseline))
+    this.log.verbose(`Recorded roster import from ${source} (${mode}): ${Object.keys(baseline.rows).length} rows in the baseline.`, this.id)
+  }
+
+  /** recordImport() for a Setup-file merge: re-baselines the rows the merge wrote. */
+  recordMergeImport(source: string, merge: RangerMergeResult) {
+    const uids = [...merge.added, ...merge.overwritten].map(n => n.uid).filter((u): u is string => !!u)
+    this.recordImport(source, 'merge', uids)
+  }
+
+  /** The baseline of the last import on this device, or null when none is recorded. */
+  importBaseline(): RosterImportBaseline | null {
+    return parseRosterImportBaseline(recordStore.getItem(this.importBaselineKey))
+  }
+
+  /** What changed since the last import, or null when this device has no import recorded. */
+  changesSinceImport(): RosterChanges | null {
+    const baseline = this.importBaseline()
+    return baseline ? rosterChanges(this.rangers, baseline) : null
   }
 
   /**

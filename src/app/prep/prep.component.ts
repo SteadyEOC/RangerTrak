@@ -292,6 +292,7 @@ export class PrepComponent {
 
       const merge = mergeRangers(this.rangerService.rangers, manifest.rangers)
       this.rangerService.replaceAllRangers(merge.rangers)
+      this.rangerService.recordMergeImport(file.filename, merge)
       rosterForPhotoMatch = merge.rangers
       parts.push(this.describeRangerMerge(merge))
       if (warnings.length) parts.push(`note: ${warnings.join('; ')}`)

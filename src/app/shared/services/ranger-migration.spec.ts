@@ -278,7 +278,7 @@ describe('ranger-migration (ADR D-42)', () => {
       expect(result.rangers.length).toBe(2);
       expect(result.rangers[0]).toEqual(existing[0]);
       expect(result.rangers[1].callsign).toBe('B1');
-      expect(result.added).toEqual([{ callsign: 'B1', id: 'REW-2' }]);
+      expect(result.added).toEqual([jasmine.objectContaining({ callsign: 'B1', id: 'REW-2' })]);
       expect(result.overwritten).toEqual([]);
       expect(result.ambiguous).toEqual([]);
     });
@@ -298,7 +298,8 @@ describe('ranger-migration (ADR D-42)', () => {
       expect(result.rangers[0].fullName).toBe('New Name');
       expect(result.rangers[0].uid).withContext('existing uid kept - radio log entries join on it').toBe('u-a1');
       expect(result.rangers[1].callsign).toBe('B1');
-      expect(result.overwritten).toEqual([{ callsign: 'A1-renamed', id: 'REW-1' }]);
+      expect(result.overwritten).toEqual([jasmine.objectContaining({ callsign: 'A1-renamed', id: 'REW-1' })]);
+      expect(result.overwritten[0].uid).withContext('the note names the row written, for the import baseline').toBe('u-a1');
       expect(result.added).toEqual([]);
     });
 
@@ -311,7 +312,7 @@ describe('ranger-migration (ADR D-42)', () => {
       expect(result.rangers.length).toBe(1);
       expect(result.rangers[0].id).toBe('REW-9');
       expect(result.rangers[0].uid).toBe('u-a1');
-      expect(result.overwritten).toEqual([{ callsign: 'A1', id: 'REW-9' }]);
+      expect(result.overwritten).toEqual([jasmine.objectContaining({ callsign: 'A1', id: 'REW-9' })]);
     });
 
     it('matches callsign case-insensitively (same convention rosterWarnings() dedupe uses)', () => {
@@ -358,7 +359,7 @@ describe('ranger-migration (ADR D-42)', () => {
       expect(result.rangers[1].id).toBe('REW-9');
       expect(result.rangers[1].uid).toBe('u-b');
       expect(result.rangers.length).toBe(2);
-      expect(result.overwritten).toEqual([{ callsign: 'NEW-CALL', id: 'REW-1' }]);
+      expect(result.overwritten).toEqual([jasmine.objectContaining({ callsign: 'NEW-CALL', id: 'REW-1' })]);
       expect(result.ambiguous).toEqual([{ callsign: 'NEW-CALL', id: 'REW-1' }]);
     });
 

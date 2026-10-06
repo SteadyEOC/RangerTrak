@@ -56,7 +56,7 @@
   you turn on device encryption on the <a routerLink="/mission">Mission</a> page (Data safety
   &gt; Device encryption) - which also covers radio log entries, after-action notes and ranger photos, and needs a
   passphrase that cannot be recovered if lost. <a routerLink="/rangers">Rangers'</a> own
-  <span class="ui">Export roster</span>, and every spreadsheet export, are plain-text files
+  <span class="ui">Export roster</span> and <span class="ui">Export changes</span>, and every spreadsheet export, are plain-text files
   regardless. <span class="ui">Back up mission</span> on the <a routerLink="/mission">Mission</a>
   page is the one exception among exports: it includes the roster, and it offers an optional
   passphrase - leave it blank and it's the same plain file as before, type one and the file is
@@ -83,7 +83,10 @@
   one to reach for by default — it round-trips everything (settings, roster and reports) back in
   on another device, so it doubles as the actual backup. It includes ranger photos, and your Google
   geocoding key only if you protect the backup with a passphrase. <span class="ui">Export roster</span> on
-  the <a routerLink="/rangers">Rangers</a> page moves just the roster, the same round-trip way. The
+  the <a routerLink="/rangers">Rangers</a> page moves just the roster, the same round-trip way.
+  <span class="ui">Export changes</span>, beside it, is for after an event: it saves only the rangers
+  added or edited on this device since the roster was imported, so whoever keeps the master list
+  can add the walk-ups and fixes without combing through the whole roster. The
   <a routerLink="/prep">Setup files</a> page is different from both: it packages any
   combination of roster, photos, locations and settings — but never radio log entries — for setting
   up a NEW device before a mission starts, merging into whatever is already there rather than

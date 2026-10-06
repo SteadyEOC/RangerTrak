@@ -304,6 +304,11 @@ single incident.
 **Handing over.** Press **Back up mission** on **Mission** and give the file to the
 incoming operator, who restores it on their device.
 
+**Walk-ups and roster fixes.** Volunteers who turn up on the day, and the phone numbers and
+call signs corrected at the desk, go back to whoever keeps your master roster: on **Rangers**,
+*Bulk roster tools* → **Export changes** saves only the rangers added or edited on this device
+since the roster was imported. Treat the file like the roster itself.
+
 **Reports from rangers' own phones.** A device is set up as either the **full app** (the
 command post) or **field mode** (a ranger's own phone: Entry and Help only, chosen once on a
 new device - from the welcome panel on a phone or tablet, or **Mission** > **Advanced** >
@@ -483,7 +488,7 @@ part of any public record.
 
 > **Shipped so far:** the passphrase above, for **Mission → Back up mission** only (the
 > section right above this one). **Still plain, no passphrase option yet:** Rangers'
-> **Export roster**, and the Radio Log/Rangers spreadsheet exports — if the roster needs to
+> **Export roster** and **Export changes**, and the Radio Log/Rangers spreadsheet exports — if the roster needs to
 > leave the device and Back up mission's own scope (settings + roster + reports) is more
 > than you want to hand over, a mission backup with a passphrase is the protected option
 > today; those narrower exports are not. **Still planned:** encryption for the data sitting

@@ -248,6 +248,9 @@ export class SampleDataService {
       opPeriodEnd: new Date(opPeriodStart.getTime() + DEFAULT_OP_PERIOD_HOURS * 60 * 60 * 1000),
     })
     this.rangerService.replaceAllRangers(rangers)
+    // The demo is an import like any other, so "Export changes since import" can be tried on it:
+    // edit a ranger, add a walk-up, export, and the file holds just those two.
+    this.rangerService.recordImport(`sample mission (${scenario})`, 'replace')
     const radioLog = this.assembleRadioLog(data.rows, rangers, data.event, tacticalCalls)
     this.radioLogService.replaceAllRadioLog(radioLog)
     this.missionLocationService.replaceAllLocations(data.locations)

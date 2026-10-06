@@ -8,6 +8,7 @@ import { RANGER_SCHEMA_VERSION } from './ranger-migration';
 // that module's own doc comment. resetForTests() is this suite's equivalent of the
 // localStorage.clear() it used to rely on for isolation between specs.
 import { recordStore } from '../storage/record-store';
+import { rosterChangesFile } from '../../domain/roster-changes';
 
 /**
  * Characterization tests: pin RangerService's current localStorage-backed
@@ -426,6 +427,44 @@ describe('RangerService', () => {
       const service = TestBed.inject(RangerService);
       service.loadHardcodedRangers();
       expect(RangerService.isRealRosterLoaded(service.rangers)).toBe(true);
+    });
+  });
+  describe('changes since import (2026-10-05)', () => {
+    const file = JSON.stringify({ rangers: [
+      { uid: 'u1', callsign: 'A1', fullName: 'Ann', phone: '555-0101' },
+      { uid: 'u2', callsign: 'B1', fullName: 'Bo', phone: '555-0102' },
+    ] });
+
+    it('has no baseline until an import is recorded', () => {
+      const service = TestBed.inject(RangerService);
+      expect(service.changesSinceImport()).toBeNull();
+    });
+
+    it('reports an edit and a walk-up, and the export re-imports as a roster with uids', () => {
+      const service = TestBed.inject(RangerService);
+      service.replaceAllRangers(service.parseRosterJson(file));
+      service.recordImport('roster.json', 'replace');
+
+      service.replaceAllRangers([
+        { ...service.rangers.find(r => r.uid === 'u1')!, phone: '555-0199' },
+        service.rangers.find(r => r.uid === 'u2')!,
+        { uid: 'u9', callsign: 'WALKUP', fullName: 'Walk Up', phone: '', image: '', team: '', role: '', note: '' },
+      ]);
+      const changes = service.changesSinceImport()!;
+      expect(changes.edited.map(r => r.uid)).toEqual(['u1']);
+      expect(changes.added.map(r => r.uid)).toEqual(['u9']);
+
+      const back = service.parseRosterJson(JSON.stringify(rosterChangesFile(changes, Date.now())));
+      expect(back.map(r => r.uid).sort()).toEqual(['u1', 'u9']);
+    });
+
+    it('stores the baseline in RecordStore, as hashes only', () => {
+      const service = TestBed.inject(RangerService);
+      service.replaceAllRangers(service.parseRosterJson(file));
+      service.recordImport('roster.json', 'replace');
+      expect(service.importBaseline()?.source).toBe('roster.json');
+      expect(Object.keys(service.importBaseline()!.rows).sort()).toEqual(['u1', 'u2']);
+      expect(recordStore.getItem('rangersImported')).not.toContain('Ann');
     });
   });
 });

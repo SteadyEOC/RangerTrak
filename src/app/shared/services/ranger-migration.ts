@@ -279,7 +279,13 @@ export function normalizeRangerIds(rangers: readonly RangerType[]): RangerIdAudi
  */
 /** One row named in a merge summary - never a bare count (capability, not policy: show the
  *  human what happened, let them judge it). */
-export type RangerMergeNote = { callsign: string; id: string }
+export type RangerMergeNote = {
+  callsign: string
+  id: string
+  /** The uid of the row this import wrote (the existing uid on an overwrite). Lets the caller
+   *  re-baseline exactly those rows for "Export changes since import" (domain/roster-changes.ts). */
+  uid?: string
+}
 
 export type RangerMergeResult = {
   /** The merged roster, existing rows first in their ORIGINAL order (an overwrite updates a
@@ -367,11 +373,11 @@ export function mergeRangers(existing: readonly RangerType[], incoming: readonly
       const uid = rangers[matchIndex].uid
       rangers[matchIndex] = { ...inc, uid }
       claimed.add(matchIndex)
-      overwritten.push(note)
+      overwritten.push({ ...note, uid })
     } else {
       rangers.push({ ...inc })
       claimed.add(rangers.length - 1)
-      added.push(note)
+      added.push({ ...note, uid: inc.uid })
     }
   }
 

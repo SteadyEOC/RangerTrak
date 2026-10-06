@@ -33,6 +33,7 @@ import { RecordStore } from '../shared/storage/record-store'
 import { DevicePrefsService } from '../shared/services/device-prefs.service'
 import { extractMissionZip, MissionZipManifest, MissionZipPhoto } from '../shared/export/mission-zip'
 import { mergeRangers } from '../shared/services/ranger-migration'
+import { rosterChangesFile } from '../domain/roster-changes'
 import { CustomTooltip } from './customTooltip'
 
 
@@ -608,6 +609,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.rangerService.replaceAllRangers(merge.rangers)
+    this.rangerService.recordMergeImport(file.name, merge)
 
     const files = photos.map(p =>
       new File([p.bytes as BlobPart], p.filename, { type: this.mimeFor(p.filename) }))
@@ -704,18 +706,66 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
         + `Cancel: export all ${all.length}.`)
     const rangers = exportSelected ? selected : all
 
-    const json = JSON.stringify({ rangers }, null, 2)
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
     const stamp = new Date().toISOString().slice(0, 10)
-
-    const a = this.document.createElement('a')
-    a.href = url
-    a.download = `rangertrak-roster-${stamp}${exportSelected ? '-selected' : ''}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    this.downloadJson({ rangers }, `rangertrak-roster-${stamp}${exportSelected ? '-selected' : ''}.json`)
 
     this.log.info(`Exported ${rangers.length} rangers as JSON${exportSelected ? ' (selection)' : ''}.`, this.id)
+  }
+
+  /**
+   * "Export changes" (2026-10-05, John): downloads just the rangers added or edited on this
+   * device since the roster was imported, plus the uids of any removed, for the coordinator to
+   * merge back into the master list after the event. The file is roster-shaped, so it imports
+   * like any roster; the rules are in domain/roster-changes.ts.
+   */
+  onBtnExportRosterChanges() {
+    const changes = this.rangerService.changesSinceImport()
+    if (!changes) {
+      if (confirm('No roster import is recorded on this device, so there is nothing to compare '
+        + 'against.\n\nExport the whole roster instead?')) {
+        this.onBtnExportRangersJson()
+      }
+      return
+    }
+
+    const since = new Date(changes.importedAt).toLocaleString()
+    const total = changes.added.length + changes.edited.length + changes.removed.length
+    if (!total) {
+      alert(`No changes since the roster was imported from "${changes.source}" (${since}).`)
+      return
+    }
+
+    const names = (list: RangerType[]) => list.slice(0, 6).map(r => r.callsign || r.id || r.fullName).join(', ')
+      + (list.length > 6 ? ', ...' : '')
+    const lines = [
+      `Changes since the roster was imported from "${changes.source}" (${since}):`,
+      '',
+      `  ${changes.added.length} added${changes.added.length ? ': ' + names(changes.added) : ''}`,
+      `  ${changes.edited.length} edited${changes.edited.length ? ': ' + names(changes.edited) : ''}`,
+      `  ${changes.removed.length} removed`,
+      '',
+      'Download these as a file for the coordinator? It holds names and phone numbers: '
+        + 'hand it over the way you would the roster itself.',
+    ]
+    if (!confirm(lines.join('\n'))) {
+      return
+    }
+
+    const now = Date.now()
+    this.downloadJson(rosterChangesFile(changes, now),
+      `rangertrak-roster-changes-${new Date(now).toISOString().slice(0, 10)}.json`)
+    this.log.info(`Exported roster changes: ${changes.added.length} added, ${changes.edited.length} edited, `
+      + `${changes.removed.length} removed.`, this.id)
+  }
+
+  private downloadJson(data: unknown, filename: string) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = this.document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   /**
@@ -773,6 +823,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       this.rangerService.replaceAllRangers(incoming)
+      this.rangerService.recordImport(file.name, 'replace')
       this.log.warn(`Imported ${incoming.length} rangers from ${file.name}.`, this.id)
       alert(`Imported ${incoming.length} rangers. Reloading so every screen picks them up...`)
       this.reloadPage()

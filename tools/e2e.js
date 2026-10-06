@@ -770,6 +770,47 @@ async function checkSetupFileMerge(fx) {
   check('setup file stores photos despite backslash paths', r.photoKeys, ['E2E-AA1', 'E2E-CC3'])
 }
 
+/**
+ * "Export changes since import" (2026-10-05): an import records a baseline; a ranger added
+ * afterwards is the only thing the export hands back. The download is caught in the page by
+ * wrapping URL.createObjectURL, since CDP has no simple hook for an <a download> click.
+ * Ends by re-importing the fixture roster, so later checks see the roster they expect.
+ */
+async function checkRosterChangesExport(fx) {
+  console.log('\nExport changes since import: only what changed after the import comes back')
+  await goto('/rangers')
+  await setFileInput('#importRosterFile', fx.rosterPath)
+  const baselineRows = await pollUntil(
+    async () => Object.keys(JSON.parse((await idbGetRaw('rangersImported')) || '{"rows":{}}').rows || {}).length,
+    n => n >= fx.rangers.length)
+  check('a roster import records a baseline of every row', baselineRows, fx.rangers.length)
+
+  await goto('/rangers')
+  await evaluate(`window.__rtDownloads = [];
+    const orig = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = b => { b.text().then(t => window.__rtDownloads.push(t)); return orig(b) }`)
+  const clickExport = `[...document.querySelectorAll('button')].find(b => b.textContent.trim().endsWith('Export changes'))?.click()`
+
+  const before = dialogs.length
+  await evaluate(clickExport)
+  await sleep(500)
+  check('with nothing changed, it says so instead of downloading', (dialogs[before] || '').startsWith('No changes since'), true)
+
+  await evaluate(`[...document.querySelectorAll('.rt-action-bar__buttons button')].find(b => b.textContent.trim().endsWith('Add'))?.click()`)
+  await sleep(1000)
+  await evaluate(clickExport)
+  const raw = await pollUntil(() => evaluate(`window.__rtDownloads[0] || ''`), t => !!t)
+  const file = JSON.parse(raw || '{}')
+  check('the export holds just the added ranger', (file.rangers || []).length, 1)
+  check('...marked as added, with its uid', !!(file.rangers?.[0]?.uid) && file.rangers?.[0]?.change, 'added')
+  check('...and counts nothing edited or removed', JSON.stringify(file.counts), JSON.stringify({ added: 1, edited: 0, removed: 0 }))
+
+  await goto('/rangers')
+  await setFileInput('#importRosterFile', fx.rosterPath)
+  await pollUntil(async () => (JSON.parse((await idbGetRaw('rangers')) || '{"rangers":[]}').rangers || []).length,
+    n => n === fx.rangers.length)
+}
+
 // ── Sprint D's keyboard-first pass and phone-width fix, retro-fitted with the checks its
 // own plan specified but never committed. Written at the START of Sprint E, before any
 // layout work, so they capture current-good behaviour rather than whatever Sprint E leaves
@@ -3312,6 +3353,7 @@ async function main() {
         if (want('roster')) await checkGridHeaderTooltipsOpaque()
         if (want('roster')) await checkFieldNameAliases(fx)
         if (want('roster')) await checkSetupFileMerge(fx)
+        if (want('roster')) await checkRosterChangesExport(fx)
       } else {
         note('fast run: skipping checkRosterLifecycle, checkFieldNameAliases, checkSetupFileMerge (pass --full to include)')
       }

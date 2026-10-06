@@ -50,7 +50,9 @@ export const ENCRYPTION_MARKER_KEY = '__encryption'
 // note fine (load() decides per record) and encrypts it on the next write.
 // 'secrets' added 2026-10-01, John: the Google geocoding key, moved out of plaintext appSettings
 // so it is encrypted whenever device encryption is on.
-export const ENCRYPTED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'aarNotes', 'secrets'] as const
+// 'rangersImported' added 2026-10-05: the roster import baseline. Hashes keyed by roster uids, no
+// names - but it describes the roster, so it is covered with it.
+export const ENCRYPTED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'aarNotes', 'secrets', 'rangersImported'] as const
 
 const VERIFIER_PLAINTEXT = 'rangertrak-encryption-verifier-v1'
 const SALT_BYTES = 16

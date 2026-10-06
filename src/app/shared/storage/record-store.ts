@@ -93,7 +93,9 @@ export const STORE = 'kv'
 // nothing to migrate; listed so load() reads it from IndexedDB like the others.
 // 'secrets' (2026-10-01, John): a small JSON object holding the Google geocoding key, kept out
 // of plaintext appSettings (and out of plain backups). MissionService moves a legacy key in.
-export const MIGRATED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'locations', 'aarNotes', 'secrets'] as const
+// 'rangersImported' (2026-10-05): the roster import baseline for "Export changes since import"
+// (RangerService.recordImport()). New; nothing to migrate, listed so load() reads it.
+export const MIGRATED_KEYS = ['rangers', 'radioLog', 'radioLog-BAD', 'locations', 'aarNotes', 'secrets', 'rangersImported'] as const
 
 /**
  * The real implementation, and the module-level singleton this file exports as `recordStore`.

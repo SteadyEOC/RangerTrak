@@ -160,6 +160,14 @@
             Export roster
           </button>
 
+          <!-- 2026-10-05, John: the comm-desk loop. Walk-ups and fixes made during an event go
+               back to the coordinator's master list as one small file, not a whole roster. -->
+          <button matButton="outlined" type="button" (click)="onBtnExportRosterChanges()"
+            title="Download only the rangers added or edited on this device since the roster was imported, for the coordinator to merge into the master list">
+            <mat-icon>difference</mat-icon>
+            Export changes
+          </button>
+
           <button matButton="outlined" type="button" (click)="importPhotoFiles.click()"
             title="Store photographs on this device. Name each file after its callsign, e.g. K7VMI.jpg">
             <mat-icon>image</mat-icon>

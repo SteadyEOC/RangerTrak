@@ -1,0 +1,4 @@
+#!/bin/sh
+# Enable once per clone:  git config core.hooksPath .githooks
+# Keeps regional data (rosters, crosswalks, photos) out of tools/regional/ - ADR D-35.
+exec node tools/check-regional-tools.js
