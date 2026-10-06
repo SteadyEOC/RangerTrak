@@ -42,7 +42,8 @@ module worker requires; **any production host needs that same MIME mapping.**
 
 ```bash
 npm test           # unit tests via Karma
-npm run lint       # tslint + typecheck (the tslint half is dead - see below)
+npm run lint       # ESLint + typecheck
+npm run lint:ts    # ESLint only (eslint.config.mjs)
 npm run lint:tsc   # typecheck only (app and spec projects separately)
 ```
 
@@ -50,8 +51,12 @@ npm run lint:tsc   # typecheck only (app and spec projects separately)
 > *reachable* files, so an unreferenced file can carry syntax errors indefinitely while
 > builds stay green. `npm run lint:tsc` is what catches that; treat it as a real gate.
 >
-> 2026-10-01, John: `npm run lint:ts` (and so `lint` and `lint:fix`) is dead - tslint is not
-> installed and the command fails. CI runs only `lint:tsc`. ESLint is planned to replace it.
+> ESLint (angular-eslint + typescript-eslint, `eslint.config.mjs`) replaced the dead tslint
+> on 2026-10-05. Per ADR D-57 every rule is a **warning** for now: CI runs it and shows the
+> count, but does not fail on it. The two rules that matter are the boundary rules at the
+> bottom of the config: `src/app/domain/` imports only `domain/` (plus type-only `*.interface`
+> files) and nothing framework or storage; components do not import `shared/storage/` or
+> touch `localStorage`. Fix or allow-list what fires, then promote them to errors.
 
 The suite is expected to be **all green** (124 specs as of this writing — check the run's
 own "Executed N of N" line for the current count rather than trusting this number to stay

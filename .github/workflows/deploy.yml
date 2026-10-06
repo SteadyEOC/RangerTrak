@@ -34,6 +34,11 @@ jobs:
       - name: Typecheck
         run: npm run lint:tsc
 
+      # ESLint, warnings only for now (ADR D-57): it reports, it does not gate. The
+      # boundary rules become errors once what fires is fixed - then this step gates too.
+      - name: Lint (warnings only)
+        run: npm run lint:ts
+
       # The suite is expected to be all green (80 specs). Deploying past a red
       # suite to an emergency-response tool is not a trade worth making.
       - name: Unit tests

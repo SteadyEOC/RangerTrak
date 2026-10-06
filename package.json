@@ -27,8 +27,8 @@
     "style:fix": "prettier --write \"src/**/*.{ts,scss,css,html}\" \"worker/**/*.{js,mjs}\"",
     "lint": "run-p lint:ts lint:tsc",
     "lint:fix": "run-s lint:ts:fix lint:tsc",
-    "lint:ts": "tslint --config tslint.json --project . -e \"**/{test,polyfills}.ts\"",
-    "lint:ts:fix": "tslint --config tslint.json --fix --project . -e \"**/{test,polyfills}.ts\"",
+    "lint:ts": "eslint \"src/**/*.{ts,html}\"",
+    "lint:ts:fix": "eslint --fix \"src/**/*.{ts,html}\"",
     "lint:tsc": "tsc --noEmit --skipLibCheck -p tsconfig.app.json && tsc --noEmit --skipLibCheck -p tsconfig.spec.json",
     "init:env": "init-dev-env generate-dot-env example.env -f"
   },
@@ -84,8 +84,10 @@
     "@types/node": "^26.6.1",
     "@types/utm": "^1.1.4",
     "acorn": "^8.15.0",
+    "angular-eslint": "^22.5.0",
     "cross-conf-env": "^1.3.0",
     "dev-norms": "^2.0.4",
+    "eslint": "^10.12.0",
     "http-server": "^14.1.1",
     "init-dev-env": "^2.0.0",
     "istanbul-lib-instrument": "^6.0.3",
@@ -102,6 +104,7 @@
     "rxjs": "^7.8.2",
     "tsviz-cli": "^2.0.3",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1",
     "wrangler": "^4.147.0"
   },
   "importSort": {
