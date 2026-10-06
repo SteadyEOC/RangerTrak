@@ -314,7 +314,7 @@ actually defends against here is narrow, and worth being honest about:
 thresholds, E-168; second: `roster-changes.ts`, the import baseline and the changes-since-import diff) live in `src/app/domain/`, one plain TypeScript file per rule set, each with a
 table-driven spec. The rule for this folder: **no Angular, Leaflet, DOM or storage imports** -
 only data in, answer out - so a rule can be tested without a browser and is never decided in two
-places. Services gather the inputs and call the rule. Since 2026-10-05 (ADR D-57, commit
+places. Services gather the inputs and call the rule. Since 2026-10-05 (ADR D-57, accepted that day; commit
 `442b3ba`) ESLint enforces the import rule: the `domain/` boundary rule and its companion
 (components reach storage only through services) are errors and gate CI, proven red with probe
 files, in `eslint.config.mjs`. The recommended rule sets still only warn.
