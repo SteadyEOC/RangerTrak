@@ -28,6 +28,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # tools/regional/ holds scripts and docs only; real rosters, crosswalks and photos stay
+      # outside git (ADR D-35). Then run those tools end to end on the made-up demo region.
+      - name: Regional tools hold no data
+        run: npm run check:regional
+      - name: Regional tools test (fictional demo region)
+        run: npm run test:regional
+
       # `ng build` compiles only *reachable* files, so it is not a typecheck - an
       # unreferenced file can carry errors indefinitely while builds stay green.
       # See the Testing section of DEVELOPING.md.

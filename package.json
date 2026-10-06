@@ -18,6 +18,8 @@
     "e2e:offline": "node tools/e2e-offline-map.js",
     "backup-fixture": "node tools/make-backup-fixture.js",
     "check:secrets": "node tools/check-no-secrets.js",
+    "check:regional": "node tools/check-regional-tools.js",
+    "test:regional": "node tools/regional/demo/test-demo-region.js",
     "deploy": "run-s build check:secrets deploy:only",
     "deploy:only": "wrangler deploy",
     "deploy:dry": "wrangler deploy --dry-run",

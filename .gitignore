@@ -91,3 +91,8 @@ src/app/shared/policies.json
 # Cloudflare Workers - local wrangler state and local secret overrides
 .wrangler
 .dev.vars*
+
+# Regional data never lives in this repo (ADR D-35; tools/check-regional-tools.js is the gate).
+# A second net in case a region folder or crosswalk is ever copied in by hand.
+us/
+**/ranger-ids*.csv
