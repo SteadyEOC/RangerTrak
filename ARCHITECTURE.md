@@ -8,12 +8,14 @@ features, and how to prepare a device so the app works when the network doesn't.
 
 ## Mapping engines
 
-> 2026-10-01, John: MapLibre is now a second-class engine. New map features are Leaflet-only
-> unless stated otherwise (ADR D-56, proposed). The Entry mini-map stays Leaflet.
+> **ADR D-56, accepted 2026-10-05 (John):** Leaflet is the primary engine and MapLibre the
+> secondary one. New map features are Leaflet-only unless stated otherwise. MapLibre bugs are
+> fixed within reason, when the fix is not hard. Whether to keep, freeze or retire MapLibre is
+> not decided until after 1.0. The Entry mini-map is Leaflet-only, at least until 1.0.
 
 RangerTrak ships **two independent map engines**. This is deliberate, not a migration
 half-finished: they have genuinely different offline behaviour, and which one is the right
-default is still an open question for the Entry page.
+default for the Entry page is settled until 1.0 (see below).
 
 Both engines live under the same `/map` route today (`MapPageComponent`, unified since
 E-64) with a toggle between them — the table below used to show them as separate
@@ -29,10 +31,10 @@ E-64) with a toggle between them — the table below used to show them as separa
 | Clustering           | `leaflet.markercluster`                                         | Native GeoJSON clustering                                               |
 | Offline tile caching | `leaflet.offline` — "Save this area for offline use" control (OpenTopoMap only; OSM's own policy forbids bulk saving) | Not needed for the bundled/background layer; a scribe-loaded custom file (`CustomPmtilesService`, Map page's "Load a custom .pmtiles file…") replaces coverage outright instead |
 
-### Open decision: which engine powers the Entry page mini-map
+### Which engine powers the Entry page mini-map
 
-> 2026-10-01, John: settled in practice - the mini-map stays Leaflet, and MapLibre is a
-> second-class engine (see the note under "Mapping engines", ADR D-56, proposed).
+> **Decided until 1.0 (ADR D-56, 2026-10-05): Leaflet.** The trade-off below is kept so it can
+> be reopened after 1.0 without being rediscovered.
 
 The Entry form has **one** mini-map slot. It currently uses `MiniMapLeafletComponent`
 (Leaflet). `MiniMapComponent` (MapLibre) is built and working but not wired into
@@ -64,8 +66,8 @@ area (Map page's "Load a custom .pmtiles file…"). Widening the BUNDLED default
 tracked as the planned in-app region-download manager (Phase 2 of the offline map coverage
 scoping doc).
 
-**Not yet decided.** Recorded here so the trade-off is on the record rather than
-rediscovered later.
+**Leaflet until 1.0** (D-56). Revisit after 1.0, with this trade-off and the region-download
+work in hand.
 
 ### Why both engines exist
 
