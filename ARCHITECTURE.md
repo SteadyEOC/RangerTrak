@@ -311,11 +311,13 @@ actually defends against here is narrow, and worth being honest about:
 ## Business rules: src/app/domain/
 
 2026-10-01: the pure rules the app decides things by (first one: `deriveUsageState` and its
-thresholds, E-168) live in `src/app/domain/`, one plain TypeScript file per rule set, each with a
+thresholds, E-168; second: `roster-changes.ts`, the import baseline and the changes-since-import diff) live in `src/app/domain/`, one plain TypeScript file per rule set, each with a
 table-driven spec. The rule for this folder: **no Angular, Leaflet, DOM or storage imports** -
 only data in, answer out - so a rule can be tested without a browser and is never decided in two
-places. Services gather the inputs and call the rule. ESLint is planned to enforce the import
-rule (ADR D-57, proposed); until then it is by convention and review.
+places. Services gather the inputs and call the rule. Since 2026-10-05 (ADR D-57, commit
+`442b3ba`) ESLint enforces the import rule: the `domain/` boundary rule and its companion
+(components reach storage only through services) are errors and gate CI, proven red with probe
+files, in `eslint.config.mjs`. The recommended rule sets still only warn.
 
 ## Data stored on the device
 
@@ -340,6 +342,7 @@ the `rangertrak-records` keys fall back to `localStorage` under the same names f
 | 11 | localStorage | `lastCoordinateFormat` | `device-prefs.service.ts` | no | no | none |
 | 12 | localStorage | `rangertrak.rangers.privacyNoticeDismissed` | `device-prefs.service.ts` | no | no | none |
 | 13 | IndexedDB `rangertrak-records` / `kv` | `rangers` | `ranger.service.ts` | yes | yes | `ranger-migration.ts`, schema 1 |
+| 13a | IndexedDB `rangertrak-records` / `kv` | `rangersImported` (2026-10-05, import baseline: ranger uid -> field hash, no PII copied) | `ranger.service.ts` (`importBaselineKey`; pure logic in `domain/roster-changes.ts`) | no (deliberately: Restore mission does not write it, or it would hide the edits being looked for) | yes (with the roster) | none; new key. Written by roster import/merge, Setup files and the sample-mission loader; read by Rangers > Bulk roster tools > Export changes |
 | 14 | IndexedDB `rangertrak-records` / `kv` | `radioLog` | `radio-log.service.ts` | yes | yes | `radio-log-migration.ts`, schema 1 |
 | 15 | IndexedDB `rangertrak-records` / `kv` | `radioLog-BAD` | `radio-log.service.ts` | no | yes | none; quarantine copy of an unreadable log |
 | 16 | IndexedDB `rangertrak-records` / `kv` | `locations` | `mission-location.service.ts` | yes | no | `mission-location-migration.ts`, schema 1 |
@@ -433,6 +436,16 @@ Only the Entry route is eager; every other route is a `loadComponent` split poin
 fetched once the app is stable — deliberate for an offline-first PWA, where everything
 should end up precached. The split improves time-to-first-screen, not total bytes over a
 whole session.
+
+### First render of a routed page
+
+2026-10-06 (E-171): under zoneless change detection `RouterOutlet` creates the routed page and
+only marks it for check, so the page's first update pass (every `@if`, such as the page header,
+and every binding) ran a task later, and a frame could paint in between without the header. That
+was PageSpeed mobile CLS 0.49, fixed in 0.99.26-alpha to 0.002. `AppComponent.onRouteActivated()`
+(`app.component.ts`), bound to `(activate)` on the router outlet, calls `ApplicationRef.tick()` so
+the first pass runs in the activating task. Do not remove it without re-running PageSpeed mobile.
+Local throttled runs never showed the problem: the race only appears on a fast load.
 
 Solid arrows are eager; dashed arrows from `APP_ROUTES` are lazily loaded chunks.
 
