@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.23-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.22-alpha...v0.99.23-alpha) (2026-10-06)
+
+
+### Bug Fixes
+
+* **print:** base map fills the printed frame at any dialog Scale down to 50%; mode switch names the mode ([ef9b863](https://github.com/SteadyEOC/RangerTrak/commit/ef9b8633e624ca7aa15418672b392b6f1b286ca4))
+
 ### [0.99.22-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.21-alpha...v0.99.22-alpha) (2026-10-06)
 
 
