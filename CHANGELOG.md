@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.22-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.21-alpha...v0.99.22-alpha) (2026-10-06)
+
+
+### Bug Fixes
+
+* **roster:** merge import keeps two people who share an id; match uid first; JSON import keeps a supplied uid ([733414b](https://github.com/SteadyEOC/RangerTrak/commit/733414b83b73f3c09e04908df0ca6146f17e59ee))
+
 ### [0.99.21-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.20-alpha...v0.99.21-alpha) (2026-10-05)
 
 
