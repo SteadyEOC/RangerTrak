@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core'
+import { ApplicationRef, Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core'
 import { RouterModule } from '@angular/router'
 import { MatSnackBarModule } from '@angular/material/snack-bar'
 
@@ -41,6 +41,7 @@ import { InstallUpdateComponent } from './shared/install-update/install-update.c
 export class AppComponent implements OnInit {
 
   private id = "AppComponent"
+  private readonly appRef = inject(ApplicationRef)
   title = 'RangerTrak'
   pageDescr = `Track & map Rangers' progress & reports on a mission`
 
@@ -73,5 +74,21 @@ export class AppComponent implements OnInit {
     // Observable itself for truthiness - so it logged "App Updates ARE Available!"
     // on every single load and never actually updated anything.
     this.updateService.init()
+  }
+
+  /**
+   * E-171, 2026-10-06 (PageSpeed mobile CLS 0.49, all of it on `rangertrak-page > main.main`).
+   * RouterOutlet.activateWith() creates the routed component (location.createComponent) and
+   * only calls markForCheck(), so the component's template runs in CREATION mode in one task
+   * and its first UPDATE pass - where every `@if`, such as PageComponent's `@if (showHeader)`
+   * around the ~137px pageHeader, and every binding is evaluated - waits for the zoneless
+   * scheduler's next tick. Entry's update pass is ~130ms, and a frame can paint between the
+   * two tasks: `main.main` at top 82 with no header, then 82 -> 219 when the header arrives.
+   * Ticking here, still inside the activating task, means nothing paints until the page is
+   * complete. The content is not hidden and nothing is deferred; the same work just runs
+   * before the first frame rather than after it.
+   */
+  onRouteActivated(): void {
+    try { this.appRef.tick() } catch { /* already inside a tick: the scheduled one will do it */ }
   }
 }

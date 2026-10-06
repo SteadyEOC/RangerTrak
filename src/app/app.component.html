@@ -28,7 +28,9 @@
 </div>
 
 <div class="content">
-  <router-outlet></router-outlet>
+  <!-- E-171 (2026-10-06): (activate) flushes the routed page's first update pass in the SAME
+       task that created it - see AppComponent.onRouteActivated for why. -->
+  <router-outlet (activate)="onRouteActivated()"></router-outlet>
 </div>
 
 <rangertrak-footer></rangertrak-footer>
