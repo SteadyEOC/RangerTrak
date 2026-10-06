@@ -5,7 +5,7 @@
  * dialog). The blog uses it as a hero image; it is also a quick way to eyeball the sheet.
  *
  *   node tools/serve-dist.js                      (in another terminal; serves dist on :8080)
- *   node tools/print-map-sheet.js [outDir] [--base=http://localhost:8080] [--name=...] [--demo=grand-canyon|vashon|state-fair] [--orientation=landscape|portrait]
+ *   node tools/print-map-sheet.js [outDir] [--base=http://localhost:8080] [--name=...] [--demo=grand-canyon|vashon|state-fair] [--orientation=landscape|portrait] [--print-scale=56]
  *
  * Loads a sample mission (Grand Canyon unless --demo says otherwise), opens the Leaflet map, switches on the
  * USNG / MGRS grid, sets the readout to DDM (so the edge ticks print in degrees and decimal
@@ -42,6 +42,9 @@ const SUFFIX = PORTRAIT ? '-portrait' : ''
 // Device pixels per CSS px. 2 = 192 dpi: at 300/96 (300 dpi) headless Chrome's screenshot hung
 // every time (2026-09-30), at any viewport height; 2 is the largest tried that works.
 const SCALE = Number(opt('scale', 2))
+// 2026-10-05, John: the print dialog's own Scale (Chrome's "More settings > Scale", e.g. 56) for the
+// PDF. Below 100 the page lays out wider and taller than the sheet the tiles were loaded for.
+const PRINT_SCALE = Number(opt('print-scale', 100)) / 100
 
 function findChrome() {
   if (process.env.CHROME_BIN && fs.existsSync(process.env.CHROME_BIN)) return process.env.CHROME_BIN
@@ -145,8 +148,30 @@ async function main() {
       document.head.appendChild(style);
       document.body.classList.add('rt-print-map');
     })()`) // printMapSheet() took its own copies off again when window.print() returned
+    if (PRINT_SCALE !== 1) {
+      // The dialog's Scale lays the page out 1/scale wider and taller; the screenshot shows it at that size.
+      await send('Emulation.setDeviceMetricsOverride', { width: Math.round(PAGE_W / PRINT_SCALE),
+        height: Math.round(PAGE_H / PRINT_SCALE), deviceScaleFactor: SCALE * PRINT_SCALE, mobile: false })
+    }
+    // 2026-10-05, John: the base map must reach every edge of the frame - tiles are loaded before the
+    // print dialog opens, so any part of the printed frame they miss prints blank. Sampled on a grid, at
+    // once (what the print dialog captures) and after the 6 s a headless capture allows.
+    const coverage = () => evaluate(`(() => {
+      const map = document.querySelector('#mapLeaflet-main').getBoundingClientRect();
+      const pane = document.querySelector('#mapLeaflet-main .leaflet-tile-pane .leaflet-layer');
+      const tiles = [...(pane?.querySelectorAll('img.leaflet-tile-loaded') || [])].map(t => t.getBoundingClientRect());
+      let hit = 0, n = 0;
+      for (let i = 0.5; i < 40; i++) for (let j = 0.5; j < 40; j++) {
+        const x = map.left + map.width * i / 40, y = map.top + map.height * j / 40; n++;
+        if (tiles.some(r => x >= r.left && x < r.right && y >= r.top && y < r.bottom)) hit++;
+      }
+      return 'base map covers ' + Math.round(100 * hit / n) + '% of the map frame (' + tiles.length + ' tiles)'
+    })()`)
     await send('Emulation.setEmulatedMedia', { media: 'print' })
-    await sleep(6000) // tiles for the re-measured map
+    await sleep(100)
+    console.log(`at once: ${await coverage()}`)
+    await sleep(6000)
+    console.log(`after 6 s: ${await coverage()}`) // tiles for the re-measured map
     const ticks = await evaluate(`document.querySelectorAll('.map-edge-ticks__label').length`)
     console.log(`edge tick labels on the sheet: ${ticks}`)
     // 2026-10-05, John: E-172 - does page 1 end where it should? The map frame's height and where
@@ -209,7 +234,7 @@ async function main() {
 
     // The PDF last: a screenshot taken after printToPDF hung in headless Chrome.
     const pdf = await Promise.race([
-      send('Page.printToPDF', { preferCSSPageSize: true, printBackground: true }),
+      send('Page.printToPDF', { preferCSSPageSize: true, printBackground: true, scale: PRINT_SCALE }),
       sleep(60000).then(() => { throw new Error('printToPDF timed out') }),
     ])
     const pdfPath = path.join(outDir, `printed-map-sheet-${DEMO}${SUFFIX}.pdf`)

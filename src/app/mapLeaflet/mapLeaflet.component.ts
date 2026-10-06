@@ -1741,6 +1741,17 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     type Saved = { layer: L.TileLayer, tileSize: L.TileLayerOptions['tileSize'], zoomOffset?: number, maxNativeZoom?: number }
     const saved: Saved[] = []
     const candidates: L.TileLayer[] = []
+    // 2026-10-05, John: the prep size is larger than the printed map (see the scss), so the tiles
+    // past the printed edge must survive the print-time invalidateSize(): Leaflet drops tiles more
+    // than keepBuffer tiles outside the view, and a smaller dialog Scale needs them back at once.
+    const keepBuffers = new Map<L.GridLayer, number | undefined>()
+    this.lMap.eachLayer(layer => {
+      if (layer instanceof L.GridLayer) {
+        const o = layer.options as L.GridLayerOptions
+        keepBuffers.set(layer, o.keepBuffer)
+        o.keepBuffer = 100
+      }
+    })
     this.lMap.eachLayer(layer => {
       if (layer instanceof L.TileLayer
         && (online || this.offlineTileLayers.includes(layer as ReturnType<typeof tileLayerOffline>))) {
@@ -1772,6 +1783,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         return
       }
       undone = true
+      keepBuffers.forEach((keepBuffer, layer) => { (layer.options as L.GridLayerOptions).keepBuffer = keepBuffer })
       for (const { layer, tileSize, zoomOffset, maxNativeZoom } of saved) {
         Object.assign(layer.options, { tileSize, zoomOffset, maxNativeZoom })
         if (this.lMap.hasLayer(layer)) {

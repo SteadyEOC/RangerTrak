@@ -683,11 +683,16 @@ mat-slide-toggle {
 // 2026-09-30, John: while Print map loads the sharper tiles (prepareSharpPrint()), the map is
 // given its printed size on screen too (landscape Letter's printable width, the print height),
 // so the tiles fetched are the ones the sheet shows. Screen only: on paper the print rules win.
+// 2026-10-05, John: "the base map only fills the middle of the printed frame" - the print
+// dialog's Scale (it was 56%) lays the page out 1/scale wider and taller, and the dialog draws at
+// once, before any tile for the extra area can load. So the prep size is twice the sheet each way
+// (any Scale down to 50%, and portrait too), and prepareSharpPrint() keeps those tiles when the
+// map shrinks back to the printed size.
 @media screen {
   :host-context(body.rt-print-prep) .mapLeaflet-frame {
-    width    : 259mm; // landscape Letter's printable width; the title and legend float on the map now
+    width    : 518mm; // 2 x landscape Letter's printable width; the title and legend float on the map now
     max-width: none;
-    height   : 178mm;
+    height   : 382mm; // 2 x portrait Letter's printable height, so portrait is covered too
   }
 
   :host-context(body.rt-print-prep) #mapLeaflet-main {

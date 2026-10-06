@@ -140,9 +140,12 @@ export class UsageStateService {
       return
     }
     if (this.mode() === 'demo') {
-      if (!confirm('Start a real mission?\n\nThis clears the demo data (rangers, radio log entries and '
+      // 2026-10-05, John: "I clicked Exercise and it asked whether to start a real mission" - the
+      // question names the mode picked; "real" read as Incident.
+      const start = mode === 'exercise' ? 'Leave the demo and start an exercise?' : 'Leave the demo and start a real incident?'
+      if (!confirm(start + '\n\nThis clears the demo data (rangers, radio log entries and '
         + 'locations) and resets the mission settings to their defaults. Demo data is not '
-        + 'relabelled as real.')) return
+        + 'carried over.')) return
       await this.startRealMission(mode)
       window.location.reload()
       return
