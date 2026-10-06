@@ -335,8 +335,8 @@ the `rangertrak-records` keys fall back to `localStorage` under the same names f
 | 8 | localStorage | `printTipShown` | `shared/export/print-tip.ts` | no | no | none |
 | 9 | localStorage | `ics213DownloadFallbackExplained` | `shared/export/ics213-print.ts` | no | no | none |
 | 10 | localStorage | `updateLastChecked` | `update.service.ts` | no | no | none |
-| 11 | localStorage | `lastCoordinateFormat` | `entry/location.component.ts` | no | no | none |
-| 12 | localStorage | `rangertrak.rangers.privacyNoticeDismissed` | `rangers/rangers.component.ts` | no | no | none |
+| 11 | localStorage | `lastCoordinateFormat` | `device-prefs.service.ts` | no | no | none |
+| 12 | localStorage | `rangertrak.rangers.privacyNoticeDismissed` | `device-prefs.service.ts` | no | no | none |
 | 13 | IndexedDB `rangertrak-records` / `kv` | `rangers` | `ranger.service.ts` | yes | yes | `ranger-migration.ts`, schema 1 |
 | 14 | IndexedDB `rangertrak-records` / `kv` | `radioLog` | `radio-log.service.ts` | yes | yes | `radio-log-migration.ts`, schema 1 |
 | 15 | IndexedDB `rangertrak-records` / `kv` | `radioLog-BAD` | `radio-log.service.ts` | no | yes | none; quarantine copy of an unreadable log |

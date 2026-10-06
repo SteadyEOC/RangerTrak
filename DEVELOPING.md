@@ -52,11 +52,13 @@ npm run lint:tsc   # typecheck only (app and spec projects separately)
 > builds stay green. `npm run lint:tsc` is what catches that; treat it as a real gate.
 >
 > ESLint (angular-eslint + typescript-eslint, `eslint.config.mjs`) replaced the dead tslint
-> on 2026-10-05. Per ADR D-57 every rule is a **warning** for now: CI runs it and shows the
-> count, but does not fail on it. The two rules that matter are the boundary rules at the
-> bottom of the config: `src/app/domain/` imports only `domain/` (plus type-only `*.interface`
-> files) and nothing framework or storage; components do not import `shared/storage/` or
-> touch `localStorage`. Fix or allow-list what fires, then promote them to errors.
+> on 2026-10-05. The two rules that matter are the **boundary rules** at the bottom of the
+> config (ADR D-57), and they are **errors** that fail CI: `src/app/domain/` imports only
+> `domain/` (plus type-only `*.interface` files) and nothing framework or storage; components
+> do not import `shared/storage/` (except to inject `RecordStore`) or touch `localStorage`; a
+> small per-device preference goes in a service such as `DevicePrefsService`. The recommended
+> angular-eslint / typescript-eslint sets are still **warnings** (about 600): fix them as files
+> are touched, then promote.
 
 The suite is expected to be **all green** (124 specs as of this writing — check the run's
 own "Executed N of N" line for the current count rather than trusting this number to stay

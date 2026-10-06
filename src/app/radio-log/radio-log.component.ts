@@ -30,7 +30,7 @@ import {
   RangerService, MissionService, MissionType, statusColorValue, statusInkValue
 } from '../shared/services'
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
-import { recordStore } from '../shared/storage/record-store'
+import { RecordStore } from '../shared/storage/record-store'
 import { showFirstPrintTip } from '../shared/export/print-tip'
 import { armPrintTitle } from '../shared/export/print-title'
 
@@ -425,6 +425,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // private teamService: TeamService,
     private rangerService: RangerService,
     private missionService: MissionService,
+    private recordStore: RecordStore,
     @Inject(DOCUMENT) private document: Document
   ) {
     this.log.info(` Construction`, this.id)
@@ -638,7 +639,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    */
   async reloadPage() {
     this.log.verbose(`Reloading window!`, this.id)
-    await recordStore.flush()
+    await this.recordStore.flush()
     window.location.reload()
   }
 

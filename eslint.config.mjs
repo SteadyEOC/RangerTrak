@@ -1,5 +1,6 @@
 // ESLint flat config. Replaces the dead tslint.json (tslint deprecated 2019, never installed).
 // ADR D-57: rules start as warnings and become errors once what fires is fixed or allow-listed.
+// The boundary rules below were clean on 2026-10-05 and are errors; the recommended sets still warn.
 // The two boundary rules at the bottom are the reason this file exists; the recommended sets
 // are the usual angular-eslint starting point.
 import angular from 'angular-eslint'
@@ -47,7 +48,7 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': 'off',
       '@typescript-eslint/no-restricted-imports': [
-        'warn',
+        'error',
         {
           patterns: [
             { group: ['@angular/*', 'rxjs', 'rxjs/*', 'leaflet', 'leaflet.*', 'maplibre-gl', 'pmtiles', 'ag-grid-*'], message: 'domain/ is framework-free (ADR D-57).' },
@@ -56,7 +57,7 @@ export default tseslint.config(
           ],
         },
       ],
-      'no-restricted-globals': ['warn', { name: 'localStorage', message: 'Persistence lives in services, not domain/ (ADR D-57).' }, { name: 'sessionStorage', message: 'Persistence lives in services, not domain/ (ADR D-57).' }, { name: 'indexedDB', message: 'Persistence lives in services, not domain/ (ADR D-57).' }],
+      'no-restricted-globals': ['error', { name: 'localStorage', message: 'Persistence lives in services, not domain/ (ADR D-57).' }, { name: 'sessionStorage', message: 'Persistence lives in services, not domain/ (ADR D-57).' }, { name: 'indexedDB', message: 'Persistence lives in services, not domain/ (ADR D-57).' }],
     },
   },
 
@@ -66,11 +67,17 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': 'off',
       '@typescript-eslint/no-restricted-imports': [
-        'warn',
-        { patterns: [{ group: ['**/shared/storage/*', '!**/shared/storage/unlock-form'], message: 'Components go through a service, not shared/storage/ (ADR D-57).' }] },
+        'error',
+        {
+          patterns: [
+            { group: ['**/shared/storage/*', '!**/shared/storage/record-store'], message: 'Components go through a service, not shared/storage/ (ADR D-57).' },
+            // The injectable RecordStore wrapper is a service; the bare `recordStore` singleton is not.
+            { group: ['**/shared/storage/record-store'], allowImportNames: ['RecordStore'], message: 'Components inject RecordStore; they do not import the recordStore singleton (ADR D-57).' },
+          ],
+        },
       ],
-      'no-restricted-globals': ['warn', { name: 'localStorage', message: 'Components go through a service, not localStorage (ADR D-57).' }],
-      'no-restricted-properties': ['warn', { object: 'window', property: 'localStorage', message: 'Components go through a service, not localStorage (ADR D-57).' }],
+      'no-restricted-globals': ['error', { name: 'localStorage', message: 'Components go through a service, not localStorage (ADR D-57).' }],
+      'no-restricted-properties': ['error', { object: 'window', property: 'localStorage', message: 'Components go through a service, not localStorage (ADR D-57).' }],
     },
   },
 )

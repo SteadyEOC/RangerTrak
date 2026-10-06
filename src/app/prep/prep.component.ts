@@ -15,7 +15,7 @@ import { LogService, MissionLocationService, MissionService, RangerService, Rang
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see
 // RangersComponent.reloadPage()'s own doc comment for the full reasoning.
-import { recordStore } from '../shared/storage/record-store'
+import { RecordStore } from '../shared/storage/record-store'
 
 /**
  * E-109 **Setup files**, v2 (2026-08-31, ADR D-48 - "a lazy-loaded route inside RangerTrak...
@@ -78,6 +78,7 @@ export class PrepComponent {
     private locationService: MissionLocationService,
     private photos: RangerPhotoService,
     private log: LogService,
+    private recordStore: RecordStore,
     @Inject(DOCUMENT) private document: Document,
   ) { }
 
@@ -339,7 +340,7 @@ export class PrepComponent {
   // inventing a new convention. Called from the explicit "Reload now" button only (R-2) -
   // never automatically, so `sessionLog` survives long enough to be read.
   async reloadPage(): Promise<void> {
-    await recordStore.flush()
+    await this.recordStore.flush()
     window.location.reload()
   }
 

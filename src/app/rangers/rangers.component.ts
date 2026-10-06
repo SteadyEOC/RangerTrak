@@ -29,7 +29,8 @@ import {
 // token"), the same way the barrel broke `imports:` arrays during Sprint B.
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
-import { recordStore } from '../shared/storage/record-store'
+import { RecordStore } from '../shared/storage/record-store'
+import { DevicePrefsService } from '../shared/services/device-prefs.service'
 import { extractMissionZip, MissionZipManifest, MissionZipPhoto } from '../shared/export/mission-zip'
 import { mergeRangers } from '../shared/services/ranger-migration'
 import { CustomTooltip } from './customTooltip'
@@ -112,10 +113,9 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // read past. Dismissing it hides the *bar*; the full notice stays in the "Privacy &
   // data handling" section below and cannot be removed.
   //
-  // Deliberately its own localStorage key rather than a field on the settings object:
+  // Deliberately its own localStorage key (held by DevicePrefsService) rather than a field on the settings object:
   // this is a per-device UI acknowledgement, not mission data, and it must not ride along
   // in Mission Export or trigger the settings migration 24e is tracking.
-  private static readonly PRIVACY_DISMISSED_KEY = 'rangertrak.rangers.privacyNoticeDismissed'
   privacyNoticeDismissed = false
 
 
@@ -324,6 +324,8 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     // The confidentiality bar's "What this means" opens the Guide drawer's Privacy tab -
     // see openPrivacyDetails().
     private guide: GuideService,
+    private recordStore: RecordStore,
+    private devicePrefs: DevicePrefsService,
     @Inject(DOCUMENT) private document: Document
   ) {
     this.log.info(`======== Constructor() ============`, this.id)
@@ -337,8 +339,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // Initialize data or fetch external data from services or API (https://geeksarray.com/blog/angular-component-lifecycle)
   ngOnInit(): void {
 
-    this.privacyNoticeDismissed =
-      localStorage.getItem(RangersComponent.PRIVACY_DISMISSED_KEY) === 'true'
+    this.privacyNoticeDismissed = this.devicePrefs.isRangersPrivacyNoticeDismissed()
 
     this.alert = new AlertsComponent(this._snackBar, this.log, this.missionService, this.document) // TODO: Use Alert Service to avoid passing along doc & snackbar as parameters!
     //this.teamService = teamService
@@ -805,7 +806,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   async reloadPage() {
     this.log.verbose(`Reloading window!`, this.id)
-    await recordStore.flush()
+    await this.recordStore.flush()
     window.location.reload()
   }
 
@@ -892,12 +893,10 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
 
   dismissPrivacyNotice() {
     this.privacyNoticeDismissed = true
-    try {
-      localStorage.setItem(RangersComponent.PRIVACY_DISMISSED_KEY, 'true')
-    } catch (e) {
+    if (!this.devicePrefs.dismissRangersPrivacyNotice()) {
       // Private-browsing or a full quota. The bar still goes away for this visit; it
       // simply comes back next time, which is the safe direction to fail in.
-      this.log.warn(`Could not persist privacy-notice dismissal: ${e}`, this.id)
+      this.log.warn('Could not persist privacy-notice dismissal', this.id)
     }
   }
 

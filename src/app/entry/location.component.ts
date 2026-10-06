@@ -29,15 +29,15 @@ import { OpenLocationCode } from '../shared/mapping/open-location-code'
 import {
   LocationType, LogService, MissionService, MissionType, undefinedAddressFlag, undefinedLocation
 } from '../shared/services'
+import { DevicePrefsService } from '../shared/services/device-prefs.service'
 
 import { MATERIAL_IMPORTS } from '../material-imports'
 
 // E-114 §1a (2026-08-31): "the ranger will almost always use the same coordinate system, so
 // initially we offer ALL OPTIONS, then just default to that" - the maintainer's own design.
-// Persisted like every other per-device preference in this app (WelcomePanelService's own
-// key, FieldModeService's FIELD_MODE_KEY) - see activeSystem's constructor-time resolution
-// below for where this outranks the mission's own preferredSystems() default.
-const LAST_COORDINATE_FORMAT_KEY = 'lastCoordinateFormat'
+// Persisted per device by DevicePrefsService (key `lastCoordinateFormat`) - see activeSystem's
+// constructor-time resolution below for where this outranks the mission's own
+// preferredSystems() default.
 
 /*
 https://stackoverflow.com/questions/43270564/dividing-a-form-into-multiple-components-with-validation
@@ -195,10 +195,10 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
    * parent Entry form). */
   setActiveSystem(system: 'DD' | 'DDM' | 'DMS' | 'MGRS' | 'UTM'): void {
     this.activeSystem.set(system)
-    // E-114 §1a: remembered across devices/sessions/missions - see LAST_COORDINATE_FORMAT_KEY's
-    // own comment. Written on every switch, not just the first, so it always reflects
+    // E-114 §1a: remembered across devices/sessions/missions - see the E-114 §1a comment near
+    // the imports. Written on every switch, not just the first, so it always reflects
     // whatever this scribe/ranger most recently actually used.
-    localStorage.setItem(LAST_COORDINATE_FORMAT_KEY, system)
+    this.devicePrefs.setLastCoordinateFormat(system)
   }
 
   /**
@@ -416,6 +416,7 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   constructor(
     private missionService: MissionService,
     private log: LogService,
+    private devicePrefs: DevicePrefsService,
     @Inject(GEOCODING_PROVIDER) private geocodingProvider: GeocodingProvider,
     // private _toppy: Toppy,
   ) {
@@ -443,8 +444,8 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
           this.activeSystemDefaultSet = true
           // E-114 §1a: whatever this device last actually used outranks the mission's own
           // preferred format - a stronger, more specific signal (see
-          // LAST_COORDINATE_FORMAT_KEY's own comment for the maintainer's reasoning).
-          const remembered = localStorage.getItem(LAST_COORDINATE_FORMAT_KEY)
+          // the E-114 §1a comment above the class for the maintainer's reasoning).
+          const remembered = this.devicePrefs.getLastCoordinateFormat()
           const rememberedValid = LocationComponent.SYSTEM_ORDER.find(s => s === remembered)
           const preferred = rememberedValid ?? this.preferredSystems()[0]
           if (preferred) this.activeSystem.set(preferred)
