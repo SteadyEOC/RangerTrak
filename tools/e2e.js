@@ -2014,7 +2014,7 @@ async function checkReportsSurviveNavigation() {
 
   for (const note of ['E2E-FIRST', 'E2E-SECOND']) {
     await evaluate(`(async () => {
-      const ta = document.querySelector('textarea[placeholder="Enter Any Notes"]');
+      const ta = document.querySelector('#enter__What--area');
       if (ta) {
         Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, ${JSON.stringify(note)});
         ta.dispatchEvent(new Event('input', { bubbles: true }));
@@ -2946,7 +2946,7 @@ async function checkReportPacketRoundTrip(downloads) {
   await goto('/')
 
   await evaluate(`(async () => {
-    const ta = document.querySelector('textarea[placeholder="Enter Any Notes"]');
+    const ta = document.querySelector('#enter__What--area');
     if (ta) {
       Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, 'E2E-PACKET');
       ta.dispatchEvent(new Event('input', { bubbles: true }));
@@ -2974,6 +2974,13 @@ async function checkReportPacketRoundTrip(downloads) {
   await sleep(1500)
   const afterFirstImport = (JSON.parse((await idbGetRaw('radioLog'))||'{}').logEntries||[]).length
   check('the packet\'s entry is merged in on the first import', afterFirstImport, 2)
+  // 2026-10-07 (blog session): storage had the merged report but the grid kept the old count
+  // until the page was reopened. Check what the operator sees, without leaving the page -
+  // grid rows or phone cards, whichever this viewport renders (both read radioLogEntries()).
+  // Distinct row-ids, since a pinned column renders the same row in a second container.
+  const shownRows = await evaluate(`new Set([...document.querySelectorAll('.ag-row[row-id]')].map(r => r.getAttribute('row-id'))).size
+    + document.querySelectorAll('.radio-log-cards__card').length`)
+  check('...and the page shows it without being reopened', shownRows, 2)
 
   await setFileInput('input[type="file"]', packetFile)
   await sleep(1500)

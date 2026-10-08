@@ -86,6 +86,12 @@ describe('buildIcs309Log', () => {
     expect(log.header.opPeriodEnd).toBeInstanceOf(Date)
   })
 
+  it('names the incident by event name first, as the ICS-213 does, falling back to the incident number', () => {
+    expect(buildIcs309Log([], { ...mission, event: 'Missing Person Exercise' }).header.incidentName)
+      .toBe('Missing Person Exercise')
+    expect(buildIcs309Log([], { ...mission, event: '  ' }).header.incidentName).toBe(mission.mission)
+  })
+
   it('handles zero reports without throwing', () => {
     const log = buildIcs309Log([], mission)
 

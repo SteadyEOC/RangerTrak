@@ -69,6 +69,8 @@ export interface Ics309Log {
 /** What a caller pulls from `MissionType` - kept narrow so this module has no Angular tie. */
 export interface Ics309MissionInfo {
   mission: string
+  /** Event name; box 1 prefers it over the incident number, as the ICS-213 and print titles do. */
+  event?: string
   opPeriod: string
   opPeriodStart: Date
   opPeriodEnd: Date
@@ -102,7 +104,7 @@ export function buildIcs309Log(
 
   return {
     header: {
-      incidentName: mission.mission,
+      incidentName: mission.event?.trim() || mission.mission,
       operationalPeriod: formatOperationalPeriod(mission),
       datePrepared: now,
       preparedBy,

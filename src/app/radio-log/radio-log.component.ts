@@ -357,6 +357,9 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   gridOptions: GridOptions = {
     // PROPERTIES
     theme: rangertrakGridTheme,
+    // Stable row identity, so a new rowData array (gotNewRadioLog) updates rows in place and
+    // keeps the selection, instead of rebuilding the grid on every cell edit.
+    getRowId: (params) => String(params.data.id),
     // v32.2+ object form. checkboxes/headerCheckbox off + enableClickSelection keeps the
     // original "multiple" behavior (click a row to select, ctrl/shift to extend) rather
     // than the new default, which would add a checkbox column the layout doesn't expect.
@@ -648,7 +651,10 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     this.log.verbose(`New collection of ${newReports.numReport} Radio Log entries observed.`, this.id)
 
     this.radioLog = newReports
-    this.radioLogEntries.set(newReports.logEntries)
+    // A fresh array: the service pushes onto logEntries in place (mergeIncomingEntries), so
+    // passing the same reference was a no-op for the signal and the grid never saw a merged
+    // Report Packet until the page was reopened.
+    this.radioLogEntries.set([...newReports.logEntries])
     this.refreshGrid()
     //this.reloadPage()  // TODO: needed? - creates endless loop!
   }
@@ -888,6 +894,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
     const log = buildIcs309Log(reports, {
       mission: this.settings.mission,
+      event: this.settings.event,
       opPeriod: this.settings.opPeriod,
       opPeriodStart: this.settings.opPeriodStart,
       opPeriodEnd: this.settings.opPeriodEnd,
