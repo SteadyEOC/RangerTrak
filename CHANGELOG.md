@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.27-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.26-alpha...v0.99.27-alpha) (2026-10-08)
+
+
+### Bug Fixes
+
+* **radio-log:** reports merged from a Report Packet show on the Radio Log at once, without reopening the page; the ICS-309's Incident Name now matches the ICS-213's ([83c7987](https://github.com/SteadyEOC/RangerTrak/commit/83c7987))
+
 ### [0.99.26-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.25-alpha...v0.99.26-alpha) (2026-10-06)
 
 
