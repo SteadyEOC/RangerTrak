@@ -108,7 +108,7 @@
     "tsviz-cli": "^2.0.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
-    "wrangler": "^4.149.0"
+    "wrangler": "^4.150.0"
   },
   "importSort": {
     ".ts, .tsx": {
