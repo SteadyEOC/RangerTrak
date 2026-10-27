@@ -3652,7 +3652,7 @@ async function checkAarNotes() {
     ta.dispatchEvent(new Event('input', { bubbles: true }));
     if (${aboutApp}) {
       const app = [...document.querySelectorAll('[data-testid="aar-note-choice"] button')]
-        .find(b => b.textContent.includes('RangerTrak'));
+        .find(b => b.textContent.trim() === 'App');
       app && app.click();
     }
     await sleep(200);
@@ -3719,7 +3719,7 @@ async function checkActivityLog() {
     const kind = document.querySelector('[data-testid="aar-note-choice"]'); // E-230: one choice
     if (!kind) return 'no kind choice';
     const opensOn = kind.querySelector('.mat-button-toggle-checked')?.textContent.trim();
-    [...kind.querySelectorAll('button')].find(b => b.textContent.includes('ICS-214 line')).click();
+    [...kind.querySelectorAll('button')].find(b => b.textContent.includes('ICS-214')).click();
     await sleep(300);
     const label = document.querySelector('[data-testid="aar-note"]')?.textContent.replace('edit_note', '').trim();
     const ta = document.querySelector('[data-testid="aar-note-text"]');
@@ -3731,8 +3731,8 @@ async function checkActivityLog() {
     await sleep(600);
     return { opensOn, label, hasTime, dialogOpen: !!document.querySelector('[data-testid="aar-note-text"]') };
   })()`)
-  check('the box opens on an AAR note about this incident, the button reads AAR/214, a 214 line has a time',
-    captured, { opensOn: 'This incident', label: 'AAR/214', hasTime: true, dialogOpen: false })
+  check('the box opens on an AAR note about the mission, the button reads AAR/214, a 214 line has a time',
+    captured, { opensOn: 'Mission', label: 'AAR/214', hasTime: true, dialogOpen: false })
 
   const stored = JSON.parse((await idbGetRaw('aarNotes')) || '{}').notes || []
   check('the line is stored as an activity line about the incident, with no edited time',

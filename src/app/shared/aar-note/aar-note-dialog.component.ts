@@ -9,7 +9,7 @@ import { MatInputModule } from '@angular/material/input'
 import { MatButtonModule } from '@angular/material/button'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
 import { MatDialogModule } from '@angular/material/dialog'
-import { AAR_NOTE_ABOUT_LABELS, AarNoteAbout, AarNoteKind, AarNoteService, FieldModeService } from '../services'
+import { AarNoteAbout, AarNoteKind, AarNoteService, FieldModeService } from '../services'
 import { DevicePrefsService } from '../services/device-prefs.service'
 
 /** `YYYY-MM-DDTHH:mm` in local time, the value format of an `<input type="datetime-local">`. */
@@ -47,7 +47,6 @@ export interface AarNoteDialogData {
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AarNoteDialogComponent {
-  readonly aboutLabels = AAR_NOTE_ABOUT_LABELS
   text = signal('')
   about = signal<AarNoteAbout>('incident')
 
