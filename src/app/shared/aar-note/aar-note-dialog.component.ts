@@ -74,6 +74,18 @@ export class AarNoteDialogComponent {
     if (this.choosesKind) this.kind.set(this.prefs.getAarNoteLastKind())
   }
 
+  /** E-230: the dialog's one choice - an AAR note's About, or an ICS-214 line. */
+  readonly choice = computed<AarNoteAbout | 'activity'>(() => this.kind() === 'activity' ? 'activity' : this.about())
+
+  onChoiceChange(choice: AarNoteAbout | 'activity'): void {
+    if (choice === 'activity') {
+      this.onKindChange('activity')
+      return
+    }
+    this.about.set(choice)
+    if (this.kind() !== 'aar') this.onKindChange('aar')
+  }
+
   onKindChange(kind: AarNoteKind): void {
     this.kind.set(kind)
     this.prefs.setAarNoteLastKind(kind)

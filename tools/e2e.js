@@ -3651,7 +3651,7 @@ async function checkAarNotes() {
     Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, ${JSON.stringify(text)});
     ta.dispatchEvent(new Event('input', { bubbles: true }));
     if (${aboutApp}) {
-      const app = [...document.querySelectorAll('[data-testid="aar-note-about"] button')]
+      const app = [...document.querySelectorAll('[data-testid="aar-note-choice"] button')]
         .find(b => b.textContent.includes('RangerTrak'));
       app && app.click();
     }
@@ -3716,7 +3716,7 @@ async function checkActivityLog() {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     document.querySelector('[data-testid="aar-note"]').click();
     await sleep(600);
-    const kind = document.querySelector('[data-testid="aar-note-kind"]');
+    const kind = document.querySelector('[data-testid="aar-note-choice"]'); // E-230: one choice
     if (!kind) return 'no kind choice';
     const opensOn = kind.querySelector('.mat-button-toggle-checked')?.textContent.trim();
     [...kind.querySelectorAll('button')].find(b => b.textContent.includes('ICS-214 line')).click();
@@ -3726,14 +3726,13 @@ async function checkActivityLog() {
     Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, 'E2E arrived at the command post');
     ta.dispatchEvent(new Event('input', { bubbles: true }));
     const hasTime = !!document.querySelector('[data-testid="aar-note-time"]');
-    const hasAbout = !!document.querySelector('[data-testid="aar-note-about"]');
     await sleep(200);
     document.querySelector('[data-testid="aar-note-save"]').click();
     await sleep(600);
-    return { opensOn, label, hasTime, hasAbout, dialogOpen: !!document.querySelector('[data-testid="aar-note-text"]') };
+    return { opensOn, label, hasTime, dialogOpen: !!document.querySelector('[data-testid="aar-note-text"]') };
   })()`)
-  check('the box opens on AAR note, the button reads AAR/214, a 214 line has a time and no About choice',
-    captured, { opensOn: 'AAR note', label: 'AAR/214', hasTime: true, hasAbout: false, dialogOpen: false })
+  check('the box opens on an AAR note about this incident, the button reads AAR/214, a 214 line has a time',
+    captured, { opensOn: 'This incident', label: 'AAR/214', hasTime: true, dialogOpen: false })
 
   const stored = JSON.parse((await idbGetRaw('aarNotes')) || '{}').notes || []
   check('the line is stored as an activity line about the incident, with no edited time',

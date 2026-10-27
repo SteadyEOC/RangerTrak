@@ -98,7 +98,10 @@ describe('AarNoteDialogComponent', () => {
 
     it('opens on AAR note on a device that has not chosen yet', () => {
       expect(component.kind()).toBe('aar');
-      expect(fixture.nativeElement.querySelector('[data-testid="aar-note-kind"]')).not.toBeNull();
+      // E-230: one choice of three - the two AAR Abouts and the 214 line.
+      const choices = [...fixture.nativeElement.querySelectorAll('[data-testid="aar-note-choice"] button')].map((b: Element) => b.textContent!.trim());
+      expect(choices).toEqual(['This incident', 'RangerTrak', 'ICS-214 line']);
+      expect(component.choice()).toBe('incident');
     });
 
     it('remembers the kind used last on this device', () => {
@@ -109,6 +112,14 @@ describe('AarNoteDialogComponent', () => {
       component.onKindChange('aar');
       remake();
       expect(component.kind()).toBe('aar');
+    });
+
+    it('one choice sets both kind and About (E-230)', () => {
+      component.onChoiceChange('activity');
+      expect([component.kind(), component.choice()]).toEqual(['activity', 'activity']);
+      component.onChoiceChange('app');
+      expect([component.kind(), component.about(), component.choice()]).toEqual(['aar', 'app', 'app']);
+      expect(localStorage.getItem('aarNoteLastKind')).toBe('aar');
     });
 
     it('saves a 214 line with no edited time when the time is left alone', () => {
@@ -149,7 +160,8 @@ describe('AarNoteDialogComponent', () => {
       TestBed.inject(FieldModeService).enabled.set(true);
       remake();
       expect(component.kind()).toBe('aar');
-      expect(fixture.nativeElement.querySelector('[data-testid="aar-note-kind"]')).toBeNull();
+      const choices = [...fixture.nativeElement.querySelectorAll('[data-testid="aar-note-choice"] button')].map((b: Element) => b.textContent!.trim());
+      expect(choices).toEqual(['This incident', 'RangerTrak']);
       expect(fixture.nativeElement.querySelector('[data-testid="aar-note-214-link"]')).toBeNull();
       component.text.set('Weak signal at the ridge');
       component.onSave();

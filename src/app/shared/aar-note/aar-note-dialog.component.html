@@ -1,14 +1,17 @@
 <h2 mat-dialog-title>{{ kind() === 'activity' ? 'ICS-214 activity line' : 'Note for the after-action review' }}</h2>
 
 <div mat-dialog-content class="rt-aar-dialog">
-  <!-- E-04 / D-63: AAR note or ICS-214 line. Hidden on a field phone, which only ever takes AAR notes. -->
-  @if (choosesKind) {
-  <mat-button-toggle-group [value]="kind()" (change)="onKindChange($event.value)" aria-label="What to record"
-    data-testid="aar-note-kind">
-    <mat-button-toggle value="aar">AAR note</mat-button-toggle>
+  <!-- E-230 (John 2026-10-27): one choice, not two. Was AAR note | ICS-214 line, then, for an AAR
+       note, a second About toggle. The two AAR choices name what the note is about; the third
+       (E-04 / D-63) is hidden on a field phone, which only ever takes AAR notes. -->
+  <mat-button-toggle-group [value]="choice()" (change)="onChoiceChange($event.value)" aria-label="What to record"
+    data-testid="aar-note-choice">
+    <mat-button-toggle value="incident">{{ aboutLabels.incident }}</mat-button-toggle>
+    <mat-button-toggle value="app">{{ aboutLabels.app }}</mat-button-toggle>
+    @if (choosesKind) {
     <mat-button-toggle value="activity">ICS-214 line</mat-button-toggle>
+    }
   </mat-button-toggle-group>
-  }
 
   @if (kind() === 'activity') {
   <p class="rt-aar-dialog__hint">A line for the ICS-214 activity log: what you did or what changed at your
@@ -32,14 +35,6 @@
     <mat-hint>Now, unless you change it.</mat-hint>
   </mat-form-field>
   } @else {
-  <div class="rt-aar-dialog__about">
-    <span id="rt-aar-about-label">About</span>
-    <mat-button-toggle-group [value]="about()" (change)="about.set($event.value)"
-      aria-labelledby="rt-aar-about-label" data-testid="aar-note-about">
-      <mat-button-toggle value="incident">{{ aboutLabels.incident }}</mat-button-toggle>
-      <mat-button-toggle value="app">{{ aboutLabels.app }}</mat-button-toggle>
-    </mat-button-toggle-group>
-  </div>
   <!-- 2026-09-27, John: Feedback and an AAR note marked RangerTrak are easy to confuse -
        this note is NOT sent anywhere yet, unlike Feedback (Help > Feedback), which goes
        out right away as a public GitHub issue. Shown only for the RangerTrak choice; the
