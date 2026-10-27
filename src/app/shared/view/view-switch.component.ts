@@ -36,8 +36,25 @@ import { ViewService } from '../services/view.service'
       padding-inline: 12px 4px;
       border: 1px solid var(--mat-sys-outline);
       border-radius: var(--rt-control-radius);
+      /* The label reads like AAR/214 and Help beside it: the outlined button's own label tokens (John 2026-10-27). */
+      --mat-slide-toggle-label-text-font: var(--mat-button-outlined-label-text-font, var(--mat-sys-label-large-font));
+      --mat-slide-toggle-label-text-size: var(--mat-button-outlined-label-text-size, var(--mat-sys-label-large-size));
+      --mat-slide-toggle-label-text-weight: var(--mat-button-outlined-label-text-weight, var(--mat-sys-label-large-weight));
+      --mat-slide-toggle-label-text-tracking: var(--mat-button-outlined-label-text-tracking, var(--mat-sys-label-large-tracking));
+      --mat-slide-toggle-label-text-line-height: var(--mat-sys-label-large-line-height);
+      --mat-slide-toggle-label-text-color: var(--mat-button-outlined-label-text-color, var(--mat-sys-primary));
     }
-    .view-switch--full mat-slide-toggle { border-color: var(--rt-advanced); box-shadow: inset 0 0 0 1px var(--rt-advanced); }`,
+    .view-switch--full mat-slide-toggle {
+      border-color: var(--rt-advanced); box-shadow: inset 0 0 0 1px var(--rt-advanced);
+      /* On = Full view, so the track is the plum the hint names, not the theme's primary. */
+      --mat-slide-toggle-selected-track-color: var(--rt-advanced);
+      --mat-slide-toggle-selected-hover-track-color: var(--rt-advanced);
+      --mat-slide-toggle-selected-focus-track-color: var(--rt-advanced);
+      --mat-slide-toggle-selected-pressed-track-color: var(--rt-advanced);
+      --mat-slide-toggle-selected-hover-state-layer-color: var(--rt-advanced);
+      --mat-slide-toggle-selected-focus-state-layer-color: var(--rt-advanced);
+      --mat-slide-toggle-selected-pressed-state-layer-color: var(--rt-advanced);
+    }`,
 })
 export class ViewSwitchComponent {
   protected readonly view = inject(ViewService)
