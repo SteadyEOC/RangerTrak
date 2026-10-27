@@ -23,6 +23,12 @@ permissions:
 
 jobs:
   cla-check:
+    # Bot PRs skip the check. The allowlist can't cover them: the action names each commit by its
+    # author's linked GitHub user, and a bot author isn't one, so it falls back to the committer -
+    # `web-flow` for Dependabot - and allowlisting web-flow would pass any unlinked outside commit.
+    if: >-
+      !contains(fromJSON('["dependabot[bot]","imgbot[bot]","ImgBotApp"]'),
+                github.event.pull_request.user.login || github.event.issue.user.login)
     runs-on: ubuntu-latest
     steps:
       - name: CLA Assistant
