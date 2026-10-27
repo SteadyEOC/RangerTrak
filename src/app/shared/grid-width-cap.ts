@@ -62,5 +62,14 @@ export function capGridToScreens(api: GridApi | undefined, screens: number): voi
     return { id: c.getColId(), width: flex ? minWidth : c.getActualWidth(), minWidth, fixed: flex }
   })
   const widths = Object.entries(capColumnWidths(cols, visible * screens))
-  if (widths.length) api.setColumnWidths(widths.map(([key, newWidth]) => ({ key, newWidth })))
+  if (widths.length) {
+    api.setColumnWidths(widths.map(([key, newWidth]) => ({ key, newWidth })))
+    return
+  }
+  // Short of the screen: the column defined as flex takes the slack, since autoSizeAllColumns()
+  // cleared its flex (John's screenshot: a blank band right of Evidence on a wide window).
+  const all = api.getAllDisplayedColumns() as Column[]
+  const short = visible - all.reduce((s, c) => s + c.getActualWidth(), 0)
+  const stretch = all.find(c => c.getColDef().flex && !c.getFlex())
+  if (short > 1 && stretch) api.setColumnWidths([{ key: stretch.getColId(), newWidth: stretch.getActualWidth() + short }])
 }
