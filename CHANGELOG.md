@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.95-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.94-alpha...v0.99.95-alpha) (2026-10-27)
+
+
+### Features
+
+* **map:** Latest per ranger draws no trails; trails 20% thinner ([d2f82ba](https://github.com/SteadyEOC/RangerTrak/commit/d2f82baed4eb72640f3fbb50b77c67245a97f364))
+
 ### [0.99.94-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.93-alpha...v0.99.94-alpha) (2026-10-27)
 
 
