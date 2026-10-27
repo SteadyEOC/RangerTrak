@@ -109,6 +109,9 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
   // scribe actually clears the evidence section.
   private evidenceMarker?: L.Marker
 
+  // E-235: the one pin for the report being typed; see addMarker().
+  private positionMarker?: L.Marker
+
   @Input() set evidenceLocationUpdated(newLocation: LocationType | null) {
     if (!this.lMap) {
       // Same "arrived before the map was built" case locationUpdated's own setter guards -
@@ -604,17 +607,16 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
       return
     }
 
-    // 1st dim all previous markers: How to iterate them though?!
-    //this.myMarkers.eachChildLayer(fn <= {
-
     this.clearMarkers()
 
-    let marker = L.marker(new L.LatLng(lat, lng), { title: title }) //, icon: iconDefault,
-    marker.bindPopup(title)  //! Needed?!
-    this.myMarkerCluster.addLayer(marker);
-
-    //this.myMarkers.push(marker)
-    marker.addTo(this.lMap)
+    // E-235 (2026-10-27): this used to add the pin to myMarkerCluster AND straight to the
+    // map. clearMarkers() only emptied the cluster, and the cluster only takes a pin off
+    // the map while it holds it unclustered and in view, so earlier pins could stay (three
+    // at once on a phone, map taps plus GPS updates). Now one tracked pin, on the map only,
+    // like evidenceMarker above.
+    this.positionMarker = L.marker(new L.LatLng(lat, lng), { title: title })
+    this.positionMarker.bindPopup(title)
+    this.positionMarker.addTo(this.lMap)
 
     // Refit map
     this.lMap.setView([lat, lng])
@@ -644,6 +646,8 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     //this.lMap._panes.markerPane.remove()
     //this.lMap.eachLayer((layer) => { layer.remove() }) // !Removes the base map layer too!!!
 
+    this.positionMarker?.remove()
+    this.positionMarker = undefined
     this.myMarkerCluster.clearLayers()
     //    throw new Error('Method not implemented.')
   }
