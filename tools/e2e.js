@@ -5266,7 +5266,8 @@ async function checkSimpleView(fx) {
     await setSwitch(true)
     await sleep(600)
     check('the person\'s switch to Full is stored with source user', await viewState(), ['full', 'user'])
-    check('the header switch is on, with its hint', [await has('[data-testid=view-switch-header]'), await has('[data-testid=view-switch-hint]')], [true, true])
+    check('the header switch is on, with its hover hint', [await has('[data-testid=view-switch-header]'),
+      await evaluate(`/plum edge/.test(document.querySelector('[data-testid=view-switch-header] button')?.title ?? '')`)], [true, true])
     check('Full view shows the advanced Mission cards',
       [await has('rangertrak-mission-tactical-calls'), await has('rangertrak-mission-maps-section'), await has('rangertrak-setup-file')],
       [true, true, true])

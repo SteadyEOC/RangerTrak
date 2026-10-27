@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
-import { MatSlideToggleModule } from '@angular/material/slide-toggle'
+import { MatButtonModule } from '@angular/material/button'
 
 import { ViewService } from '../services/view.service'
 
@@ -12,50 +12,32 @@ import { ViewService } from '../services/view.service'
 @Component({
   selector: 'rangertrak-view-switch',
   standalone: true,
-  imports: [MatSlideToggleModule],
+  imports: [MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="view-switch" data-testid="view-switch-header" [class.view-switch--full]="!view.isSimple()">
-      <mat-slide-toggle hideIcon [checked]="!view.isSimple()" (change)="view.setView($event.checked ? 'full' : 'simple')"
-        title="Full view shows every control, including the advanced ones. Nothing is changed.">Full view</mat-slide-toggle>
-      @if (!view.isSimple()) {
-      <span class="view-switch__hint" data-testid="view-switch-hint">Options with a plum edge show only in Full view</span>
-      }
+      <button matButton="outlined" type="button" role="switch" [attr.aria-checked]="!view.isSimple()"
+        (click)="view.setView(view.isSimple() ? 'full' : 'simple')" [title]="hint">
+        <span class="view-switch__dot" aria-hidden="true"></span>Full view
+      </button>
     </div>`,
-  // Wraps under the toggle on a phone; the hint is first in the row when it does, never wider than the screen.
-  // E-231: in the header row beside AAR/214 and Help, so the switch wears the same control height,
-  // corners and outline (_patterns.scss rule 1-2); in Full view the edge is plum, the colour the hint
-  // talks about.
+  // E-231: in the header row beside AAR/214 and Help, and the same outlined button as them. Its edge
+  // is always plum, the colour of the options it reveals; the explanation is hover text, not a line
+  // on the page. A plain button with a dot, empty for Simple and plum-filled for Full, in place of
+  // Material's slide toggle (John 2026-10-27).
   styles: `
     :host { display: block; min-width: 0; max-width: 100%; }
-    .view-switch { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--rt-space-xs) var(--rt-space-md); max-width: 100%; }
-    .view-switch__hint { order: -1; color: var(--rt-ink-2); font-size: 0.85em; min-width: 0; text-align: right; }
-    mat-slide-toggle {
-      display: inline-flex; align-items: center; box-sizing: border-box;
-      min-height: var(--rt-control-height);
-      padding-inline: 12px 4px;
-      border: 1px solid var(--mat-sys-outline);
-      border-radius: var(--rt-control-radius);
-      /* The label reads like AAR/214 and Help beside it: the outlined button's own label tokens (John 2026-10-27). */
-      --mat-slide-toggle-label-text-font: var(--mat-button-outlined-label-text-font, var(--mat-sys-label-large-font));
-      --mat-slide-toggle-label-text-size: var(--mat-button-outlined-label-text-size, var(--mat-sys-label-large-size));
-      --mat-slide-toggle-label-text-weight: var(--mat-button-outlined-label-text-weight, var(--mat-sys-label-large-weight));
-      --mat-slide-toggle-label-text-tracking: var(--mat-button-outlined-label-text-tracking, var(--mat-sys-label-large-tracking));
-      --mat-slide-toggle-label-text-line-height: var(--mat-sys-label-large-line-height);
-      --mat-slide-toggle-label-text-color: var(--mat-button-outlined-label-text-color, var(--mat-sys-primary));
+    .view-switch { display: flex; justify-content: flex-end; max-width: 100%; }
+    button { --mat-button-outlined-outline-color: var(--rt-advanced); }
+    .view-switch--full button { box-shadow: inset 0 0 0 1px var(--rt-advanced); }
+    .view-switch__dot {
+      display: inline-block; width: 12px; height: 12px; margin-inline-end: 8px;
+      border: 2px solid var(--rt-advanced); border-radius: 50%; box-sizing: border-box;
     }
-    .view-switch--full mat-slide-toggle {
-      border-color: var(--rt-advanced); box-shadow: inset 0 0 0 1px var(--rt-advanced);
-      /* On = Full view, so the track is the plum the hint names, not the theme's primary. */
-      --mat-slide-toggle-selected-track-color: var(--rt-advanced);
-      --mat-slide-toggle-selected-hover-track-color: var(--rt-advanced);
-      --mat-slide-toggle-selected-focus-track-color: var(--rt-advanced);
-      --mat-slide-toggle-selected-pressed-track-color: var(--rt-advanced);
-      --mat-slide-toggle-selected-hover-state-layer-color: var(--rt-advanced);
-      --mat-slide-toggle-selected-focus-state-layer-color: var(--rt-advanced);
-      --mat-slide-toggle-selected-pressed-state-layer-color: var(--rt-advanced);
-    }`,
+    .view-switch--full .view-switch__dot { background: var(--rt-advanced); }`,
 })
 export class ViewSwitchComponent {
   protected readonly view = inject(ViewService)
+  protected readonly hint = 'Full view shows every option. Options with a plum edge, like this switch, appear only in Full view. '
+    + 'Simple view hides them so each page shows just what most people need. Switching changes only what you see; nothing is changed or deleted.'
 }
