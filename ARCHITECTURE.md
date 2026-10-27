@@ -201,7 +201,8 @@ into a smudge and the pin ring closes up.
 the sensitive part (legal names, personal phone numbers, photos, and call signs that resolve
 to public licence records), and radio log entries can contain PII about missing persons.
 
-**Phase 2a (E-122) moved where "at rest" lives.** The roster, radio log entries and locations -
+**Phase 2a (E-122) moved where "at rest" lives.** The roster, radio log entries and Places (the storage key and
+file-format name stay `locations`) -
 `RangerService`, `RadioLogService`, `MissionLocationService` - live in IndexedDB
 (`shared/storage/record-store.ts`, database `rangertrak-records`) behind `RecordStore`, a
 synchronous in-memory cache over an async IndexedDB store, instead of directly in
@@ -327,6 +328,12 @@ the two helpers they need (`json-dates.ts`, `status-color.ts`). The `shared/serv
 still re-exports the last two. New rules start here; older ones move when they are touched.
 
 2026-10-15 (E-190, map half): `map-entry-filter.ts` decides what the Leaflet map draws: `selectMapEntries` (all, latest per ranger, needs attention; entries with no ranger key are each kept), `isStatusFlagged`/`flaggedStatuses` (the optional `flagOnMap` on a radio log status, derived from the colour key when absent, so no migration) and `mapFilterChips` (the chip wording on the map and in the print title block). The choices are deliberately not stored, so there is no persisted-state row.
+
+2026-10-27 (naming): the map's saved points are called Places in every screen. Identifiers, the `locations` storage key and the backup/setup file formats keep the old name, and the setup-file reader still accepts it.
+
+2026-10-27 (E-228 phase 1): the Board snapshot carries an optional `ics213` object on a published report (`ics213Fields` in `domain/board-client.ts`: `to`, `subject`, `message`, `replyRequested`, `approvedBy`, `printedAt?`), and `src/command-post-view/index.html` shows the radio log and the ICS-213 messages as two tabs.
+
+2026-10-27 (E-221): `domain/clear-choices.ts` holds the rules for the "What to clear" checkbox dialog (`shared/clear-dialog`). It appears on a demo load, Start a real mission and Delete radio log entries; the services take the set of chosen ids.
 
 2026-10-15 (E-189): `mission-summary.ts` is `summarizeMission`, the numbers behind the Mission summary page (`/summary`, lazy, no menu item): totals, a zero-filled messages-per-bucket series (smallest of 1/2/3/6/12/24 hours giving at most 48 bars), counts by status, team (by `rangerUid`, else call sign), station, operator and source, the needs-attention list (reusing `flaggedStatuses`), and AAR notes grouped by area. It takes `now` as an argument and reads only; the page, the printout and the CSV (`shared/export/mission-summary-csv.ts`) are all computed live and nothing is stored, so there is no persisted-state row. The two charts are inline SVG drawn by the page template (no chart library).
 
@@ -483,7 +490,7 @@ whose key has left the source fails. Add the row in the same commit as the key.
 
 `GET /hello` (not under `/api/`) is the plain "this device can reach the Board" page. The Board's console also prints a start-up self-check (`tools/board/selfcheck.js`: Wi-Fi name, virtual adapters left out via `tools/board/net.js`, Windows network type, firewall rule, who holds port 443, battery) and one status line every 30 s when it changes (`tools/board/statusline.js`). Nothing in it changes the computer except the Windows fixes, which are offered once, at a keyboard, behind Windows' own permission prompt.
 
-The causes ("why can't I reach the Board?") are written once in `src/app/domain/board-causes.json`: `{ id, seenFrom, message, detail, anchor }`. The app reads them through `domain/board-causes.ts` (`boardCause(id, values)`), the server through `tools/board/causes.js`. The viewer page `src/command-post-view/index.html` is plain static JS and cannot import the file, so it carries the words of `board-lost` and `scribe-quiet`; `tools/board/causes.test.js` fails if they drift. The app's Test connection (`domain/board-diagnosis.ts`, run by `command-post-publish.service.ts`) turns what it finds into one of these causes. `message` is plain words; `detail` is the technical line shown under "Details"; `anchor` is the heading slug on the Guide page planned for slice 3.
+The causes ("why can't I reach the Board?") are written once in `src/app/domain/board-causes.json`: `{ id, seenFrom, message, detail, anchor }`. The app reads them through `domain/board-causes.ts` (`boardCause(id, values)`), the server through `tools/board/causes.js`. The viewer page `src/command-post-view/index.html` is plain static JS and cannot import the file, so it carries the words of `board-lost` and `scribe-quiet`; `tools/board/causes.test.js` fails if they drift. The app's Test connection (`domain/board-diagnosis.ts`, run by `command-post-publish.service.ts`) turns what it finds into one of these causes. `message` is plain words; `detail` is the technical line shown under "Details"; `anchor` is the heading slug on the Help page planned for slice 3.
 
 Notes for the storage freeze:
 

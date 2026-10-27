@@ -249,11 +249,13 @@ naming a bucket that doesn't exist yet. To turn it on:
 
 ## How a deploy happens
 
-Pushing to `main` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
-`npm ci` → `npm run build` → **secret gate** → `wrangler deploy`. It can also be
-triggered manually from the Actions tab (`workflow_dispatch`).
+**A deploy is a push to `main`.** CI does the deploy; running it from a local machine is not the normal path.
+Pushing runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml): `npm ci` → regional-tools
+checks → typecheck → lint → storage and icon checks → unit tests → worker tests → `npm run build` →
+**secret gate** → `wrangler deploy` → a check that the public hostname serves the new build. It can also
+be triggered manually from the Actions tab (`workflow_dispatch`).
 
-To deploy by hand:
+The local scripts below exist for a dry run or an emergency, and need your own Cloudflare credentials:
 
 ```bash
 npm run deploy       # build + secret gate + wrangler deploy

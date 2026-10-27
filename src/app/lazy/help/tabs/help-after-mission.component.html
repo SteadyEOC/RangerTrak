@@ -6,10 +6,22 @@
 <h3>Starting a device over</h3>
 
 <p>
-  Delete the reports on the <a routerLink="/radio-log">Radio Log</a> page and the roster on
-  the <a routerLink="/rangers">Rangers</a> page, then reset settings under
-  <span class="path">Mission &rarr; Danger zone</span>. Back up anything you need first —
-  none of it can be undone.
+  Back up first: none of this can be undone. Loading a demo, <span class="ui">Start a real mission</span>
+  and <span class="ui">Delete radio log entries and messages</span> each show a <strong>What to clear</strong>
+  list before they do anything:
+</p>
+<ul>
+  <li>A demo or a real mission replaces the whole mission. The roster, ranger photos, radio log (with its
+    attachments), places and settings always go. Notes about this mission, ICS-214 lines and the ICS-214 header
+    start ticked; untick any you want to keep. Notes about RangerTrak start unticked.</li>
+  <li>Deleting the radio log clears only the log and its attachments. Everything else starts unticked.</li>
+  <li>The list has <span class="ui">Back up mission first</span>. During a live mission you also type the
+    mission name before it goes ahead.</li>
+</ul>
+<p>
+  For a full reset, also use <span class="ui">Delete all rangers</span> on the
+  <a routerLink="/rangers">Rangers</a> page and <span class="ui">Reset mission to defaults</span> under
+  <span class="path">Mission &rarr; Danger zone</span>.
 </p>
 
 <div class="warn">
@@ -87,7 +99,8 @@
     </tr>
     <tr>
       <td>Clear reports for the next mission</td>
-      <td><span class="path">Radio Log &rarr; Delete radio log entries and messages</span></td>
+      <td><span class="path">Radio Log &rarr; Delete radio log entries and messages</span>; in its
+        What to clear list, tick notes or 214 lines only if they should go too</td>
     </tr>
     <tr>
       <td>Reuse the same roster next time</td>
@@ -96,8 +109,8 @@
     </tr>
     <tr>
       <td>Start completely fresh</td>
-      <td><span class="path">Mission &rarr; Danger zone &rarr; Reset mission to defaults</span>,
-        plus clearing the roster and reports above</td>
+      <td><span class="ui">Start a real mission</span> on Entry clears the roster, log, places and settings
+        in one step; or clear them one at a time as above</td>
     </tr>
   </tbody>
 </table>

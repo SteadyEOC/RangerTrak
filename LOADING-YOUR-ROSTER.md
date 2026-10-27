@@ -132,8 +132,8 @@ Each shows its own preview first, and a later file wins where it matches someone
 of the selected rows (or the rows the table shows): call sign, name, role, phone and ID, grouped by team.
 It has names and phone numbers on it, so keep the paper safe.
 
-**Locations layer the same way.** Import your county's places, then your own group's, then a
-mission's. A location with the **same name** as one already on the device is updated; any other
+**Places layer the same way.** Import your county's places, then your own group's, then a
+mission's. A place with the **same name** as one already on the device is updated; any other
 name is added. Radio log entries are never touched by any of these imports.
 
 ### Starting over

@@ -3,6 +3,8 @@
 Places are the fixed points on your map: shelters, staging areas, fire stations, water points,
 the command post. Most groups already keep them in Excel, Google Sheets or a Google My Maps map.
 
+"Places" and "locations" mean the same thing for these map points. This guide says Places.
+
 **Your places never leave your device.** RangerTrak reads the file in your browser. Nothing is
 uploaded, and there is no account to make.
 

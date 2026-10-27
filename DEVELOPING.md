@@ -41,7 +41,7 @@ module worker requires; **any production host needs that same MIME mapping.**
 ## Testing
 
 ```bash
-npm test           # unit tests via Karma
+npx ng test --watch=false --browsers=ChromeHeadless   # unit tests via Karma (plain `npm test` is watch mode)
 npm run lint       # ESLint + typecheck
 npm run lint:ts    # ESLint only (eslint.config.mjs)
 npm run lint:tsc   # typecheck only (app and spec projects separately)
