@@ -41,6 +41,7 @@ error
 event
 feedback
 filter
+fit_screen
 fitness_center
 folder
 gif

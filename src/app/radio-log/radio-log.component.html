@@ -42,6 +42,12 @@
           <mat-icon>attach_file</mat-icon>
           Attachments for the selected entry
         </button>
+        <button matButton="outlined" type="button" data-testid="radiolog-fit" [attr.aria-pressed]="fitToScreen()"
+          [class.rt-grid-fit--on]="fitToScreen()" (click)="toggleFitToScreen()"
+          title="Fit every column on the screen at once, shortening long text. Off, the log can run up to one and a half screens wide.">
+          <mat-icon>fit_screen</mat-icon>
+          Fit to screen
+        </button>
       </div>
       <!-- ══ 5. ACTION BAR ══ Material-M3 pass, 2026-08-26. Was three separate rows below
            the grid - a selection/paging line, then a bare <br>, then an export line mixing a

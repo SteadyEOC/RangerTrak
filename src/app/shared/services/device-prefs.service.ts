@@ -16,12 +16,17 @@ const AAR_NOTE_LAST_KIND_KEY = 'aarNoteLastKind'
 // E-220 / D-68: the station letter this device's message numbers carry. A device pref, not a Mission
 // setting, so a Setup file sent to ten phones does not give them all the same letter.
 const MSG_STATION_KEY = 'rt-msg-station'
+// 2026-10-27: the grids this device fits to the screen (Fit to screen), comma-separated names.
+const GRID_FIT_KEY = 'rt-grid-fit'
 
 /**
  * D-61: what this device remembers about publishing to a Board. `key` is the hidden publish key the
  * server issued at the last claim, `base` the server it belongs to. `replaced` is set once another
  * device took the Board, so a restart does not claim it back. A secret: never exported, never logged.
  */
+/** The grids that have a Fit to screen switch. */
+export type GridName = 'radio-log' | 'rangers'
+
 export type BoardPublisherPref = { base?: string, key?: string, replaced?: boolean }
 
 /**
@@ -57,6 +62,16 @@ export class DevicePrefsService {
   setMsgStation(letter: string): boolean {
     const clean = (letter ?? '').trim().toUpperCase()
     return /^[A-Z]$/.test(clean) && this.write(MSG_STATION_KEY, clean)
+  }
+
+  /** Fit to screen (John 2026-10-27): whether this grid fits the screen rather than up to 1.5 widths. */
+  getGridFit(grid: GridName): boolean {
+    return (this.read(GRID_FIT_KEY) ?? '').split(',').includes(grid)
+  }
+
+  setGridFit(grid: GridName, fit: boolean): void {
+    const others = (this.read(GRID_FIT_KEY) ?? '').split(',').filter(g => g && g !== grid)
+    this.write(GRID_FIT_KEY, (fit ? [...others, grid] : others).join(','))
   }
 
   getLastCoordinateFormat(): string | null {

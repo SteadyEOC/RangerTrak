@@ -1,4 +1,4 @@
-import { ColDef, GridOptions } from 'ag-grid-community'
+import { ColDef, ColumnResizedEvent, GridOptions, GridSizeChangedEvent } from 'ag-grid-community'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../domain/overdue'
 import { isAiGeneratedPhoto, withAiBadge } from '../shared/ai-photo'
 import { bundledRangerImage } from '../shared/ranger-image'
@@ -64,6 +64,7 @@ import type { RosterImportDialogResult } from './roster-import-dialog/roster-imp
 import { CustomTooltip } from './customTooltip'
 import { localDateStamp } from '../shared/export/local-date'
 import { escapeHtml } from '../shared/escape-html'
+import { capGridToScreens, GRID_MAX_SCREENS } from '../shared/grid-width-cap'
 
 
 @Component({
@@ -191,6 +192,9 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   private gridApi: any
   private gridColumnApi: any
 
+  protected fitToScreen = signal(inject(DevicePrefsService).getGridFit('rangers'))
+  private lastGridWidth = 0
+
   gridOptions: GridOptions = {
     // PROPERTIES
     theme: rangertrakGridTheme,
@@ -218,6 +222,19 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     // 2026-10-18: rows arriving (an import, a restore) change what the grid shows without any filter
     // changing, which left "Prints 0 of 9" on the Print card. Recount whenever the row model updates.
     onModelUpdated: () => this.refreshFilterChips(),
+    // 2026-10-27, John: same width cap as the Radio Log - after every auto-size and on a resize the
+    // widest columns are trimmed so the grid is at most 1.5 screens wide (1 with Fit to screen).
+    // A phone's flex columns already fit, so the cap leaves them alone.
+    onColumnResized: (e: ColumnResizedEvent) => {
+      if (e.finished && e.source === 'autosizeColumns') this.capGridWidth()
+    },
+    // A width change re-sizes from content (which caps again); see the Radio Log's same handler.
+    onGridSizeChanged: (e: GridSizeChangedEvent) => {
+      if (e.clientWidth === this.lastGridWidth) return
+      this.lastGridWidth = e.clientWidth
+      if (this.isPhone()) e.api.sizeColumnsToFit()
+      else e.api.autoSizeAllColumns()
+    },
 
     // CALLBACKS
     // getRowHeight: (params) => 25
@@ -1152,6 +1169,17 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       this.gridApi.refreshCells()
       this.fitColumns()
     }
+  }
+
+  private capGridWidth() {
+    capGridToScreens(this.gridApi, this.fitToScreen() ? 1 : GRID_MAX_SCREENS)
+  }
+
+  /** Fit to screen (John 2026-10-27), remembered on this device. Re-sizes from content, then caps. */
+  toggleFitToScreen() {
+    this.fitToScreen.update(fit => !fit)
+    this.devicePrefs.setGridFit('rangers', this.fitToScreen())
+    this.fitColumns()
   }
 
   /** Desktop sizes columns from content (E-104: sizeColumnsToFit() undid that after every edit);

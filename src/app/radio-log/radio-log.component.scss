@@ -319,7 +319,7 @@
 .radio-log__empty { margin: 0 0 12px; color: var(--rt-ink-2); }
 
 // E-194: the one button under the grid that opens the selected entry's attachments.
-.radio-log__attach-bar { margin: 8px 0; }
+.radio-log__attach-bar { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 8px; }
 
 // E-188: the Hand over card's explanatory lines and its result line.
 .handover__note {

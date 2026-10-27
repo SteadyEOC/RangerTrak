@@ -1,6 +1,6 @@
 import { MasonryDirective } from '../shared/layout/masonry.directive'
 import { RouterLink } from '@angular/router'
-import { Column, ColumnResizedEvent, GridOptions, SelectionChangedEvent } from 'ag-grid-community'
+import { ColumnResizedEvent, GridOptions, GridSizeChangedEvent, SelectionChangedEvent } from 'ag-grid-community'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../domain/overdue'
 // , TeamService
 import { Observable, subscribeOn, Subscription } from 'rxjs'
@@ -43,7 +43,7 @@ import { ImportSafetyService } from '../shared/services/import-safety.service'
 import { AttachmentChipComponent } from '../shared/attachments/attachment-chip.component'
 import { attachmentChipHtml, attachmentChipUid } from '../shared/attachments/attachment-chip-html'
 import { escapeHtml } from '../shared/escape-html'
-import { capColumnWidths } from '../shared/grid-width-cap'
+import { capGridToScreens, GRID_MAX_SCREENS } from '../shared/grid-width-cap'
 import { AttachmentViewerService } from '../shared/attachments/attachment-viewer.service'
 import { parseReportPacket, REPORT_PACKET_SCHEMA_VERSION } from '../shared/export/report-packet'
 import { diagnoseFile, REPORT_PACKET_DAMAGED_MESSAGE } from '../shared/export/import-file'
@@ -163,8 +163,6 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   // gridOptions so the arithmetic is exact; one spare row keeps auto-page-size from rounding
   // down to a page a row short.
   private static readonly GRID_ROW_PX = 42
-  /** The grid's starting width is at most this many visible widths (John 2026-10-27). */
-  private static readonly GRID_MAX_SCREENS = 1.5
   private static readonly GRID_HEADER_PX = 48
   /** Header + floating filter + pager, plus a pixel or two of border. */
   private static readonly GRID_CHROME_PX = 48 * 3 + 2
@@ -496,7 +494,14 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     onColumnResized: (e: ColumnResizedEvent) => {
       if (e.finished && e.source === 'autosizeColumns') this.capGridWidth()
     },
-    onGridSizeChanged: () => this.capGridWidth(),
+    // A width change re-sizes from content (which caps again). Capping alone only ever shrinks: in
+    // 0.99.92 a cap taken while the grid was still laying out, narrow, left every column at its
+    // minimum once the grid reached full width, with Notes taking the rest (John's screenshot).
+    onGridSizeChanged: (e: GridSizeChangedEvent) => {
+      if (e.clientWidth === this.lastGridWidth) return
+      this.lastGridWidth = e.clientWidth
+      e.api.autoSizeAllColumns()
+    },
 
     // CALLBACKS
     // getRowHeight: (params) => 25
@@ -528,6 +533,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
 
   private attachmentStore = inject(AttachmentStoreService)
   private devicePrefs = inject(DevicePrefsService)
+  protected fitToScreen = signal(this.devicePrefs.getGridFit('radio-log'))
+  private lastGridWidth = 0
   private importSafety = inject(ImportSafetyService)
   private attachmentViewer = inject(AttachmentViewerService)
   /** E-196 (D-66): the mode decides the catch-up wording and the import warnings. */
@@ -756,22 +763,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     this.radioLogService.setSelectedRadioLogEntries(selectedData)
   }
 
-  /** See onColumnResized in gridOptions: trims the widest columns to keep the grid within 1.5 screens. */
+  /** See onColumnResized in gridOptions. Fit to screen makes the limit one screen instead of 1.5. */
   private capGridWidth() {
-    const api = this.gridApi
-    if (!api) return
-    const range = api.getHorizontalPixelRange?.()
-    const visible = range ? range.right - range.left : 0
-    if (visible <= 0) return
-    const cols = (api.getAllDisplayedColumns() as Column[]).map(c => ({
-      id: c.getColId(),
-      width: c.getActualWidth(),
-      minWidth: c.getColDef().minWidth ?? 60,
-      fixed: !!c.getColDef().flex,
-    }))
-    const widths = capColumnWidths(cols, visible * RadioLogComponent.GRID_MAX_SCREENS)
-    const entries = Object.entries(widths)
-    if (entries.length) api.setColumnWidths(entries.map(([key, newWidth]) => ({ key, newWidth })))
+    capGridToScreens(this.gridApi, this.fitToScreen() ? 1 : GRID_MAX_SCREENS)
+  }
+
+  /** Fit to screen (John 2026-10-27), remembered on this device. Re-sizes from content, then caps. */
+  toggleFitToScreen() {
+    this.fitToScreen.update(fit => !fit)
+    this.devicePrefs.setGridFit('radio-log', this.fitToScreen())
+    this.gridApi?.autoSizeAllColumns()
   }
 
   //onFirstDataRendered(params: any) {

@@ -422,6 +422,13 @@ rangertrak-footer {
   padding      : 0 0.5em;
 }
 
+// Fit to screen on the Radio Log and Rangers grids (2026-10-27): when on, the outlined button reads
+// as pressed - accent outline and a light accent fill.
+.rt-grid-fit--on.rt-grid-fit--on {
+  border-color: var(--rt-accent);
+  background  : color-mix(in srgb, var(--rt-accent) 14%, transparent);
+}
+
 // The Radio Log's Notes cell when it carries a chip (2026-10-27): the note ellipsises on its own
 // so a long note no longer pushes the chip out of sight.
 .rt-notes-cell {

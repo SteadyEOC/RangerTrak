@@ -93,6 +93,16 @@
           [showToolPanel]="showToolPanel";
         -->
     </ag-grid-angular>
+    @if (!isPhone()) {
+    <div class="rangers__grid-bar">
+      <button matButton="outlined" type="button" data-testid="rangers-fit" [attr.aria-pressed]="fitToScreen()"
+        [class.rt-grid-fit--on]="fitToScreen()" (click)="toggleFitToScreen()"
+        title="Fit every column on the screen at once, shortening long text. Off, the roster can run up to one and a half screens wide.">
+        <mat-icon>fit_screen</mat-icon>
+        Fit to screen
+      </button>
+    </div>
+    }
     <!--button (click)="onBtPrinterFriendly()">Printer Friendly Layout</button>
       <button (click)="onBtNormal()">Normal Layout</button-->
 

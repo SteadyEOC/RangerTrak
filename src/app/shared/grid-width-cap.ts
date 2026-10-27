@@ -1,3 +1,5 @@
+import type { Column, GridApi } from 'ag-grid-community'
+
 export interface ColumnWidth {
   id: string
   width: number
@@ -14,7 +16,7 @@ export interface ColumnWidth {
  * alone exceed it.
  *
  * John 2026-10-27: the Radio Log ran far past the screen and "scrolling too widely loses
- * association between fields" - start at no more than 1.5 screen widths.
+ * association between fields" - start at no more than 1.5 screen widths. Fit to screen is 1.
  */
 export function capColumnWidths(cols: ColumnWidth[], limit: number): Record<string, number> {
   const total = cols.reduce((s, c) => s + c.width, 0)
@@ -36,4 +38,29 @@ export function capColumnWidths(cols: ColumnWidth[], limit: number): Record<stri
     if (w < c.width) out[c.id] = w
   }
   return out
+}
+
+/** A content-sized grid starts at most this many visible widths wide (John 2026-10-27). */
+export const GRID_MAX_SCREENS = 1.5
+
+/**
+ * Trims a grid's widest columns so it is at most `screens` visible widths in total. Call it after
+ * an auto-size (a ColumnResizedEvent with source 'autosizeColumns') and when the grid resizes.
+ */
+export function capGridToScreens(api: GridApi | undefined, screens: number): void {
+  if (!api) return
+  const range = api.getHorizontalPixelRange()
+  const visible = range.right - range.left
+  // A grid still laying out reports a sliver of its width; a cap taken then would crush every column.
+  if (visible < 320) return
+  // A column still flexing counts at its minimum: it grows back into whatever room is left after.
+  // Ask the column, not its definition: autoSizeAllColumns() sizes Notes from content too, and
+  // AG Grid then drops its flex although the definition still says `flex: 1`.
+  const cols = (api.getAllDisplayedColumns() as Column[]).map(c => {
+    const minWidth = c.getColDef().minWidth ?? 60
+    const flex = !!c.getFlex()
+    return { id: c.getColId(), width: flex ? minWidth : c.getActualWidth(), minWidth, fixed: flex }
+  })
+  const widths = Object.entries(capColumnWidths(cols, visible * screens))
+  if (widths.length) api.setColumnWidths(widths.map(([key, newWidth]) => ({ key, newWidth })))
 }

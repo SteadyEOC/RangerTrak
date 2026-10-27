@@ -1,7 +1,7 @@
 import { DevicePrefsService } from './device-prefs.service'
 
 describe('DevicePrefsService', () => {
-  const keys = ['lastCoordinateFormat', 'rangertrak.rangers.privacyNoticeDismissed', 'rt-board-publisher', 'rt-msg-station']
+  const keys = ['lastCoordinateFormat', 'rangertrak.rangers.privacyNoticeDismissed', 'rt-board-publisher', 'rt-msg-station', 'rt-grid-fit']
   let prefs: DevicePrefsService
 
   beforeEach(() => {
@@ -56,5 +56,17 @@ describe('DevicePrefsService', () => {
     expect(prefs.getMsgStation()).toBe('C')
     localStorage.setItem('rt-msg-station', '9')
     expect(prefs.getMsgStation()).toBe('A')
+  })
+
+  it('remembers Fit to screen per grid, and reads unknown names as off', () => {
+    expect(prefs.getGridFit('radio-log')).toBeFalse()
+    prefs.setGridFit('rangers', true)
+    prefs.setGridFit('radio-log', true)
+    prefs.setGridFit('rangers', false)
+    expect(prefs.getGridFit('radio-log')).toBeTrue()
+    expect(prefs.getGridFit('rangers')).toBeFalse()
+    expect(localStorage.getItem('rt-grid-fit')).toBe('radio-log')
+    localStorage.setItem('rt-grid-fit', 'junk,,')
+    expect(prefs.getGridFit('radio-log')).toBeFalse()
   })
 })
