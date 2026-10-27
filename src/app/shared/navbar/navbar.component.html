@@ -37,7 +37,7 @@
            header any taller. -->
       <svg class="brand-icon" width="26" height="44" viewBox="0 0 155 260" aria-hidden="true"
         [class.rt-pulse-a]="pulseKey() % 2 === 0" [class.rt-pulse-b]="pulseKey() % 2 !== 0"
-        [class.rt-pulse-twice]="pulseTwice()">
+        [class.rt-pulse-on-load]="pulseOnLoad()">
         <!-- 2026-09-28, John: "animated logo waves, on events only" - this used to run
              `infinite`, all the time, whether or not anything was happening. Now the
              animation is finite (one pass per trigger) and fires only for: page load (the
@@ -59,7 +59,7 @@
           }
 
           /* 2026-09-29, John: two passes on every page load and in-app page change
-             (rt-pulse-twice), one per submitted radio log entry. Fixed the same day: a
+             (rt-pulse-on-load), one per submitted radio log entry. Fixed the same day: a
              finished CSS animation only restarts when its animation-NAME changes, not when
              an identically styled class swaps in, so rt-pulse-a and rt-pulse-b now use two
              identical keyframes under different names. And the per-wave stagger is a custom
@@ -75,8 +75,8 @@
             animation: rt-signal-b 1.6s ease-out var(--rt-wave-delay, 0s) var(--rt-pulse-count, 1);
           }
 
-          .brand-icon.rt-pulse-twice {
-            --rt-pulse-count: 2;
+          .brand-icon.rt-pulse-on-load {
+            --rt-pulse-count: 4;
           }
 
           /* Staggered so the smallest ring (nearest the antenna) fires first and the

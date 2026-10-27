@@ -291,6 +291,7 @@ HEAD = '''<!doctype html>
 <meta name="description" content="A nine-module tour of RangerTrak for beta testers, with numbered tests and questions.">
 <link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="tour.css">
+<script src="tour.js" defer></script>
 </head>
 <body>
 <header class="top">
@@ -302,7 +303,7 @@ HEAD = '''<!doctype html>
 
 TAIL = '''<section id="sheet">
 <h2>Tour Checklist</h2>
-<p class="noprint">Every test and question in one list. <button type="button" onclick="document.body.classList.add('sheet-only');addEventListener('afterprint',()=>document.body.classList.remove('sheet-only'),{once:true});setTimeout(print,50)">Print the Tour Checklist</button></p>
+<p class="noprint">Every test and question in one list. <button type="button" id="print-sheet">Print the Tour Checklist</button></p>
 <p class="fields">Name ____________________ &nbsp; Date __________ &nbsp; Device and browser ____________________ &nbsp; RangerTrak version __________</p>
 <div class="scroll"><table class="sheet"><tr><th>ID</th><th>Step</th><th>Pass</th><th>Fail</th><th>Note</th></tr>
 {rows}</table></div>

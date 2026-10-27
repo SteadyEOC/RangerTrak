@@ -3,6 +3,13 @@
 .map-engine-switch {
   margin: 0.5rem 0 1rem;
 
+  // Full view edge (_patterns.scss .rt-advanced): rounded, with a gap, so it reads as a bracket
+  // like the header's Full view button rather than a bar stuck to the switch (John 2026-10-27).
+  &.rt-advanced {
+    padding-inline-start: 10px;
+    border-radius: var(--rt-control-radius);
+  }
+
   // Maintainer, 2026-08-29 (live phone screenshot): this toggle is the last thing in the
   // column beside each engine's floated 175px overview map (mapLeaflet.component.scss/
   // mapLibre.component.scss both float #mapLeaflet-overview/#pmtiles-overview right) - same

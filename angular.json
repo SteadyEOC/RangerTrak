@@ -60,7 +60,7 @@
                 "output": "./exercise"
               },
               {
-                "glob": "{index.html,tour.css}",
+                "glob": "{index.html,tour.css,tour.js}",
                 "input": "./tools/tour",
                 "output": "./tour"
               },

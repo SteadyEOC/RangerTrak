@@ -241,6 +241,14 @@
   @media print { box-shadow: none; }
 }
 
+// The Import, export & print panel is only its rounded header bar until opened: the edge goes on
+// that bar and follows its corners, not on the host beside it (John 2026-10-27).
+rangertrak-io-panel.rt-advanced.rt-advanced {
+  box-shadow: none;
+
+  .mat-expansion-panel-header { box-shadow: inset 3px 0 0 var(--rt-advanced); }
+}
+
 // Leaflet's layers box draws its own rows (mapLeaflet.component.ts marks the advanced ones).
 .leaflet-control-layers .rt-advanced {
   padding-inline-start: 4px;

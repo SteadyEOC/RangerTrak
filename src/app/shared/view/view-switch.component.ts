@@ -28,8 +28,9 @@ import { ViewService } from '../services/view.service'
   styles: `
     :host { display: block; min-width: 0; max-width: 100%; }
     .view-switch { display: flex; justify-content: flex-end; max-width: 100%; }
-    button { --mat-button-outlined-outline-color: var(--rt-advanced); }
-    .view-switch--full button { box-shadow: inset 0 0 0 1px var(--rt-advanced); }
+    /* The same 3px left edge that marks Full-view-only options (_patterns.scss .rt-advanced). */
+    button { --mat-button-outlined-outline-color: var(--rt-advanced); box-shadow: inset 3px 0 0 var(--rt-advanced); }
+    .view-switch--full button { box-shadow: inset 3px 0 0 var(--rt-advanced), inset 0 0 0 1px var(--rt-advanced); }
     .view-switch__dot {
       display: inline-block; width: 12px; height: 12px; margin-inline-end: 8px;
       border: 2px solid var(--rt-advanced); border-radius: 50%; box-sizing: border-box;
