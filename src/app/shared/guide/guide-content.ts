@@ -52,6 +52,12 @@ export interface GuideEntry {
 const GRID_KEYBOARD: GuideTab = {
   label: 'Keyboard',
   blocks: [
+    // E-233 (John 2026-10-27): say whose keys these are, and list the few others. Inventoried
+    // 10-27: RangerTrak has no site-wide shortcuts; every other key works in one place only.
+    {
+      heading: 'These keys are for the grid',
+      text: 'The keys below work in the table on this page (Radio Log, Rangers & Teams), and in the column and filter menus it opens. RangerTrak has no keys that work on every page; the few others are listed at the end.'
+    },
     {
       heading: 'Column and filter menus',
       bullets: [
@@ -69,6 +75,16 @@ const GRID_KEYBOARD: GuideTab = {
         'Arrow keys move the focused cell.',
         'Enter starts editing the focused cell; Escape cancels without saving.',
         'Tab moves to the next cell, wrapping to the next row at the end.'
+      ]
+    },
+    {
+      heading: 'Keys and gestures elsewhere',
+      bullets: [
+        'Radio Log Entry: Ctrl+Enter (Cmd+Enter on a Mac) logs the report from any box. Tab moves through Who, Where, When and What in radio-call order. Enter in the address box looks the address up.',
+        'Radio Log Entry map: Alt+click marks an evidence or clue location, once that section is showing.',
+        'Photo, video and audio viewer: the left and right arrow keys, or a swipe, move between files.',
+        'Time boxes: the up and down arrow keys step the hour or the minute.',
+        'Escape closes the Help panel, a dialog, or an attachment\'s hover preview.'
       ]
     }
   ]
