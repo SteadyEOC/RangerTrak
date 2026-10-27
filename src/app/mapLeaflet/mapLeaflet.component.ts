@@ -992,8 +992,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // selected-only view could never be honored no matter what the switch said.
     this.clearMarkers()
 
-    // E-190: the Show choice thins the entry MARKERS only; trails below still use the full
+    // E-190: the Show choice thins the entry MARKERS; trails below still use the full
     // displayedRadioLogEntries (after the selected-only switch), so a path is always the whole trail.
+    // Except "Latest per ranger" (John 2026-10-27): one point each, so no paths at all.
     const shown = this.shownEntries()
     this.legendEntries.set([...shown])
     shown.forEach(i => {
@@ -1034,7 +1035,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // E-190: a layer the scribe unticked in the layers control stays off across redraws.
     if (this.entriesOn()) this.lMap.addLayer(this.myMarkerCluster)
 
-    this.overlays.drawTrails()
+    this.overlays.drawTrails(this.showChoice() !== 'latest')
     if (this.pathsOn()) this.lMap.addLayer(this.myTrailsLayer)
 
     // to refresh markers that have changed:

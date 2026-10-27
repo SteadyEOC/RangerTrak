@@ -399,7 +399,7 @@ export class LeafletOverlays {
    * separate segments with stepped opacity (oldest faintest, newest strongest) rather than
    * a gradient-along-path, which Leaflet has no native support for.
    */
-  drawTrails() {
+  drawTrails(withPaths = true) {
     // D-42 phase 5: was grouped by `r.callsign` alone. Two DIFFERENT rangers with no
     // callsign both grouped under the same '' key, so their check-ins could be sorted
     // together into one bogus trail segment connecting two unrelated people. `rangerUid`
@@ -432,16 +432,18 @@ export class LeafletOverlays {
       const color = rangerColorFor(key)
       const segmentCount = ordered.length - 1
 
-      for (let i = 0; i < segmentCount; i++) { // no segments at all for a lone check-in
+      // John 2026-10-27: "Latest per ranger" shows one point each, so no path (the badge stays).
+      for (let i = 0; withPaths && i < segmentCount; i++) { // no segments at all for a lone check-in
         const opacity = segmentCount === 1 ? 0.9 : 0.25 + (0.65 * i / (segmentCount - 1))
         // 2026-09-30, John: E-163 - trails that show direction. Weight tapers linearly from
-        // 1.5 (oldest segment) to 5 (newest): 1.5 + 3.5 * i / (segmentCount - 1); a lone
+        // 1.2 (oldest segment) to 4 (newest): 1.2 + 2.8 * i / (segmentCount - 1) (John 10-27: 20%
+        // thinner than the first 1.5 to 5); a lone
         // segment takes the newest weight. Only each ranger's NEWEST segment carries the
         // class that animates a slow dash flow (see .rt-trail-newest in the scss). The
         // polyline is [older, newer], so a decreasing stroke-dashoffset moves the dashes
         // older -> newer. Default SVG renderer (no preferCanvas anywhere), so CSS applies.
         const isNewest = i === segmentCount - 1
-        const weight = segmentCount === 1 ? 5 : 1.5 + 3.5 * i / (segmentCount - 1)
+        const weight = segmentCount === 1 ? 4 : 1.2 + 2.8 * i / (segmentCount - 1)
         const segment = L.polyline(
           [
             [ordered[i].location.lat, ordered[i].location.lng],
