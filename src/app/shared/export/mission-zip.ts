@@ -256,7 +256,7 @@ export function extractMissionZip(bytes: Uint8Array): { manifest: MissionZipMani
 function readmeText(manifest: MissionZipManifest, photoCount: number): string {
   const parts: string[] = []
   if (manifest.rangers) parts.push(`${manifest.rangers.length} ranger${manifest.rangers.length === 1 ? '' : 's'}`)
-  if (manifest.locations) parts.push(`${manifest.locations.length} location${manifest.locations.length === 1 ? '' : 's'}`)
+  if (manifest.locations) parts.push(`${manifest.locations.length} place${manifest.locations.length === 1 ? '' : 's'}`)
   if (manifest.settings) parts.push('mission settings')
   if (manifest.entries) parts.push(`${manifest.entries.length} radio log entr${manifest.entries.length === 1 ? 'y' : 'ies'}`)
   const contents = parts.length ? parts.join(', ') : 'no categories'

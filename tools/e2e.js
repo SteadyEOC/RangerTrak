@@ -2138,21 +2138,21 @@ async function checkCards() {
   const have = Array.isArray(raw) ? raw : (raw.locations || [])
   const extra = Array.from({ length: 40 }, (_, i) => ({ uid: 'e2e-card-' + i, name: 'E2E Place ' + String(i + 1).padStart(2, '0'), type: have[0]?.type || 'Command Post', lat: 36.05 + i / 1000, lng: -112.14 }))
   await idbSetRaw('locations', JSON.stringify(Array.isArray(raw) ? [...have, ...extra] : { ...raw, locations: [...have, ...extra] }))
-  const box = () => evaluate(`(() => { const s = document.querySelector('.rt-card-scroll[aria-label="Locations"]'); if (!s) return null; const cs = getComputedStyle(s);
+  const box = () => evaluate(`(() => { const s = document.querySelector('.rt-card-scroll[aria-label="Places"]'); if (!s) return null; const cs = getComputedStyle(s);
     return { client: s.clientHeight, scroll: s.scrollHeight, overflowY: cs.overflowY, maxHeight: cs.maxHeight, tabindex: s.getAttribute('tabindex'), role: s.getAttribute('role'), vh: innerHeight,
       sticky: getComputedStyle(s.querySelector('thead th')).position, sub: (s.closest('mat-card')?.querySelector('mat-card-subtitle')?.textContent || '').trim() } })()`)
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
   await goto('/mission', 4000)
   const lap = await box()
-  check('1280: the Locations list is its own region (keyboard stop with a label)', lap && lap.tabindex === '0' && lap.role === 'region', true)
-  check('1280: with 40+ Locations the list scrolls inside its card', lap && lap.scroll > lap.client + 4 && lap.overflowY === 'auto', true)
+  check('1280: the Places list is its own region (keyboard stop with a label)', lap && lap.tabindex === '0' && lap.role === 'region', true)
+  check('1280: with 40+ Places the list scrolls inside its card', lap && lap.scroll > lap.client + 4 && lap.overflowY === 'auto', true)
   check('1280: and stops at min(28rem, 60vh)', lap && lap.client <= Math.min(448, lap.vh * 0.6) + 2, true)
   check('1280: its header row sticks', lap && lap.sticky === 'sticky', true)
-  check('1280: the subtitle counts the Locations', lap && /^\d+ locations$/.test(lap.sub), true)
+  check('1280: the subtitle counts the Places', lap && /^\d+ places$/.test(lap.sub), true)
   await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 800, deviceScaleFactor: 1, mobile: true })
   await goto('/mission', 4000)
   const phone = await box()
-  check('360: the Locations list does not scroll inside (the page scrolls)', phone && phone.overflowY === 'visible' && phone.scroll <= phone.client + 2, true)
+  check('360: the Places list does not scroll inside (the page scrolls)', phone && phone.overflowY === 'visible' && phone.scroll <= phone.client + 2, true)
   await send('Emulation.setEmulatedMedia', { media: 'print' })
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
   await sleep(500)
@@ -3342,7 +3342,7 @@ async function checkMissionAddRowsPersist() {
 
   for (const [title, key, label] of [
     ['Add a new Radio Log Status', 'statuses', 'status'],
-    ['Add a new Location category', 'types', 'location category'],
+    ['Add a new Place category', 'types', 'place category'],
   ]) {
     await goto('/mission')
     await evaluate(`document.querySelector('button[title="${title}"]')?.click()`)
@@ -5236,7 +5236,7 @@ async function checkSimpleView(fx) {
     const rows = await evaluate(`(() => {
       const labels = [...document.querySelectorAll('.leaflet-control-layers label')]
       const extra = labels.filter(l => /USNG|Range rings|Satellite|Hiking|Roads and place/.test(l.textContent))
-      const core = labels.filter(l => /OpenStreetMap|Locations|Radio log entries/.test(l.textContent))
+      const core = labels.filter(l => /OpenStreetMap|Places|Radio log entries/.test(l.textContent))
       return { extra: extra.length, extraHidden: extra.every(l => getComputedStyle(l).display === 'none'),
         coreShown: core.length >= 3 && core.every(l => getComputedStyle(l).display !== 'none') }
     })()`)

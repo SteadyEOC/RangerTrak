@@ -141,6 +141,6 @@ export function describeLocationMerge(merge: LocationMergeResult, listLimit = 8)
       merge.changes.map(c => `${c.name}: ${c.changedFields.join(', ')}`), '; ')})`)
   }
   if (merge.unchanged.length) bits.push(`${merge.unchanged.length} already up to date`)
-  return `locations: ${bits.length ? bits.join('; ') : 'no changes'}`
+  return `places: ${bits.length ? bits.join('; ') : 'no changes'}`
 }
 

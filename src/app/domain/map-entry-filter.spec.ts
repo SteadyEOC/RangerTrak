@@ -73,7 +73,7 @@ describe('mapFilterChips', () => {
   const labels = (o: Partial<MapFilterState>) => mapFilterChips({ ...none, ...o }).map(c => c.label)
   it('is empty when nothing is filtered', () => expect(labels({})).toEqual([]))
   it('words each filter', () => {
-    expect(labels({ locationsHidden: true })).toEqual(['Locations hidden'])
+    expect(labels({ locationsHidden: true })).toEqual(['Places hidden'])
     expect(labels({ entriesHidden: true })).toEqual(['Radio log entries hidden'])
     expect(labels({ pathsHidden: true })).toEqual(['Ranger paths hidden'])
     expect(labels({ choice: 'latest' })).toEqual(['Showing: latest per ranger'])

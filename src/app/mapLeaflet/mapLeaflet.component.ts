@@ -597,7 +597,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // group's radio buttons, which is the "real toggle" this row asked for without any
     // custom UI needed - the control already exists from E-85.
     const overlayLayers: Record<string, L.Layer> = {
-      'Locations': this.locationsLayer,
+      'Places': this.locationsLayer,
       'Radio log entries': this.myMarkerCluster,
       'Ranger paths': this.myTrailsLayer,
       'Hillshade (terrain relief)': hillshadeOverlay,

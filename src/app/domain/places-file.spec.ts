@@ -260,7 +260,7 @@ describe('places-file', () => {
       expect(text).toContain('added 12 (New 0, New 1')
       expect(text).toContain('and 4 more')
       expect(text).toContain('updated 1 (A: note)')
-      expect(describeLocationMerge(mergeLocations([], []))).toBe('locations: no changes')
+      expect(describeLocationMerge(mergeLocations([], []))).toBe('places: no changes')
     })
   })
 

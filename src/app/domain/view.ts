@@ -75,8 +75,8 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'debug-log', label: 'Debug log', isInUse: ctx => ctx.debugMode },
   // Mission page
   { id: 'statuses', label: 'Radio log statuses', isInUse: ctx => ctx.statusesCustomised },
-  { id: 'location-categories', label: 'Location categories', isInUse: ctx => ctx.locationCategoriesCustomised },
-  { id: 'locations-list', label: 'Locations', isInUse: ctx => ctx.locationCount > 0 },
+  { id: 'location-categories', label: 'Place categories', isInUse: ctx => ctx.locationCategoriesCustomised },
+  { id: 'locations-list', label: 'Places', isInUse: ctx => ctx.locationCount > 0 },
   { id: 'maps', label: 'Maps and geocoding', isInUse: ctx => ctx.mapSettingsCustomised },
   { id: 'recipients213', label: 'Listed message recipients', isInUse: ctx => ctx.recipientsCustomised },
   { id: 'tactical-calls', label: 'Tactical call signs', isInUse: ctx => ctx.tacticalCallCount > 0 },

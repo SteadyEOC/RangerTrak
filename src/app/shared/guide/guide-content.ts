@@ -424,7 +424,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Moving a whole mission',
-            text: 'To move the roster, settings and radio log entries together, use Back up mission/Restore mission on the Mission page. Import and Export here move only the roster. To hand a coordinator a starting point for a NEW device before a mission begins - any combination of roster, photos, locations and settings, no radio log entries - use the Setup file card on the Mission page (Data safety) instead.'
+            text: 'To move the roster, settings and radio log entries together, use Back up mission/Restore mission on the Mission page. Import and Export here move only the roster. To hand a coordinator a starting point for a NEW device before a mission begins - any combination of roster, photos, places and settings, no radio log entries - use the Setup file card on the Mission page (Data safety) instead.'
           },
           {
             heading: 'Tactical call signs',
@@ -601,7 +601,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Filtering the map',
-            text: 'Under the layers box, Locations, Radio log entries and Ranger paths can each be switched off, and Show under the map can thin the entries to the Latest per ranger or only those that Need attention (the statuses flagged on the Mission page). With Ranger paths on, All and Need attention still draw each ranger\'s whole trail; Latest per ranger shows one point each, so it draws no trails. A strip on the top edge of the map lists whatever is hidden, each with an x, and Show everything brings it all back. Nothing is remembered: the map starts with everything shown each time. A printed map says "Filtered:" with the same list in its title box when anything is hidden.'
+            text: 'Under the layers box, Places, Radio log entries and Ranger paths can each be switched off, and Show under the map can thin the entries to the Latest per ranger or only those that Need attention (the statuses flagged on the Mission page). With Ranger paths on, All and Need attention still draw each ranger\'s whole trail; Latest per ranger shows one point each, so it draws no trails. A strip on the top edge of the map lists whatever is hidden, each with an x, and Show everything brings it all back. Nothing is remembered: the map starts with everything shown each time. A printed map says "Filtered:" with the same list in its title box when anything is hidden.'
           },
           {
             // 2026-10-15, E-187 phase B (ADR D-58): places in and out, in the Import, export & print panel.

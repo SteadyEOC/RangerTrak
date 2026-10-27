@@ -125,7 +125,7 @@ export class SetupFileComponent {
       const bytes = await buildMissionZipBytes(manifest, photoBlobs)
       const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/zip' }))
       // What the file holds rides along in its name, so files built from one device don't collide.
-      const tag = [includeRangers && 'rangers', includePlaces && 'locations', includeSettings && 'settings']
+      const tag = [includeRangers && 'rangers', includePlaces && 'places', includeSettings && 'settings']
         .filter((c): c is string => !!c).join('-')
       const missionLabel = (this.missionService.settings.mission || 'mission').replace(/[^a-z0-9_-]+/gi, '_')
       const filename = `rangertrak-setup-${tag}-${missionLabel}-${localDateStamp(exportedAt)}.zip`
@@ -190,7 +190,7 @@ export class SetupFileComponent {
         lines.push(`Rangers: ${describeRangerMerge(mergeRangers(this.rangerService.rangers, manifest.rangers))}.`)
       }
       if (manifest.locations) {
-        lines.push(`Places: ${describeLocationMerge(mergeLocations(this.locationService.getCurrentLocations(), manifest.locations))}.`)
+        lines.push(`${describeLocationMerge(mergeLocations(this.locationService.getCurrentLocations(), manifest.locations)).replace(/^places/, 'Places')}.`)
       }
       if (photos.length) {
         lines.push(`Photos: ${photos.length} will be stored on this device, matched to rangers by ID or call sign.`)

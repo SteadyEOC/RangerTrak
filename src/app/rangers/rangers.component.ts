@@ -736,12 +736,12 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (!manifest.rangers) {
       alert(`"${file.name}" does not carry a Rangers category - there is nothing here for `
-        + `Import a list to apply. If it carries locations or settings instead, use the `
+        + `Import a list to apply. If it carries places or settings instead, use the `
         + `Setup file card on the Mission page to load those.`)
       return
     }
 
-    const otherCategories = [manifest.settings && 'mission settings', manifest.locations && 'locations']
+    const otherCategories = [manifest.settings && 'mission settings', manifest.locations && 'places']
       .filter((c): c is string => !!c)
     const named = layerName(manifest)
     const notes = [

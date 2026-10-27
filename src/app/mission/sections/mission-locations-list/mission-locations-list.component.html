@@ -4,15 +4,15 @@
      card. type="button" matters: the page wraps every section in its Save form. -->
 <mat-card appearance="outlined" class="rt-mission-card" [rtAdvanced]="'locations-list'">
   <mat-card-header>
-    <mat-card-title>Locations</mat-card-title>
+    <mat-card-title>Places</mat-card-title>
     @if (locations().length > 0) {
-    <mat-card-subtitle>{{ locations().length }} {{ locations().length === 1 ? 'location' : 'locations' }}</mat-card-subtitle>
+    <mat-card-subtitle>{{ locations().length }} {{ locations().length === 1 ? 'place' : 'places' }}</mat-card-subtitle>
     }
   </mat-card-header>
   <mat-card-content>
     @if (locations().length === 0) {
     <p class="rt-locations-list__empty">
-      No Locations placed yet - use the Add Location button on the Map page to place one.
+      No Places yet - use the Add Place button on the Map page to place one.
     </p>
     <!-- Locations need a map click, so this opens the map with placing already armed. -->
     <p>
@@ -24,7 +24,7 @@
     } @else {
     <!-- E-210 rule 6: a long list scrolls inside the card (screen, tablet and wider), so the card
          does not stretch its neighbours. A keyboard stop, named after the card. -->
-    <div class="rt-card-scroll" tabindex="0" role="region" aria-label="Locations">
+    <div class="rt-card-scroll" tabindex="0" role="region" aria-label="Places">
     <table class="rt-locations-list">
       <thead>
         <tr>

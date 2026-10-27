@@ -67,7 +67,7 @@ export function buildClearRows(context: ClearContext, c: ClearCounts): ClearRow[
       { id: 'roster', label: 'Roster', count: c.rangers, locked: true, checked: true },
       { id: 'photos', label: 'Ranger photos', count: c.photos, locked: true, checked: true },
       { id: 'log', label: 'Radio log entries (+ attachments)', count: c.entries, locked: true, checked: true },
-      { id: 'places', label: 'Locations', count: c.places, locked: true, checked: true },
+      { id: 'places', label: 'Places', count: c.places, locked: true, checked: true },
       { id: 'settings', label: 'Mission settings & tactical calls', count: null, locked: true, checked: true },
     ]
     : [

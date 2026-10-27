@@ -85,7 +85,7 @@ export type MapFilterState = {
 /** One chip per active map filter; [] when the map shows everything. */
 export function mapFilterChips(s: MapFilterState): FilterChip[] {
   const chips: FilterChip[] = []
-  if (s.locationsHidden) chips.push({ key: 'locations', label: 'Locations hidden' })
+  if (s.locationsHidden) chips.push({ key: 'locations', label: 'Places hidden' })
   if (s.entriesHidden) chips.push({ key: 'entries', label: 'Radio log entries hidden' })
   if (s.pathsHidden) chips.push({ key: 'paths', label: 'Ranger paths hidden' })
   if (s.selectedOnly) chips.push({ key: 'selected', label: 'Showing: selected on Radio Log' })
