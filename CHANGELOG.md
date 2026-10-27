@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.96-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.95-alpha...v0.99.96-alpha) (2026-10-27)
+
+
+### Features
+
+* **attachments:** smaller copies keep photo EXIF and video location/camera tags ([d5aafd4](https://github.com/SteadyEOC/RangerTrak/commit/d5aafd4f4c2162bfce650601ab84445c2b7bd395))
+* **board:** E-228 phase 1 - ICS-213 messages tab on the Board ([65ab0d9](https://github.com/SteadyEOC/RangerTrak/commit/65ab0d94d8db73390dc40b70244ca4c665561687))
+* **demo:** E-213 - a real-event demo's name links to what really happened ([83728eb](https://github.com/SteadyEOC/RangerTrak/commit/83728eb30520a56817ed866bbd0462d782f3718e))
+
 ### [0.99.95-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.94-alpha...v0.99.95-alpha) (2026-10-27)
 
 
