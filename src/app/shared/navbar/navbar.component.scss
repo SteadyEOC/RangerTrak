@@ -214,9 +214,13 @@
   // theme/skin toggle icons next to it were a flat 20px - two different sizes in the same
   // icon row. Fixed px now, same as the others, at the 24px value they all share (Material's
   // own default icon-button glyph size) instead of an em value that drifted with font-size.
-  width       : 24px;
-  height      : 24px;
-  margin-right: 2px;
+  // E-240 (John 2026-10-27): still looked ~10% too big. GitHub's mark fills its whole
+  // viewBox, where a Material glyph sits inside ~2px of padding, so equal boxes aren't equal
+  // marks. 22px, plus 1px each side to keep the row's spacing.
+  width       : 22px;
+  height      : 22px;
+  margin-left : 1px;
+  margin-right: 3px;
 }
 
 // Same circular hover treatment as .theme-toggle, since the two sit side by side.
