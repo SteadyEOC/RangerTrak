@@ -15,6 +15,7 @@ import { HelpStartComponent } from './tabs/help-start.component'
 import { HelpFeedbackComponent } from './tabs/help-feedback.component'
 import { HelpDataComponent } from './tabs/help-data.component'
 import { HelpFaqComponent } from './tabs/help-faq.component'
+import { HELP_SECTIONS, TOUR_URL } from '../../shared/guide/help-sections'
 
 /**
  * The in-app user documentation, and (E-84 decision, 2026-08-24) the canonical one: it ships
@@ -63,26 +64,33 @@ export class HelpComponent implements OnDestroy {
   public version = ''
 
   /** `?tab=` names, in tab order (help.component.html). E-124 added this so the map page's
-   *  "How?" link can land on "Your data" instead of always "Start here". */
-  static readonly TAB_KEYS = ['start', 'about', 'faq', 'data', 'after', 'feedback'] as const
+   *  "How?" link can land on "Your data" instead of always "Start here". Now taken from
+   *  HELP_SECTIONS, which the Help drawer's navigation row also uses. */
+  static readonly TAB_KEYS: readonly string[] = HELP_SECTIONS.map(s => s.key)
+  readonly sections = HELP_SECTIONS
+  readonly tourUrl = TOUR_URL
   public selectedIndex = signal(0)
+  private routeSubscription: Subscription
 
   constructor(
     private log: LogService,
     private missionService: MissionService,
     route: ActivatedRoute,
   ) {
-    const tab = route.snapshot.queryParamMap.get('tab')
-    const index = HelpComponent.TAB_KEYS.indexOf(tab as typeof HelpComponent.TAB_KEYS[number])
-    if (index >= 0) {
-      this.selectedIndex.set(index)
-    }
-    // The router's own anchorScrolling runs before the chosen tab's content exists, so the
-    // fragment is scrolled to here, once the tab has rendered.
-    const fragment = route.snapshot.fragment
-    if (fragment) {
-      setTimeout(() => HelpComponent.revealFragment(fragment))
-    }
+    // Subscribed, not read once from the snapshot: the Help drawer's section links also work
+    // while /help is already showing, and the router reuses this component for those.
+    this.routeSubscription = route.queryParamMap.subscribe(params => {
+      const index = HelpComponent.TAB_KEYS.indexOf(params.get('tab') ?? '')
+      if (index >= 0) {
+        this.selectedIndex.set(index)
+      }
+      // The router's own anchorScrolling runs before the chosen tab's content exists, so the
+      // fragment is scrolled to here, once the tab has rendered.
+      const fragment = route.snapshot.fragment
+      if (fragment) {
+        setTimeout(() => HelpComponent.revealFragment(fragment))
+      }
+    })
 
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
@@ -117,5 +125,6 @@ export class HelpComponent implements OnDestroy {
 
   ngOnDestroy() {
     this.missionSubscription?.unsubscribe()
+    this.routeSubscription?.unsubscribe()
   }
 }

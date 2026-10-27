@@ -1,0 +1,55 @@
+// One look for every Help navigation control (John 2026-10-27): the /help page's tabs, its
+// Tour Guide link, and the Help drawer's section links and screen tabs. E-147 / E-209 / D-64
+// set the look on the /help tabs - outlined, control corner, label-large text, the current
+// one filled with the accent - and this is that rule, lifted out so the drawer matches it.
+
+// An outlined pill on any element (a link, or Material's own `.mdc-tab`).
+@mixin pill($height: var(--rt-control-height)) {
+  display        : inline-flex;
+  align-items    : center;
+  gap            : 0.3rem;
+  height         : $height;
+  min-width      : 0;
+  padding-inline : 1rem;
+  border         : 1px solid var(--rt-line-strong);
+  border-radius  : var(--rt-control-radius);
+  color          : var(--rt-ink);
+  font-size      : var(--mat-sys-label-large-size);
+  font-weight    : var(--mat-sys-label-large-weight);
+  text-decoration: none;
+  white-space    : nowrap;
+}
+
+@mixin pill-current {
+  background-color: var(--rt-accent);
+  border-color    : var(--rt-accent);
+  color           : var(--rt-accent-ink);
+}
+
+// A mat-tab-group whose tabs are pills. Use inside `:host ::ng-deep` - the tab DOM is
+// Material's, so emulated encapsulation would otherwise drop these rules.
+@mixin pill-tabs($height: var(--rt-control-height)) {
+  --mat-tab-active-indicator-height          : 0;
+  --mat-tab-divider-height                   : 0;
+  --mat-tab-inactive-label-text-color        : var(--rt-ink);
+  --mat-tab-inactive-hover-label-text-color  : var(--rt-ink);
+  --mat-tab-inactive-focus-label-text-color  : var(--rt-ink);
+  --mat-tab-active-label-text-color          : var(--rt-accent-ink);
+  --mat-tab-active-hover-label-text-color    : var(--rt-accent-ink);
+  --mat-tab-active-focus-label-text-color    : var(--rt-accent-ink);
+
+  .mat-mdc-tab-labels {
+    gap    : 0.5rem;
+    padding: 0.25rem 0.125rem;
+  }
+
+  .mat-mdc-tab.mdc-tab {
+    @include pill($height);
+    --mat-tab-label-text-size  : var(--mat-sys-label-large-size);
+    --mat-tab-label-text-weight: var(--mat-sys-label-large-weight);
+  }
+
+  .mat-mdc-tab.mdc-tab--active {
+    @include pill-current;
+  }
+}

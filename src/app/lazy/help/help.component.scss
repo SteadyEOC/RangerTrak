@@ -1,4 +1,5 @@
 @use "../../../styles/breakpoints" as bp;
+@use "../../../styles/help-nav";
 
 // `.main` now lives in PageComponent - see shared/page/page.component.scss.
 
@@ -93,45 +94,21 @@ filter: brightness(30%);
 // mat-stretch-tabs="false" leaves labels at their natural width, so six of them scroll
 // rather than each being squeezed to a sixth of the viewport - Material pages them on a
 // phone, which is the behavior we want here.
-// 2026-09-30, John: E-147 - the labels read as plain words (Material's underline-only
-// indicator is easy to miss). Now outlined pills, the selected one filled. Still the stock
-// mat-tab-group - same DOM, roles and arrow-key behaviour; only Material's own tab tokens plus
-// a pill shape on each tab. Underline and divider are turned off because the fill replaces
-// them. The header's built-in overflow paging still handles six pills on a 390px phone, so
-// nothing here can widen the page.
-// The pill rules below style mat-tab-group's own DOM, so they need :host ::ng-deep - without it
-// emulated encapsulation drops them and only the label-colour tokens apply (white on grey).
-.help-tabs {
-  --mat-tab-active-indicator-height          : 0;
-  --mat-tab-divider-height                   : 0;
-  --mat-tab-inactive-label-text-color        : var(--rt-ink);
-  --mat-tab-inactive-hover-label-text-color  : var(--rt-ink);
-  --mat-tab-inactive-focus-label-text-color  : var(--rt-ink);
-  --mat-tab-active-label-text-color          : var(--rt-accent-ink);
-  --mat-tab-active-hover-label-text-color    : var(--rt-accent-ink);
-  --mat-tab-active-focus-label-text-color    : var(--rt-accent-ink);
+// 2026-09-30, John: E-147 - outlined pills, the selected one filled; E-209 / D-64 gave them
+// the control height and corner. Still the stock mat-tab-group - same DOM, roles and
+// arrow-key behaviour. 2026-10-27: the look moved to styles/_help-nav.scss so the Help
+// drawer's tabs and links share it.
+:host ::ng-deep .help-tabs {
+  @include help-nav.pill-tabs;
 }
 
-:host ::ng-deep .help-tabs .mat-mdc-tab-labels {
-  gap    : 0.5rem;
-  padding: 0.25rem 0.125rem;
-}
+.help-tour-link {
+  @include help-nav.pill;
+  margin-top: 0.75rem;
 
-:host ::ng-deep .help-tabs .mat-mdc-tab.mdc-tab {
-  // E-209 / D-64: the tabs are controls like any other - the control height (44 px on a touch
-  // screen), the control corner, label-large text (was 36 px and a full pill).
-  height       : var(--rt-control-height);
-  min-width    : 0;
-  padding-inline: 1rem;
-  border       : 1px solid var(--rt-line-strong);
-  border-radius: var(--rt-control-radius);
-  --mat-tab-label-text-size  : var(--mat-sys-label-large-size);
-  --mat-tab-label-text-weight: var(--mat-sys-label-large-weight);
-}
-
-:host ::ng-deep .help-tabs .mat-mdc-tab.mdc-tab--active {
-  background-color: var(--rt-accent);
-  border-color    : var(--rt-accent);
+  &:hover {
+    border-color: var(--rt-accent);
+  }
 }
 
 :host ::ng-deep .help-tabs .mat-mdc-tab-body-content {

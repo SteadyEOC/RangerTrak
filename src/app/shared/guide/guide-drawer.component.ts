@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common'
 import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
-import { RouterModule } from '@angular/router'
+import { IsActiveMatchOptions, RouterModule } from '@angular/router'
 import { A11yModule } from '@angular/cdk/a11y'
 import { MatButtonModule } from '@angular/material/button'
 import { MatIconModule } from '@angular/material/icon'
@@ -9,6 +9,7 @@ import { MatTabsModule } from '@angular/material/tabs'
 
 import { GuideService } from './guide.service'
 import { renderGuideText } from './guide-render'
+import { HELP_SECTIONS, TOUR_URL } from './help-sections'
 
 /**
  * The one Guide drawer, rendered once in app.component.html and opened by the Guide button
@@ -37,6 +38,14 @@ import { renderGuideText } from './guide-render'
 export class GuideDrawerComponent {
   readonly guide = inject(GuideService)
   private readonly sanitizer = inject(DomSanitizer)
+
+  readonly sections = HELP_SECTIONS
+  readonly tourUrl = TOUR_URL
+
+  /** A section link is current only on /help with that same `?tab=`. */
+  readonly currentSectionMatch: IsActiveMatchOptions = {
+    paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored'
+  }
 
   /** renderGuideText() already escapes everything but its own `<a>` output, so this is safe. */
   renderText(text: string): SafeHtml {

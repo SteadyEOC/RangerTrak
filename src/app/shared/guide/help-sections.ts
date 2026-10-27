@@ -1,0 +1,21 @@
+/**
+ * The one list of Help destinations, shared by the /help page's tabs and the Help drawer's
+ * navigation row, so the two can never name or order them differently (John 2026-10-27:
+ * the drawer's links used to sit in a footer under the screen's own text, and "Your data"
+ * was repeated as a drawer tab on every screen).
+ *
+ * `key` is the `/help?tab=` name; the order is the /help page's tab order.
+ */
+export const HELP_SECTIONS = [
+  { key: 'start', label: 'Start here' },
+  { key: 'about', label: 'About' },
+  { key: 'faq', label: 'FAQ' },
+  { key: 'data', label: 'Your data' },
+  { key: 'after', label: 'After mission' },
+  { key: 'feedback', label: 'Feedback' },
+] as const
+
+export type HelpSectionKey = typeof HELP_SECTIONS[number]['key']
+
+/** The Tour Guide, a separate static page (tools/tour) the service worker serves offline. */
+export const TOUR_URL = '/tour/'

@@ -17,38 +17,56 @@
     </button>
   </header>
 
+  <!-- John 2026-10-27: all of Help, first. These used to be a footer under the screen's own
+       text; they are the same sections, in the same order, as the /help page's tabs. -->
+  <nav class="guide__nav" aria-label="All of Help">
+    @for (section of sections; track section.key) {
+    <a class="guide__nav-link" routerLink="/help" [queryParams]="{ tab: section.key }" (click)="guide.close()"
+      routerLinkActive="guide__nav-link--current" ariaCurrentWhenActive="page"
+      [routerLinkActiveOptions]="currentSectionMatch">{{ section.label }}</a>
+    }
+    <a class="guide__nav-link" [href]="tourUrl" target="_blank" rel="noopener" data-testid="guide-tour-link">Tour Guide
+      <span aria-hidden="true">&#8599;</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+  </nav>
+
   @if (guide.loadFailed()) {
   <p class="guide__panel guide__text" role="alert">The Help text could not be loaded. Check the connection and try again.</p>
   }
   @if (guide.entry(); as entry) {
-  <mat-tab-group class="guide__tabs" [selectedIndex]="guide.selectedTabIndex()">
+  <!-- A screen with one tab gets no tab strip: a single "This page" pill is not navigation. -->
+  @if (entry.tabs.length === 1) {
+  <div class="guide__single">
+    <ng-container *ngTemplateOutlet="panel; context: { $implicit: entry.tabs[0] }"></ng-container>
+  </div>
+  } @else {
+  <mat-tab-group class="guide__tabs" mat-stretch-tabs="false" [selectedIndex]="guide.selectedTabIndex()">
     @for (tab of entry.tabs; track tab.label) {
     <mat-tab [label]="tab.label">
-      <div class="guide__panel">
-        @for (block of tab.blocks; track block.heading) {
-        <section class="guide__block">
-          <h3 class="guide__heading">{{ block.heading }}</h3>
-          @if (block.text) {
-          <p class="guide__text" [innerHTML]="renderText(block.text)"></p>
-          }
-          @if (block.bullets) {
-          <ul class="guide__list">
-            @for (bullet of block.bullets; track bullet) {
-            <li [innerHTML]="renderText(bullet)"></li>
-            }
-          </ul>
-          }
-        </section>
-        }
-      </div>
+      <ng-container *ngTemplateOutlet="panel; context: { $implicit: tab }"></ng-container>
     </mat-tab>
     }
   </mat-tab-group>
   }
+  }
 
-  <footer class="guide__footer">
-    <a routerLink="/help" (click)="guide.close()" class="guide__help-link">All of Help: FAQ, Your data, After mission, Feedback</a>
-    <a href="/tour/" target="_blank" rel="noopener" class="guide__help-link" data-testid="guide-tour-link">Tour Guide (new tab)</a>
-  </footer>
+  <ng-template #panel let-tab>
+    <div class="guide__panel">
+      @for (block of tab.blocks; track block.heading) {
+      <section class="guide__block">
+        <h3 class="guide__heading">{{ block.heading }}</h3>
+        @if (block.text) {
+        <p class="guide__text" [innerHTML]="renderText(block.text)"></p>
+        }
+        @if (block.bullets) {
+        <ul class="guide__list">
+          @for (bullet of block.bullets; track bullet) {
+          <li [innerHTML]="renderText(bullet)"></li>
+          }
+        </ul>
+        }
+      </section>
+      }
+    </div>
+  </ng-template>
 </aside>
 }

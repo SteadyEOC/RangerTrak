@@ -5,6 +5,11 @@
     </h1>
     <p class="help-version">Version {{version}}</p>
 
+    <!-- John 2026-10-27: one Help navigation. The Tour Guide is a peer of the tabs below, not a
+         link buried in Start here; the Help drawer shows the same sections (HELP_SECTIONS). -->
+    <a class="help-tour-link" [href]="tourUrl" target="_blank" rel="noopener"
+      data-testid="help-tour-link">Tour Guide <span aria-hidden="true">&#8599;</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+
     <!-- E-84: this page used to be one long scroll, which is how six shipped features ended
          up documented nowhere - there was no obvious place to add them and no way to see
          what was already covered. Eight tabs, each its own component in ./tabs.
@@ -22,22 +27,22 @@
          see HelpComponent.TAB_KEYS for the names, in the same order as these tabs. -->
     <mat-tab-group class="help-tabs" mat-stretch-tabs="false" animationDuration="0ms"
       [selectedIndex]="selectedIndex()" (selectedIndexChange)="selectedIndex.set($event)">
-      <mat-tab label="Start here">
+      <mat-tab [label]="sections[0].label">
         <rangertrak-help-start></rangertrak-help-start>
       </mat-tab>
-      <mat-tab label="About">
+      <mat-tab [label]="sections[1].label">
         <rangertrak-help-about></rangertrak-help-about>
       </mat-tab>
-      <mat-tab label="FAQ">
+      <mat-tab [label]="sections[2].label">
         <rangertrak-help-faq></rangertrak-help-faq>
       </mat-tab>
-      <mat-tab label="Your data">
+      <mat-tab [label]="sections[3].label">
         <rangertrak-help-data></rangertrak-help-data>
       </mat-tab>
-      <mat-tab label="After mission">
+      <mat-tab [label]="sections[4].label">
         <rangertrak-help-after-mission></rangertrak-help-after-mission>
       </mat-tab>
-      <mat-tab label="Feedback">
+      <mat-tab [label]="sections[5].label">
         <rangertrak-help-feedback></rangertrak-help-feedback>
       </mat-tab>
     </mat-tab-group>

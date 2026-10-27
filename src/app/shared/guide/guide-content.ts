@@ -90,28 +90,9 @@ const GRID_KEYBOARD: GuideTab = {
   ]
 }
 
-const YOUR_DATA: GuideTab = {
-  label: 'Your data',
-  blocks: [
-    {
-      heading: 'Where it lives',
-      text: 'Everything RangerTrak knows is stored in this browser, on this device. There is no server, no account and no login. Your mission stays on this device. When online, the app fetches map images and looks up addresses for report locations automatically. Sending feedback, and turning on RangerTrak Board publishing yourself (on the Mission page, off by default), only happen if you choose to. See "RangerTrak Board" on the Mission page for exactly what that sends and to whom, and https://rangertrak.com/privacy.html for the full privacy policy.'
-    },
-    {
-      heading: 'What that means',
-      bullets: [
-        'Another device — even another browser on this same machine — has its own separate copy.',
-        'Clearing site data clears the mission. Back up mission, on the Mission page, guards against this.',
-        'Especially on iPhone and iPad, every browser can clear a site\'s data after about a week unused, and storage protection is not reliable there (nor in Safari on a Mac). Install RangerTrak and back up the mission.',
-        'Roster exports and spreadsheet exports contain the ranger roster in the clear: legal names, phone numbers and call signs. A mission backup is encrypted only if you give it a passphrase; left blank, it is plain text too.',
-        'The roster, radio log entries, after-action notes and ranger photos on this device are stored unencrypted unless you turn on device encryption on the Mission page (Data safety > Device encryption).',
-        // Item 9 (2026-09-28, John): so a scribe who opens a second tab/window and sees
-        // either notice understands why, rather than assuming something broke.
-        'Only ONE tab of this browser saves at a time. Opening RangerTrak in a second tab or window shows a notice offering to make that one active instead - the other stops saving, with its own notice, until reloaded.'
-      ]
-    }
-  ]
-}
+// "Your data" was a tab here, repeated on every screen. It is global, not per screen, so it
+// now lives only on the /help page's own "Your data" tab, which the drawer's navigation row
+// links to (John 2026-10-27). Everything it said is covered there.
 
 export const GUIDE_CONTENT: Record<string, GuideEntry> = {
 
@@ -212,8 +193,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             ]
           }
         ]
-      },
-      YOUR_DATA
+      }
     ]
   },
 
@@ -293,8 +273,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           }
         ]
       },
-      GRID_KEYBOARD,
-      YOUR_DATA
+      GRID_KEYBOARD
     ]
   },
 
@@ -317,8 +296,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'Both Print and Save PDF fill FEMA’s own real ICS-213 form the same way - Print opens the print dialog directly (one click to paper), Save PDF downloads the file instead, for attaching to an email or filing. Subject comes from the report\'s own Subject field, and Approved by is the operator who filed the report. The Reply section is left blank for the recipient to fill in.'
           }
         ]
-      },
-      YOUR_DATA
+      }
     ]
   },
 
@@ -352,8 +330,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'Review and send opens Help > Feedback with those notes filled in. Nothing is sent until you press Submit there, and it becomes a public GitHub issue, so take out names and places first.'
           }
         ]
-      },
-      YOUR_DATA
+      }
     ]
   },
 
@@ -530,8 +507,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             ]
           }
         ]
-      },
-      YOUR_DATA
+      }
     ]
   },
 
@@ -618,8 +594,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'Route trails join one ranger\'s reports oldest to newest on the Leaflet map (the MapLibre map does not draw them), so you can see which way a team has been moving: thin and faint is older, thick and bright is newest, and the newest leg slowly flows toward the latest position. The label at the newest end is a snapshot from when the map was drawn, not a running clock.'
           }
         ]
-      },
-      YOUR_DATA
+      }
     ]
   }
 }

@@ -1,4 +1,5 @@
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -59,7 +60,7 @@ describe('HelpComponent fragments', () => {
       imports: [HelpComponent, NoopAnimationsModule],
       providers: [provideRouter([]), {
         provide: ActivatedRoute,
-        useValue: { snapshot: { queryParamMap: { get: () => tab }, fragment } },
+        useValue: { queryParamMap: of(convertToParamMap({ tab })), snapshot: { fragment } },
       }],
     }).compileComponents()
     const fixture = TestBed.createComponent(HelpComponent)

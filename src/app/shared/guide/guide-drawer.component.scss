@@ -1,3 +1,5 @@
+@use "../../../styles/help-nav";
+
 // The Guide drawer. See guide-drawer.component.ts for why this is a fixed <aside> plus a
 // CDK focus trap rather than mat-sidenav or mat-dialog.
 
@@ -77,11 +79,53 @@ $guide-z: 1200;
   margin     : 0.1rem 0 0;
 }
 
-.guide__tabs {
+// Same row as the /help page's tab strip (styles/_help-nav.scss): pills that wrap, the current
+// one filled. Sits above the screen's own text, which scrolls beneath it.
+.guide__nav {
+  flex         : none;
+  display      : flex;
+  flex-wrap    : wrap;
+  gap          : 0.5rem;
+  padding      : 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--rt-line);
+}
+
+.guide__nav-link {
+  @include help-nav.pill;
+
+  &:hover {
+    border-color: var(--rt-accent);
+  }
+}
+
+.guide__nav-link--current {
+  @include help-nav.pill-current;
+}
+
+.guide__tabs,
+.guide__single {
   flex     : 1;
   // Without an explicit min-height of 0 a flex child refuses to shrink below its content,
-  // so the tab body would push the footer off the bottom instead of scrolling.
+  // so the tab body would overflow the drawer instead of scrolling.
   min-height: 0;
+}
+
+.guide__single {
+  display       : flex;
+  flex-direction: column;
+}
+
+.guide__single .guide__panel {
+  flex: 1;
+}
+
+:host ::ng-deep .guide__tabs {
+  @include help-nav.pill-tabs;
+
+  .mat-mdc-tab-header {
+    padding-inline: 1.125rem;
+    padding-top   : 0.5rem;
+  }
 }
 
 .guide__panel {
@@ -120,20 +164,6 @@ $guide-z: 1200;
 
 .guide__list li + li {
   margin-top: 0.35rem;
-}
-
-.guide__footer {
-  flex       : none;
-  padding    : 0.9rem 1.25rem;
-  border-top : 1px solid var(--rt-line);
-  display    : flex;
-  flex-wrap  : wrap;
-  gap        : 0.5rem 1.25rem;
-}
-
-.guide__help-link {
-  font-size: var(--rt-type-body-sm-size);
-  color    : var(--rt-accent);
 }
 
 // The drawer covers the screen it describes at phone width, so it must not also be
