@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-<h1 align="center">RangerTrak™</h1>
+<h1 align="center">RangerTrak™</h1>    
 
 [![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
