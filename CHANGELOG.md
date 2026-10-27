@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.93-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.92-alpha...v0.99.93-alpha) (2026-10-27)
+
+
+### Bug Fixes
+
+* **grids:** Fit to screen on Radio Log and Rangers; the width cap no longer crushes columns ([2d31911](https://github.com/SteadyEOC/RangerTrak/commit/2d31911aa69bbb608ff18b7f540bb930586e45ea))
+
 ### [0.99.92-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.91-alpha...v0.99.92-alpha) (2026-10-27)
 
 
