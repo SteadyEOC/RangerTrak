@@ -63,6 +63,7 @@ import { showFirstPrintTip } from '../shared/export/print-tip'
 import type { RosterImportDialogResult } from './roster-import-dialog/roster-import-dialog.component'
 import { CustomTooltip } from './customTooltip'
 import { localDateStamp } from '../shared/export/local-date'
+import { escapeHtml } from '../shared/escape-html'
 
 
 @Component({
@@ -257,7 +258,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // Step 3 matters: before it, a ranger with no photo rendered a broken-image icon.
   imageCellRenderer = (params: { data: RangerType }) => {
     const src = this.photoSrc(params.data)
-    const img = `<img class="licenseImg" style="height:40px; width:40px;" alt="Photo of ${params.data.fullName || params.data.callsign}"
+    const img = `<img class="licenseImg" style="height:40px; width:40px;" alt="Photo of ${escapeHtml(params.data.fullName || params.data.callsign)}"
       src="${src}">`
     // The demo roster's AI-generated faces carry a small "AI" badge (shared/ai-photo.ts).
     return withAiBadge(img, isAiGeneratedPhoto(params.data.image, !!this.photos.photoUrl(params.data)))
@@ -277,8 +278,8 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // idCellRenderer below, since a blank `id` ("hasn't checked in yet") is the state that
   // actually leaves a report unattributable.
   callsignCellRenderer = (params: { data: RangerType }) => {
-    let title = `${params.data.fullName} | ${params.data.phone}`
-    return `<span aria-hidden title="${title}"> ${params.data.callsign}</span>`
+    const title = escapeHtml(`${params.data.fullName} | ${params.data.phone}`)
+    return `<span aria-hidden title="${title}"> ${escapeHtml(params.data.callsign)}</span>`
   }
 
   idCellRenderer = (params: { data: RangerType }) => {

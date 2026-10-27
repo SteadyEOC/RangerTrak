@@ -38,6 +38,14 @@
   // ── Accent ────────────────────────────────────────────────────────
   --rt-accent: #{light-dark(map.get($c, accent), map.get($c, accent-dark))};
   --rt-accent-ink: #{light-dark(map.get($c, accent-ink), map.get($c, accent-ink-dark))};
+
+  // ── Links (2026-10-27, John: link colours "way off" in dark mode on a phone) ──
+  // Until now no link colour was set, so every skin showed the browser's own blue/purple -
+  // on Android and iOS the visited purple is near-unreadable on the dark grounds, and neither
+  // matches any skin. A link is the skin's accent (contrast-checked for text in both schemes);
+  // visited leans toward the ink, so it stays readable in both and still looks different.
+  --rt-link: var(--rt-accent);
+  --rt-link-visited: color-mix(in oklab, var(--rt-accent) 60%, var(--rt-ink));
 }
 
 :root {

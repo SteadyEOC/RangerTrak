@@ -194,6 +194,18 @@ body {
   color: var(--rt-ink);
 }
 
+// Links take the skin's colours (tokens: --rt-link*), not the browser's blue/purple, which were
+// unreadable on the dark grounds. :where() keeps this at zero specificity, so Material's
+// anchor-buttons and every component's own `a` rule (`color: inherit` in notices, the navbar's
+// chrome ink) still win.
+:where(a:link) {
+  color: var(--rt-link);
+}
+
+:where(a:visited) {
+  color: var(--rt-link-visited);
+}
+
 // E-44 audit, 2026-08-26: `.material-icons` (ligature icons - rangers.component.html,
 // alerts.component.html) was live in three places with no font behind it anywhere in the
 // tree - not this stylesheet, not index.html's Google Fonts link, not self-hosted. Confirmed
@@ -288,7 +300,10 @@ rangertrak-footer {
     rangertrak-stale-origin-notice,
     rangertrak-install-update,
     rangertrak-footer,
-    pageHeader {
+    pageHeader,
+    // 2026-10-27 (blog session's capture of 0.99.90): the Full view switch printed at the top of
+    // the map sheet and pushed the legend onto page 2.
+    rangertrak-page .view-bar {
       display: none !important;
     }
   }
@@ -405,6 +420,26 @@ rangertrak-footer {
   line-height  : 1.4;
   margin-left  : 0.4em;
   padding      : 0 0.5em;
+}
+
+// The Radio Log's Notes cell when it carries a chip (2026-10-27): the note ellipsises on its own
+// so a long note no longer pushes the chip out of sight.
+.rt-notes-cell {
+  display    : flex;
+  align-items: center;
+  min-width  : 0;
+}
+
+.rt-notes-cell__text {
+  flex         : 1 1 auto;
+  min-width    : 0;
+  overflow     : hidden;
+  text-overflow: ellipsis;
+  white-space  : nowrap;
+}
+
+.rt-notes-cell .rt-attach-chip {
+  flex-shrink: 0;
 }
 
 // E-219: a placeholder is an example or an instruction, never a value. Italic tells them apart

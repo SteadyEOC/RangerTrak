@@ -400,6 +400,12 @@
 }
 
 // E-194: an attachment listed under a needs-attention entry (name, short fingerprint, thumbnail for an image).
+// 2026-10-27 (blog session, 0.99.90): the space before this span in the template sits alone at
+// the start of an @if block, so Angular drops it and the time ran into the number ("21:03A027").
+.rt-summary__msgno {
+  margin-left: 0.5em;
+}
+
 .rt-summary__attachment {
   display  : block;
   font-size: 0.85em;

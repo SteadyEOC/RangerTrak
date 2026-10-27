@@ -42,6 +42,7 @@ import { AttachmentStoreService } from '../shared/services/attachment-store.serv
 import { ImportSafetyService } from '../shared/services/import-safety.service'
 import { AttachmentChipComponent } from '../shared/attachments/attachment-chip.component'
 import { attachmentChipHtml, attachmentChipUid } from '../shared/attachments/attachment-chip-html'
+import { escapeHtml } from '../shared/escape-html'
 import { AttachmentViewerService } from '../shared/attachments/attachment-viewer.service'
 import { parseReportPacket, REPORT_PACKET_SCHEMA_VERSION } from '../shared/export/report-packet'
 import { diagnoseFile, REPORT_PACKET_DAMAGED_MESSAGE } from '../shared/export/import-file'
@@ -617,15 +618,18 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   // than a revival of this.
 
   statusCellRenderer = (params: { data: RadioLogEntryType }) => {
-    let title = `Status: ${params.data.status}`
-    return `<span aria-hidden title="${title}"> ${params.data.status}</span>`
+    const status = escapeHtml(params.data.status)
+    return `<span aria-hidden title="Status: ${status}"> ${status}</span>`
   }
 
   notesCellRenderer = (params: { data: RadioLogEntryType }) => {
-    let title = `Note: ${params.data.notes}`
+    const notes = escapeHtml(params.data.notes)
     // E-194: the 📎 N chip rides inside the notes cell (no new wide column); its click is caught
-    // by onGridClick() below, since a cell renderer here is a string.
-    return `<span aria-hidden title="${title}"> ${params.data.notes}</span>${attachmentChipHtml(params.data)}`
+    // by onGridClick() below, since a cell renderer here is a string. 2026-10-27: a flex row, so a
+    // long note ellipsises its own text and the chip keeps its width (it used to be cut off).
+    const chip = attachmentChipHtml(params.data)
+    if (!chip) return `<span aria-hidden title="Note: ${notes}"> ${notes}</span>`
+    return `<span class="rt-notes-cell"><span class="rt-notes-cell__text" aria-hidden title="Note: ${notes}"> ${notes}</span>${chip}</span>`
   }
 
   /** E-194: opens the viewer for the ONE selected row, the way to add files to an entry that has none yet. */

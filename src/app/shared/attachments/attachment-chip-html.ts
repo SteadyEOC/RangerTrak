@@ -1,4 +1,5 @@
 import { liveRefs } from '../../domain/attachments'
+import { escapeHtml } from '../escape-html'
 import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
 
 /** Hook class the grid's click handler looks for; the entry's uid rides in `data-entry-uid`. */
@@ -14,7 +15,7 @@ export const ATTACH_CHIP_CLASS = 'rt-attach-chip'
 export function attachmentChipHtml(entry: Pick<RadioLogEntryType, 'uid' | 'attachments'>): string {
   const n = liveRefs(entry).length
   if (!n || !entry.uid) return ''
-  const uid = entry.uid.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`)
+  const uid = escapeHtml(entry.uid)
   return `<button type="button" class="${ATTACH_CHIP_CLASS}" data-entry-uid="${uid}" `
     + `aria-label="${n} ${n === 1 ? 'attachment' : 'attachments'}, open">📎 ${n}</button>`
 }

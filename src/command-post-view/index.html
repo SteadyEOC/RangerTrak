@@ -97,6 +97,9 @@
     cursor: pointer;
   }
   .controls button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  /* The browser's own link blue/purple is unreadable on the dark ground (2026-10-27). */
+  a:link { color: var(--accent); }
+  a:visited { color: color-mix(in oklab, var(--accent) 60%, var(--ink)); }
 
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   caption { text-align: left; color: var(--ink-2); margin-bottom: 0.4rem; font-size: 0.85rem; }
