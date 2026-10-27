@@ -1,0 +1,1376 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-10-27T16:54:02.505Z",
+  "appVersion": "0.99.93-alpha",
+  "settings": {
+    "schemaVersion": 5,
+    "settingsName": "",
+    "settingsDate": "2026-10-27T16:53:29.157Z",
+    "mission": "FIXTURE-0.99.93-alpha",
+    "event": "Missing Person Exercise",
+    "eventNotes": "Overdue day hiker last seen starting down the Bright Angel Trail",
+    "opPeriod": "Op 1",
+    "opPeriodStart": "2026-10-27T11:08:37.008Z",
+    "opPeriodEnd": "2026-10-27T23:08:37.008Z",
+    "application": "RangerTrak",
+    "version": "0.99.93-alpha",
+    "debugMode": false,
+    "defLat": 36.0524,
+    "defLng": -112.1437,
+    "googleGeocodingApiKey": "",
+    "showDD": true,
+    "showDDM": true,
+    "showDMS": true,
+    "showMGRS": false,
+    "showUTM": false,
+    "showMaidenhead": true,
+    "leaflet": {
+      "defZoom": 17,
+      "markerScheme": "",
+      "overviewDifference": 5,
+      "overviewMinZoom": 5,
+      "overviewMaxZoom": 16
+    },
+    "maplibre": {
+      "defZoom": 17,
+      "markerScheme": "",
+      "overviewDifference": 5,
+      "overviewMinZoom": 5,
+      "overviewMaxZoom": 16
+    },
+    "imageDirectory": "./assets/imgs/",
+    "defRadioLogStatus": 0,
+    "radioLogStatuses": [
+      {
+        "status": "Normal",
+        "color": "normal",
+        "icon": "check_FILL0_wght400_GRAD0_opsz48.png"
+      },
+      {
+        "status": "Location Report",
+        "color": "location-report",
+        "icon": "where_to_vote_FILL0_wght400_GRAD0_opsz48.png"
+      },
+      {
+        "status": "Evidence Report",
+        "color": "evidence-report",
+        "icon": "add_photo_alternate_FILL0_wght400_GRAD0_opsz48.png"
+      },
+      {
+        "status": "Need Rest/Food",
+        "color": "need-rest-food",
+        "icon": "mood_bad_FILL0_wght400_GRAD0_opsz48.png"
+      },
+      {
+        "status": "Incident Check-in",
+        "color": "incident-check-in",
+        "icon": "person_add_FILL0_wght400_GRAD0_opsz48.png"
+      },
+      {
+        "status": "Incident Check-out",
+        "color": "incident-check-out",
+        "icon": "person_remove_FILL0_wght400_GRAD0_opsz48.png"
+      },
+      {
+        "status": "Urgent",
+        "color": "urgent",
+        "icon": "crisis_alert_FILL0_wght400_GRAD0_opsz48.png"
+      }
+    ],
+    "recipientOptions213": [
+      "Incident Commander",
+      "Ops",
+      "Planning",
+      "Logistics",
+      "Finance",
+      "EOC",
+      "LEO",
+      "PI"
+    ],
+    "idFieldLabel": "Ranger ID",
+    "checkInIntervalMin": 30,
+    "locationTypes": [
+      {
+        "type": "Command Post",
+        "color": "#1565C0",
+        "icon": "command-post"
+      },
+      {
+        "type": "Staging Area",
+        "color": "#EF6C00",
+        "icon": "staging"
+      },
+      {
+        "type": "Ranger First Aid",
+        "color": "#C62828",
+        "icon": "first-aid"
+      },
+      {
+        "type": "EOC",
+        "color": "#6A1B9A",
+        "icon": "eoc"
+      },
+      {
+        "type": "Fire Station",
+        "color": "#D84315",
+        "icon": "fire-station"
+      },
+      {
+        "type": "Dock",
+        "color": "#00838F",
+        "icon": "dock"
+      }
+    ],
+    "commandPostEnabled": false,
+    "commandPostServerUrl": "",
+    "autoPrint213": false,
+    "tacticalCalls": [
+      {
+        "name": "Command Post",
+        "rangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87"
+      },
+      {
+        "name": "Rim Team 1",
+        "rangerUid": "e9eaef42-583f-443f-b424-02a9bfd64148"
+      },
+      {
+        "name": "Below Rim Team",
+        "rangerUid": "894f3b52-810d-41bf-bef2-40a84c6f5874"
+      },
+      {
+        "name": "Medical Aid"
+      }
+    ],
+    "extraCopies213": 1,
+    "attachmentBudgetMB": 512,
+    "boardPassword": "",
+    "boardShowAttachments": false,
+    "missionMode": "demo"
+  },
+  "rangers": [
+    {
+      "callsign": "!CmdPost",
+      "fullName": "Exercise Command Post",
+      "phone": "928-555-0101",
+      "image": "badge-cmd.svg",
+      "id": "CP-1",
+      "team": "Command",
+      "role": "Command",
+      "note": "Net control for the exercise",
+      "uid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87"
+    },
+    {
+      "callsign": "Below1",
+      "fullName": "Canyon Ash Deepgorge",
+      "phone": "928-555-0131",
+      "image": "log-chief.jpg",
+      "id": "GC-21",
+      "team": "Below-Rim",
+      "role": "Team Lead",
+      "note": "Bright Angel Trail, down to the 3 Mile Resthouse",
+      "uid": "894f3b52-810d-41bf-bef2-40a84c6f5874"
+    },
+    {
+      "callsign": "Below2",
+      "fullName": "Juniper Redrock",
+      "phone": "928-555-0132",
+      "image": "cert3.jpg",
+      "id": "GC-22",
+      "team": "Below-Rim",
+      "role": "Responder",
+      "note": "Bright Angel Trail, down to the 3 Mile Resthouse",
+      "uid": "e489bd1a-5ec6-49bd-8a0d-93f01248e06d"
+    },
+    {
+      "callsign": "IC-Actual",
+      "fullName": "Dusty \"Mesa\" Ridgewalker",
+      "phone": "928-555-0100",
+      "image": "ic-actual.jpg",
+      "id": "IC-1",
+      "team": "Command",
+      "role": "Incident Commander",
+      "note": "Overall exercise command",
+      "uid": "d923cedf-6ee1-418d-8eff-7406f9e9d2d7"
+    },
+    {
+      "callsign": "Liaison1",
+      "fullName": "Sunny Vermillion",
+      "phone": "928-555-0113",
+      "image": "pio.jpg",
+      "id": "LNO-1",
+      "team": "Command",
+      "role": "Liaison Officer",
+      "note": "Stays with the hiker's parents; point of contact for NPS",
+      "uid": "3269b601-b2d7-4024-81fd-c183badd30c1"
+    },
+    {
+      "callsign": "Medic1",
+      "fullName": "Butte Ironwood",
+      "phone": "928-555-0133",
+      "image": "mert1.jpg",
+      "id": "GC-23",
+      "team": "Medical",
+      "role": "Team Lead",
+      "note": "Follows Below-Rim down the trail",
+      "uid": "d54ce366-efc2-4cbb-ba9f-946d2bf4cb2d"
+    },
+    {
+      "callsign": "Medic2",
+      "fullName": "Dr. Sage Coyote",
+      "phone": "928-555-0134",
+      "image": "medic1.jpg",
+      "id": "GC-24",
+      "team": "Medical",
+      "role": "Medical",
+      "note": "Holds the trailhead with park EMS",
+      "uid": "daaf2b44-7893-4a84-8bfc-d3af9ef1bf38"
+    },
+    {
+      "callsign": "OpsChief",
+      "fullName": "Rusty Sagebrush",
+      "phone": "928-555-0110",
+      "image": "ops-chief.jpg",
+      "id": "OPS-1",
+      "team": "Command",
+      "role": "Operations Section Chief",
+      "note": "Directs field teams",
+      "uid": "b741eb11-11e5-4421-b29f-860df88a7576"
+    },
+    {
+      "callsign": "Rim1",
+      "fullName": "Wren Cliffside",
+      "phone": "928-555-0121",
+      "image": "cert1.jpg",
+      "id": "GC-11",
+      "team": "Rim-West",
+      "role": "Team Lead",
+      "note": "Rim Trail west to Hopi Point",
+      "uid": "e9eaef42-583f-443f-b424-02a9bfd64148"
+    },
+    {
+      "callsign": "Rim2",
+      "fullName": "Talus Windham",
+      "phone": "928-555-0122",
+      "image": "cert2.jpg",
+      "id": "GC-12",
+      "team": "Rim-West",
+      "role": "Responder",
+      "note": "Rim Trail west to Hopi Point",
+      "uid": "4ed50578-cc6e-42f2-b398-a0a6db70531a"
+    },
+    {
+      "callsign": "Rim3",
+      "fullName": "Mesa Longstride",
+      "phone": "928-555-0123",
+      "image": "recon1.jpg",
+      "id": "GC-13",
+      "team": "Rim-East",
+      "role": "Team Lead",
+      "note": "Rim Trail east to Mather Point",
+      "uid": "b8d507ee-540d-44de-9bf0-8e4db0028fbe"
+    },
+    {
+      "callsign": "Rim4",
+      "fullName": "Piper Overlook",
+      "phone": "928-555-0124",
+      "image": "plan-chief.jpg",
+      "id": "GC-14",
+      "team": "Rim-East",
+      "role": "Responder",
+      "note": "Rim Trail east to Mather Point",
+      "uid": "57dfca49-f252-4a6c-b3bd-b1cc20bd7062"
+    }
+  ],
+  "radioLog": {
+    "version": "0.99.93-alpha",
+    "date": "2026-10-27T16:53:37.012Z",
+    "event": "Missing Person Exercise",
+    "numReport": 39,
+    "maxId": 39,
+    "msgNoHighWater": {
+      "Op 1\u0000A": 39
+    },
+    "filter": "",
+    "logEntries": [
+      {
+        "id": 0,
+        "callsign": "!CmdPost",
+        "tacticalCall": "Command Post",
+        "rangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:13:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Command post established at the Backcountry Information Center, net open on primary.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 1
+        },
+        "uid": "10b8c7d1-7d78-4d11-bd91-35143efbbead"
+      },
+      {
+        "id": 1,
+        "callsign": "IC-Actual",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:15:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Assuming command. Overdue day hiker, 19, started down Bright Angel at dawn with one liter of water, due back by 10:00.",
+        "source": "Voice",
+        "operator": "Dusty \"Mesa\" Ridgewalker",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 2
+        },
+        "uid": "273ab52c-db5c-4282-bc3f-fbe8fe1c48a0"
+      },
+      {
+        "id": 2,
+        "callsign": "OpsChief",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:19:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Assignments: Below-Rim takes the trail, Medical follows, Rim-West and Rim-East hasty-search the rim both ways.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 3
+        },
+        "uid": "92a532ae-1196-4da8-8161-930073dc5d0c"
+      },
+      {
+        "id": 3,
+        "callsign": "Liaison1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:23:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "With the hiker's parents. Description: red day pack, white sun hat, gray shirt. Phone goes to voicemail.",
+        "source": "Voice",
+        "operator": "Sunny Vermillion",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 4
+        },
+        "uid": "9ae7ad53-cedc-40e7-b9c3-191552c6538f"
+      },
+      {
+        "id": 4,
+        "callsign": "Below1",
+        "tacticalCall": "Below Rim Team",
+        "rangerUid": "894f3b52-810d-41bf-bef2-40a84c6f5874",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:31:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Below-Rim checked in at the trailhead, starting down with extra water.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 5
+        },
+        "uid": "3dc69637-02ea-4071-93e1-6deb40ebc5db"
+      },
+      {
+        "id": 5,
+        "callsign": "Below2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.058,
+          "lng": -112.1465,
+          "address": "Bright Angel Trail, first tunnel",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:39:37.011Z",
+        "status": "Location Report",
+        "notes": "Location report: first tunnel, trail busy, already noticeably warmer.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 9
+        },
+        "uid": "410a945d-a9c3-4a75-8a52-369378d4158a"
+      },
+      {
+        "id": 6,
+        "callsign": "Below1",
+        "tacticalCall": "Below Rim Team",
+        "rangerUid": "894f3b52-810d-41bf-bef2-40a84c6f5874",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0593,
+          "lng": -112.143,
+          "address": "Bright Angel Trail, second tunnel",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:51:37.011Z",
+        "status": "Evidence Report",
+        "notes": "White sun hat matching the description beside the trail just past the second tunnel. Photographed and bagged.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 12
+        },
+        "uid": "3ed80152-4ead-43e0-a4d1-ebf4bfe3baed"
+      },
+      {
+        "id": 7,
+        "callsign": "Below2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0604,
+          "lng": -112.1393,
+          "address": "Bright Angel Trail, 1.5 Mile Resthouse",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:07:37.011Z",
+        "status": "Location Report",
+        "notes": "Location report: 1.5 Mile Resthouse. Hikers coming up passed someone with a red pack heading down about an hour ago.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 15
+        },
+        "uid": "ab7738fc-be78-42da-85bd-b819f21cb38c"
+      },
+      {
+        "id": 8,
+        "callsign": "Below1",
+        "tacticalCall": "Below Rim Team",
+        "rangerUid": "894f3b52-810d-41bf-bef2-40a84c6f5874",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0657,
+          "lng": -112.1362,
+          "address": "Bright Angel Trail, 3 Mile Resthouse",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:35:37.011Z",
+        "status": "Urgent",
+        "notes": "URGENT: found the missing hiker at the 3 Mile Resthouse. Heat exhaustion, conscious but dizzy and out of water.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "generates213": true,
+        "replyRequested213": true,
+        "subject213": "Missing hiker found - heat exhaustion at 3 Mile Resthouse",
+        "message213": "Below-Rim has found the missing hiker at the 3 Mile Resthouse on Bright Angel Trail. Heat exhaustion: conscious and talking, dizzy, out of water. Cooling in the shade now. Requesting Medic1 continue down to us, and park EMS on standby at the trailhead.",
+        "recipients213": [
+          "Incident Commander",
+          "Ops"
+        ],
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 21
+        },
+        "uid": "9d1b18ff-fe82-4cc9-92b3-7d2f8a029e60"
+      },
+      {
+        "id": 9,
+        "callsign": "Below2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0657,
+          "lng": -112.1362,
+          "address": "Bright Angel Trail, 3 Mile Resthouse",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:41:37.011Z",
+        "status": "Normal",
+        "notes": "Hiker in the resthouse shade, cooling with wet cloths and sipping electrolytes.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 23
+        },
+        "uid": "411985c4-09b1-47bd-a57e-daf75bd137f2"
+      },
+      {
+        "id": 10,
+        "callsign": "Below2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0604,
+          "lng": -112.1393,
+          "address": "Bright Angel Trail, 1.5 Mile Resthouse",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T14:03:37.011Z",
+        "status": "Need Rest/Food",
+        "notes": "Walk-out resting 20 minutes at 1.5 Mile. Team and hiker all need water and a break.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 29
+        },
+        "uid": "dc09759c-5258-47e2-af9b-8fe4fb85ab26"
+      },
+      {
+        "id": 11,
+        "callsign": "Below1",
+        "tacticalCall": "Below Rim Team",
+        "rangerUid": "894f3b52-810d-41bf-bef2-40a84c6f5874",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0593,
+          "lng": -112.143,
+          "address": "Bright Angel Trail, second tunnel",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T14:49:37.011Z",
+        "status": "Location Report",
+        "notes": "Location report: second tunnel, hiker moving well, about 30 minutes out.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 30
+        },
+        "uid": "29d578cf-13ea-4588-9bec-9d8557d8bc58"
+      },
+      {
+        "id": 12,
+        "callsign": "Below1",
+        "tacticalCall": "Below Rim Team",
+        "rangerUid": "894f3b52-810d-41bf-bef2-40a84c6f5874",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T15:25:37.011Z",
+        "status": "Incident Check-out",
+        "notes": "Below-Rim back at the trailhead, hiker handed to park EMS. Checking out.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 32
+        },
+        "uid": "5ca498bd-03c6-4932-9a32-819d4b34fff7"
+      },
+      {
+        "id": 13,
+        "callsign": "Below2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T15:27:37.011Z",
+        "status": "Incident Check-out",
+        "notes": "Checking out with Below1.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 33
+        },
+        "uid": "c834de97-290a-46e6-8db0-572b992a78ff"
+      },
+      {
+        "id": 14,
+        "callsign": "Medic1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:35:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Medical checked in at the trailhead with water, electrolytes and a trauma kit.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 7
+        },
+        "uid": "49ba456a-fc61-444c-8562-bc976d2ba471"
+      },
+      {
+        "id": 15,
+        "callsign": "Medic1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.058,
+          "lng": -112.1465,
+          "address": "Bright Angel Trail, first tunnel",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:47:37.011Z",
+        "status": "Normal",
+        "notes": "Following Below-Rim down as a precaution, heat is building fast.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 10
+        },
+        "uid": "25cfa42a-c443-41e6-b26c-d58db280b8e6"
+      },
+      {
+        "id": 16,
+        "callsign": "Medic2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:57:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Staged at the trailhead. Park EMS aware and on standby.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 14
+        },
+        "uid": "757c4a49-0813-4194-9eeb-feeb27952ba8"
+      },
+      {
+        "id": 17,
+        "callsign": "Medic1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0657,
+          "lng": -112.1362,
+          "address": "Bright Angel Trail, 3 Mile Resthouse",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:53:37.011Z",
+        "status": "Normal",
+        "notes": "On scene at 3 Mile. Hiker alert, vitals improving. Not a carry-out: plan a slow walk-out once cooled.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 27
+        },
+        "uid": "fb65c0b9-442a-48e7-ad5b-04f505c79619"
+      },
+      {
+        "id": 18,
+        "callsign": "Medic1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0657,
+          "lng": -112.1362,
+          "address": "Bright Angel Trail, 3 Mile Resthouse",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T13:21:37.011Z",
+        "status": "Normal",
+        "notes": "Starting the walk-out with Below-Rim, resting at each resthouse.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 28
+        },
+        "uid": "1e6599fb-2d01-4c60-b3ce-cd55712f795e"
+      },
+      {
+        "id": 19,
+        "callsign": "Medic1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T15:23:37.011Z",
+        "status": "Incident Check-out",
+        "notes": "Walked out under their own power. Handed to park EMS. Checking out.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 31
+        },
+        "uid": "9a525662-9909-430d-bfe2-0191d468cd55"
+      },
+      {
+        "id": 20,
+        "callsign": "Medic2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T15:33:37.011Z",
+        "status": "Incident Check-out",
+        "notes": "Park EMS assessed the hiker and released them to their parents. Checking out.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 35
+        },
+        "uid": "95423a4e-c154-4884-9541-2dbf199d1cf3"
+      },
+      {
+        "id": 21,
+        "callsign": "Rim1",
+        "tacticalCall": "Rim Team 1",
+        "rangerUid": "e9eaef42-583f-443f-b424-02a9bfd64148",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:33:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Rim-West checked in, hasty search west along the Rim Trail to Hopi Point.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 6
+        },
+        "uid": "3468644f-a77a-42dd-9582-9ca833b4eddf"
+      },
+      {
+        "id": 22,
+        "callsign": "Rim2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.062,
+          "lng": -112.1468,
+          "address": "Trailview Overlook",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:49:37.011Z",
+        "status": "Location Report",
+        "notes": "Location report: Trailview Overlook, no sign. Showing the hiker's photo to visitors.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 11
+        },
+        "uid": "8a972f4d-0d76-4c75-98f3-419b38810a0b"
+      },
+      {
+        "id": 23,
+        "callsign": "Rim1",
+        "tacticalCall": "Rim Team 1",
+        "rangerUid": "e9eaef42-583f-443f-b424-02a9bfd64148",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0704,
+          "lng": -112.1483,
+          "address": "Maricopa Point",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:11:37.011Z",
+        "status": "Normal",
+        "notes": "Maricopa Point clear. Shuttle drivers on the Hermit Road route have the description.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 16
+        },
+        "uid": "da058311-6b2d-4156-a0ba-76517c51b059"
+      },
+      {
+        "id": 24,
+        "callsign": "Rim2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0704,
+          "lng": -112.1483,
+          "address": "Maricopa Point",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:17:37.011Z",
+        "status": "Need Rest/Food",
+        "notes": "Requesting a water resupply at the Maricopa shuttle stop, it is very hot out here.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 18
+        },
+        "uid": "eb6e350d-7340-40fd-b690-12a282382544"
+      },
+      {
+        "id": 25,
+        "callsign": "Rim1",
+        "tacticalCall": "Rim Team 1",
+        "rangerUid": "e9eaef42-583f-443f-b424-02a9bfd64148",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0729,
+          "lng": -112.152,
+          "address": "Powell Point",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:31:37.011Z",
+        "status": "Location Report",
+        "notes": "Location report: Powell Point, no sign. Continuing to Hopi.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 20
+        },
+        "uid": "73bfe8f5-5443-457c-803f-831cf8855f29"
+      },
+      {
+        "id": 26,
+        "callsign": "Rim2",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0745,
+          "lng": -112.1549,
+          "address": "Hopi Point",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:49:37.011Z",
+        "status": "Incident Check-out",
+        "notes": "Copy hiker found. Rim-West standing down at Hopi Point, shuttling back. Checking out.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 26
+        },
+        "uid": "45e839aa-9629-40bf-96c1-304c1b731fca"
+      },
+      {
+        "id": 27,
+        "callsign": "Rim3",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.058,
+          "lng": -112.1426,
+          "address": "Rim Trail at Kolb Studio",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:35:37.011Z",
+        "status": "Incident Check-in",
+        "notes": "Rim-East checked in at Kolb Studio, heading east along the Rim Trail to Mather Point.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 8
+        },
+        "uid": "fbff03ed-5086-4e6f-b301-d68e0702762b"
+      },
+      {
+        "id": 28,
+        "callsign": "Rim4",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0576,
+          "lng": -112.1357,
+          "address": "Rim Trail at Verkamp's Visitor Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T11:51:37.011Z",
+        "status": "Normal",
+        "notes": "Passing Verkamp's, Rim Trail crowded but clear.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 13
+        },
+        "uid": "1c5e9f3e-5505-4f8a-8e9a-6de57d665efc"
+      },
+      {
+        "id": 29,
+        "callsign": "Rim3",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.066,
+          "lng": -112.1169,
+          "address": "Yavapai Point",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:13:37.011Z",
+        "status": "Urgent",
+        "notes": "URGENT: a caller on the park line reports a young hiker with a red pack, looking unwell, at Yavapai Point.",
+        "source": "Phone",
+        "operator": "Rusty Sagebrush",
+        "generates213": true,
+        "replyRequested213": true,
+        "subject213": "Possible sighting at Yavapai Point",
+        "message213": "A caller on the park line reports a young hiker with a red pack, looking unwell, at Yavapai Point a few minutes ago. Rim-East is diverting to check. Requesting other teams hold their assignments until we confirm.",
+        "recipients213": [
+          "Incident Commander",
+          "Ops"
+        ],
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 17
+        },
+        "uid": "1a420162-aa13-4eec-ad5c-6b2ef271049f"
+      },
+      {
+        "id": 30,
+        "callsign": "Rim3",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0653,
+          "lng": -112.1176,
+          "address": "Rim Trail at the Yavapai Geology Museum",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:25:37.011Z",
+        "status": "Normal",
+        "notes": "Found the caller's hiker by the geology museum: a different person, fine, resting with family. Not our subject.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 19
+        },
+        "uid": "1bb875bb-d2a8-42b5-8da1-0c730161606f"
+      },
+      {
+        "id": 31,
+        "callsign": "Rim4",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0617,
+          "lng": -112.109,
+          "address": "Mather Point",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:39:37.011Z",
+        "status": "Location Report",
+        "notes": "Location report: Mather Point, end of our segment, no sign.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 22
+        },
+        "uid": "8a528609-3af4-4934-9149-4741714b96b3"
+      },
+      {
+        "id": 32,
+        "callsign": "Rim4",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0617,
+          "lng": -112.109,
+          "address": "Mather Point",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:47:37.011Z",
+        "status": "Incident Check-out",
+        "notes": "Copy hiker found. Rim-East standing down at Mather Point. Checking out.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 25
+        },
+        "uid": "2488ce72-aa9c-44e7-a383-e6d925081270"
+      },
+      {
+        "id": 33,
+        "callsign": "Liaison1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T12:43:37.011Z",
+        "status": "Normal",
+        "notes": "Parents told the hiker is found and talking. Keeping them here and fed until the walk-out.",
+        "source": "Voice",
+        "operator": "Sunny Vermillion",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 24
+        },
+        "uid": "a7ffacde-dd54-4b60-9ad2-803c8f0c3c0f"
+      },
+      {
+        "id": 34,
+        "callsign": "Liaison1",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0573,
+          "lng": -112.1436,
+          "address": "Bright Angel Trailhead, Grand Canyon Village",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T15:29:37.011Z",
+        "status": "Normal",
+        "notes": "Parents reunited with the hiker at the trailhead.",
+        "source": "Voice",
+        "operator": "Sunny Vermillion",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 34
+        },
+        "uid": "c6ed469a-e964-4ed8-8e7c-ec1de7d4a6ed"
+      },
+      {
+        "id": 35,
+        "callsign": "IC-Actual",
+        "toTactical": "Command Post",
+        "toCallsign": "!CmdPost",
+        "toRangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T16:23:37.011Z",
+        "status": "Normal",
+        "notes": "All teams out and accounted for. Standing down.",
+        "source": "Voice",
+        "operator": "Dusty \"Mesa\" Ridgewalker",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 36
+        },
+        "uid": "0068d801-998a-404d-9a12-a2e15d739511"
+      },
+      {
+        "id": 36,
+        "callsign": "!CmdPost",
+        "tacticalCall": "Command Post",
+        "rangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T16:35:37.011Z",
+        "status": "Normal",
+        "notes": "Mission backed up; ICS-309 printed for handoff.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 37
+        },
+        "uid": "ac63d942-c896-484f-937f-6c85268ba1f5"
+      },
+      {
+        "id": 37,
+        "callsign": "!CmdPost",
+        "tacticalCall": "Command Post",
+        "rangerUid": "4bc8c195-f1be-4a37-ac99-aef6ee3d6d87",
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Grand Canyon Village - Backcountry Information Center",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T16:41:37.011Z",
+        "status": "Incident Check-out",
+        "notes": "Exercise complete, closing net.",
+        "source": "Voice",
+        "operator": "Rusty Sagebrush",
+        "msgNo": {
+          "mission": "2026-10-Search",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 38
+        },
+        "uid": "388e8b36-a7ca-4edc-adeb-83ba3a2a99b5"
+      },
+      {
+        "id": 38,
+        "location": {
+          "lat": 36.0524,
+          "lng": -112.1437,
+          "address": "Wells Fargo, Maswik Sidewalk, Grand Canyon Village, Coconino County, Arizona, United States",
+          "derivedFromAddress": false
+        },
+        "date": "2026-10-27T16:53:49.699Z",
+        "notes": "",
+        "source": "Voice",
+        "generates213": false,
+        "replyRequested213": false,
+        "message213": "",
+        "recipients213": [],
+        "subject213": "",
+        "rangerUid": "",
+        "callsign": "FIXTURE-ATT",
+        "status": "Normal",
+        "operator": "",
+        "evidenceLocation": null,
+        "uid": "fbc0fc38-202b-411a-b479-9ec7a9657ba0",
+        "loggedAt": "2026-10-27T16:53:55.454Z",
+        "msgNo": {
+          "mission": "FIXTURE-0.99.93-alpha",
+          "opPeriod": "Op 1",
+          "station": "A",
+          "seq": 39
+        },
+        "attachments": [
+          {
+            "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+            "name": "fixture-clue.png",
+            "type": "image/png",
+            "size": 70,
+            "capturedAt": "2026-10-27T16:53:49.559Z",
+            "addedAt": "2026-10-27T16:53:55.540Z",
+            "addedBy": ""
+          }
+        ]
+      }
+    ],
+    "schemaVersion": 3
+  },
+  "locations": [
+    {
+      "name": "Last Known Point - Bright Angel Trailhead",
+      "type": "Last Known Point",
+      "lat": 36.0573,
+      "lng": -112.1436,
+      "address": "Bright Angel Trailhead, Grand Canyon Village",
+      "note": "Missing hiker last seen starting down Bright Angel Trail at dawn.",
+      "uid": "52cc846a-21fd-4a5a-8023-92e86fa82da6"
+    },
+    {
+      "name": "Search Staging Area - Backcountry Info Center",
+      "type": "Staging Area",
+      "lat": 36.0524,
+      "lng": -112.1437,
+      "address": "Grand Canyon Village - Backcountry Information Center",
+      "note": "Command post, marshalling point for search teams, and where the family waits.",
+      "uid": "3868faac-3723-4bfd-ae5c-d5c0ee14aea3"
+    }
+  ],
+  "aarNotes": [],
+  "activityLogHeader": {
+    "name": "",
+    "icsPosition": "",
+    "homeAgency": "",
+    "resources": []
+  },
+  "layers": [],
+  "photos": [],
+  "journal": {
+    "head": "be6e0671d292e0ba2b202106f36e9e7cf68bbb4ae4d9c4e330e73a374e07a1b1",
+    "count": 2,
+    "entries": [
+      {
+        "seq": 1,
+        "at": "2026-10-27T16:53:37.052Z",
+        "action": "demo-loaded",
+        "summary": "Loaded the \"grand-canyon\" demo: 12 rangers, 38 radio log entries, 2 locations (this is DEMO data). Cleared: 0 radio log entries, the mission settings, the ICS-214 header.",
+        "mission": "2026-10-Search",
+        "mode": "demo",
+        "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+        "hash": "5518e5cd312917dd706f548f830d8625ba5c00c0af84d755e06bc1f2307b1ff5"
+      },
+      {
+        "seq": 2,
+        "at": "2026-10-27T16:54:02.504Z",
+        "action": "backup-exported",
+        "summary": "Exported a mission backup (NOT encrypted).",
+        "mission": "FIXTURE-0.99.93-alpha",
+        "mode": "demo",
+        "prev": "5518e5cd312917dd706f548f830d8625ba5c00c0af84d755e06bc1f2307b1ff5",
+        "hash": "be6e0671d292e0ba2b202106f36e9e7cf68bbb4ae4d9c4e330e73a374e07a1b1"
+      }
+    ]
+  },
+  "devicePrefs": {
+    "msgStation": "A"
+  }
+}
