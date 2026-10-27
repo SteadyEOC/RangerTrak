@@ -66,11 +66,10 @@
   <aside class="entry-welcome entry-demo-card" role="note" data-testid="demo-card">
     <div class="entry-welcome__text">
       @if (usage.state() === 'demo') {
-      <strong>You're looking at demo data ({{ demoLabel() }}).</strong>
-      @if (demoDetailsUrl(); as url) {
-      {{ ' ' }}<a [href]="url" target="_blank" rel="noopener" data-testid="demo-card-details-link"
-        title="What really happened (opens a new tab)">Details</a>
-      }
+      <!-- E-213 (John 10-27): a real-event demo's name is itself the link to what really happened. -->
+      <strong>You're looking at demo data (@if (demoDetailsUrl(); as url) {<a [href]="url" target="_blank"
+        rel="noopener" data-testid="demo-card-details-link"
+        title="What really happened (opens a new tab)">{{ demoLabel() }}</a>} @else {<span>{{ demoLabel() }}</span>}).</strong>
       Pick another demo, or start a real mission.
       } @else {
       <strong>Demo:</strong> no mission yet? Load a demonstration with made-up data to try out the app.

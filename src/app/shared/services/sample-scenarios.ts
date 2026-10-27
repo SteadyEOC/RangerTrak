@@ -18,7 +18,7 @@ export type SampleScenarioOption = {
   label: string
   hint: string
   /** E-213 (AAR 2026-10-19, John 10-20): a demo modeled on a real event links to the best
-   *  public overview of what really happened, shown as a plain "Details" link by the demo. */
+   *  public overview of what really happened, linked from the demo's name on the demo card. */
   detailsUrl?: string
 }
 

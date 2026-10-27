@@ -75,7 +75,7 @@ describe('SampleDataService', () => {
     expect(SAMPLE_SCENARIOS[0].id).toBe(DEFAULT_SAMPLE_SCENARIO);
   });
 
-  it('E-213: only demos modeled on a real event carry a "Details" link', () => {
+  it('E-213: only demos modeled on a real event link their name to an overview', () => {
     const withDetails = SAMPLE_SCENARIOS.filter(s => s.detailsUrl).map(s => s.id);
     expect(withDetails).toEqual(['montecito', 'oso']);
     expect(SAMPLE_SCENARIOS.find(s => s.id === 'montecito')!.detailsUrl)
