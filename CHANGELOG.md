@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.92-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.91-alpha...v0.99.92-alpha) (2026-10-27)
+
+
+### Features
+
+* **radio-log:** the grid starts no wider than 1.5 screens ([9c64018](https://github.com/SteadyEOC/RangerTrak/commit/9c64018c801214ca26fb104d4fb0474ad8d6677e))
+
 ### [0.99.91-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.90-alpha...v0.99.91-alpha) (2026-10-27)
 
 
