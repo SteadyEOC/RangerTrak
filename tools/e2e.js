@@ -70,11 +70,16 @@ const rawLog = console.log
 let section = ''
 let sectionShown = false
 if (!VERBOSE) {
-  // A line starting with a newline is a check's section heading: held back, and printed only
-  // if something under it fails. Everything else routine is dropped. report() always prints.
+  // A line starting with a newline is a check's section heading: held back, and printed in full
+  // only if something under it fails. Everything else routine is dropped. report() always prints.
+  // Each heading still gets one short progress line on stderr: a default run is ~17 minutes, and
+  // with nothing on screen until the summary it looked hung (2026-10-26).
   console.log = (...a) => {
     const line = a.map(String).join(' ')
-    if (line.startsWith('\n')) { section = line; sectionShown = false }
+    if (line.startsWith('\n')) {
+      section = line; sectionShown = false
+      process.stderr.write(`  ... ${line.trim().slice(0, 90)}\n`)
+    }
   }
 }
 const report = (...a) => rawLog(...a)
@@ -4935,8 +4940,8 @@ async function checkDeviceEncryption() {
 /**
  * D-61 / D-60: the Board end to end. Starts the real Board server in this process on
  * 127.0.0.1:8095 (never 8081) with a throwaway certificate, so Chrome must be started with
- * --ignore-certificate-errors: main() adds that flag when the board group is asked for, and
- * only then. Nothing here touches the network beyond loopback, and nothing is announced over mDNS.
+ * --ignore-certificate-errors: main() adds that flag whenever the board group runs (by name or
+ * in a run with no --only), and only then. Nothing here touches the network beyond loopback, and nothing is announced over mDNS.
  *
  * Covers: publish with a password and the viewer at /view#code=... (claim line, rows, hash
  * removed); a thumbnail click ending in "Verified"; a wrong password asking for one; a second
@@ -5336,8 +5341,11 @@ async function main() {
   const chrome = spawn(findChrome(), [
     '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
     '--no-first-run', '--no-default-browser-check', '--window-size=1400,1000',
-    // The board group talks to a Board with a throwaway certificate. Only when that group is asked for by name.
-    ...(ONLY.includes('board') ? ['--ignore-certificate-errors'] : []),
+    // The board group talks to a Board with a throwaway certificate, so whenever that group runs.
+    // want(), not ONLY.includes(): a run with no --only runs every group but has an empty ONLY, so
+    // the flag was missing and device A could never publish - the "Board fails only in a full run"
+    // that stood from 10-20 to 10-26 and was put down to harness state.
+    ...(want('board') ? ['--ignore-certificate-errors'] : []),
     'about:blank',
   ], { stdio: 'ignore' })
 
