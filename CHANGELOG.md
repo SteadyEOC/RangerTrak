@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.90-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.89-alpha...v0.99.90-alpha) (2026-10-27)
+
+
+### Features
+
+* **radio-log:** a Callsign edit says when the call is off the roster or the tactical call stays ([c864e0e](https://github.com/SteadyEOC/RangerTrak/commit/c864e0ea940e09211c27f76c385714850b5b2f87))
+
 ### [0.99.89-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.88-alpha...v0.99.89-alpha) (2026-10-27)
 
 
