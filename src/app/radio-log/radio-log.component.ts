@@ -32,7 +32,7 @@ import { rangertrakGridTheme } from '../shared/ag-grid-theme'
 import { rangerColorFor } from '../shared/mapping/ranger-marker'
 import { buildIcs309Log, Ics309Log } from '../shared/export/ics309-log'
 import { formatStation } from '../domain/station-label'
-import { applyCallsignEdit } from '../domain/ranger-match'
+import { applyCallsignEdit, callsignEditNotice } from '../domain/ranger-match'
 import { isScenarioEntry, formatScenarioTime, scenarioTimeAt, sameScenarioClock } from '../domain/scenario'
 import { UsageStateService } from '../shared/services/usage-state.service'
 import { AarNoteService } from '../shared/services/aar-note.service'
@@ -54,6 +54,7 @@ import {
   MissionLocationService, FieldModeService, RangerPhotoService
 } from '../shared/services'
 import { MatDialog } from '@angular/material/dialog'
+import { MatSnackBar } from '@angular/material/snack-bar'
 import * as packageJson from '../../../package.json'
 import { describeRangerMerge } from '../domain/ranger-migration'
 import { describeLocationMerge } from '../domain/location-merge'
@@ -522,6 +523,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   protected usage = inject(UsageStateService)
   private aarNoteService = inject(AarNoteService)
   protected journal = inject(MissionJournalService)
+  private snackBar = inject(MatSnackBar)
 
   constructor(
     private radioLogService: RadioLogService,
@@ -1386,6 +1388,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     const to = edit.newCallsign || (edit.ranger ? '(no call sign)' : '(blank)')
     this.journal.record('report-reassigned', `Changed the call sign on report ${report.id} from ${from} to ${to}`
       + (edit.ranger ? '.' : ', which matches no one on the roster.'))
+    const notice = callsignEditNotice(edit, report.tacticalCall)
+    if (notice) this.snackBar.open(notice, 'OK', { duration: 8000 })
     return true
   }
 

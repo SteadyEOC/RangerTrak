@@ -59,3 +59,21 @@ export function applyCallsignEdit(entry: RadioLogEntryType, typed: unknown, rang
   }
   return { changed, oldCallsign, newCallsign, ranger }
 }
+
+/**
+ * John 10-26: both quiet outcomes of a Callsign edit get a short pop-up, not a dialog (a
+ * blocking dialog on every grid correction would slow a scribe on a busy net). Null when the
+ * edit needs no remark: it found a ranger and the report has no tactical call.
+ */
+export function callsignEditNotice(edit: CallsignEdit, tacticalCall: string | undefined): string | null {
+  if (!edit.changed) return null
+  const parts: string[] = []
+  if (!edit.ranger && edit.newCallsign) {
+    parts.push(`${edit.newCallsign} isn't on the roster, so this report isn't linked to a ranger.`)
+  }
+  const tactical = tacticalCall?.trim()
+  if (tactical) {
+    parts.push(`Its tactical call ${tactical} stays as recorded.`)
+  }
+  return parts.length ? parts.join(' ') : null
+}

@@ -1,4 +1,4 @@
-import { applyCallsignEdit, matchRanger } from './ranger-match'
+import { applyCallsignEdit, callsignEditNotice, matchRanger } from './ranger-match'
 import type { RangerType } from '../shared/services/ranger.interface'
 import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
 
@@ -66,5 +66,29 @@ describe('applyCallsignEdit (tester report 2026-10-26)', () => {
     const e = entryFor('K7ABC', 'u-a', 'Vashon EOC')
     applyCallsignEdit(e, 'KB7XYZ', rangers)
     expect(e.tacticalCall).toBe('Vashon EOC')
+  })
+})
+
+describe('callsignEditNotice (John 10-26)', () => {
+  it('says nothing when the new call is on the roster and there is no tactical call', () => {
+    const e = entryFor('K7ABC', 'u-a')
+    expect(callsignEditNotice(applyCallsignEdit(e, 'KB7XYZ', rangers), e.tacticalCall)).toBeNull()
+  })
+
+  it('warns that an unmatched call leaves the report unlinked', () => {
+    const e = entryFor('K7ABC', 'u-a')
+    expect(callsignEditNotice(applyCallsignEdit(e, 'W1NEW', rangers), e.tacticalCall))
+      .toBe("W1NEW isn't on the roster, so this report isn't linked to a ranger.")
+  })
+
+  it('says the tactical call stays, alongside the roster warning', () => {
+    const e = entryFor('K7ABC', 'u-a', 'Vashon EOC')
+    expect(callsignEditNotice(applyCallsignEdit(e, 'W1NEW', rangers), e.tacticalCall))
+      .toBe("W1NEW isn't on the roster, so this report isn't linked to a ranger. Its tactical call Vashon EOC stays as recorded.")
+  })
+
+  it('says nothing for an edit that changed nothing', () => {
+    const e = entryFor('K7ABC', 'u-a', 'Vashon EOC')
+    expect(callsignEditNotice(applyCallsignEdit(e, 'k7abc', rangers), e.tacticalCall)).toBeNull()
   })
 })
