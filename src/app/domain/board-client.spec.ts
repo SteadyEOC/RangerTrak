@@ -1,5 +1,5 @@
 import {
-  attachmentFields, boardStep, BoardAttachment, BoardEvent, BoardState, describeAgent, readClaimReply,
+  attachmentFields, boardStep, ics213Fields, BoardAttachment, BoardEvent, BoardState, describeAgent, readClaimReply,
   readKeyedReply, replacedMessage, trimThumbs, WRONG_PASSWORD_MESSAGE,
 } from './board-client'
 import type { AttachmentRef } from './attachments'
@@ -200,5 +200,30 @@ describe('Board snapshot attachments (D-60 item 6)', () => {
   it('a budget of zero drops every thumbnail', () => {
     const reports = [{ attachments: [{ sha256: SHA_A, name: 'x', type: 'image/jpeg', size: 1, thumb: 'xx' }, { sha256: SHA_B, name: 'y', type: 'image/jpeg', size: 1, thumb: 'yy' }] }]
     expect(trimThumbs(reports, 0)).toBe(2)
+  })
+})
+
+describe('Board snapshot ICS-213 messages (E-228 phase 1)', () => {
+  it('sends nothing for an entry that is not a 213', () => {
+    expect(ics213Fields({ subject213: 'left over', generates213: false })).toEqual({})
+    expect(ics213Fields({})).toEqual({})
+  })
+
+  it("sends the form's fields, the operator as Approved by, and when it was first printed", () => {
+    const out = ics213Fields({
+      generates213: true, recipients213: ['Incident Commander', ' ', 'Ops'], subject213: 'Water',
+      message213: 'Need 20 gal at Hermit', replyRequested213: true, operator: 'K7ABC',
+      printedAt: new Date('2026-10-27T16:05:00Z'),
+    })
+    expect(out).toEqual({ ics213: {
+      to: ['Incident Commander', 'Ops'], subject: 'Water', message: 'Need 20 gal at Hermit',
+      replyRequested: true, approvedBy: 'K7ABC', printedAt: '2026-10-27T16:05:00.000Z',
+    } })
+  })
+
+  it('fills blanks rather than leaving fields out, and drops an unreadable print time', () => {
+    expect(ics213Fields({ generates213: true, printedAt: 'not a date' })).toEqual({ ics213: {
+      to: [], subject: '', message: '', replyRequested: false, approvedBy: '',
+    } })
   })
 })

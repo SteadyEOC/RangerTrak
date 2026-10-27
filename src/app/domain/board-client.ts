@@ -201,6 +201,33 @@ export function attachmentFields(
   }
 }
 
+// ---- the snapshot's ICS-213 messages (E-228 phase 1) ----
+
+/** A 213 as the Board shows it: the form's own fields, and when it first went out on paper or PDF. */
+export type BoardIcs213 = { to: string[], subject: string, message: string, replyRequested: boolean, approvedBy: string, printedAt?: string }
+
+/**
+ * The 213 of one published report, or nothing for an entry that is not one. The same fields the
+ * printed form carries (`ics213FieldsFromReport`); `approvedBy` is the operator, as on the form.
+ */
+export function ics213Fields(entry: {
+  generates213?: boolean, recipients213?: string[], subject213?: string, message213?: string,
+  replyRequested213?: boolean, operator?: string, printedAt?: Date | string,
+}): { ics213: BoardIcs213 } | Record<string, never> {
+  if (!entry.generates213) return {}
+  const printed = entry.printedAt ? new Date(entry.printedAt) : undefined
+  return {
+    ics213: {
+      to: (entry.recipients213 ?? []).filter(x => x.trim()),
+      subject: entry.subject213 ?? '',
+      message: entry.message213 ?? '',
+      replyRequested: !!entry.replyRequested213,
+      approvedBy: entry.operator ?? '',
+      ...(printed && !isNaN(printed.getTime()) ? { printedAt: printed.toISOString() } : {}),
+    },
+  }
+}
+
 /**
  * Keeps the total thumbnail text within `budget` by dropping `thumb` from the oldest report
  * first (reports are passed oldest first). Returns how many thumbnails went. Mutates the

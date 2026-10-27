@@ -182,6 +182,32 @@
   .dialog .actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; }
   .verified { color: light-dark(#1a6b1a, #6fd97f); font-weight: 600; }
   .mismatch { color: var(--warn); font-weight: 600; }
+
+  /* E-228 phase 1: the radio log and its ICS-213 messages, one tab each. */
+  .tabs { display: flex; gap: 0.25rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
+  .tabs button {
+    padding: 0.5rem 0.9rem; border: none; border-bottom: 3px solid transparent; background: none;
+    color: var(--ink-2); font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+  .link-btn { border: none; background: none; padding: 0; color: var(--accent); font: inherit; text-align: left; cursor: pointer; text-decoration: underline; }
+  .tag213 {
+    margin-left: 0.3rem; padding: 0 0.35em; border: 1px solid var(--accent); border-radius: 4px;
+    background: none; color: var(--accent); font-size: 0.72rem; font-weight: 700; cursor: pointer;
+  }
+  .reply { font-weight: 600; color: var(--warn); white-space: nowrap; }
+  .form213 { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 0.5rem 0; }
+  .form213 dt { font-weight: 700; color: var(--ink-2); }
+  .form213 dd { margin: 0; }
+  .form213 .message { white-space: pre-wrap; padding: 0.5rem; border: 1px solid var(--line); border-radius: 4px; }
+  /* Print from a 213: only the message prints, on a plain white page. */
+  @media print {
+    body.print-213 > :not(#overlay) { display: none !important; }
+    body.print-213 { background: #fff; color: #000; padding: 0; }
+    body.print-213 #overlay { position: static; display: block; padding: 0; background: none; }
+    body.print-213 .dialog { max-width: none; max-height: none; overflow: visible; background: #fff; color: #000; }
+    body.print-213 .dialog .actions, body.print-213 #ovStatus { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -202,25 +228,22 @@
 </form>
 <p id="notice" class="notice notice--warn" role="status" hidden></p>
 
+<div class="tabs" role="tablist" aria-label="What to show">
+  <button id="tabLog" type="button" role="tab" aria-selected="true" aria-controls="logPanel" data-view="log">Radio log</button>
+  <button id="tabMsgs" type="button" role="tab" aria-selected="false" aria-controls="logPanel" data-view="msgs">ICS-213 messages</button>
+</div>
+
 <div class="controls">
   <input id="filterInput" type="search" placeholder="Filter by number, callsign, status, or message…" autocomplete="off">
   <button id="markedOnly" type="button" aria-pressed="false" title="Show only the reports marked with ★ on this device">★ Marked only</button>
 </div>
 
-<div class="table-scroll">
+<div class="table-scroll" id="logPanel" role="tabpanel">
   <table>
     <caption>Read-only. Tap a heading to sort; tap ☆ to mark a report to come back to. Filter, sort and marks affect only this screen, and marks are kept on this device only - the scribe and other viewers never see them.</caption>
+    <!-- The heading row is drawn by the script: each tab has its own columns (COLUMNS below). -->
     <thead>
-      <tr>
-        <th aria-sort="none"><button type="button" data-sort="mark" aria-label="Marked">★</button></th>
-        <th aria-sort="none"><button type="button" data-sort="msgno">Msg #</button></th>
-        <th aria-sort="descending"><button type="button" data-sort="time">Time</button></th>
-        <th aria-sort="none"><button type="button" data-sort="callsign">Callsign</button></th>
-        <th aria-sort="none"><button type="button" data-sort="status">Status</button></th>
-        <th aria-sort="none"><button type="button" data-sort="source">Source</button></th>
-        <th aria-sort="none"><button type="button" data-sort="notes">Message</button></th>
-        <th aria-sort="none"><button type="button" data-sort="files">Files</button></th>
-      </tr>
+      <tr></tr>
     </thead>
     <tbody id="rows"></tbody>
   </table>
@@ -342,6 +365,45 @@
     render();
   });
 
+  // ---- the two tabs (E-228 phase 1, John 2026-10-27) ----
+  // The radio log (ICS-309), and the entries that are ICS-213 messages with the form's own fields.
+  // Filter, sort and marks work the same on both. The tab is remembered on this device only.
+  var COLUMNS = {
+    log: [['mark', '★', 'Marked'], ['msgno', 'Msg #'], ['time', 'Time'], ['callsign', 'Callsign'], ['status', 'Status'],
+      ['source', 'Source'], ['notes', 'Message'], ['files', 'Files']],
+    msgs: [['mark', '★', 'Marked'], ['msgno', 'Msg #'], ['time', 'Time'], ['callsign', 'From'], ['to', 'To'],
+      ['subject', 'Subject'], ['message', 'Message'], ['reply', 'Reply'], ['files', 'Files']]
+  };
+  var view = 'log';
+  try { view = localStorage.getItem('boardView') === 'msgs' ? 'msgs' : 'log'; } catch (e) { /* storage refused: the log */ }
+  var tabButtons = document.querySelectorAll('.tabs button[data-view]');
+
+  function setView(v) {
+    view = v;
+    try { localStorage.setItem('boardView', v); } catch (e) { /* kept for this visit only */ }
+    var keys = COLUMNS[v].map(function (c) { return c[0]; });
+    if (keys.indexOf(sortKey) === -1) { sortKey = 'time'; sortDir = -1; }
+    filterEl.placeholder = v === 'msgs' ? 'Filter by number, station, To, subject, or message…'
+      : 'Filter by number, callsign, status, or message…';
+    render();
+  }
+  for (var ti = 0; ti < tabButtons.length; ti++) {
+    tabButtons[ti].addEventListener('click', function (ev) { setView(ev.currentTarget.getAttribute('data-view')); });
+  }
+
+  function is213(r) { return !!(r && r.ics213 && typeof r.ics213 === 'object'); }
+
+  function drawHead() {
+    headRow.innerHTML = COLUMNS[view].map(function (c) {
+      var sort = c[0] !== sortKey ? 'none' : sortDir < 0 ? 'descending' : 'ascending';
+      return '<th aria-sort="' + sort + '"><button type="button" data-sort="' + c[0] + '"'
+        + (c[2] ? ' aria-label="' + escAttr(c[2]) + '"' : '') + '>' + esc(c[1]) + '</button></th>';
+    }).join('');
+    for (var i = 0; i < tabButtons.length; i++) {
+      tabButtons[i].setAttribute('aria-selected', String(tabButtons[i].getAttribute('data-view') === view));
+    }
+  }
+
   // ---- sorting (John, 2026-10-22) ----
   // A heading sorts by its column; the same heading again reverses it. Time, Files and ★ start
   // descending (newest, most, marked first), the text columns A-Z. Ties fall back to newest first.
@@ -350,12 +412,7 @@
     if (!btn) { return; }
     var key = btn.getAttribute('data-sort');
     if (key === sortKey) { sortDir = -sortDir; }
-    else { sortKey = key; sortDir = (key === 'time' || key === 'files' || key === 'mark') ? -1 : 1; }
-    var ths = headRow.querySelectorAll('th');
-    for (var i = 0; i < ths.length; i++) {
-      var k = ths[i].querySelector('button').getAttribute('data-sort');
-      ths[i].setAttribute('aria-sort', k !== sortKey ? 'none' : sortDir < 0 ? 'descending' : 'ascending');
-    }
+    else { sortKey = key; sortDir = (key === 'time' || key === 'files' || key === 'mark' || key === 'reply') ? -1 : 1; }
     render();
   });
 
@@ -378,6 +435,10 @@
       case 'status': return (r.status || '').toLowerCase();
       case 'source': return (r.source || '').toLowerCase();
       case 'notes': return (r.notes || '').toLowerCase();
+      case 'to': return is213(r) ? (r.ics213.to || []).join(', ').toLowerCase() : '';
+      case 'subject': return is213(r) ? String(r.ics213.subject || '').toLowerCase() : '';
+      case 'message': return is213(r) ? String(r.ics213.message || '').toLowerCase() : '';
+      case 'reply': return is213(r) && r.ics213.replyRequested ? 1 : 0;
       default: return new Date(r.date).getTime() || 0;
     }
   }
@@ -519,12 +580,19 @@
     if (!btn) { return; }
     if (btn.hasAttribute('data-mark')) { toggleMark(btn.getAttribute('data-mark')); return; }
     if (btn.hasAttribute('data-more')) { expanded[btn.getAttribute('data-more')] = true; render(); return; }
+    if (btn.hasAttribute('data-open213')) {
+      var key = btn.getAttribute('data-open213');
+      var r = ((latest && latest.reports) || []).filter(function (x) { return markKey(x) === key; })[0];
+      if (r && is213(r)) { open213(r); }
+      return;
+    }
     var sha = btn.getAttribute('data-sha');
     var a = sha && findAttachment(sha);
     if (a) { openOverlay(a); }
   });
 
   function render() {
+    drawHead();
     if (!latest) {
       rowsEl.innerHTML = '';
       emptyEl.hidden = false;
@@ -535,17 +603,20 @@
     metaEl.textContent = (latest.mission || '(unnamed mission)')
       + (latest.opPeriod ? ' — ' + latest.opPeriod : '');
 
-    var reports = (latest.reports || []).slice();
+    var all = latest.reports || [];
+    var msgCount = all.filter(is213).length;
+    tabButtons[1].textContent = 'ICS-213 messages' + (msgCount ? ' (' + msgCount + ')' : '');
+    var reports = view === 'msgs' ? all.filter(is213) : all.slice();
     var markedCount = reports.filter(isMarked).length;
     markedOnlyBtn.textContent = '★ Marked only' + (markedCount ? ' (' + markedCount + ')' : '');
     if (markedOnly) { reports = reports.filter(isMarked); }
     if (filterText) {
       reports = reports.filter(function (r) {
-        return (r.callsign || '').toLowerCase().indexOf(filterText) !== -1
-          || (r.tacticalCall || '').toLowerCase().indexOf(filterText) !== -1
-          || (r.status || '').toLowerCase().indexOf(filterText) !== -1
-          || (r.msgNo || '').toLowerCase().indexOf(filterText) !== -1
-          || (r.notes || '').toLowerCase().indexOf(filterText) !== -1;
+        var m = is213(r) ? r.ics213 : {};
+        return [r.callsign, r.tacticalCall, r.toCallsign, r.toTactical, r.status, r.msgNo, r.notes,
+          (m.to || []).join(' '), m.subject, m.message].some(function (s) {
+          return String(s || '').toLowerCase().indexOf(filterText) !== -1;
+        });
       });
     }
     reports.sort(compareReports);
@@ -554,26 +625,75 @@
       rowsEl.innerHTML = '';
       emptyEl.hidden = false;
       emptyEl.textContent = filterText ? 'No reports match that filter.'
-        : markedOnly ? 'No marked reports. Tap ☆ on a row to mark it.' : 'No reports yet this mission.';
+        : markedOnly ? 'No marked reports. Tap ☆ on a row to mark it.'
+          : view === 'msgs' ? 'No ICS-213 messages yet this mission.' : 'No reports yet this mission.';
       return;
     }
     emptyEl.hidden = true;
 
     rowsEl.innerHTML = reports.map(function (r) {
       var marked = isMarked(r);
-      return '<tr' + (marked ? ' class="marked"' : '') + '>'
-        + '<td><button type="button" class="mark-btn" data-mark="' + escAttr(markKey(r)) + '" aria-pressed="' + marked
+      var key = escAttr(markKey(r));
+      var open = function (label) { return '<button type="button" class="link-btn" data-open213="' + key + '">' + label + '</button>'; };
+      var cells = '<td><button type="button" class="mark-btn" data-mark="' + key + '" aria-pressed="' + marked
         + '" aria-label="' + (marked ? 'Marked. Tap to unmark' : 'Mark this report') + '">' + (marked ? '★' : '☆') + '</button></td>'
-        + '<td class="msgno" title="' + escAttr(r.msgNoFull || '') + '">' + esc(r.msgNo || '') + '</td>'
+        + '<td class="msgno" title="' + escAttr(r.msgNoFull || '') + '">' + esc(r.msgNo || '')
+        + (view === 'log' && is213(r) ? '<button type="button" class="tag213" data-open213="' + key + '" title="Open the ICS-213 message">213</button>' : '')
+        + '</td>'
         + '<td class="time">' + esc(fmtTime(r.date)) + '</td>'
         + '<td class="callsign">' + esc(station(r.tacticalCall, r.callsign) || '(not given)')
-        + (station(r.toTactical, r.toCallsign) ? ' &rarr; ' + esc(station(r.toTactical, r.toCallsign)) : '') + '</td>'
-        + '<td>' + (r.status ? '<span class="status-pill">' + esc(r.status) + '</span>' : '') + '</td>'
-        + '<td>' + esc(r.source) + '</td>'
-        + '<td>' + esc(r.notes) + '</td>'
-        + '<td>' + filesCell(r) + '</td>'
-        + '</tr>';
+        + (station(r.toTactical, r.toCallsign) ? ' &rarr; ' + esc(station(r.toTactical, r.toCallsign)) : '') + '</td>';
+      if (view === 'msgs') {
+        var m = r.ics213;
+        cells += '<td>' + esc((m.to || []).join(', ')) + '</td>'
+          + '<td>' + open(esc(m.subject || '(no subject)')) + '</td>'
+          + '<td>' + esc(m.message) + '</td>'
+          + '<td>' + (m.replyRequested ? '<span class="reply">Requested</span>' : '') + '</td>';
+      } else {
+        cells += '<td>' + (r.status ? '<span class="status-pill">' + esc(r.status) + '</span>' : '') + '</td>'
+          + '<td>' + esc(r.source) + '</td>'
+          + '<td>' + esc(r.notes) + '</td>';
+      }
+      return '<tr' + (marked ? ' class="marked"' : '') + '>' + cells + '<td>' + filesCell(r) + '</td></tr>';
     }).join('');
+  }
+
+  // ---- one ICS-213, laid out like the form, with Print (E-228 phase 1) ----
+  // The scribe's device still prints the official FEMA form; this is the Board's readable copy.
+  function open213(r) {
+    closeOverlay();
+    var m = r.ics213;
+    var d = new Date(r.date);
+    var date = isNaN(d.getTime()) ? '' : String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + '/' + d.getFullYear();
+    var row = function (label, value, cls) {
+      return '<dt>' + esc(label) + '</dt><dd' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(value) + '</dd>';
+    };
+    ov.root.hidden = false;
+    ov.title.textContent = 'ICS-213 General Message' + (r.msgNo ? ' - ' + r.msgNo : '');
+    ov.status.className = '';
+    ov.status.textContent = m.printedAt ? 'Printed by the scribe ' + fmtTime(m.printedAt) + '.' : 'Not printed by the scribe yet.';
+    ov.body.innerHTML = '<dl class="form213">'
+      + row('Incident', latest.event || latest.mission || '')
+      + row('To', (m.to || []).join(', '))
+      + row('From', station(r.tacticalCall, r.callsign))
+      + row('Subject', m.subject)
+      + row('Date', date)
+      + row('Time', fmtClock(d.getTime()))
+      + row('Message', m.message, 'message')
+      + row('Approved by', m.approvedBy)
+      + row('Reply', m.replyRequested ? 'Requested' : 'Not requested')
+      + (r.msgNoFull ? row('Message number', r.msgNoFull) : '')
+      + '</dl>';
+    var print = document.createElement('button');
+    print.type = 'button';
+    print.textContent = 'Print';
+    print.addEventListener('click', function () {
+      document.body.classList.add('print-213');
+      addEventListener('afterprint', function () { document.body.classList.remove('print-213'); }, { once: true });
+      setTimeout(window.print, 50);
+    });
+    ov.download.appendChild(print);
+    ov.close.focus();
   }
 
   // E-165: same "CERT Team 1 (K7ABC)" format as the app's own Radio Log (station-label.ts).
@@ -758,6 +878,7 @@
     }).catch(function () { fail('The Board could not be reached.'); });
   }
 
+  setView(view);
   poll();
   setInterval(poll, POLL_MS);
 })();

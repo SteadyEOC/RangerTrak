@@ -5046,7 +5046,18 @@ async function checkBoard(downloads) {
     await goto('/')
     check('settings were written by the first load (precondition)', await evaluate(seedExpr({ mission: 'E2E Board', show: true })), 'ok')
     await goto('/')
-    await entrySaveWithAttachments('E2E-BRD', [pngPath])
+    // E-228: the same entry is an ICS-213, so the viewer's messages tab has one to show.
+    await entrySaveWithAttachments('E2E-BRD', [pngPath], async () => {
+      await evaluate(`document.querySelector('[data-testid="generates213-toggle"] input[type=checkbox]').click()`)
+      await sleep(300)
+      await evaluate(`(() => {
+        const ta = document.querySelector('.enter__213-message textarea');
+        Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, 'E2E-BOARD-213 water at Hermit');
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+        document.querySelector('.enter__213 mat-chip-option .mat-mdc-chip-action')?.click();
+      })()`)
+      await sleep(600)
+    })
     await sleep(1500)
 
     const first = await boardUntil(b => (b.reports || []).some(r => (r.attachments || []).length), 25)
@@ -5068,6 +5079,31 @@ async function checkBoard(downloads) {
     const verified = await pollUntil(() => evaluate(`document.getElementById('ovStatus').textContent`, v.sessionId), t => /Verified|match/.test(t), 40, 500)
     check('clicking the thumbnail fetches the original from the scribe and says Verified', verified, '✓ Verified')
     check('...and shows the picture with a Download link', await evaluate(`!!document.querySelector('#ovBody img') && !!document.querySelector('#ovDownload a')`, v.sessionId), true)
+
+    // ── E-228 phase 1: the ICS-213 messages tab ────────────────────────────────
+    check('the snapshot carries the 213 message and its recipients',
+      [first?.reports?.[0]?.ics213?.message, (first?.reports?.[0]?.ics213?.to || []).length > 0], ['E2E-BOARD-213 water at Hermit', true])
+    await evaluate(`document.getElementById('ovClose').click()`, v.sessionId)
+    check('the log row carries a 213 marker, and the tab counts one message', await evaluate(`[
+      document.querySelectorAll('#rows .tag213').length, document.getElementById('tabMsgs').textContent]`, v.sessionId),
+    [1, 'ICS-213 messages (1)'])
+    await evaluate(`document.getElementById('tabMsgs').click()`, v.sessionId)
+    check('...its tab lists the message under To / Subject / Message / Reply', await evaluate(`[
+      document.querySelectorAll('#rows tr').length,
+      [...document.querySelectorAll('thead th')].map(t => t.textContent.trim()).slice(4, 8).join('|'),
+      document.querySelector('#rows tr').textContent.includes('E2E-BOARD-213 water at Hermit')]`, v.sessionId),
+    [1, 'To|Subject|Message|Reply', true])
+    await evaluate(`(() => { const f = document.getElementById('filterInput'); f.value = 'hermit'; f.dispatchEvent(new Event('input')); })()`, v.sessionId)
+    const hit = await evaluate(`document.querySelectorAll('#rows tr').length`, v.sessionId)
+    await evaluate(`(() => { const f = document.getElementById('filterInput'); f.value = 'no-such-words'; f.dispatchEvent(new Event('input')); })()`, v.sessionId)
+    check('...the filter searches the message text', [hit, await evaluate(`document.querySelectorAll('#rows tr').length`, v.sessionId)], [1, 0])
+    await evaluate(`(() => { const f = document.getElementById('filterInput'); f.value = ''; f.dispatchEvent(new Event('input')); document.querySelector('#rows [data-open213]').click(); })()`, v.sessionId)
+    check('...and opening it shows the ICS-213 layout with a Print button', await evaluate(`[
+      document.getElementById('ovTitle').textContent.startsWith('ICS-213 General Message'),
+      document.querySelector('#ovBody .form213 .message')?.textContent,
+      document.querySelector('#ovDownload button')?.textContent]`, v.sessionId),
+    [true, 'E2E-BOARD-213 water at Hermit', 'Print'])
+    await evaluate(`document.getElementById('ovClose').click(); document.getElementById('tabLog').click()`, v.sessionId)
     await closeTarget(v.targetId)
 
     // ── a wrong password asks for one ──────────────────────────────────────────
