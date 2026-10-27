@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.89-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.88-alpha...v0.99.89-alpha) (2026-10-27)
+
+
+### Bug Fixes
+
+* **radio-log:** a Callsign edit moves the report to the ranger it names ([aa0cd84](https://github.com/SteadyEOC/RangerTrak/commit/aa0cd84994e90525677cdfa8e5cb0b0f6eeb2a1f))
+
 ### [0.99.88-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.87-alpha...v0.99.88-alpha) (2026-10-27)
 
 ### [0.99.87-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.86-alpha...v0.99.87-alpha) (2026-10-24)
