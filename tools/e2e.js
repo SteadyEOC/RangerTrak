@@ -4391,8 +4391,9 @@ async function checkSmallerCopies(downloads) {
   })
   check('the chip offers the choice, and Keep original is selected by default', facts.keepChecked, true)
   check('the explanation shows only once Smaller copy is chosen', [facts.noteBefore, facts.smallerChecked], [false, true])
-  check('the note is mild and says what is not kept',
-    /Sends much faster over a field network\. Fine detail, and the photo's own location and camera data, aren't kept\./.test(facts.note), true)
+  // D-60 item 2 revised 2026-10-27: only fine detail goes; the file's own metadata is kept where it can be.
+  check('the note is mild, says fine detail is not kept, and that location, time and camera data are',
+    /Sends much faster over a field network, but fine detail isn't kept\. Location, time and camera data are kept wherever the file has them\./.test(facts.note), true)
   const stored = await pollUntil(attachmentKeys, k => k.length === 1)
   check('only the smaller copy is stored, never the original', stored.length === 1 && stored[0] !== pngs[0].sha, true)
   const sizes = await attachmentSizes()
