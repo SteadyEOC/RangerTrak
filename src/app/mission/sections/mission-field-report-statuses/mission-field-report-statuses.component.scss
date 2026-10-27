@@ -3,15 +3,11 @@
 :host {
   display: contents;
 }
-// E-65: `width: 400px` was a hard floor, so on a 390px phone this grid pushed the whole
-// Settings page's layout viewport out to ~417px rather than scrolling inside itself. The
-// Rangers grid is the reference for the intended behavior ("reachable, not broken,
-// horizontal scroll inside its own container is acceptable" - the deliberately-deferred
-// phone-layout decision): it stays within the page and scrolls internally. max-width
-// gives this grid the same property while keeping 400px as the size it wants when there
-// is room for it.
+// E-65: a fixed 400px width pushed a 390px phone's page sideways. E-243 (2026-10-27): it was
+// also 400 x 400 px inside a much wider card, so Color was cut off behind a scrollbar. Now it
+// fills the card, and its height follows its rows (domLayout autoHeight in the .ts). On a phone
+// the columns' minimum widths scroll inside the grid, never the page.
 ag-grid-angular {
-  height   : 400px;
-  width    : 400px;
-  max-width: 100%;
+  display: block;
+  width  : 100%;
 }

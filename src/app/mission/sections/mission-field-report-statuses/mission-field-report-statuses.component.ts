@@ -63,6 +63,9 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
   // https://www.ag-grid.com/javascript-data-grid/row-styles/#highlighting-rows-and-columns
   gridOptions: GridOptions = {
     theme: rangertrakGridTheme,
+    // E-243 (same fix as Location categories): as tall as its rows, so the card shows every
+    // status with no scrollbar of its own, and grows as statuses are added.
+    domLayout: 'autoHeight',
   }
 
   defaultColDef: ColDef = {
@@ -78,7 +81,7 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
   //? FUTURE: Consider replacing "Color" with "CSS_Style" to allow more options?
   columnDefs = [
     {
-      headerName: "Status", field: "status", flex: 50,
+      headerName: "Status", field: "status", flex: 3, minWidth: 130,
       editable: (params: { data: RadioLogStatusType }) => !this.isStatusInUse(params.data.status),
       cellStyle: (params: { value: string; data: RadioLogStatusType }) => {
         // Same fill+ink resolution as the Radio Log entries grid - see field-reports.component.ts.
@@ -125,12 +128,12 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
       cellEditor: ColorEditor,
       cellEditorPopup: true,
       editable: true,
-      width: 300,
+      flex: 2, minWidth: 100,
     },
     {
       // E-190: shows the derived value (domain/map-entry-filter.ts); an edit writes an
       // explicit boolean. No schema bump: an absent field already means "the default".
-      headerName: "Flag on map", colId: "flagOnMap", cellDataType: 'boolean', width: 130,
+      headerName: "Flag on map", colId: "flagOnMap", cellDataType: 'boolean', flex: 1, minWidth: 150,
       headerTooltip: 'Shown when the map is set to Needs attention',
       valueGetter: (params: { data?: RadioLogStatusType }) => params.data ? isStatusFlagged(params.data) : false,
       valueSetter: (params: { data: RadioLogStatusType, newValue: unknown }) => {
@@ -199,8 +202,8 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
 
   refreshStatusGrid(force = false) {
     if (this.gridApi) {
+      // E-243: no sizeColumnsToFit() - every column flexes now, and it would fix their widths.
       this.gridApi.refreshCells({ force })
-      this.gridApi.sizeColumnsToFit();
     }
   }
 
