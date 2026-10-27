@@ -1903,6 +1903,9 @@ async function checkUsageModes() {
   await idbClearAll()
   await goto('/')
   check('blank device: a demo picker is offered (in the welcome panel)', await evaluate(`!!document.querySelector('rangertrak-demo-picker')`), true)
+  // John 10-27: the demo bar links to the Tour Guide, and /tour/ is served beside the app.
+  check('blank device: the demo bar links to the Tour Guide', await evaluate(`document.querySelector('[data-testid="welcome-tour-link"] a')?.getAttribute('href') ?? 'none'`), '/tour/')
+  check('the Tour Guide page loads', await evaluate(`fetch('/tour/').then(r => r.ok && r.text()).then(t => !!t && t.includes('RangerTrak Tour Guide'))`), true)
   check('blank device: the pill shows the default mode, Incident (2026-10-05: one mode is always active)', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'incident')
 
   // 2026-10-02, John: picking a demo loads it, no button (except Mission > Danger zone).
@@ -1912,6 +1915,7 @@ async function checkUsageModes() {
   await new Promise(r => setTimeout(r, 4000)) // the picker loads the demo and reloads the page
   await goto('/')
   check('after loading a demo: the pill shows demo mode', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'demo')
+  check('after loading a demo: the demo card links to the Tour Guide', await evaluate(`document.querySelector('[data-testid="demo-card-tour-link"] a')?.getAttribute('href') ?? 'none'`), '/tour/')
   check('after loading a demo: the demo card offers to switch', await evaluate(`document.querySelector('[data-testid="demo-card"]')?.textContent.includes('Switch demo') ?? false`), true)
   check('after loading a demo: its dropdown shows the loaded demo, not just the default', await evaluate(`document.querySelector('[data-testid="demo-card"] mat-select')?.textContent.includes('Grand Canyon') ?? false`), true)
 

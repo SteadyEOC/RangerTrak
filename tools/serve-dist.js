@@ -109,7 +109,10 @@ const server = http.createServer((req, res) => {
         console.warn(`404 ${urlPath}`);
         return;
       }
-      filePath = path.join(ROOT, 'index.html'); // SPA fallback
+      // A directory with its own index.html (the Tour Guide at /tour/) is served as itself,
+      // as Cloudflare does; anything else gets the app.
+      const dirIndex = path.join(filePath, 'index.html');
+      filePath = stats?.isDirectory() && fs.existsSync(dirIndex) ? dirIndex : path.join(ROOT, 'index.html'); // SPA fallback
     }
 
     fs.stat(filePath, (err2, stats2) => {

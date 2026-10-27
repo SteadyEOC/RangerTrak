@@ -126,6 +126,9 @@ $guide-z: 1200;
   flex       : none;
   padding    : 0.9rem 1.25rem;
   border-top : 1px solid var(--rt-line);
+  display    : flex;
+  flex-wrap  : wrap;
+  gap        : 0.5rem 1.25rem;
 }
 
 .guide__help-link {
