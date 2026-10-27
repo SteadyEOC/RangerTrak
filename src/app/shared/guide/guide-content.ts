@@ -114,10 +114,6 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'Each radio log entry (a field report, if that is what your team calls it) answers four questions: who is reporting, where they are, when it happened, and what they said. Tab moves through them in radio-call order, so a whole report can be typed without touching the mouse. When it is complete, log it with the "Add to radio log" button at the bottom, or press Ctrl+Enter (Cmd+Enter on a Mac) from any box.'
           },
           {
-            heading: 'Operator',
-            text: 'Not who the report is about — who is at the keyboard recording it. Stamped on each report and message at submit, and never changed later, so a shift change never retroactively re-attributes a report someone else logged.'
-          },
-          {
             heading: 'Positions',
             bullets: [
               'Type a position in whichever format it was read to you — the rest are derived and shown below the fields.',
@@ -126,10 +122,6 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Every format here assumes WGS84 / modern GPS. A position read off an older paper topo quad may use NAD27 instead, which can be 100–200 m off in the western US.',
               'Every format (DD, DDM, DMS, MGRS, UTM) is always one tap away here, regardless of mission settings — a call in an unexpected format is never blocked. Mission → Location Defaults only picks which one this screen opens on by default; a team that mostly works in MGRS can set that as the default while every other format stays reachable.'
             ]
-          },
-          {
-            heading: 'Notes and 213 messages are not the same thing',
-            text: 'Notes is the general record of this report — always saved, and what appears on the Radio Log grid and in the ICS-309 communications log: a ranger\'s status, purpose, or what happened. A 213 message is a separate, addressed message that only some reports generate (see the Messages page) — a formal request, order, or notification to a specific recipient. It is typed independently, not derived from your notes, because the two often serve different purposes entirely.'
           },
           {
             heading: 'Location formats',
@@ -153,12 +145,12 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             ]
           },
           {
-            heading: 'Getting it wrong',
-            text: 'Submit anyway. It is better to have the report logged than to hold the radio while you fix it. Corrections happen on the Radio Log page: click a cell, type, and move on — grid edits save themselves. Editing a latitude or longitude moves that report on the map.'
-          },
-          {
             heading: 'The map beside the form',
             text: 'The small map confirms where the location you typed actually landed — glance at it, and if the pin is in the water, re-read the coordinates back over the radio. It is also a drawing surface: click anywhere on it to set the location directly instead of typing coordinates.'
+          },
+          {
+            heading: 'Notes and 213 messages are not the same thing',
+            text: 'Notes is the general record of this report — always saved, and what appears on the Radio Log grid and in the ICS-309 communications log: a ranger\'s status, purpose, or what happened. A 213 message is a separate, addressed message that only some reports generate (see the Messages page) — a formal request, order, or notification to a specific recipient. It is typed independently, not derived from your notes, because the two often serve different purposes entirely.'
           },
           {
             heading: 'Attaching photos, video and audio',
@@ -175,6 +167,14 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Make a smaller copy… in the viewer is for a file someone else sent, and it warns you more strongly: the fingerprint proves it is exactly what they sent, and a copy will not match it. Keep both (the default) adds the copy beside the original. Replace the original needs you to type REPLACE; the entry then shows "Replaced by a smaller copy 14:02 by N7XYZ" and the original is deleted from this device.',
               'An entry from another device can name a file whose bytes are not here; the viewer says "On another device" until the backup\'s attachments file or a hand-over brings it.'
             ]
+          },
+          {
+            heading: 'Operator',
+            text: 'Not who the report is about — who is at the keyboard recording it. Stamped on each report and message at submit, and never changed later, so a shift change never retroactively re-attributes a report someone else logged.'
+          },
+          {
+            heading: 'Getting it wrong',
+            text: 'Submit anyway. It is better to have the report logged than to hold the radio while you fix it. Corrections happen on the Radio Log page: click a cell, type, and move on — grid edits save themselves. Editing a latitude or longitude moves that report on the map.'
           },
           {
             heading: 'Field mode — a ranger\'s own phone',
