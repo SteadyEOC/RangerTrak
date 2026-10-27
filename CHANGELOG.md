@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.94-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.93-alpha...v0.99.94-alpha) (2026-10-27)
+
+
+### Bug Fixes
+
+* **grids:** Notes fills a wide window again ([b65d10c](https://github.com/SteadyEOC/RangerTrak/commit/b65d10c8d3a23b0c990025c53974b9558b2d8523))
+
 ### [0.99.93-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.92-alpha...v0.99.93-alpha) (2026-10-27)
 
 
