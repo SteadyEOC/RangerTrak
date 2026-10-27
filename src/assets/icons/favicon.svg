@@ -11,8 +11,17 @@
   <style>
     /* Browsers honour this in SVG favicons; renderers that do not just get the
        light version, which is the correct fallback. */
-    @media (prefers-color-scheme: dark) { .pin { fill: #9DC2DC; } }
+    @media (prefers-color-scheme: dark) { .pin { fill: #9DC2DC; } .halo { stroke: #12263F; } }
   </style>
+  <!--
+    E-241 (2026-10-27): a halo round the pin's outline, drawn under it. Chrome on Android
+    shows this icon on a dark-grey circle (long-press the tab's logo) without honouring the
+    media query above, and the navy pin vanished there, leaving only the waves. Light on a
+    light tab strip, so it shows nowhere else. Outline only (the pin's first subpath), so
+    the antenna slot stays open. favicon.ico is rendered from this file.
+  -->
+  <path class="halo" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round"
+        d="M 11.5 29 L 6.26 21.84 A 6.5 6.5 0 1 1 16.74 21.84 Z"/>
   <path class="pin" fill="#12263F" fill-rule="evenodd"
         d="M 11.5 29 L 6.26 21.84 A 6.5 6.5 0 1 1 16.74 21.84 Z
            M 10.4 12.6 L 12.6 12.6 L 12.6 24.2 L 10.4 24.2 Z"/>
