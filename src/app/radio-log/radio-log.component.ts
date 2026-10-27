@@ -32,6 +32,7 @@ import { rangertrakGridTheme } from '../shared/ag-grid-theme'
 import { rangerColorFor } from '../shared/mapping/ranger-marker'
 import { buildIcs309Log, Ics309Log } from '../shared/export/ics309-log'
 import { formatStation } from '../domain/station-label'
+import { applyCallsignEdit } from '../domain/ranger-match'
 import { isScenarioEntry, formatScenarioTime, scenarioTimeAt, sameScenarioClock } from '../domain/scenario'
 import { UsageStateService } from '../shared/services/usage-state.service'
 import { AarNoteService } from '../shared/services/aar-note.service'
@@ -292,7 +293,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // half) is a separate, still-open decision - see the handoff doc.
       {
         headerName: 'Callsign', field: "callsign", tooltipField: "team", maxWidth: 160,
-        headerTooltip: 'The reporting station\'s FCC call sign, such as K7ABC. It can be blank for members who are not licensed. Double-click to edit.',
+        headerTooltip: 'The reporting station\'s FCC call sign, such as K7ABC. It can be blank for members who are not licensed. Double-click to edit; a call, name or ID on the roster moves the report to that person.',
+        valueSetter: (params: { data: RadioLogEntryType, newValue: any }) => this.setCallsign(params.data, params.newValue),
         cellStyle: (params: { data: RadioLogEntryType }) => {
           const key = params.data.rangerUid || params.data.callsign
           return key ? { color: rangerColorFor(key), 'font-weight': 600 } : null
@@ -1369,6 +1371,22 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   private onCellEdited() {
     this.log.info(`Edited a radio log entry in the grid.`, this.id)
     this.radioLogService.saveEditedRadioLog()
+  }
+
+  /**
+   * A Callsign edit re-links the report to the roster ranger it now names (domain/ranger-match),
+   * so colour, map trail and the operator tooltips follow the correction. Journalled (D-67)
+   * because it changes who a report is attributed to. Returns false for no change, so the grid
+   * skips the save.
+   */
+  private setCallsign(report: RadioLogEntryType, newValue: any): boolean {
+    const edit = applyCallsignEdit(report, newValue, this.rangerService.rangers)
+    if (!edit.changed) return false
+    const from = edit.oldCallsign || '(blank)'
+    const to = edit.newCallsign || (edit.ranger ? '(no call sign)' : '(blank)')
+    this.journal.record('report-reassigned', `Changed the call sign on report ${report.id} from ${from} to ${to}`
+      + (edit.ranger ? '.' : ', which matches no one on the roster.'))
+    return true
   }
 
   /**

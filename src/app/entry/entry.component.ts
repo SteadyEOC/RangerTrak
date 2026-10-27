@@ -39,6 +39,7 @@ import { SmallerCopyProgressComponent } from '../shared/attachments/smaller-copy
 import { AttachmentBudgetService } from '../shared/attachments/attachment-budget.service'
 import { TimePickerComponent } from '../shared/time-picker/time-picker.component'
 import { DDToDDM } from '../domain/coordinate'
+import { matchRanger } from '../domain/ranger-match'
 import {
   RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
   LogService, RangerService, RangerType, MissionService, MissionType, TacticalCallType, UsageStateService,
@@ -817,22 +818,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    * control for attributing a report to them could not find them.
    */
   /**
-   * Resolves what the scribe typed (or picked) to one ranger, or null.
-   *
-   * Matches the same three fields `_filterRangers()` offers, and in the same priority order
-   * the autocomplete presents them, so "the row I clicked" and "the row this resolves to"
-   * cannot disagree. Exact match only - a substring is fine for *narrowing a list a human
-   * then picks from*, but not for silently deciding who a report belongs to.
+   * Resolves what the scribe typed (or picked) to one ranger, or null. Shared with the Radio
+   * Log grid's Callsign edit (domain/ranger-match.ts), so both resolve a call the same way.
    */
   private matchRanger(value: string): RangerType | null {
-    const needle = value.trim().toLowerCase()
-    if (!needle) {
-      return null
-    }
-    return this.rangers.find(r => r.callsign?.trim().toLowerCase() === needle)
-      ?? this.rangers.find(r => r.fullName?.trim().toLowerCase() === needle)
-      ?? this.rangers.find(r => r.id?.trim().toLowerCase() === needle)
-      ?? null
+    return matchRanger(this.rangers, value)
   }
 
   /**

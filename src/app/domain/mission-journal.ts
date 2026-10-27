@@ -20,7 +20,7 @@ export type JournalAction =
   | 'journal-started'
   | 'demo-loaded' | 'real-mission-started' | 'demo-left' | 'mode-changed' | 'scenario-clock-set'
   | 'mission-reset' | 'mission-restored' | 'import-undone' | 'encryption-on' | 'encryption-off'
-  | 'radio-log-cleared' | 'reports-merged' | 'handover-built' | 'handover-merged' | 'packet-exported' | 'radio-log-exported'
+  | 'radio-log-cleared' | 'report-reassigned' | 'reports-merged' | 'handover-built' | 'handover-merged' | 'packet-exported' | 'radio-log-exported'
   | 'print-309' | 'print-213' | 'print-213-auto' | 'pdf-213-saved'
   | 'attachments-removed' | 'attachments-restored'
   | 'roster-cleared' | 'roster-imported' | 'roster-exported' | 'print-roster' | 'photos-exported'
