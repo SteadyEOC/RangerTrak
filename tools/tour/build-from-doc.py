@@ -35,36 +35,40 @@ SVG = ('<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="curr
 WHO = {1: 'solo', 2: 'solo or pairs', 3: 'solo or pairs', 4: 'solo', 5: 'best with a crew',
        6: 'solo', 7: 'solo', 8: 'optional; your laptop and a phone', 9: 'optional; a phone'}
 
-# The route as a trail: three stages, nine stops, then the finish. Stop: (module, x, y, name, note).
-TOP, BOT = 170, 350
-STOPS = [(1, 90, TOP, 'First look', 'the demo'), (2, 235, TOP, 'First radio call', 'solo or pairs'),
-         (3, 380, TOP, 'Where exactly?', 'six location formats'), (4, 525, TOP, 'Set up', 'starting a mission'),
-         (5, 670, TOP, 'Run the net', 'all hands on deck'), (6, 670, BOT, 'Lights out', 'no Internet'),
-         (7, 525, BOT, 'After the mission', 'forms, AAR and backups'), (8, 380, BOT, 'The Board', 'two devices'),
-         (9, 235, BOT, 'Field phones', 'two devices')]
-STAGES = [(24, 96, 432, 154, '1 · Explore the demo'), (462, 96, 274, 330, '2 · Run your own exercise'),
-          (164, 276, 292, 150, '3 · Optional extras')]
+# The route as a trail that zig-zags down three tiers, one per stage: 1-3 left to right, 4-7 right
+# to left, then 8-9 and the finish left to right. Stop: (module, x, y, name, note).
+R1, R2, R3 = 104, 300, 496
+L, M2, M3, R = 150, 303, 457, 610
+STOPS = [(1, L, R1, 'First look', 'the demo'), (2, 380, R1, 'First radio call', 'solo or pairs'),
+         (3, R, R1, 'Where exactly?', 'six location formats'), (4, R, R2, 'Set up', 'starting a mission'),
+         (5, M3, R2, 'Run the net', 'all hands on deck'), (6, M2, R2, 'Lights out', 'no Internet'),
+         (7, L, R2, 'After the mission', 'forms, AAR and backups'), (8, L, R3, 'The Board', 'two devices'),
+         (9, 380, R3, 'Field phones', 'two devices')]
+STAGES = [(56, R1 - 80, 648, 172, '1 · Explore the demo'), (56, R2 - 80, 648, 172, '2 · Run your own exercise'),
+          (56, R3 - 80, 424, 172, '3 · Optional extras')]
 
 
 def route_svg():
-    out = ['<div class="scroll"><svg class="trail" viewBox="0 0 760 436" role="img" '
+    out = ['<div class="scroll"><svg class="trail" viewBox="0 0 760 612" role="img" '
            'aria-label="The route: explore the demo (modules 1 to 3), run your own exercise (4 to 7), '
            'optional extras (8 and 9), then tell us what you found">']
     for x, y, w, h, label in STAGES:
         out.append(f'<rect class="stage" x="{x}" y="{y}" width="{w}" height="{h}" rx="10"/>'
-                   f'<text class="slabel" x="{x + 14}" y="{y + 22}">{label}</text>')
-    out.append(f'<path class="path" d="M114 {TOP}H211M259 {TOP}H356M404 {TOP}H501M549 {TOP}H646'
-               f'M692 {TOP}C748 {TOP} 748 {BOT} 692 {BOT}M646 {BOT}H549M501 {BOT}H404M356 {BOT}H259'
-               f'M211 {BOT}H122"/>')
+                   f'<text class="slabel" x="{x + 14}" y="{y + 24}">{label}</text>')
+    out.append(f'<path class="path" d="M{L + 26} {R1}H354M406 {R1}H{R - 26}'
+               f'M{R + 26} {R1}C760 {R1} 760 {R2} {R + 26} {R2}'
+               f'M{R - 26} {R2}H{M3 + 26}M{M3 - 26} {R2}H{M2 + 26}M{M2 - 26} {R2}H{L + 26}'
+               f'M{L - 26} {R2}C0 {R2} 0 {R3} {L - 26} {R3}'
+               f'M{L + 26} {R3}H354M406 {R3}H{R - 18}"/>')
     for n, x, y, name, note in STOPS:
         cls = 'stop main' if n == 5 else 'stop opt' if n >= 8 else 'stop'
-        out.append(f'<a href="#m{n}"><circle class="{cls}" cx="{x}" cy="{y}" r="22"/>'
-                   f'<text class="num" x="{x}" y="{y + 5}">{n}</text>'
-                   f'<text class="name" x="{x}" y="{y + 44}">{name}</text>'
-                   f'<text class="note" x="{x}" y="{y + 60}">{note}</text></a>')
-    out.append(f'<a href="#telling-us"><path class="flag" d="M92 {BOT + 18}V{BOT - 22}l20 8-20 8"/>'
-               f'<text class="name" x="96" y="{BOT + 44}">Tell us</text>'
-               f'<text class="note" x="96" y="{BOT + 60}">what you found</text></a>')
+        out.append(f'<a href="#m{n}"><circle class="{cls}" cx="{x}" cy="{y}" r="24"/>'
+                   f'<text class="num" x="{x}" y="{y + 6}">{n}</text>'
+                   f'<text class="name" x="{x}" y="{y + 50}">{name}</text>'
+                   f'<text class="note" x="{x}" y="{y + 70}">{note}</text></a>')
+    out.append(f'<a href="#telling-us"><path class="flag" d="M{R - 6} {R3 + 20}V{R3 - 24}l22 9-22 9"/>'
+               f'<text class="name" x="{R}" y="{R3 + 50}">Tell us</text>'
+               f'<text class="note" x="{R}" y="{R3 + 70}">what you found</text></a>')
     out.append('</svg></div>')
     return ''.join(out)
 
