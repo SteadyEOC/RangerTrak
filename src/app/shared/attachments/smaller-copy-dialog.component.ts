@@ -30,9 +30,9 @@ export type SmallerCopyChoice = 'keep' | 'replace'
     <div mat-dialog-content>
       <p data-testid="smaller-copy-warning">
         This file came from <strong>{{ data.from || 'the sender' }}</strong>. Its fingerprint proves it is exactly the
-        file they sent. A smaller copy won't match that fingerprint, and it won't keep the fine detail or
-        {{ data.kind === 'image' ? "the photo's" : "the recording's" }} own location data. The original is kept unless
-        you choose to replace it.
+        file they sent. A smaller copy won't match that fingerprint, and it won't keep the fine detail
+        (location, time and {{ data.kind === 'image' ? 'camera' : 'device' }} data are kept wherever the file has them).
+        The original is kept unless you choose to replace it.
       </p>
       @if (replacing()) {
       <p>The original will be deleted from this device. The entry keeps a note that it was replaced, and when and by whom.</p>

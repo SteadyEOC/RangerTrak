@@ -290,8 +290,9 @@ from this device but leaves "Removed 14:02 by K7ABC" on the entry.
   to be identical. Backups and hand-overs carry the references, and re-check every file against its
   fingerprint when they open it.
 - **Smaller copy (your choice, per file).** Each photo, video or audio file you pick also offers
-  **Smaller copy**: it sends much faster over a field network, but fine detail, and the file's own
-  location and camera data, are not kept. Only the smaller copy is stored, and the entry notes the
+  **Smaller copy**: it sends much faster over a field network, but fine detail is not kept. The
+  file's own location, time and camera data are kept wherever the file has them (a photo's EXIF, a
+  phone video's location tag). Only the smaller copy is stored, and the entry notes the
   original's fingerprint, size, who made it and when. The viewer always says which kind a file is
   ("Smaller copy, made on K7ABC's phone from 4.2 MB") and shows two fingerprints: this file's, and
   the original's. A long video takes a while; **Cancel** keeps the original. If a copy would not be

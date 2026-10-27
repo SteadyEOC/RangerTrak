@@ -1,9 +1,11 @@
 import { CompressCancelledError, IMAGE_MAX_EDGE, IMAGE_QUALITY } from './compress-types'
 import type { CompressOptions, CompressResult } from './compress-types'
+import { readExif, writeExif } from './exif'
 
 /**
- * A photo, redrawn through a canvas: longest side at most 2048 px, JPEG at quality 0.85. The canvas
- * carries none of the photo's own EXIF or location data, which is part of what the sender is told.
+ * A photo, redrawn through a canvas: longest side at most 2048 px, JPEG at quality 0.85. A canvas
+ * holds pixels only, so the photo's own EXIF (location, capture time, camera) is read from the
+ * original and written back into the copy (`exif.ts`), wherever the original has one we can read.
  * EXIF orientation is applied while decoding, so a phone photo is not turned on its side.
  * Null when the browser cannot decode the file (HEIC on Chrome, say).
  */
@@ -27,8 +29,17 @@ export async function compressImage(file: Blob, options: CompressOptions = {}): 
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', IMAGE_QUALITY))
-    return blob ? { blob, type: 'image/jpeg', ext: 'jpg' } : null
+    if (!blob) return null
+    return { blob: await withOriginalExif(file, blob, canvas.width, canvas.height), type: 'image/jpeg', ext: 'jpg' }
   } finally {
     bitmap.close?.()
   }
+}
+
+/** The copy with the original's EXIF in it; the copy as made when there is none, or it can't be carried. */
+async function withOriginalExif(original: Blob, copy: Blob, width: number, height: number): Promise<Blob> {
+  const tiff = readExif(new Uint8Array(await original.arrayBuffer()))
+  if (!tiff) return copy
+  const out = writeExif(new Uint8Array(await copy.arrayBuffer()), tiff, width, height)
+  return out ? new Blob([out as BlobPart], { type: 'image/jpeg' }) : copy
 }

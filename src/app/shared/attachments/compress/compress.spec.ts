@@ -1,4 +1,6 @@
-import { BlobSource, BufferTarget, CanvasSource, Input, MP4, Mp4OutputFormat, Output, Quality } from 'mediabunny'
+import { BlobSource, BufferTarget, CanvasSource, Input, MP4, MovOutputFormat, Output, Quality } from 'mediabunny'
+
+import { LOCATION_KEY } from './media-tags'
 
 import { canCompress, canCompressFile } from './can-compress'
 import { compress } from './index'
@@ -192,9 +194,11 @@ describe('smaller copies (compressors)', () => {
       canvas.height = 1080
       const ctx = canvas.getContext('2d')!
       const made = new BufferTarget()
-      const output = new Output({ format: new Mp4OutputFormat(), target: made })
+      // A .mov with its location in a user-data ©xyz atom, as an Android phone or ffmpeg writes it (made up).
+      const output = new Output({ format: new MovOutputFormat(), target: made })
       const source = new CanvasSource(canvas, { codec: 'avc', bitrate: new Quality({ bitrate: 8_000_000 }) as any })
       output.addVideoTrack(source, { frameRate: 15 })
+      output.setMetadataTags({ raw: { '©xyz': '+47.4400-122.4600/' } })
       await output.start()
       for (let i = 0; i < 30; i++) {
         ctx.fillStyle = `hsl(${i * 12} 80% 50%)`
@@ -204,7 +208,7 @@ describe('smaller copies (compressors)', () => {
         await source.add(i / 15, 1 / 15)
       }
       await output.finalize()
-      const clip = new File([made.buffer!], 'generated.mp4', { type: 'video/mp4' })
+      const clip = new File([made.buffer!], 'generated.mov', { type: 'video/quicktime' })
 
       let last = -1
       const out = await compress(clip, 'video', { onProgress: p => { last = p } })
@@ -216,6 +220,8 @@ describe('smaller copies (compressors)', () => {
       const back = new Input({ formats: [MP4], source: new BlobSource(out!.blob) })
       const track = await back.getPrimaryVideoTrack()
       expect(Math.max(track!.displayWidth, track!.displayHeight)).toBe(1280)
+      // John 2026-10-27: the location survives the copy, in the keyed form viewers read.
+      expect((await back.getMetadataTags()).raw?.[LOCATION_KEY]).toBe('+47.4400-122.4600/')
       back.dispose()
     }, 90000)
 

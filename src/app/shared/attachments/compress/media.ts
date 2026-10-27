@@ -9,6 +9,7 @@ import {
   AUDIO_ONLY_BITRATE, CompressCancelledError, VIDEO_AUDIO_BITRATE, VIDEO_BITRATE, VIDEO_MAX_EDGE,
 } from './compress-types'
 import type { CompressOptions, CompressResult } from './compress-types'
+import { smallerCopyTags } from './media-tags'
 
 /** Containers a phone or recorder is likely to hand over. Listing them keeps unused demuxers out of the chunk. */
 const FORMATS = [MP4, QTFF, MATROSKA, WEBM, MP3, WAVE, OGG, ADTS, FLAC]
@@ -57,7 +58,8 @@ async function convert(file: Blob, sound: SoundChoice, options: CompressOptions)
     const shrink = longest > VIDEO_MAX_EDGE
     const landscape = !!video && video.displayWidth >= video.displayHeight
     const target = new BufferTarget()
-    const output = new Output({ format: new Mp4OutputFormat(), target })
+    // Keyed ('mdta') tags, so the phone's location and camera keys survive (`smallerCopyTags`).
+    const output = new Output({ format: new Mp4OutputFormat({ metadataFormat: 'mdta' }), target })
 
     // A stalled encoder (or a file the demuxer never finishes reading) may never answer cancel(), so
     // the stall is raced against the work rather than waited for.
@@ -89,6 +91,7 @@ async function convert(file: Blob, sound: SoundChoice, options: CompressOptions)
           quality: new Quality({ bitrate: sound.bitrate }),
           ...(video ? {} : { numberOfChannels: 1 }),
         },
+        tags: smallerCopyTags,
         showWarnings: false,
       }), stall])
       if (!conversion.isValid) return null

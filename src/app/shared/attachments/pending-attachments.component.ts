@@ -34,8 +34,8 @@ import { kindOf } from './compress/compress-types'
         </mat-button-toggle-group>
         @if (item.smaller) {
         <small class="rt-pending__note" data-testid="pending-smaller-note">
-          Sends much faster over a field network. Fine detail, and {{ own(item.file) }} location and
-          {{ kind(item.file) === 'image' ? 'camera' : 'device' }} data, aren't kept.
+          Sends much faster over a field network, but fine detail isn't kept. Location, time and
+          {{ kind(item.file) === 'image' ? 'camera' : 'device' }} data are kept wherever the file has them.
           @if (item.estimate) { Expect about {{ size(item.estimate) }}. }
         </small>
         }
@@ -60,7 +60,6 @@ export class PendingAttachmentsComponent {
 
   size(bytes: number): string { return formatBytes(bytes) }
   kind(file: File) { return kindOf(file.type) }
-  own(file: File): string { return kindOf(file.type) === 'image' ? "the photo's own" : "the recording's own" }
 
   remove(index: number): void { this.items.update(list => list.filter((_, i) => i !== index)) }
 
