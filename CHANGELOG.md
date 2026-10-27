@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.91-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.90-alpha...v0.99.91-alpha) (2026-10-27)
+
+
+### Bug Fixes
+
+* **theme:** links take the skin's colours; three print/grid fixes from 0.99.90 captures ([e71e190](https://github.com/SteadyEOC/RangerTrak/commit/e71e190d084dc1d318ee33ec6d481851d399d276))
+
 ### [0.99.90-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.89-alpha...v0.99.90-alpha) (2026-10-27)
 
 
