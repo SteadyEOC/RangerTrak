@@ -91,6 +91,10 @@
          <rangertrak-section> blocks ("Instructions", "Tips", "Privacy & data handling",
          "Grid Menu Keyboard interaction") sitting permanently below each page's grid or
          form. Rendered only where there is something to read. -->
+    <!-- E-231 (John 2026-10-27): the Full view switch had a line of its own under this one. -->
+    @if (showViewSwitch) {
+    <rangertrak-view-switch></rangertrak-view-switch>
+    }
     <!-- E-116: capture an After Action note from any page without leaving it. -->
     <button matButton="outlined" type="button" class="header__guide" (click)="onAarNote()"
       data-testid="aar-note"

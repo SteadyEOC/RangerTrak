@@ -4,7 +4,6 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Input, effe
 import { HeaderComponent } from '../header/header.component'
 import { FieldModeService } from '../services/field-mode.service'
 import { ViewService } from '../services/view.service'
-import { ViewSwitchComponent } from '../view/view-switch.component'
 
 /**
  * The shell every routed page sits in.
@@ -27,13 +26,13 @@ import { ViewSwitchComponent } from '../view/view-switch.component'
  * `showHeader` exists for Help, which is the one page with no mission strip of its own.
  *
  * `viewIds` (E-214): the Simple/Full view ids this page can hide (ADVANCED_FEATURES). When there
- * are any, the shell shows the "Full view" switch under the header, except in field mode (which
+ * are any, the shell shows the "Full view" switch in the header row (E-231), except in field mode (which
  * has no view choice). Pages without hideable controls pass nothing.
  */
 @Component({
   selector: 'rangertrak-page',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, ViewSwitchComponent],
+  imports: [CommonModule, HeaderComponent],
   templateUrl: './page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./page.component.scss']

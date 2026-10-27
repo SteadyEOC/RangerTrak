@@ -8,12 +8,3 @@
 .main {
   margin: 0 1em;
 }
-
-// E-214: the Full view switch sits right-aligned under the page title; on a phone its hint wraps
-// above the toggle, so it never widens the page.
-.view-bar {
-  display        : flex;
-  justify-content: flex-end;
-  margin         : 0 1em;
-  min-width      : 0;
-}

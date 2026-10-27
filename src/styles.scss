@@ -300,10 +300,9 @@ rangertrak-footer {
     rangertrak-stale-origin-notice,
     rangertrak-install-update,
     rangertrak-footer,
-    pageHeader,
-    // 2026-10-27 (blog session's capture of 0.99.90): the Full view switch printed at the top of
-    // the map sheet and pushed the legend onto page 2.
-    rangertrak-page .view-bar {
+    // The Full view switch is inside pageHeader since E-231 (it printed at the top of the map
+    // sheet and pushed the legend onto page 2 when it had a line of its own).
+    pageHeader {
       display: none !important;
     }
   }

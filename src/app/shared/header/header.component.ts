@@ -15,6 +15,7 @@ import { Utility } from '../'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
 import { GuideService } from '../guide/guide.service'
 import { AarNoteDialogComponent, AarNoteDialogData } from '../aar-note/aar-note-dialog.component'
+import { ViewSwitchComponent } from '../view/view-switch.component'
 
 /**
  * HaaderComponent
@@ -29,7 +30,7 @@ import { AarNoteDialogComponent, AarNoteDialogData } from '../aar-note/aar-note-
 @Component({
   selector: 'pageHeader',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MissionReadinessComponent],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MissionReadinessComponent, ViewSwitchComponent],
   templateUrl: './header.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./header.component.scss']
@@ -37,6 +38,8 @@ import { AarNoteDialogComponent, AarNoteDialogData } from '../aar-note/aar-note-
 export class HeaderComponent implements OnInit, OnDestroy {
   @Input() parentTitle: string
   @Input() pageDescription: string
+  /** E-231: the page shell's say on whether this page has a Full view switch (it sits in this row). */
+  @Input() showViewSwitch = false
 
   /**
    * The one Guide affordance. Lives here rather than on each page because this header is
