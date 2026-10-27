@@ -67,6 +67,9 @@ export class MissionLocationTypesComponent implements OnChanges {
 
   gridOptions: GridOptions = {
     theme: rangertrakGridTheme,
+    // E-243: as tall as its rows (six by default), so the card shows them all with no
+    // scrollbar of its own, and grows as rows are added.
+    domLayout: 'autoHeight',
   }
 
   defaultColDef: ColDef = {
@@ -98,7 +101,7 @@ export class MissionLocationTypesComponent implements OnChanges {
   }
 
   columnDefs = [
-    { headerName: "Category", field: "type", flex: 50 },
+    { headerName: "Category", field: "type", flex: 3, minWidth: 120 },
     {
       headerName: "Icon", field: "icon",
       tooltipField: "the pictogram this category's marker draws on the map",
@@ -112,7 +115,7 @@ export class MissionLocationTypesComponent implements OnChanges {
       valueFormatter: (params: { value: string }) =>
         LOCATION_ICON_OPTIONS.find(o => o.id === params.value)?.label ?? params.value,
       editable: true,
-      width: 220,
+      flex: 3, minWidth: 150,
     },
     {
       headerName: "Color", field: "color",
@@ -132,7 +135,7 @@ export class MissionLocationTypesComponent implements OnChanges {
       cellEditor: ColorEditor,
       cellEditorPopup: true,
       editable: true,
-      width: 300,
+      flex: 2, minWidth: 100,
     }
   ]
 
@@ -174,8 +177,8 @@ export class MissionLocationTypesComponent implements OnChanges {
 
   refreshGrid(force = false) {
     if (this.gridApi) {
+      // E-243: no sizeColumnsToFit() - every column flexes now, and it would fix their widths.
       this.gridApi.refreshCells({ force })
-      this.gridApi.sizeColumnsToFit()
     }
   }
 }

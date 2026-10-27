@@ -4,10 +4,11 @@
   display: contents;
 }
 
-// Same E-65 phone-width fix as MissionFieldReportStatusesComponent's own copy of this rule -
-// see that file's comment for the full reasoning.
+// E-243 (2026-10-27): was 400 x 300 px, inside a card far wider, so Category and Icon names
+// were cut off and Color sat behind a horizontal scrollbar. Now it fills the card, and its
+// height follows its rows (domLayout autoHeight in the .ts). On a phone the columns'
+// minimum widths still scroll inside the grid (E-65), never the page.
 ag-grid-angular {
-  height   : 300px;
-  width    : 400px;
-  max-width: 100%;
+  display: block;
+  width  : 100%;
 }
