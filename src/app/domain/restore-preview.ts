@@ -43,9 +43,36 @@ export function parseVersion(version: string): number[] | null {
   return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null
 }
 
+/** "1.0.0-beta.2" -> ['beta', '2']; a release (no tag) gives []. Build metadata (+...) is ignored. */
+function preReleaseOf(version: string): string[] {
+  const m = /^v?\d+\.\d+\.\d+-([0-9A-Za-z.-]+)/.exec((version ?? '').trim())
+  return m ? m[1].split('.') : []
+}
+
 /**
- * True when `candidate` is a later release than `current`. Compares major, minor and patch only:
- * the pre-release tag (`-alpha`) is not ordered, because every release in this series carries one.
+ * Semver order of two pre-release tags: a release (no tag) is above any pre-release of the same
+ * number, numeric parts compare as numbers (beta.10 after beta.2) and below words, words compare
+ * as text (alpha before beta), and a longer tag is above its own prefix. Returns <0, 0 or >0.
+ */
+function comparePreRelease(a: string[], b: string[]): number {
+  if (!a.length || !b.length) return b.length - a.length
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    const an = /^\d+$/.test(a[i]), bn = /^\d+$/.test(b[i])
+    if (an && bn) {
+      if (Number(a[i]) !== Number(b[i])) return Number(a[i]) - Number(b[i])
+    } else if (an !== bn) {
+      return an ? -1 : 1
+    } else if (a[i] !== b[i]) {
+      return a[i] < b[i] ? -1 : 1
+    }
+  }
+  return a.length - b.length
+}
+
+/**
+ * True when `candidate` is a later release than `current`, in semver order: major, minor and
+ * patch, then the pre-release tag (E-238: the beta runs 1.0.0-beta.1, -beta.2, ..., so a backup
+ * from beta.5 restored into beta.3 is flagged; 0.99.N-alpha < 1.0.0-beta.N < 1.0.0).
  */
 export function isNewerVersion(candidate: string, current: string): boolean {
   const a = parseVersion(candidate)
@@ -54,7 +81,7 @@ export function isNewerVersion(candidate: string, current: string): boolean {
   for (let i = 0; i < 3; i++) {
     if (a[i] !== b[i]) return a[i] > b[i]
   }
-  return false
+  return comparePreRelease(preReleaseOf(candidate), preReleaseOf(current)) > 0
 }
 
 function timeOf(value: unknown): number {

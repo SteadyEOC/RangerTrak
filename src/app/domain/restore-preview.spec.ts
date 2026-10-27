@@ -20,6 +20,16 @@ describe('restore preview (E-198)', () => {
       expect(isNewerVersion('0.99.56-alpha', '0.99.56-alpha')).toBeFalse()
       expect(isNewerVersion('0.99.55-alpha', '0.99.56-alpha')).toBeFalse()
       expect(isNewerVersion('', '0.99.56-alpha')).toBeFalse()
+      // E-238: the pre-release tag is ordered too.
+      expect(isNewerVersion('1.0.0-beta.5', '1.0.0-beta.3')).toBeTrue()
+      expect(isNewerVersion('1.0.0-beta.3', '1.0.0-beta.5')).toBeFalse()
+      expect(isNewerVersion('1.0.0-beta.10', '1.0.0-beta.2')).toBeTrue()
+      expect(isNewerVersion('1.0.0-beta.1', '1.0.0-alpha.9')).toBeTrue()
+      expect(isNewerVersion('1.0.0-beta.1', '0.99.96-alpha')).toBeTrue()
+      expect(isNewerVersion('1.0.0', '1.0.0-beta.9')).toBeTrue()
+      expect(isNewerVersion('1.0.0-beta.9', '1.0.0')).toBeFalse()
+      expect(isNewerVersion('1.0.0-beta.2', '1.0.0-beta.2')).toBeFalse()
+      expect(isNewerVersion('1.0.0-beta.2', '1.0.0-beta')).toBeTrue()
     })
   })
 

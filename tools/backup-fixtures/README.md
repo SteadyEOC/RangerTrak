@@ -17,7 +17,7 @@ made in the alpha (and every release after it) must still restore.
 
 ```sh
 npm run build
-npm run backup-fixture -- <version>     # e.g. 0.99.0-alpha
+npm run backup-fixture -- <version>     # e.g. 1.0.0-beta.1
 ```
 
 Commit the new `tools/backup-fixtures/<version>/` folder. Never edit or regenerate an existing

@@ -33,7 +33,7 @@ const { spawn } = require('child_process')
 
 const version = process.argv[2]
 if (!version || !/^[0-9A-Za-z.+-]+$/.test(version)) {
-  console.error('Usage: npm run backup-fixture -- <version>   (e.g. 0.99.0-alpha)')
+  console.error('Usage: npm run backup-fixture -- <version>   (e.g. 1.0.0-beta.1, the release just cut)')
   process.exit(2)
 }
 
