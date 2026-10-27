@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.88-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.87-alpha...v0.99.88-alpha) (2026-10-27)
+
 ### [0.99.87-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.86-alpha...v0.99.87-alpha) (2026-10-24)
 
 ### [0.99.86-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.85-alpha...v0.99.86-alpha) (2026-10-24)
