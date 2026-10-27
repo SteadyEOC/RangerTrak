@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.97-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.96-alpha...v0.99.97-alpha) (2026-10-27)
+
+
+### Features
+
+* **aar:** E-230 - AAR/214 dialog has one choice: This incident | RangerTrak | ICS-214 line ([598d1b2](https://github.com/SteadyEOC/RangerTrak/commit/598d1b25747b223ae058579447a5570ba2ef53c4))
+* **aar:** E-230 - dialog choices read Mission | App | ICS-214, each with hover text ([36861bb](https://github.com/SteadyEOC/RangerTrak/commit/36861bba09b1b7619276f7cdb4d9a4e2c4daf115))
+* **header:** E-231 - Full view switch joins the header row, plum-edged in Full view ([d59e364](https://github.com/SteadyEOC/RangerTrak/commit/d59e364fbd3552d3c4515f85194b8dbf1287492e))
+
+
+### Bug Fixes
+
+* **brand:** E-241 - favicon pin gets a light halo so it shows on dark grounds ([47e684b](https://github.com/SteadyEOC/RangerTrak/commit/47e684b03ff87254363f07171ddd6f1ed3027b55))
+* **entry:** E-235 - mini-map keeps one position pin, not a pile of old ones ([5c3cfe4](https://github.com/SteadyEOC/RangerTrak/commit/5c3cfe4c53205a98527202d45d7cbdf025a789f0))
+* **mission:** E-243 - Location categories grid fills its card and shows every row ([8785754](https://github.com/SteadyEOC/RangerTrak/commit/8785754387fd2693b9e186f7a5b8910fad4cff67))
+* **mission:** E-243 - Radio log statuses grid fills its card and shows every row too ([bd8b1fe](https://github.com/SteadyEOC/RangerTrak/commit/bd8b1fe4a9a8ce7b78fdf1ec2ec92dd275a6686e))
+* **navbar:** E-240 - GitHub mark 22px so it matches the icons beside it ([db18b5b](https://github.com/SteadyEOC/RangerTrak/commit/db18b5b5225102c2895af190c6ee4efaf664dd37))
+* **restore:** E-238 - newer-version check orders pre-release tags (beta.5 > beta.3) ([7a088de](https://github.com/SteadyEOC/RangerTrak/commit/7a088de34b100bf7c8e4bf0f368ff73e4310b034))
+
 ### [0.99.96-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.95-alpha...v0.99.96-alpha) (2026-10-27)
 
 
