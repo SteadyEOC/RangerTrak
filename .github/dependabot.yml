@@ -12,3 +12,12 @@ updates:
     directory: "/" # Location of package manifests.   Look for `package.json` and `lock` files in the `root` directory
     schedule:
       interval: "daily"
+    # Majors we can't take yet. Jasmine 6+ drops Karma (E-226 replaces Karma with Vitest, then
+    # remove these two); TypeScript 7 waits on Angular's peer range (>=6.0 <6.1 in Angular 22).
+    ignore:
+      - dependency-name: "jasmine-core"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/jasmine"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
