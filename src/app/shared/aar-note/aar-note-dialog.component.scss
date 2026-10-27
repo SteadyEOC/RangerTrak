@@ -2,8 +2,14 @@
   display       : flex;
   flex-direction: column;
   gap           : 0.5em;
-  // Fits a 390px phone: the dialog's own padding plus this stays inside the viewport.
-  width         : min(28em, calc(100vw - 5em));
+  // Fits a 390px phone: the dialog's own padding plus this stays inside the viewport. A floor, not a
+  // fixed width: on a wide screen the action row (up to four buttons) sets the dialog's width, and the
+  // text box should use all of it (John 2026-10-27, screenshot: the box stopped short of the buttons).
+  min-width     : min(28em, calc(100vw - 5em));
+
+  // The toggle group would otherwise stretch to the full width, its buttons would not, and the
+  // last one looks like it owns the empty tail.
+  mat-button-toggle-group { align-self: flex-start; }
 }
 
 .rt-aar-dialog__hint {
