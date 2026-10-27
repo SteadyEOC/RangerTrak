@@ -138,7 +138,7 @@ def short(h):
 
 
 def build(root):
-    out, items = [], []
+    out, items, cards = [], [], {}
     blocks = list(root)
     module = 0
     i = 0
@@ -222,9 +222,11 @@ def build(root):
                         first = int(iid.split('.')[1])
                         ids = [f'{stem}.{n}' for n in range(first, last + 1)]
                         spans = ''.join(f'<span id="{x}"></span>' for x in ids[1:])
-                        rest = re.sub(r'^.*?</strong>:?\s*', '', body, count=1)
+                        # The checklist names each card, or six rows would read the same (E-225).
                         for x in ids:
-                            items.append((x, rest))
+                            card = 'C' + x[1:]
+                            fmt = f', {cards[card]},' if card in cards else ''
+                            items.append((x, f'{card}{fmt} lands where the card table’s last column says.'))
                     else:
                         items.append((iid, body))
                     cls = 'q' if iid[0] == 'Q' else 't'
@@ -244,6 +246,9 @@ def build(root):
                 cells = ''.join(f'<{tag}>{inline(c.find("paragraph")) if c.find("paragraph") is not None else ""}</{tag}>'
                                 for c in r)
                 rows.append(f'<tr>{cells}</tr>')
+                texts = [plain(inline(c.find('paragraph'))) if c.find('paragraph') is not None else '' for c in r]
+                if r_i and len(texts) > 1 and re.fullmatch(r'C\d+\.\d+', texts[0]):
+                    cards[texts[0]] = texts[1]
             out.append('<div class="scroll"><table>' + ''.join(rows) + '</table></div>')
         elif t == 'codeBlock':
             out.append('<pre>' + html.escape(''.join(b.itertext()), quote=False) + '</pre>')
@@ -293,7 +298,7 @@ HEAD = '''<!doctype html>
 
 TAIL = '''<section id="sheet">
 <h2>Tour Checklist</h2>
-<p class="noprint">Every test and question in one list. <button type="button" onclick="document.body.classList.add('sheet-only');print();document.body.classList.remove('sheet-only')">Print the Tour Checklist</button></p>
+<p class="noprint">Every test and question in one list. <button type="button" onclick="document.body.classList.add('sheet-only');addEventListener('afterprint',()=>document.body.classList.remove('sheet-only'),{once:true});setTimeout(print,50)">Print the Tour Checklist</button></p>
 <p class="fields">Name ____________________ &nbsp; Date __________ &nbsp; Device and browser ____________________ &nbsp; RangerTrak version __________</p>
 <div class="scroll"><table class="sheet"><tr><th>ID</th><th>Step</th><th>Pass</th><th>Fail</th><th>Note</th></tr>
 {rows}</table></div>
