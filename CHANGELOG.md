@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-beta.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.97-alpha...v1.0.0-beta.1) (2026-10-28)
+
+
+### Features
+
+* **help:** "Help" heads the page, Take the Tour! joins the pill row, Feedback becomes Contact us ([37319ad](https://github.com/SteadyEOC/RangerTrak/commit/37319adb1ac2f552a92ac94e58b5d4fc2cc4ba4d))
+* **help:** link the Tour Guide from Entry's demo bar, Help > Get set up and the Help drawer ([541e4e9](https://github.com/SteadyEOC/RangerTrak/commit/541e4e92a488bba330c2945c174eec687c5448b4))
+* **help:** one Help navigation, shared by the drawer and /help ([9321d1a](https://github.com/SteadyEOC/RangerTrak/commit/9321d1a9378c70af9f8e90e0c84df02d1149333c))
+* **places:** E-242 - the map's saved points are "Places" everywhere ([250fb9e](https://github.com/SteadyEOC/RangerTrak/commit/250fb9e5e21dd928cf18301f2d0db608d618e081))
+* **view:** E-248 Full view button's outline shows on/off, bigger dot; Help and guide call it a button ([1e4ec2d](https://github.com/SteadyEOC/RangerTrak/commit/1e4ec2de7c67a453b4d4b6df56e2fcf5f3548675))
+
+
+### Bug Fixes
+
+* **aar:** note box uses the dialog's full width; toggle group no longer stretches ([e74fe11](https://github.com/SteadyEOC/RangerTrak/commit/e74fe11ff399c633ccedf220ab32cce70020b736))
+* **aar:** the dialog's app choice reads "RangerTrak" again, not "App" ([2c50c0f](https://github.com/SteadyEOC/RangerTrak/commit/2c50c0f32537ba59aa8ce308753e6b6dbd0068d7))
+* **help:** drawer section pills show that section in the drawer ([215d52a](https://github.com/SteadyEOC/RangerTrak/commit/215d52aa70fc6d0b9c94d6302f5ff73fdeef6ce8))
+* **icons:** add 'tag' to the icon font subset ([70f6070](https://github.com/SteadyEOC/RangerTrak/commit/70f60701b3a9a30bee3dd620e2850bc42f4cd4d6))
+* Tour print button works under CSP; plum Full view edge follows rounded controls; logo pulses 4x on load ([9ab1615](https://github.com/SteadyEOC/RangerTrak/commit/9ab1615c8783a7d57d5c1cff7ed55089ac292b22))
+* **view:** Full view switch is a plain plum-edged button with a dot; hint moves to hover text ([56258d5](https://github.com/SteadyEOC/RangerTrak/commit/56258d5e8065b3ccefb8abc5df4aa609a6456eb5))
+* **view:** Full view switch label matches AAR/214 and Help; plum track when on ([6058071](https://github.com/SteadyEOC/RangerTrak/commit/60580716172b183f0b2d82887e4343f743794148))
+
 ### [0.99.97-alpha](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.96-alpha...v0.99.97-alpha) (2026-10-27)
 
 
