@@ -102,6 +102,21 @@ $guide-z: 1200;
   @include help-nav.pill-current;
 }
 
+// The pills are buttons now (they swap the drawer's content); reset what a button brings.
+button.guide__nav-link {
+  font-family: inherit;
+  cursor     : pointer;
+
+  &:not(.guide__nav-link--current) {
+    background: transparent;
+  }
+}
+
+.guide__page-link {
+  margin    : 1.5rem 0 0;
+  font-size : var(--rt-type-body-sm-size);
+}
+
 .guide__tabs,
 .guide__single {
   flex     : 1;

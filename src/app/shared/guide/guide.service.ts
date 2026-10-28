@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop'
 import { filter, map, startWith } from 'rxjs/operators'
 
 import type { GuideEntry } from './guide-content'
+import type { HelpSectionKey } from './help-sections'
 
 /**
  * The routes that have Guide text. Kept here, eagerly, so the header can show or hide its
@@ -83,9 +84,17 @@ export class GuideService {
     return i >= 0 ? i : 0
   })
 
+  /**
+   * The all-of-Help section the drawer is showing in place of this screen's own text, or
+   * undefined for the screen's text. John 2026-10-27: the section pills used to navigate to
+   * /help and close the drawer, which read as being thrown out of Help.
+   */
+  readonly section = signal<HelpSectionKey | undefined>(undefined)
+
   open(tabLabel?: string): void {
     if (this.available()) {
       this._requestedTab.set(tabLabel)
+      this.section.set(undefined)
       this._open.set(true)
       void this.ensureLoaded()
     }

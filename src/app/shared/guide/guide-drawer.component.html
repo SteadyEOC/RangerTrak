@@ -18,17 +18,46 @@
   </header>
 
   <!-- John 2026-10-27: all of Help, first. These used to be a footer under the screen's own
-       text; they are the same sections, in the same order, as the /help page's tabs. -->
+       text; they are the same sections, in the same order, as the /help page's tabs. They
+       swap the drawer's content and keep it open - as links to /help they closed the drawer,
+       which read as being thrown out of Help. "This screen" comes back to the screen's text. -->
   <nav class="guide__nav" aria-label="All of Help">
+    <button type="button" class="guide__nav-link" [class.guide__nav-link--current]="!guide.section()"
+      [attr.aria-pressed]="!guide.section()" (click)="guide.section.set(undefined)"
+      data-testid="guide-section-screen">This screen</button>
     @for (section of sections; track section.key) {
-    <a class="guide__nav-link" routerLink="/help" [queryParams]="{ tab: section.key }" (click)="guide.close()"
-      routerLinkActive="guide__nav-link--current" ariaCurrentWhenActive="page"
-      [routerLinkActiveOptions]="currentSectionMatch">{{ section.label }}</a>
+    <button type="button" class="guide__nav-link" [class.guide__nav-link--current]="guide.section() === section.key"
+      [attr.aria-pressed]="guide.section() === section.key" (click)="guide.section.set(section.key)"
+      [attr.data-testid]="'guide-section-' + section.key">{{ section.label }}</button>
     }
     <a class="guide__nav-link" [href]="tourUrl" target="_blank" rel="noopener" data-testid="guide-tour-link">Tour Guide
       <span aria-hidden="true">&#8599;</span><span class="visually-hidden"> (opens in a new tab)</span></a>
   </nav>
 
+  @if (guide.section(); as key) {
+  <!-- The /help page's own tab components, deferred so they stay out of the main bundle until
+       a section is first chosen. -->
+  <div class="guide__single">
+    <div class="guide__panel guide__section">
+      @defer (on immediate) {
+      @switch (key) {
+      @case ('start') { <rangertrak-help-start></rangertrak-help-start> }
+      @case ('about') { <rangertrak-help-about></rangertrak-help-about> }
+      @case ('faq') { <rangertrak-help-faq></rangertrak-help-faq> }
+      @case ('data') { <rangertrak-help-data></rangertrak-help-data> }
+      @case ('after') { <rangertrak-help-after-mission></rangertrak-help-after-mission> }
+      @case ('feedback') { <rangertrak-help-feedback></rangertrak-help-feedback> }
+      }
+      <p class="guide__page-link"><a routerLink="/help" [queryParams]="{ tab: key }" (click)="guide.close()">Open on
+          the Help page</a></p>
+      } @loading (minimum 0ms) {
+      <p class="guide__text">Loading...</p>
+      } @error {
+      <p class="guide__text" role="alert">This part of Help could not be loaded. Check the connection and try again.</p>
+      }
+    </div>
+  </div>
+  } @else {
   @if (guide.loadFailed()) {
   <p class="guide__panel guide__text" role="alert">The Help text could not be loaded. Check the connection and try again.</p>
   }
@@ -46,6 +75,7 @@
     </mat-tab>
     }
   </mat-tab-group>
+  }
   }
   }
 

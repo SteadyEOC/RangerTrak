@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common'
 import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
-import { IsActiveMatchOptions, RouterModule } from '@angular/router'
+import { RouterModule } from '@angular/router'
 import { A11yModule } from '@angular/cdk/a11y'
 import { MatButtonModule } from '@angular/material/button'
 import { MatIconModule } from '@angular/material/icon'
@@ -10,6 +10,14 @@ import { MatTabsModule } from '@angular/material/tabs'
 import { GuideService } from './guide.service'
 import { renderGuideText } from './guide-render'
 import { HELP_SECTIONS, TOUR_URL } from './help-sections'
+// The /help page's tab components, shown in the drawer when a section pill is chosen. Used
+// only inside @defer, so they load as their own chunk, not with the app shell.
+import { HelpAboutComponent } from '../../lazy/help/tabs/help-about.component'
+import { HelpAfterMissionComponent } from '../../lazy/help/tabs/help-after-mission.component'
+import { HelpDataComponent } from '../../lazy/help/tabs/help-data.component'
+import { HelpFaqComponent } from '../../lazy/help/tabs/help-faq.component'
+import { HelpFeedbackComponent } from '../../lazy/help/tabs/help-feedback.component'
+import { HelpStartComponent } from '../../lazy/help/tabs/help-start.component'
 
 /**
  * The one Guide drawer, rendered once in app.component.html and opened by the Guide button
@@ -30,7 +38,11 @@ import { HELP_SECTIONS, TOUR_URL } from './help-sections'
 @Component({
   selector: 'rangertrak-guide-drawer',
   standalone: true,
-  imports: [CommonModule, RouterModule, A11yModule, MatButtonModule, MatIconModule, MatTabsModule],
+  imports: [
+    CommonModule, RouterModule, A11yModule, MatButtonModule, MatIconModule, MatTabsModule,
+    HelpStartComponent, HelpAboutComponent, HelpFaqComponent, HelpDataComponent,
+    HelpAfterMissionComponent, HelpFeedbackComponent,
+  ],
   templateUrl: './guide-drawer.component.html',
   styleUrls: ['./guide-drawer.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -41,11 +53,6 @@ export class GuideDrawerComponent {
 
   readonly sections = HELP_SECTIONS
   readonly tourUrl = TOUR_URL
-
-  /** A section link is current only on /help with that same `?tab=`. */
-  readonly currentSectionMatch: IsActiveMatchOptions = {
-    paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored'
-  }
 
   /** renderGuideText() already escapes everything but its own `<a>` output, so this is safe. */
   renderText(text: string): SafeHtml {
