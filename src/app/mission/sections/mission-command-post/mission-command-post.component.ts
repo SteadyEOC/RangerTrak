@@ -186,6 +186,7 @@ export class MissionCommandPostComponent implements OnDestroy {
 
   readonly localhostHint = BOARD_LOCALHOST_HINT
 
-  /** E-255: the Board kit is attached to each GitHub release, beside the web zip. */
-  readonly boardKitUrl = 'https://github.com/SteadyEOC/RangerTrak/releases/latest'
+  /** E-255: the Board kit is attached to each GitHub release, beside the web zip. Not
+   *  /releases/latest: GitHub skips pre-releases there, and every beta is one. */
+  readonly boardKitUrl = 'https://github.com/SteadyEOC/RangerTrak/releases'
 }
