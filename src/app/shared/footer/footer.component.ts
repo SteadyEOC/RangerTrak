@@ -3,6 +3,7 @@ import { Component, Inject, ChangeDetectionStrategy } from '@angular/core'
 
 import { FieldModeService, MissionService, UpdateService } from '../services'
 import { InstallUpdateComponent } from '../install-update/install-update.component'
+import { buildSuffix } from '../build-stamp'
 
 /**
  * Footer component
@@ -28,7 +29,8 @@ export class FooterComponent {
    * snapshot left the footer showing the previous mission's version forever.
    */
   get version(): string {
-    return this.missionService.settings?.version ?? ''
+    const version = this.missionService.settings?.version
+    return version ? version + buildSuffix() : ''
   }
 
   /** When the browser last confirmed this build was current. */

@@ -66,6 +66,14 @@ jobs:
       - name: Worker unit tests
         run: npm run test:worker
 
+      # Between weekly tagged releases, the footer and Help show which deploy this is:
+      # "Version 1.0.0-beta.2 (build 2026-10-28 c3edefa)". See src/app/shared/build-stamp.ts.
+      - name: Stamp the build
+        run: |
+          STAMP="$(git log -1 --format=%cd --date=format:%Y-%m-%d) $(git rev-parse --short HEAD)"
+          sed -i "s/^export const BUILD_STAMP = ''$/export const BUILD_STAMP = '$STAMP'/" src/app/shared/build-stamp.ts
+          grep -q "BUILD_STAMP = '$STAMP'" src/app/shared/build-stamp.ts
+
       - name: Build
         run: npm run build
 

@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common'
 import { ActivatedRoute } from '@angular/router'
 
 import { PageComponent } from '../../shared/page/page.component'
+import { buildSuffix } from '../../shared/build-stamp'
 
 import { LogService, MissionService, MissionType } from '../../shared/services'
 
@@ -98,7 +99,7 @@ export class HelpComponent implements OnDestroy {
       error: (e) => this.log.error('Settings Subscription got:' + e, this.id)
     })
 
-    this.version = this.settings ? this.settings.version : '0'
+    this.version = this.settings ? this.settings.version + buildSuffix() : '0'
   }
 
   /**
