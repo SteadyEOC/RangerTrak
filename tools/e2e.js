@@ -2204,7 +2204,7 @@ async function checkHelpTabs() {
   // 2026-08-30: "Entering reports" and "Maps" moved into the Entry/Map pages' own Guide
   // drawers (screen-specific operating instructions, not general Help) - see guide-content.ts.
   check('six tabs, in the planned order', labels,
-    'Start here|About|FAQ|Your data|After mission|Contact us')
+    'Start here|FAQ|Your data|After mission|About|Contact us')
 
   const firstBody = await evaluate(`document.querySelector('.help-tabs rangertrak-help-start') ? 'start' : 'missing'`)
   check('the first tab shows the Start here body', firstBody, 'start')

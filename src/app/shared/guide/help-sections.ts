@@ -8,10 +8,11 @@
  */
 export const HELP_SECTIONS = [
   { key: 'start', label: 'Start here' },
-  { key: 'about', label: 'About' },
   { key: 'faq', label: 'FAQ' },
   { key: 'data', label: 'Your data' },
   { key: 'after', label: 'After mission' },
+  // John 2026-10-28: moved from second to near the end.
+  { key: 'about', label: 'About' },
   // John 2026-10-27: was "Feedback"; it is also how to reach the maintainer privately.
   { key: 'feedback', label: 'Contact us' },
 ] as const

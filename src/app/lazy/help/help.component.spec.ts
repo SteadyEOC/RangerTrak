@@ -46,7 +46,7 @@ describe('HelpComponent', () => {
     ).map(el => el.textContent!.trim());
 
     expect(labels).toEqual([
-      'Start here', 'About', 'FAQ', 'Your data', 'After mission', 'Contact us'
+      'Start here', 'FAQ', 'Your data', 'After mission', 'About', 'Contact us'
     ]);
   });
 

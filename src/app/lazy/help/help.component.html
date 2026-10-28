@@ -35,13 +35,14 @@
             class="visually-hidden"> (opens in a new tab)</span></a>
       </nav>
       <div class="help-tab-body">
-        @switch (selectedIndex()) {
-        @case (0) { <rangertrak-help-start></rangertrak-help-start> }
-        @case (1) { <rangertrak-help-about></rangertrak-help-about> }
-        @case (2) { <rangertrak-help-faq></rangertrak-help-faq> }
-        @case (3) { <rangertrak-help-data></rangertrak-help-data> }
-        @case (4) { <rangertrak-help-after-mission></rangertrak-help-after-mission> }
-        @case (5) { <rangertrak-help-feedback></rangertrak-help-feedback> }
+        <!-- By key, not index, so reordering HELP_SECTIONS can't pair a pill with another body. -->
+        @switch (sections[selectedIndex()].key) {
+        @case ('start') { <rangertrak-help-start></rangertrak-help-start> }
+        @case ('faq') { <rangertrak-help-faq></rangertrak-help-faq> }
+        @case ('data') { <rangertrak-help-data></rangertrak-help-data> }
+        @case ('after') { <rangertrak-help-after-mission></rangertrak-help-after-mission> }
+        @case ('about') { <rangertrak-help-about></rangertrak-help-about> }
+        @case ('feedback') { <rangertrak-help-feedback></rangertrak-help-feedback> }
         }
       </div>
     </div>
