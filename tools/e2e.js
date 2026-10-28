@@ -3656,7 +3656,7 @@ async function checkAarNotes() {
     ta.dispatchEvent(new Event('input', { bubbles: true }));
     if (${aboutApp}) {
       const app = [...document.querySelectorAll('[data-testid="aar-note-choice"] button')]
-        .find(b => b.textContent.trim() === 'App');
+        .find(b => b.textContent.trim() === 'RangerTrak');
       app && app.click();
     }
     await sleep(200);

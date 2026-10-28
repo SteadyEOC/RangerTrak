@@ -100,7 +100,7 @@ describe('AarNoteDialogComponent', () => {
       expect(component.kind()).toBe('aar');
       // E-230: one choice of three - the two AAR Abouts and the 214 line.
       const choices = [...fixture.nativeElement.querySelectorAll('[data-testid="aar-note-choice"] button')].map((b: Element) => b.textContent!.trim());
-      expect(choices).toEqual(['Mission', 'App', 'ICS-214']);
+      expect(choices).toEqual(['Mission', 'RangerTrak', 'ICS-214']);
       expect(component.choice()).toBe('incident');
     });
 
@@ -161,7 +161,7 @@ describe('AarNoteDialogComponent', () => {
       remake();
       expect(component.kind()).toBe('aar');
       const choices = [...fixture.nativeElement.querySelectorAll('[data-testid="aar-note-choice"] button')].map((b: Element) => b.textContent!.trim());
-      expect(choices).toEqual(['Mission', 'App']);
+      expect(choices).toEqual(['Mission', 'RangerTrak']);
       expect(fixture.nativeElement.querySelector('[data-testid="aar-note-214-link"]')).toBeNull();
       component.text.set('Weak signal at the ridge');
       component.onSave();

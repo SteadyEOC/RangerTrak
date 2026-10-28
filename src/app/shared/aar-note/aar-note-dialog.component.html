@@ -3,12 +3,13 @@
 <div mat-dialog-content class="rt-aar-dialog">
   <!-- E-230 (John 2026-10-27): one choice, not two. Was AAR note | ICS-214 line, then, for an AAR
        note, a second About toggle. The two AAR choices name what the note is about; the third
-       (E-04 / D-63) is hidden on a field phone, which only ever takes AAR notes. Short labels so all
-       three fit one row on a 360 px phone ("RangerTrak" did not); the hover text says what each records (John 10-27). -->
+       (E-04 / D-63) is hidden on a field phone, which only ever takes AAR notes. The hover text says
+       what each records (John 10-27). "App" was briefly the label, on a guess that "RangerTrak" would
+       not fit a 360 px phone; John's phone showed plenty of room, and Help says "mark it RangerTrak". -->
   <mat-button-toggle-group [value]="choice()" (change)="onChoiceChange($event.value)" aria-label="What to record"
     data-testid="aar-note-choice">
     <mat-button-toggle value="incident" title="An after-action note about this mission: what went well, what to fix">Mission</mat-button-toggle>
-    <mat-button-toggle value="app" title="An after-action note about the RangerTrak app itself: a problem or an idea">App</mat-button-toggle>
+    <mat-button-toggle value="app" title="An after-action note about the RangerTrak app itself: a problem or an idea">RangerTrak</mat-button-toggle>
     @if (choosesKind) {
     <mat-button-toggle value="activity" title="A line for the ICS-214 activity log: what you did or what changed at your position">ICS-214</mat-button-toggle>
     }
