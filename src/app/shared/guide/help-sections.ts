@@ -9,8 +9,9 @@
 export const HELP_SECTIONS = [
   { key: 'start', label: 'Start here' },
   { key: 'faq', label: 'FAQ' },
-  { key: 'data', label: 'Your data' },
+  // John 2026-10-28: After mission ahead of Your data.
   { key: 'after', label: 'After mission' },
+  { key: 'data', label: 'Your data' },
   // John 2026-10-28: moved from second to near the end.
   { key: 'about', label: 'About' },
   // John 2026-10-27: was "Feedback"; it is also how to reach the maintainer privately.
