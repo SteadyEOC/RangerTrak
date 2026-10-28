@@ -1,0 +1,178 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later
+     Hosting RangerTrak yourself. Free software under the GNU AGPL v3 or later.
+     One source, two places: served at rangertrak.org/self-hosting/ (angular.json copies it), and
+     copied to the top of every release's web zip as READ-ME-FIRST.html (.github/workflows/release-zip.yml).
+     So it must stand alone: inline styles only, and absolute https:// links, because the zip copy
+     opens from file:// where "/" means the disk. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Hosting RangerTrak yourself</title>
+<meta name="description" content="How to serve RangerTrak from your own web server or offline hub: HTTPS, its own hostname, two server rules, and what to expect.">
+<style>
+  :root { --bg: #ffffff; --fg: #1b1f24; --muted: #57606a; --rule: #d0d7de; --code: #f3f4f6; --accent: #0b5cad; --warn: #fff4d6; --warn-rule: #e3b341; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121417; --fg: #e6e8eb; --muted: #9aa4af; --rule: #30363d; --code: #1d2126; --accent: #6cb0ff; --warn: #2b2410; --warn-rule: #8a6d1f; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.25; margin: 0 0 .25rem; }
+  h2 { font-size: 1.25rem; margin: 2.2rem 0 .5rem; padding-top: .8rem; border-top: 1px solid var(--rule); }
+  h3 { font-size: 1.05rem; margin: 1.4rem 0 .3rem; }
+  .lede { color: var(--muted); margin: 0 0 1.2rem; }
+  a { color: var(--accent); }
+  code, pre { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .9em; background: var(--code); border-radius: 4px; }
+  code { padding: .1em .3em; }
+  pre { padding: .8rem 1rem; overflow-x: auto; line-height: 1.4; }
+  pre code { padding: 0; background: none; }
+  .note { background: var(--warn); border-left: 4px solid var(--warn-rule); padding: .6rem 1rem; border-radius: 4px; }
+  ol > li, ul > li { margin: .35rem 0; }
+  footer { margin-top: 3rem; color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Hosting RangerTrak yourself</h1>
+<p class="lede">For people who run a web server or an offline hub and want to serve RangerTrak to phones and tablets
+nearby, such as a club's field kit, a radio software collection or a community emergency hub.</p>
+
+<p>RangerTrak is a web app that runs entirely in the browser. There is no database and no server code: the
+release zip is a folder of static files, and any web server can serve it. Each device keeps its own
+data on the device.</p>
+
+<p class="note"><strong>Don't run a web server?</strong> You don't need to. Use RangerTrak at
+<a href="https://rangertrak.org/">rangertrak.org</a>; it installs on the device and then works with no Internet. To share a
+mission from a laptop to nearby devices over local Wi-Fi, use the Board, which ships with RangerTrak's
+<a href="https://github.com/SteadyEOC/RangerTrak">source</a> (<code>Start Command Post Server</code>; it needs Node.js 24 or
+newer). A ready-to-run Board download is planned.</p>
+
+<h2>What's in the zip</h2>
+<ul>
+  <li><code>READ-ME-FIRST.html</code>: this page.</li>
+  <li><code>LICENSE</code>: the GNU Affero General Public License, version 3.</li>
+  <li><code>rangertrak/</code>: the app. Serve this folder's contents as the web root.</li>
+</ul>
+<p>The offline basemap and the demo maps are <strong>not</strong> in the zip. See <a href="#maps">Maps</a> below.</p>
+
+<h2>The four rules</h2>
+
+<h3>1. Serve it over HTTPS</h3>
+<p>Browsers only allow three things RangerTrak depends on over HTTPS (or on <code>localhost</code>):</p>
+<ul>
+  <li>the offline install (service worker), which keeps the app working with no network;</li>
+  <li>encryption, for encrypted backups and on-device encryption;</li>
+  <li>location, for position fixes from the device's GPS.</li>
+</ul>
+<p>Over plain <code>http://</code> from an IP address, the app opens, but none of those three work.</p>
+<p>A self-signed or private certificate is fine, but <strong>each device must trust it</strong>. If you only
+click past the certificate warning, browsers still refuse to install the offline copy. Install your
+certificate (or your private certificate authority) on each device, or use a real certificate for a name
+you own.</p>
+
+<h3>2. Give it its own hostname, at the root</h3>
+<p>Serve it at <code>https://rangertrak.your-hub.example/</code>, not under a path like
+<code>https://your-hub.example/rangertrak/</code>. The app is built for <code>&lt;base href="/"&gt;</code> and its offline
+install covers the whole site.</p>
+
+<h3>3. Send app pages back to <code>index.html</code>, but let missing files be 404</h3>
+<p>Addresses like <code>/map</code> or <code>/radio-log</code> are pages inside the app, not files. The server must answer
+any path that isn't a file with <code>index.html</code>.</p>
+<p>The exception is <code>/assets/</code>: a file missing there must return <strong>404</strong>, not
+<code>index.html</code>. The map files are deliberately missing, and a web page sent in their place can be
+cached by the app as if it were a map.</p>
+
+<h3>4. Support range requests</h3>
+<p>The map files (<code>.pmtiles</code>) are read a piece at a time with HTTP range requests. Most servers support
+this by default for static files; some proxies and caches don't.</p>
+
+<h2>Example configurations</h2>
+
+<h3>Caddy</h3>
+<p>Caddy can make and renew a local certificate itself (<code>tls internal</code>). The devices still have to
+trust Caddy's local certificate authority (rule 1).</p>
+<pre><code>rangertrak.your-hub.example {
+    tls internal
+    root * /srv/rangertrak
+    encode gzip
+
+    handle /assets/* {
+        file_server
+    }
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+}</code></pre>
+
+<h3>nginx</h3>
+<pre><code>server {
+    listen 443 ssl;
+    server_name rangertrak.your-hub.example;
+    ssl_certificate     /etc/ssl/rangertrak/cert.pem;
+    ssl_certificate_key /etc/ssl/rangertrak/key.pem;
+
+    root /srv/rangertrak;
+
+    location /assets/ {
+        try_files $uri =404;
+    }
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    types {
+        application/manifest+json webmanifest;
+    }
+}</code></pre>
+<p>The <code>rangertrak/_headers</code> file lists the security and caching headers rangertrak.org sends. It uses
+Cloudflare's format; copy whichever ones your server supports. If you copy none, the app still works.</p>
+
+<h2 id="maps">Maps</h2>
+<p>RangerTrak has two maps.</p>
+<ul>
+  <li><strong>The standard map</strong> loads its tiles from the Internet. With no Internet, it shows only the areas
+    a device saved beforehand.</li>
+  <li><strong>The Alternative map</strong> reads map files from the device. The zip has <strong>no</strong> map files,
+    so it is blank until you add one for your area. Cut a file for your area with the free <code>pmtiles</code> tool,
+    then load it on each device under Map → Alternative map → <strong>Load a custom .pmtiles file…</strong>. The
+    <a href="https://github.com/SteadyEOC/RangerTrak/blob/main/FIELD-GUIDE.md">Field Guide</a> has the steps
+    (search it for “make your own offline map file”).</li>
+</ul>
+<p>Because the world basemap is missing, the app's offline-readiness check will report that the Alternative
+map isn't ready for offline use. That's expected for a zip install.</p>
+<p>The demo missions still load, but without their street-level maps.</p>
+
+<h2>What else to expect</h2>
+<ul>
+  <li><strong>Data belongs to the address it was opened from.</strong> A tablet that opens RangerTrak from your hub keeps
+    that data separate from the same tablet's rangertrak.org copy. Nothing moves between them on its own; to move a
+    mission, export a backup in one and import it in the other.</li>
+  <li><strong>Anything that needs the Internet needs the Internet.</strong> Online map tiles and address lookup don't
+    work on an offline hub. The feedback button falls back to a link to GitHub.</li>
+  <li><strong>Updates.</strong> To update, replace the folder with the one from a newer release. Devices pick up the new
+    version the next time they open the app while they can reach your server.</li>
+  <li><strong>Privacy.</strong> The roster and the radio log are stored on each device, not on your server. Your server only
+    hands out the app's files.</li>
+</ul>
+
+<h2>The licence</h2>
+<p>RangerTrak is free software under the
+<a href="https://www.gnu.org/licenses/agpl-3.0.html">GNU Affero General Public License, version 3 or later</a>.</p>
+<ul>
+  <li><strong>Unchanged:</strong> serve it as it is. Keep <code>LICENSE</code> with it. The app's Help pages link to its source.</li>
+  <li><strong>Changed:</strong> if you modify it, the AGPL requires you to offer the people who use your copy the
+    source of your modified version.</li>
+</ul>
+<p>Telling people where it came from, with a link to <a href="https://rangertrak.org/">rangertrak.org</a>, is appreciated.</p>
+
+<footer>
+  <p>Questions or problems: open an issue at <a href="https://github.com/SteadyEOC/RangerTrak/issues">github.com/SteadyEOC/RangerTrak</a>.
+  The latest version of this page is at <a href="https://rangertrak.org/self-hosting/">rangertrak.org/self-hosting/</a>.</p>
+</footer>
+
+</main>
+</body>
+</html>

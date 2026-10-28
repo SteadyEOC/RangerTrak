@@ -45,6 +45,7 @@ needs Internet).
 | **[FIELD-GUIDE.md](FIELD-GUIDE.md)** | Operators, ECs, scribes | The printable pre-mission companion: preparing a device so it still works when the network doesn't |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | Developers | How the app is built: map engines, geocoding, bundle and loading strategy |
 | **[DEVELOPING.md](DEVELOPING.md)** | Developers | Running, testing, releasing, updating dependencies, deploying |
+| **[Hosting it yourself](https://rangertrak.org/self-hosting/)** | Server and hub admins | Serving the ready-built zip attached to each [release](https://github.com/SteadyEOC/RangerTrak/releases) from your own server or offline hub |
 | **[contributing.md](contributing.md)** | Everyone | Code of conduct |
 | **[CHANGELOG.md](CHANGELOG.md)** | Everyone | Release history |
 | **[.vscode/SETUP.md](.vscode/SETUP.md)** | Developers | VS Code workspace setup |
@@ -113,6 +114,10 @@ Known gaps worth stating plainly:
 **Using it:** visit <https://RangerTrak.org>, then name the mission on the **Mission** page,
 add people on the **Rangers** page, and enter reports on **Field Entry** (the RangerTrak
 link at top left). Help → **Start here** walks through it.
+
+**Hosting it yourself:** each [release](https://github.com/SteadyEOC/RangerTrak/releases) has a
+ready-built `rangertrak-<version>-web.zip`; [rangertrak.org/self-hosting](https://rangertrak.org/self-hosting/)
+says how to serve it.
 
 **Developing it:**
 

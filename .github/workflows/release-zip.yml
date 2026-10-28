@@ -1,0 +1,80 @@
+# Attach a ready-built web zip to each GitHub release, so people hosting RangerTrak themselves
+# (offline hubs, radio software collections) have one file to pick up instead of a build.
+#
+# John publishes releases by hand; this runs when he does, builds the release's own tag, and
+# uploads rangertrak-<version>-web.zip to it. Layout, instructions first:
+#   READ-ME-FIRST.html   tools/self-hosting/index.html (also served at rangertrak.org/self-hosting/),
+#                        from this workflow's commit, so a manual run for an older tag gets it too
+#   LICENSE
+#   rangertrak/          the built site, without assets/maps/ (John, 2026-10-28: no basemap in
+#                        the zip - hosts load a .pmtiles file for their own area instead)
+#
+# The deploy workflow has already run the tests on this commit; this only builds and packages.
+name: Release web zip
+
+on:
+  release:
+    types: [published]
+  # Re-attach to an existing release, e.g. after a failed run: give the tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, e.g. v1.0.0-beta.1
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      # The instructions come from this workflow's own commit, not the tag: a manual run for an
+      # older tag (v1.0.0-beta.1 predates the page) still gets the current page.
+      - uses: actions/checkout@v7
+        with:
+          path: _readme
+          sparse-checkout: tools/self-hosting
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check for API keys in the build
+        run: npm run check:secrets
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          NAME="rangertrak-${VERSION}-web"
+          STAGE="$RUNNER_TEMP/$NAME"
+          mkdir -p "$STAGE"
+          cp _readme/tools/self-hosting/index.html "$STAGE/READ-ME-FIRST.html"
+          cp LICENSE "$STAGE/LICENSE"
+          cp -r dist/rangertrak/browser "$STAGE/rangertrak"
+          rm -rf "$STAGE/rangertrak/assets/maps"
+          test -f "$STAGE/rangertrak/index.html"
+          test ! -e "$STAGE/rangertrak/assets/maps"
+          (cd "$RUNNER_TEMP" && zip -qr9 "$NAME.zip" "$NAME")
+          ls -l "$RUNNER_TEMP/$NAME.zip"
+          echo "ZIP=$RUNNER_TEMP/$NAME.zip" >> "$GITHUB_ENV"
+
+      - name: Attach to the release
+        run: gh release upload "$TAG" "$ZIP" --clobber

@@ -65,6 +65,11 @@
                 "output": "./tour"
               },
               {
+                "glob": "index.html",
+                "input": "./tools/self-hosting",
+                "output": "./self-hosting"
+              },
+              {
                 "glob": "**/*",
                 "input": "./src/assets",
                 "output": "./assets",

@@ -420,6 +420,18 @@ export default {
       return env.ASSETS.fetch(new Request(new URL('/tour/index.html', url), request))
     }
 
+    // Hosting RangerTrak yourself, copied to /self-hosting/ by angular.json; the same page is
+    // READ-ME-FIRST.html in each release's web zip. Same URL handling as the tour.
+    if (url.pathname === '/self-hosting' || url.pathname === '/self-hosting/index.html') {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: '/self-hosting/', 'Cache-Control': 'no-store' },
+      })
+    }
+    if (url.pathname === '/self-hosting/') {
+      return env.ASSETS.fetch(new Request(new URL('/self-hosting/index.html', url), request))
+    }
+
     if (!url.pathname.endsWith('.pmtiles')) {
       return env.ASSETS.fetch(request)
     }
