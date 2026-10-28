@@ -44,14 +44,6 @@ export class HelpStartComponent {
    * it reveals nothing but this phone's own reports.
    */
   onTurnOffFieldMode(): void {
-    if (!confirm('Turn off field mode on this device?\n\n'
-      + 'Every page comes back to the menu: the roster, map, radio log and Mission. '
-      + 'Reports already on this device stay.')) {
-      return
-    }
-    this.fieldMode.disable()
-    // Same reason as EntryComponent.onEnableFieldMode(): nav and route gating read
-    // fieldMode.enabled() at construction time, so a reload is the reliable reset.
-    window.location.reload()
+    this.fieldMode.confirmAndTurnOff()
   }
 }

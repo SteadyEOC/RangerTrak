@@ -52,8 +52,20 @@ export class FieldModeService {
     this.log.info('Turned field mode (lite mode) on for this device.', this.id)
   }
 
-  /** E-142 (2026-09-29, John): wired to Help's "Turn off field mode" button
-   *  (HelpStartComponent.onTurnOffFieldMode()), which confirms first and reloads after. */
+  /** E-142 (2026-09-29, John): the exit from field mode. Since 2026-10-28 (John) it is reached
+   *  from the field phone's menu ("Leave field mode") as well as Help's "Turn off field mode",
+   *  so the confirm and reload live here. Nav and route gating read enabled() at construction
+   *  time, so a reload is the reliable reset (same as EntryComponent.onEnableFieldMode()). */
+  confirmAndTurnOff(): void {
+    if (!confirm('Turn off field mode on this device?\n\n'
+      + 'Every page comes back to the menu: the roster, map, radio log and Mission. '
+      + 'Reports already on this device stay.')) {
+      return
+    }
+    this.disable()
+    window.location.reload()
+  }
+
   disable(): void {
     localStorage.removeItem(FIELD_MODE_KEY)
     localStorage.removeItem(SENT_UIDS_KEY)

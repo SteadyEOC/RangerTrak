@@ -3,6 +3,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 
 import { NavbarComponent } from './navbar.component';
 import { provideSwUpdateStub } from '../../../testing/sw-update.stub';
+import { FieldModeService } from '../services/field-mode.service';
 
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
@@ -52,5 +53,19 @@ describe('NavbarComponent', () => {
     expect(brand).not.toBeNull();
     expect(brand.getAttribute('href')).toBe('/');
     expect(brand.querySelector('svg.brand-icon')).not.toBeNull();
+  });
+
+  // 2026-10-28, John: "I'm in field phone mode & don't see the get out of it button".
+  it("a field phone's menu has Leave field mode; the full app's does not", () => {
+    const q = () => fixture.nativeElement.querySelector('[data-testid="nav-leave-field-mode"]');
+    expect(q()).toBeNull();
+
+    const fieldMode = TestBed.inject(FieldModeService);
+    fieldMode.enabled.set(true);
+    fixture.detectChanges();
+    const spy = spyOn(fieldMode, 'confirmAndTurnOff');
+    (q() as HTMLButtonElement).click();
+    expect(spy).toHaveBeenCalled();
+    fieldMode.enabled.set(false);
   });
 });

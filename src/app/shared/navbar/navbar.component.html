@@ -228,6 +228,13 @@
          not from here. -->
     <li><a [routerLink]="['/help']" routerLinkActive="active" (click)="closeNav()"
         title="How to use RangerTrak, and feedback">Help</a></li>
+    <!-- 2026-10-28, John: the exit was only inside a collapsed section on Help, where nobody
+         found it. A field phone's menu now has it too. -->
+    @if (fieldMode.enabled()) {
+    <li><button type="button" class="nav-link-button" data-testid="nav-leave-field-mode"
+        (click)="closeNav(); fieldMode.confirmAndTurnOff()"
+        title="Bring back every page: roster, map, radio log and Mission">Leave field mode</button></li>
+    }
     <li *ngIf="isNavigating()" class="Navbar__progressBar">Loading... <span class="smaller"> (Please 'Refresh' the
         page.)</span>
       <mat-progress-bar mode="indeterminate">

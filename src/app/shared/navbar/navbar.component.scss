@@ -260,6 +260,25 @@
   opacity: 1;
 }
 
+// "Leave field mode" is an action, not a page, so it is a button dressed as a nav link.
+.main-nav .nav-link-button {
+  margin-left: 5px;
+  margin-right: 5px;
+  padding    : 0;
+  border     : 0;
+  background : none;
+  font       : inherit;
+  color      : inherit;
+  cursor     : pointer;
+  opacity    : 0.85;
+  vertical-align: middle;
+}
+
+.main-nav .nav-link-button:hover,
+.main-nav .nav-link-button:focus-visible {
+  opacity: 1;
+}
+
 // 2026-08-26: replaces the old `flex-direction: column` stopgap (three stacked rows -
 // brand, links, icons - ~143px measured live) with a real collapsed menu, the treatment
 // this file's own .main-nav>ul comment already flagged as deferred ("a real collapsed/
@@ -303,9 +322,15 @@
     margin-right: 0;
   }
 
-  .main-nav a {
+  .main-nav a,
+  .main-nav .nav-link-button {
     display: block;
     padding: 0.6em 0.4em;
     margin : 0;
+  }
+
+  .main-nav .nav-link-button {
+    width     : 100%;
+    text-align: left;
   }
 }
