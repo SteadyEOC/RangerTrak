@@ -5070,6 +5070,13 @@ async function checkBoard(downloads) {
       [first?.reports?.[0]?.attachments?.[0]?.sha256, String(first?.reports?.[0]?.attachments?.[0]?.thumb || '').startsWith('data:image/jpeg;base64,')], [pngSha, true])
     check('a viewer with no password is refused', (await boardGet('/api/mission', '')).status, 401)
 
+    // John 10-28 / E-255: the card says how to run the Board on this computer, and device A's 127.0.0.1
+    // address gets the "only works on this computer" hint (publishing to it still works, as above).
+    await goto('/mission', 3000)
+    check('the Board card links the Board kit and flags the loopback address',
+      await evaluate(`[!!document.querySelector('[data-testid=board-run-here] a[href*="/releases/"]'), !!document.querySelector('[data-testid=board-localhost]')]`), [true, true])
+    await goto('/')
+
     // ── the viewer, arriving by the QR link ────────────────────────────────────
     const v = await openDevice(`${BOARD}/view#code=${PASS}`)
     const claimLine = await evaluate(`document.getElementById('claimLine').textContent`, v.sessionId)

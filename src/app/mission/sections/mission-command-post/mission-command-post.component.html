@@ -20,9 +20,19 @@
     <p class="mission__note">
       <!-- 2026-09-28, John: AAR note - same correction as the phone note and the switch
            label below: this device only ever sends to the Board, never runs it. -->
-      The Board runs on a laptop at the command post (see Help). This device only
-      sends to it. Off by default; your own copy of the mission is unaffected either way.
+      The Board runs on a laptop or desktop at the command post, which can be this one (see Help).
+      This switch only sends this log to it. Off by default; your own copy of the mission is unaffected either way.
     </p>
+    <!-- John, 2026-10-28: "unclear how to set up the current computer as the board server", and running it
+         locally is the likelier case. The app can't start the Board itself; E-255's kit is the one download. -->
+    @if (!isPhone()) {
+      <p class="mission__note" data-testid="board-run-here">
+        <strong>To run the Board on this computer:</strong> download the
+        <a [href]="boardKitUrl" target="_blank" rel="noopener noreferrer">RangerTrak Board kit</a>
+        (<code>rangertrak-board-…zip</code> under Assets), unzip it, and double-click
+        <em>Start RangerTrak Board</em>. It needs Node.js 24 or newer. Then paste the address it prints below.
+      </p>
+    }
     <div class="warn">
       Uses <code>https://</code>. The first time each device visits that address, the browser
       will warn it's not private - click through it once per device, <strong>before</strong>
@@ -117,6 +127,9 @@
            entersPlainHttp()'s own doc comment. -->
       @if (entersPlainHttp()) {
         <div class="warn mission-command-post__http-warning">{{ httpError }}</div>
+      }
+      @if (thisComputerOnly()) {
+        <p class="mission__note mission-command-post__view-hint" role="status" data-testid="board-localhost">{{ localhostHint }}</p>
       }
       @if (viewHint()) {
         <p class="mission__note mission-command-post__view-hint" role="status">{{ viewHintText }}</p>

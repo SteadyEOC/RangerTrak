@@ -8,6 +8,7 @@
 #   LICENSE
 #   rangertrak/          the built site, without assets/maps/ (John, 2026-10-28: no basemap in
 #                        the zip - hosts load a .pmtiles file for their own area instead)
+# It also attaches rangertrak-board-<version>.zip, the Board kit (E-255; last step below).
 #
 # The deploy workflow has already run the tests on this commit; this only builds and packages.
 name: Release web zip
@@ -78,3 +79,21 @@ jobs:
 
       - name: Attach to the release
         run: gh release upload "$TAG" "$ZIP" --clobber
+
+      # E-255: the ready-to-run Board kit, rangertrak-board-<version>.zip, from the same build. Its
+      # layout is in tools/board-kit/build.js. Tags from before the kit existed have no build.js.
+      - name: Board kit
+        run: |
+          set -euo pipefail
+          if [ ! -f tools/board-kit/build.js ]; then echo "No Board kit at $TAG"; exit 0; fi
+          npm run build:board-kit
+          VERSION="${TAG#v}"
+          NAME="rangertrak-board-${VERSION}"
+          KIT="dist/board-kit/$(node -p "'rangertrak-board-' + require('./package.json').version")"
+          [ "$KIT" = "dist/board-kit/$NAME" ] || mv "$KIT" "dist/board-kit/$NAME"
+          test -f "dist/board-kit/$NAME/rangertrak-board.js"
+          test -f "dist/board-kit/$NAME/app/index.html"
+          test -x "dist/board-kit/$NAME/Start RangerTrak Board.command"
+          (cd dist/board-kit && zip -qr9 "$RUNNER_TEMP/$NAME.zip" "$NAME")
+          ls -l "$RUNNER_TEMP/$NAME.zip"
+          gh release upload "$TAG" "$RUNNER_TEMP/$NAME.zip" --clobber

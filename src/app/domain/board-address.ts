@@ -5,6 +5,7 @@
 
 export const BOARD_HTTP_ERROR = 'Use https:// — RangerTrak is on https, so the browser blocks plain http.'
 export const BOARD_VIEW_HINT = 'That was the viewer\'s address. The scribe uses the same address without /view.'
+export const BOARD_LOCALHOST_HINT = 'That address only works on this computer, so the viewer link below won\'t open for anyone else. Use the rangertrak-board.local or numbered address the Board printed instead.'
 
 export type BoardAddress = {
   /** The cleaned address; '' when nothing was typed. Absent when there is an error. */
@@ -12,9 +13,12 @@ export type BoardAddress = {
   error?: string
   /** True when a trailing /view was removed, so the screen can say why the text changed. */
   strippedView?: boolean
+  /** True for localhost / 127.x / [::1]: publishing works when the Board is on this computer, but the viewer link is useless to anyone else. */
+  thisComputerOnly?: boolean
 }
 
 const TRAILING = /\/+(view|qr|hello)?\/*$/i
+const LOOPBACK = /^https:\/\/(localhost|127(\.\d{1,3}){3}|\[::1\])(:\d+)?$/i
 
 export function normaliseBoardAddress(raw: string | null | undefined): BoardAddress {
   let s = (raw ?? '').trim()
@@ -28,5 +32,5 @@ export function normaliseBoardAddress(raw: string | null | undefined): BoardAddr
     if (m[1]?.toLowerCase() === 'view') strippedView = true
     s = s.slice(0, m.index)
   }
-  return { url: s, ...(strippedView ? { strippedView } : {}) }
+  return { url: s, ...(strippedView ? { strippedView } : {}), ...(LOOPBACK.test(s) ? { thisComputerOnly: true } : {}) }
 }

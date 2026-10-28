@@ -458,6 +458,13 @@ on the Mission page. Viewers see two tabs: **Radio log** and **ICS-213 messages*
 message to read or print it). Phones cannot send reports through it. Only one device publishes
 to it at a time, and another device with the password can take it over.
 
+**Starting the Board.** It runs on a laptop or desktop, often the scribe's own. Download the
+RangerTrak Board kit (`rangertrak-board-<version>.zip`, under **Assets** on the latest release at
+<https://github.com/SteadyEOC/RangerTrak/releases>), unzip it, and double-click **Start RangerTrak
+Board**. It needs Node.js 24 or newer and nothing else. Paste the address it prints into the
+Mission page's Board card. Use the `rangertrak-board.local` or numbered address even on the same
+computer: `localhost` publishes, but the viewer link made from it opens nowhere else.
+
 **If the Board won't connect,** press **Test connection** on the Mission page's RangerTrak
 Board card. It tells you, in one sentence, the most likely reason:
 

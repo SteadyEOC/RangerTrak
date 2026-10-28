@@ -4,7 +4,7 @@ import { FieldTree, FormField } from '@angular/forms/signals'
 
 import { LogService, MissionType } from '../../../shared/services/'
 import { CommandPostPublishService } from '../../../shared/services/command-post-publish.service'
-import { BOARD_HTTP_ERROR, BOARD_VIEW_HINT, normaliseBoardAddress } from '../../../domain/board-address'
+import { BOARD_HTTP_ERROR, BOARD_LOCALHOST_HINT, BOARD_VIEW_HINT, normaliseBoardAddress } from '../../../domain/board-address'
 import { replacedMessage } from '../../../domain/board-client'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
@@ -178,4 +178,14 @@ export class MissionCommandPostComponent implements OnDestroy {
   }
 
   readonly httpError = BOARD_HTTP_ERROR
+
+  /** John, 2026-10-28: with the Board on this computer, `localhost` publishes fine but makes a viewer link nobody else can open. */
+  thisComputerOnly(): boolean {
+    return !!this.address().thisComputerOnly
+  }
+
+  readonly localhostHint = BOARD_LOCALHOST_HINT
+
+  /** E-255: the Board kit is attached to each GitHub release, beside the web zip. */
+  readonly boardKitUrl = 'https://github.com/SteadyEOC/RangerTrak/releases/latest'
 }

@@ -45,14 +45,17 @@ const selfcheck = require('./board/selfcheck');
 const { startStatusLine } = require('./board/statusline');
 const { version: APP_VERSION } = require('../package.json');
 
-const ROOT = path.join(__dirname, '..', 'dist', 'rangertrak', 'browser');
+// E-255: the Board kit (tools/board-kit/) runs this file bundled, from a folder with the built
+// app in app/ and the certificate kept in certificate/. Its entry sets this before loading us.
+const KIT_DIR = process.env.RANGERTRAK_BOARD_KIT || '';
+const ROOT = KIT_DIR ? path.join(KIT_DIR, 'app') : path.join(__dirname, '..', 'dist', 'rangertrak', 'browser');
 const DEFAULT_LABEL = 'rangertrak-board';
 const PREFERRED_PORT = 443;
 const FALLBACK_PORT = 8080;
 // Never committed - see .gitignore's existing `/non-distributed` entry, reused here rather
 // than inventing a second "local, not for git" convention. A private key belongs here even
 // though it is self-signed and low-stakes: no reason to make a habit of committing one.
-const CERT_DIR = path.join(__dirname, '..', 'non-distributed', 'command-post-cert');
+const CERT_DIR = KIT_DIR ? path.join(KIT_DIR, 'certificate') : path.join(__dirname, '..', 'non-distributed', 'command-post-cert');
 
 const MIME = {
   '.html': 'text/html', '.js': 'application/javascript', '.mjs': 'text/javascript', '.css': 'text/css',
@@ -362,8 +365,9 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   console.log('certificate authority, the same warning router admin pages show. Click Advanced,');
   console.log('then Proceed. Needed ONCE per device and name; the browser remembers it after that.');
   console.log('');
-  console.log('In RangerTrak\'s own Mission Setup, turn on "Send this log to a RangerTrak Board" and');
-  console.log('set the server address to the first address above (without /view), e.g.:');
+  console.log('In RangerTrak, on the Mission page\'s RangerTrak Board card, turn on "Send this log to a');
+  console.log('RangerTrak Board" and set the server address to the first address above (without /view),');
+  console.log('even when RangerTrak runs on this same computer, e.g.:');
   console.log(`  ${primaryUrl}`);
   console.log('(Visit that address directly in THIS device\'s own browser first, and accept the');
   console.log('warning, before turning the toggle on - publishing fails silently otherwise.)');
@@ -467,6 +471,6 @@ async function start() {
   process.on('SIGTERM', shutdown);
 }
 
-module.exports = { createServer, getOrCreateCert };
+module.exports = { createServer, getOrCreateCert, start };
 
 if (require.main === module) start();

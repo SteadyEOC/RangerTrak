@@ -26,6 +26,13 @@ describe('normaliseBoardAddress', () => {
     expect(normaliseBoardAddress('http://x.local/view')).toEqual({ error: BOARD_HTTP_ERROR })
     expect(normaliseBoardAddress('HTTP://x.local')).toEqual({ error: BOARD_HTTP_ERROR })
   })
+  it('marks addresses that only work on this computer', () => {
+    expect(normaliseBoardAddress('https://localhost')).toEqual({ url: 'https://localhost', thisComputerOnly: true })
+    expect(normaliseBoardAddress('localhost:8080/view')).toEqual({ url: 'https://localhost:8080', strippedView: true, thisComputerOnly: true })
+    expect(normaliseBoardAddress('https://127.0.0.1')).toEqual({ url: 'https://127.0.0.1', thisComputerOnly: true })
+    expect(normaliseBoardAddress('https://[::1]:8080')).toEqual({ url: 'https://[::1]:8080', thisComputerOnly: true })
+    expect(normaliseBoardAddress('https://localhost.example.org').thisComputerOnly).toBeUndefined()
+  })
   it('treats blank as nothing typed', () => {
     expect(normaliseBoardAddress('   ')).toEqual({ url: '' })
     expect(normaliseBoardAddress(undefined)).toEqual({ url: '' })

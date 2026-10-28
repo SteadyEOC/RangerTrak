@@ -1,0 +1,49 @@
+RangerTrak Board
+================
+
+The Board lets people on the command post's Wi-Fi or hotspot watch the live radio log on their
+own phone, tablet or laptop. It runs on one laptop or desktop at the command post. That can be
+the same computer the scribe logs on.
+
+Nothing here touches the Internet once it is set up, and nothing is saved to disk except the
+Board's own certificate (in the certificate folder).
+
+
+BEFORE YOU GO (needs the Internet, once)
+----------------------------------------
+1. Install Node.js, the LTS version, from https://nodejs.org (version 24 or newer).
+2. Unzip this whole kit into a folder you can find again, for example Documents\RangerTrak Board.
+   Don't run it from inside the zip.
+
+
+AT THE COMMAND POST
+-------------------
+1. Join the Wi-Fi or hotspot everyone will use.
+2. Double-click "Start RangerTrak Board".
+     Windows: if a blue "Windows protected your PC" box appears, click More info, then Run anyway.
+              If Windows asks whether to allow Node.js on private networks, click Allow.
+     Mac:     the first time, right-click (or Control-click) the file, choose Open, then Open.
+3. A window opens and prints the Board's address, normally https://rangertrak-board.local
+   (with a numbered address under it for older Android phones). Keep that window open; closing
+   it stops the Board.
+4. On the scribe's device, open that address in the browser. It warns "Your connection is not
+   private". That is expected for a private server: click Advanced, then Proceed. Once per
+   device; viewers do the same the first time.
+5. In RangerTrak, open Mission > RangerTrak Board, turn on "Send this log to a RangerTrak Board",
+   paste the address, and press Test connection. Use the printed address even on this same
+   computer, not "localhost": the viewer link is made from it, and a localhost link opens on
+   this computer only.
+6. Viewers open the same address with /view on the end, or scan the QR code in the window.
+
+
+GOOD TO KNOW
+------------
+- The roster never goes to the Board, only report content.
+- Some guest Wi-Fi (hotels, public hotspots) stops devices reaching each other. Use your own
+  router or a phone hotspot.
+- To install RangerTrak itself on a device for offline use, open https://rangertrak.org on it
+  while you still have the Internet. The Board is for watching the log, not for installing the app.
+- Help, in RangerTrak, has more: the Board's entry in the Mission page's Help, and the FAQ.
+
+RangerTrak is free software under the GNU Affero General Public License, version 3 or later
+(see LICENSE). Source: https://github.com/SteadyEOC/RangerTrak
