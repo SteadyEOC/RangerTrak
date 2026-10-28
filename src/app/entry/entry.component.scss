@@ -243,6 +243,18 @@ $filledColor: var(--rt-surface-2);
   font-style: normal;
 }
 
+// E-246: stands in for What + 213 + Operator until the idle @defer draws them. Measured
+// 2026-10-28 on a desktop-width fresh profile, When's bottom to Reset's top: 461px Simple,
+// 587px Full (Source and Attach shown). On a phone Reset is well below the screen, so a
+// shift there isn't seen.
+.enter__lower-placeholder {
+  min-height: 461px;
+}
+
+.enter__lower-placeholder--full {
+  min-height: 587px;
+}
+
 // Mirrors .Entry__MapLeaflet-footer's padding - content is a non-breaking space rather
 // than real coordinates (there's nothing to report yet while the map is still loading),
 // but it still needs a line box of real text to match the real footer's rendered height.

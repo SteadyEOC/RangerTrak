@@ -328,6 +328,12 @@
       }
     </div>
 
+    <!-- E-246 (John, 2026-10-28): What, the 213 box and Operator draw on idle, after the welcome
+         panel and the top of the form, so the first draw (and the LCP welcome line in it) is
+         shorter. The tab numbers are fixed in entry.component.ts, so the chain is the same once
+         this lands; until then Tab skips from Time to Reset. The placeholder holds the space so
+         Reset/Submit don't jump. @defer keeps the <form>'s injector, so formControlName works. -->
+    @defer (on idle) {
     <!-- ======================================= -->
     <!-- Raised live, 2026-08-26: the circled-i here explaining Notes vs. the 213 section's
          own "213 Message" field is redundant now - the same distinction is already covered
@@ -604,6 +610,10 @@
       </span>
       }
     </div>
+    } @placeholder {
+    <div class="enter__lower-placeholder" aria-hidden="true"
+      [class.enter__lower-placeholder--full]="view.isShown('source', entryHere())"></div>
+    }
 
     <!-- ======================================= -->
     <!--button (click)="this.entryDetailsForm.reset()" type="reset">Reset (native)</button> <br-->

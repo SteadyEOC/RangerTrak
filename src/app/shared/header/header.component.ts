@@ -115,6 +115,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ]
 
+  /** The op-period start/end read-outs. toLocaleString(opts) built a new formatter on every
+   *  call - four during the first draw (constructor seed + subscription replay, start + end).
+   *  Same locale and options, built once on first use (2026-10-28 perf trace).
+   *  hour12: false - 24-hour clock throughout the app, not the locale default. */
+  private static opPeriodFormatter?: Intl.DateTimeFormat
+  private static opPeriodFormat(): Intl.DateTimeFormat {
+    return HeaderComponent.opPeriodFormatter ??= new Intl.DateTimeFormat([], {
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+    })
+  }
+
   /** Matches the format the old `date: 'MMM d, HH:mm:ss'` pipe produced - hand-formatted
    *  rather than via Intl.DateTimeFormat, which has known hour12:false midnight quirks
    *  ("24:00" instead of "00:00" in some engines) this app's own time-picker component
@@ -222,12 +233,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.eventInfo.set(mission || event ? `#${mission}: ${event}` : '')
     this.opPeriod.set(`${this.settings.opPeriod}`)
     this.missionNotes.set(this.settings.eventNotes.trim())
-    // hour12: false - 24-hour clock throughout the app, not the locale default toLocaleString() would use.
-    const timeOpts: Intl.DateTimeFormatOptions = {
-      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
-    }
-    this.opPeriodStartDisplay.set(new Date(this.settings.opPeriodStart).toLocaleString([], timeOpts))
-    this.opPeriodEndDisplay.set(new Date(this.settings.opPeriodEnd).toLocaleString([], timeOpts))
+    const fmt = HeaderComponent.opPeriodFormat()
+    this.opPeriodStartDisplay.set(fmt.format(new Date(this.settings.opPeriodStart)))
+    this.opPeriodEndDisplay.set(fmt.format(new Date(this.settings.opPeriodEnd)))
 
     // if (!this.settings.opPeriodStart) {
     //   this.settings.opPeriodStart = new Date()

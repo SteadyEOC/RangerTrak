@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common'
 import {
-  ChangeDetectionStrategy, Component, HostListener, OnInit, signal
+  ChangeDetectionStrategy, Component, HostListener, afterNextRender, signal
 } from '@angular/core'
 
 /**
@@ -24,7 +24,7 @@ import {
   styleUrls: ['./back-to-top.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
 })
-export class BackToTopComponent implements OnInit {
+export class BackToTopComponent {
 
   /** Show once the user is a full viewport-height down - i.e. the top is genuinely gone. */
   private static readonly SHOW_AFTER_PX = 600
@@ -47,8 +47,11 @@ export class BackToTopComponent implements OnInit {
   // zoneless app has no guaranteed path back into change detection otherwise (Sprint G).
   visible = signal(false)
 
-  ngOnInit(): void {
-    this.update()
+  // 2026-10-28 perf trace: update() reads scrollHeight, which forced a ~68 ms layout in the
+  // middle of the first draw when it ran from ngOnInit. The read phase of afterNextRender
+  // measures once the page has been drawn, alongside Angular's other layout reads.
+  constructor() {
+    afterNextRender({ read: () => this.update() })
   }
 
   // passive: the handler never calls preventDefault, and saying so lets the browser
