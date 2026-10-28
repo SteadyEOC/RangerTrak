@@ -3,7 +3,6 @@ import { Subscription } from 'rxjs'
 import { ChangeDetectionStrategy, Component, OnDestroy, signal } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { ActivatedRoute } from '@angular/router'
-import { MatTabsModule } from '@angular/material/tabs'
 
 import { PageComponent } from '../../shared/page/page.component'
 
@@ -45,7 +44,7 @@ import { HELP_SECTIONS, TOUR_URL } from '../../shared/guide/help-sections'
   selector: 'rangertrak-help',
   standalone: true,
   imports: [
-    CommonModule, PageComponent, MatTabsModule,
+    CommonModule, PageComponent,
     HelpAboutComponent, HelpStartComponent,
     HelpDataComponent, HelpAfterMissionComponent, HelpFeedbackComponent, HelpFaqComponent,
   ],

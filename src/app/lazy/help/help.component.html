@@ -1,14 +1,10 @@
 <rangertrak-page [showHeader]="false">
   <div class="help-backdrop">
-    <h1 split-by="letter" letter-animation="breath">
-      RangerTrak&trade; - tooling for ranging Rangers
-    </h1>
-    <p class="help-version">Version {{version}}</p>
+    <!-- John 2026-10-27: the page says "Help" first, so a reader knows where they are; the
+         tagline and version drop to one line beneath it. -->
+    <h1 split-by="letter" letter-animation="breath">Help</h1>
+    <p class="help-version">RangerTrak&trade; - tooling for ranging Rangers &middot; Version {{version}}</p>
 
-    <!-- John 2026-10-27: one Help navigation. The Tour Guide is a peer of the tabs below, not a
-         link buried in Start here; the Help drawer shows the same sections (HELP_SECTIONS). -->
-    <a class="help-tour-link" [href]="tourUrl" target="_blank" rel="noopener"
-      data-testid="help-tour-link">Tour Guide <span aria-hidden="true">&#8599;</span><span class="visually-hidden"> (opens in a new tab)</span></a>
 
     <!-- E-84: this page used to be one long scroll, which is how six shipped features ended
          up documented nowhere - there was no obvious place to add them and no way to see
@@ -25,27 +21,30 @@
          carries the feedback form, moved on from About). -->
     <!-- E-124: `/help?tab=data#map-file-help` opens a named tab and scrolls to a section -
          see HelpComponent.TAB_KEYS for the names, in the same order as these tabs. -->
-    <mat-tab-group class="help-tabs" mat-stretch-tabs="false" animationDuration="0ms"
-      [selectedIndex]="selectedIndex()" (selectedIndexChange)="selectedIndex.set($event)">
-      <mat-tab [label]="sections[0].label">
-        <rangertrak-help-start></rangertrak-help-start>
-      </mat-tab>
-      <mat-tab [label]="sections[1].label">
-        <rangertrak-help-about></rangertrak-help-about>
-      </mat-tab>
-      <mat-tab [label]="sections[2].label">
-        <rangertrak-help-faq></rangertrak-help-faq>
-      </mat-tab>
-      <mat-tab [label]="sections[3].label">
-        <rangertrak-help-data></rangertrak-help-data>
-      </mat-tab>
-      <mat-tab [label]="sections[4].label">
-        <rangertrak-help-after-mission></rangertrak-help-after-mission>
-      </mat-tab>
-      <mat-tab [label]="sections[5].label">
-        <rangertrak-help-feedback></rangertrak-help-feedback>
-      </mat-tab>
-    </mat-tab-group>
+    <!-- John 2026-10-27: one Help navigation, the same row of pills as the Help drawer
+         (HELP_SECTIONS), with "Take the Tour!" at the end of the row. A mat-tab-group cannot
+         hold a link in its tab strip, so this is a row of buttons over one section body. -->
+    <div class="help-tabs">
+      <nav class="help-nav" aria-label="Help sections">
+        @for (section of sections; track section.key; let i = $index) {
+        <button type="button" class="help-tab" [class.help-tab--current]="selectedIndex() === i"
+          [attr.aria-pressed]="selectedIndex() === i" (click)="selectedIndex.set(i)">{{ section.label }}</button>
+        }
+        <a class="help-tab help-tour-link" [href]="tourUrl" target="_blank" rel="noopener"
+          data-testid="help-tour-link"><em>Take the Tour!</em> <span aria-hidden="true">&#8599;</span><span
+            class="visually-hidden"> (opens in a new tab)</span></a>
+      </nav>
+      <div class="help-tab-body">
+        @switch (selectedIndex()) {
+        @case (0) { <rangertrak-help-start></rangertrak-help-start> }
+        @case (1) { <rangertrak-help-about></rangertrak-help-about> }
+        @case (2) { <rangertrak-help-faq></rangertrak-help-faq> }
+        @case (3) { <rangertrak-help-data></rangertrak-help-data> }
+        @case (4) { <rangertrak-help-after-mission></rangertrak-help-after-mission> }
+        @case (5) { <rangertrak-help-feedback></rangertrak-help-feedback> }
+        }
+      </div>
+    </div>
 
     <!-- Pixabay Content License (verified by the maintainer 2026-09-26); replaces an earlier
          marmot photo whose photographer and licence were never known. -->

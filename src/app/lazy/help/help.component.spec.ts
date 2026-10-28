@@ -42,11 +42,11 @@ describe('HelpComponent', () => {
   // leaving six.
   it('renders the six documentation tabs, in the planned order', () => {
     const labels: string[] = Array.from(
-      fixture.nativeElement.querySelectorAll('.help-tabs .mdc-tab__text-label') as NodeListOf<HTMLElement>
+      fixture.nativeElement.querySelectorAll('.help-nav button.help-tab') as NodeListOf<HTMLElement>
     ).map(el => el.textContent!.trim());
 
     expect(labels).toEqual([
-      'Start here', 'About', 'FAQ', 'Your data', 'After mission', 'Feedback'
+      'Start here', 'About', 'FAQ', 'Your data', 'After mission', 'Contact us'
     ]);
   });
 

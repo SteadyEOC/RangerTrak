@@ -30,7 +30,7 @@
       [attr.aria-pressed]="guide.section() === section.key" (click)="guide.section.set(section.key)"
       [attr.data-testid]="'guide-section-' + section.key">{{ section.label }}</button>
     }
-    <a class="guide__nav-link" [href]="tourUrl" target="_blank" rel="noopener" data-testid="guide-tour-link">Tour Guide
+    <a class="guide__nav-link" [href]="tourUrl" target="_blank" rel="noopener" data-testid="guide-tour-link"><em>Take the Tour!</em>
       <span aria-hidden="true">&#8599;</span><span class="visually-hidden"> (opens in a new tab)</span></a>
   </nav>
 

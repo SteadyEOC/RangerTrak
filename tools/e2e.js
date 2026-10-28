@@ -2198,20 +2198,20 @@ async function checkHelpTabs() {
   const labels = await evaluate(`(() => {
     const group = document.querySelector('.help-tabs');
     if (!group) return 'NO .help-tabs';
-    return [...group.querySelectorAll('.mat-mdc-tab .mdc-tab__text-label')]
+    return [...group.querySelectorAll('.help-nav button.help-tab')]
       .map(el => el.textContent.trim()).join('|');
   })()`)
   // 2026-08-30: "Entering reports" and "Maps" moved into the Entry/Map pages' own Guide
   // drawers (screen-specific operating instructions, not general Help) - see guide-content.ts.
   check('six tabs, in the planned order', labels,
-    'Start here|About|FAQ|Your data|After mission|Feedback')
+    'Start here|About|FAQ|Your data|After mission|Contact us')
 
   const firstBody = await evaluate(`document.querySelector('.help-tabs rangertrak-help-start') ? 'start' : 'missing'`)
   check('the first tab shows the Start here body', firstBody, 'start')
 
   // Click the FAQ tab and confirm a different component is now mounted.
   await evaluate(`(() => {
-    const tab = [...document.querySelectorAll('.help-tabs .mat-mdc-tab')]
+    const tab = [...document.querySelectorAll('.help-tabs .help-nav button.help-tab')]
       .find(t => t.textContent.trim() === 'FAQ');
     tab?.click();
   })()`)
@@ -2225,8 +2225,8 @@ async function checkHelpTabs() {
   // carries the feedback form) - it must survive each move, since it's the path a bug
   // reporter is told to follow.
   await evaluate(`(() => {
-    const tab = [...document.querySelectorAll('.help-tabs .mat-mdc-tab')]
-      .find(t => t.textContent.trim() === 'Feedback');
+    const tab = [...document.querySelectorAll('.help-tabs .help-nav button.help-tab')]
+      .find(t => t.textContent.trim() === 'Contact us');
     tab?.click();
   })()`)
   await sleep(600)

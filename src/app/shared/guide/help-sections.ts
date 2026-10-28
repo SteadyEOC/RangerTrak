@@ -12,7 +12,8 @@ export const HELP_SECTIONS = [
   { key: 'faq', label: 'FAQ' },
   { key: 'data', label: 'Your data' },
   { key: 'after', label: 'After mission' },
-  { key: 'feedback', label: 'Feedback' },
+  // John 2026-10-27: was "Feedback"; it is also how to reach the maintainer privately.
+  { key: 'feedback', label: 'Contact us' },
 ] as const
 
 export type HelpSectionKey = typeof HELP_SECTIONS[number]['key']

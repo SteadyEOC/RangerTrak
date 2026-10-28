@@ -41,7 +41,7 @@
           <!-- John 10-27: the Tour Guide (/tour/, built from tools/tour) had no way in from the app;
                it goes on the demo bar, here and in the demo card below. -->
           <span data-testid="welcome-tour-link">Or <a href="/tour/" target="_blank" rel="noopener"
-            title="Opens in a new tab; works offline">Take the Tour</a>.</span>
+            title="Opens in a new tab; works offline"><em>Take the Tour!</em></a></span>
         </li>
         }
         @if (usage.state() === 'empty' && !fieldMode.enabled() && isTouchFirstDevice) {
@@ -78,8 +78,8 @@
       } @else {
       <strong>Demo:</strong> no mission yet? Load a demonstration with made-up data to try out the app.
       }
-      <span data-testid="demo-card-tour-link">New here? Take the <a href="/tour/" target="_blank" rel="noopener"
-        title="Opens in a new tab; works offline">Tour Guide</a>.</span>
+      <span data-testid="demo-card-tour-link">New here? <a href="/tour/" target="_blank" rel="noopener"
+        title="Opens in a new tab; works offline"><em>Take the Tour!</em></a></span>
     </div>
     <rangertrak-demo-picker [label]="usage.state() === 'demo' ? 'Switch demo' : 'Load a demo'"></rangertrak-demo-picker>
     @if (usage.state() === 'demo') {

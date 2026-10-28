@@ -84,38 +84,41 @@ filter: brightness(30%);
 // https://developer.mozilla.org/en-US/docs/Web/CSS/background-image
 //https://rapidapi.com/guides/css-painting-api
 
-// E-84: tab shell. The tab body carries the page's prose, so it needs breathing room the
-// bare Material panel does not give it; the tab strip itself keeps Material's own behavior
-// (keyboard nav, focus ring, overflow paging on narrow screens) untouched.
+// E-84: tab shell. The section body carries the page's prose, so it needs breathing room.
 .help-tabs {
   margin-block: 1rem 2rem;
 }
 
-// mat-stretch-tabs="false" leaves labels at their natural width, so six of them scroll
-// rather than each being squeezed to a sixth of the viewport - Material pages them on a
-// phone, which is the behavior we want here.
 // 2026-09-30, John: E-147 - outlined pills, the selected one filled; E-209 / D-64 gave them
-// the control height and corner. Still the stock mat-tab-group - same DOM, roles and
-// arrow-key behaviour. 2026-10-27: the look moved to styles/_help-nav.scss so the Help
-// drawer's tabs and links share it.
-:host ::ng-deep .help-tabs {
-  @include help-nav.pill-tabs;
+// the control height and corner. 2026-10-27: the look moved to styles/_help-nav.scss so the
+// Help drawer shares it, and the strip became buttons (was a mat-tab-group) so the Tour link
+// can sit in the same row. The row wraps on a phone instead of paging.
+.help-nav {
+  display  : flex;
+  flex-wrap: wrap;
+  gap      : 0.5rem;
+  padding  : 0.25rem 0.125rem;
 }
 
-.help-tour-link {
+.help-tab {
   @include help-nav.pill;
-  margin-top: 0.75rem;
+  background : transparent;
+  font-family: inherit;
+  cursor     : pointer;
 
   &:hover {
     border-color: var(--rt-accent);
   }
 }
 
-:host ::ng-deep .help-tabs .mat-mdc-tab-body-content {
+.help-tab--current {
+  @include help-nav.pill-current;
+}
+
+.help-tab-body {
   padding-block: 1rem;
-  // Material sets overflow:hidden on the body content; prose that ends up wider than the
-  // panel (a long URL, a reference table) must scroll inside it rather than pushing the
-  // page sideways.
+  // Prose that ends up wider than the panel (a long URL, a reference table) scrolls inside
+  // it rather than pushing the page sideways.
   overflow-x   : auto;
 }
 
