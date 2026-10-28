@@ -493,6 +493,10 @@ whose key has left the source fails. Add the row in the same commit as the key.
 
 **The Board kit (E-255, 2026-10-28).** `npm run build:board-kit` (`tools/board-kit/build.js`) bundles `tools/board-kit/entry.js`, the server and its npm packages with esbuild into one `rangertrak-board.js`, beside the built app in `app/` (no `assets/maps/`), double-click launchers that check only for Node.js 24, `READ-ME-FIRST.txt`, `LICENSE` and `THIRD-PARTY-NOTICES.txt` (the bundled packages' licences, read from the metafile). The entry sets `RANGERTRAK_BOARD_KIT` to its folder, and the server then serves `app/` and keeps its certificate in `certificate/` there. `release-zip.yml` attaches it to each release as `rangertrak-board-<version>.zip`.
 
+**The web zip and self-hosting (E-254, 2026-10-28).** The same `release-zip.yml` attaches `rangertrak-<version>-web.zip` to each release: the built app without `assets/maps/` (no basemap), `LICENSE`, and `READ-ME-FIRST.html`. Hosting instructions are one page, `tools/self-hosting/index.html`, also served at `/self-hosting/` (the Worker's `run_worker_first` lists it, as it does `/tour/`; without that the SPA fallback served the app shell there). A host must give every unknown path the app, **except** `/assets/`, which must 404. Known gap: the offline basemap warm-up (`offline-basemap.service.ts`) checks only `res.ok`, so a host that answers a missing `.pmtiles` with `index.html` would have HTML cached as a map.
+
+**Field phone reports and time (2026-10-28).** A field phone's Report Packet leaves mission, event and op period blank: the phone never learns them (E-252). In their place, `domain/packet-time-check.ts` warns on merge when reports predate the mission (the op period start, or this device's oldest report) or lie more than 10 minutes in the future. The phone counts what it has sent by uid (`fieldModeSentUids`, row 32). Nothing comes back from the scribe's device, so "sent" means "put in a packet", not "received".
+
 The causes ("why can't I reach the Board?") are written once in `src/app/domain/board-causes.json`: `{ id, seenFrom, message, detail, anchor }`. The app reads them through `domain/board-causes.ts` (`boardCause(id, values)`), the server through `tools/board/causes.js`. The viewer page `src/command-post-view/index.html` is plain static JS and cannot import the file, so it carries the words of `board-lost` and `scribe-quiet`; `tools/board/causes.test.js` fails if they drift. The app's Test connection (`domain/board-diagnosis.ts`, run by `command-post-publish.service.ts`) turns what it finds into one of these causes. `message` is plain words; `detail` is the technical line shown under "Details"; `anchor` is the heading slug on the Help page planned for slice 3.
 
 Notes for the storage freeze:
@@ -555,6 +559,14 @@ replacing the page under an in-progress report would lose the report.
 Anything that only `console.warn`s here is a bug, not a placeholder: a silently stale
 service worker means an installed copy serves an old build indefinitely, which is exactly
 what happened after 0.13.0 shipped.
+
+## Version stamp between releases
+
+Releases are tagged about weekly (`1.0.0-beta.N`); pushes in between carry no version bump. `deploy.yml` writes the deploy's date and short commit into `src/app/shared/build-stamp.ts` before building, and the footer and Help show it as `(build YYYY-MM-DD abc1234)`, so a report from a tester names the exact build. A local build shows no stamp. `domain/restore-preview.ts` orders pre-release tags numerically (`-alpha` < `-beta.3` < `-beta.5` < the release) when it checks whether a backup came from a newer version (E-238).
+
+## Errors and the diagnostic report (E-258, 2026-10-28)
+
+There is no Debug mode setting any more. Developer panels show only in a dev build or with `?debug` (`shared/dev-diagnostics.ts`); `settings.debugMode` is kept in stored settings, unread, so returning users' settings still load. `global-error-handler.ts` turns an uncaught error into a "Something went wrong" prompt with *Report it* and *Don't show again*, at most three times a session (the mute is sessionStorage). The feedback form can attach a diagnostic report, only when the person ticks it, with *Preview* and *Copy diagnostics*. `diagnostics.service.ts` builds it: ordinary log lines go in without their message text, and warning and error text passes through `shared/redact.ts` first (emails, phone numbers and coordinates). Rule 5 applies: nothing from the roster or report text leaves the device unless someone reads it in the preview and sends it.
 
 ## Bundle and loading strategy
 

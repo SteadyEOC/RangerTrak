@@ -57,10 +57,10 @@ npm run lint:tsc   # typecheck only (app and spec projects separately)
 > `domain/` (plus type-only `*.interface` files) and nothing framework or storage; components
 > do not import `shared/storage/` (except to inject `RecordStore`) or touch `localStorage`; a
 > small per-device preference goes in a service such as `DevicePrefsService`. The recommended
-> angular-eslint / typescript-eslint sets are still **warnings** (about 600): fix them as files
+> angular-eslint / typescript-eslint sets are still **warnings** (703 on 2026-10-27): fix them as files
 > are touched, then promote.
 
-The suite is expected to be **all green** (124 specs as of this writing — check the run's
+The suite is expected to be **all green** (131 spec files and 1,379 tests on 2026-10-28 — check the run's
 own "Executed N of N" line for the current count rather than trusting this number to stay
 put; it grows with the app). It was not for a long time, and the
 failures were all harness gaps rather than app defects — components that inject `SwUpdate`
@@ -80,16 +80,18 @@ These run against a production build, in real headless Chrome:
 ```bash
 npm run build
 npm run server &          # tools/e2e.js expects the build served on :8080
-npm run e2e:full          # the full browser suite (~25 min); before a release
+npm run e2e:full          # the full browser suite (~17 min, quiet); before a release
 node tools/e2e.js --full --only=map,entry   # just the groups a change touches
 npm run e2e:offline       # does the Alternative map really work offline? (starts its own server)
 ```
 
 The suite is quiet by default: it prints only failures, each under its section heading, then
-the count (`387/387 passed`). Add `--verbose` to see every check. `--only=` picks groups:
+the count (`728/728 passed` on 2026-10-27). Add `--verbose` to see every check. `--only=` picks groups:
 `shell` (navigation, layout, Help), `entry`, `map`, `radiolog` (Radio Log and Messages),
 `roster`, `mission` (Mission page, statuses, sample mission), `backup` (backups, report
-packets, old-release fixtures, device encryption). Run the groups a change touches before an
+packets, old-release fixtures, device encryption), `attachments` (photos and files on
+entries, smaller copies), `board` (the Mission Board server and viewer), `view` (Simple and
+Full view), `controls` (control sizes and corners), `cards` (the card grid layouts). Run the groups a change touches before an
 ordinary push, and the whole suite before a release.
 
 `e2e:offline` is separate on purpose: "offline" has to mean the server is actually gone, so
