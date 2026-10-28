@@ -8,6 +8,10 @@
   --accent: #2e5d8a;
   --q: #6b4c9a;
   --tint: #f3f1f6;
+  --chrome: #442c2e;
+  --chrome-ink: #f7f2ee;
+  --signal: #f0700a;
+  --done: #2e7d4f;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -18,10 +22,12 @@
     --accent: #8fb8e3;
     --q: #c3a8ec;
     --tint: #222027;
+    --chrome: #1a1210;
+    --done: #6cc391;
   }
 }
 * { box-sizing: border-box; }
-html { scroll-padding-top: 4rem; }
+html { scroll-padding-top: 7rem; }
 body {
   margin: 0;
   background: var(--bg);
@@ -29,14 +35,7 @@ body {
   font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 a { color: var(--accent); }
-.top {
-  position: sticky; top: 0; z-index: 1;
-  display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between;
-  padding: .6rem 16px; background: var(--bg); border-bottom: 1px solid var(--rule);
-}
-.top .home { font-weight: 600; text-decoration: none; color: var(--fg); }
-.top nav a { margin-left: .9rem; }
-main { max-width: 46rem; margin: 0 auto; padding: 1rem 16px 3rem; }
+main { max-width: 46rem; min-width: 0; padding: 1rem 16px 3rem; }
 h1 { font-size: 1.8rem; line-height: 1.2; margin: 1rem 0 .25rem; }
 h2 { font-size: 1.3rem; margin: 2.25rem 0 .5rem; padding-top: .75rem; border-top: 1px solid var(--rule); }
 .ver { color: var(--muted); margin-top: 0; }
@@ -52,22 +51,22 @@ table { border-collapse: collapse; width: 100%; margin: .75rem 0; font-size: .95
 th, td { border: 1px solid var(--rule); padding: .35rem .5rem; text-align: left; vertical-align: top; }
 th { background: var(--tint); }
 pre { background: var(--tint); padding: .75rem; overflow-x: auto; font-size: .9rem; }
-table.sheet td:nth-child(3), table.sheet td:nth-child(4) { width: 3.2rem; }
-table.sheet td:nth-child(5) { width: 30%; }
+table.sheet td:nth-child(4), table.sheet td:nth-child(5) { width: 3.2rem; }
+table.sheet td:nth-child(6) { width: 26%; }
 .fields { line-height: 2.4; }
 button { font: inherit; padding: .3rem .8rem; cursor: pointer; }
 footer { max-width: 46rem; margin: 0 auto; padding: 1rem 16px 2rem; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule); }
 
 @media print {
   :root { --bg: #fff; --fg: #000; --muted: #444; --rule: #999; --accent: #000; --q: #000; --tint: #eee; }
-  .top, footer, .noprint, .self { display: none; }
+  .top, .side, .pager, .mprog, footer, .noprint, .self { display: none; }
+  .layout { display: block; }
   main { max-width: none; padding: 0; }
   a { text-decoration: none; }
   h2 { break-after: avoid; }
   li, tr { break-inside: avoid; }
-  #sheet { break-before: page; }
-  body.sheet-only main > :not(#sheet) { display: none; }
-  body.sheet-only #sheet { break-before: auto; }
+  body.print-all .view[hidden] { display: block; }
+  body.print-all .view + .view { break-before: page; }
 }
 
 /* Module header: icon + title, then Setup / Goals / Situation boxes; Skills learned closes it */
@@ -88,8 +87,6 @@ p.skills { background: var(--tint); border-radius: 6px; padding: .5rem .8rem; }
 h3 { font-size: 1.05rem; margin: 1.5rem 0 .4rem; }
 blockquote { margin: .75rem 0; padding: .5rem .9rem; border-left: 3px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; }
 blockquote p { margin: .4rem 0; }
-.top .home { display: inline-flex; align-items: center; gap: .45rem; }
-.top .home img { display: block; }
 svg.trail { display: block; width: 100%; min-width: 560px; margin: .5rem 0 1rem; font: 16px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 .trail .stage { fill: none; stroke: var(--rule); stroke-width: 1.25; stroke-dasharray: 6 4; }
 .trail .slabel { fill: var(--muted); font-size: 14px; font-weight: 600; }
@@ -104,3 +101,86 @@ svg.trail { display: block; width: 100%; min-width: 560px; margin: .5rem 0 1rem;
 .trail .note { fill: var(--muted); font-size: 14px; }
 .trail a:hover .stop, .trail a:focus .stop { fill: var(--accent); }
 .trail a:hover .num, .trail a:focus .num { fill: var(--bg); }
+
+/* E-244: the app's own bar on top (its chrome colours, mark and page links), the tour's tabs under it,
+   a module side nav, one view at a time, and tick boxes. */
+.top { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--rule); }
+.appbar { display: flex; align-items: center; gap: .25rem 1rem; padding: 0 16px; min-height: 44px;
+  background: var(--chrome); color: var(--chrome-ink); box-shadow: inset 0 -2px 0 var(--signal); }
+.appbar a { color: inherit; text-decoration: none; }
+.appbar .home { display: inline-flex; align-items: center; gap: .5rem; font-weight: 700; flex: none; }
+.appbar .mark .waves { stroke: var(--signal); }
+.applinks { display: flex; gap: .1rem; overflow-x: auto; scrollbar-width: none; font-size: .92rem; }
+.applinks a { padding: .6rem .55rem; white-space: nowrap; border-radius: 4px; }
+.openapp { display: none; margin-left: auto; padding: .6rem .3rem; }
+.applinks a:hover, .applinks a:focus-visible { background: rgba(255, 255, 255, .1); }
+.tabs { display: flex; align-items: center; gap: .25rem; padding: 0 12px; overflow-x: auto; scrollbar-width: none; }
+.tabs a { display: inline-flex; align-items: center; gap: .4rem; padding: .65rem .7rem; white-space: nowrap;
+  text-decoration: none; color: var(--muted); border-bottom: 3px solid transparent; font-weight: 600; }
+.tabs a:hover { color: var(--fg); }
+.tabs a[aria-current] { color: var(--accent); border-bottom-color: var(--accent); }
+.tabs .overall { margin-left: auto; padding-left: 1rem; color: var(--muted); font-size: .9rem; white-space: nowrap; }
+#done-count { font-weight: 700; color: var(--done); }
+
+.layout { display: grid; grid-template-columns: 15.5rem minmax(0, 46rem); justify-content: center; gap: 0 1.5rem; }
+.side { position: sticky; top: 6.5rem; align-self: start; padding: 1.25rem 0 1rem 12px; max-height: calc(100vh - 7rem); overflow-y: auto; }
+.side ol { list-style: none; margin: 0; padding: 0; }
+.side a { display: grid; grid-template-columns: 2rem 1fr auto; align-items: center; gap: .55rem; padding: .4rem .5rem;
+  border-radius: 8px; text-decoration: none; color: var(--fg); line-height: 1.25; }
+.side a:hover { background: var(--tint); }
+.side a[aria-current] { background: var(--tint); box-shadow: inset 3px 0 0 var(--accent); }
+.side .icon { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem;
+  border-radius: 50%; background: var(--tint); color: var(--accent); }
+.side .icon svg { width: 18px; height: 18px; }
+.side a[aria-current] .icon { background: var(--bg); }
+.side .mnum { display: block; font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.side .count { font-size: .8rem; color: var(--muted); }
+.side a.done .icon { background: var(--done); color: var(--bg); }
+.side a.done .count { color: var(--done); font-weight: 700; }
+.view[hidden] { display: none; }
+.view > :first-child { margin-top: .5rem; border-top: 0; }
+/* A view's own heading opens at the very top, so the phone's module chips above it stay in sight */
+.view > :first-child { scroll-margin-top: 100vh; }
+
+/* Each step: a tick box, then the text */
+ul.checks li { display: flex; gap: .6rem; align-items: flex-start; }
+ul.checks li > div { flex: 1; min-width: 0; }
+input.tick { flex: none; width: 1.25rem; height: 1.25rem; margin: .15rem 0 0; accent-color: var(--done); cursor: pointer; }
+ul.checks li:has(input.tick:checked) { border-left-color: var(--done); }
+ul.checks li:has(input.tick:checked) > div { color: var(--muted); }
+ul.checks li.q strong svg { vertical-align: -2px; margin-right: .25rem; color: var(--q); }
+table.sheet td:first-child { width: 2.6rem; text-align: center; }
+table.sheet tr.grp th { background: none; border-left: 0; border-right: 0; padding-top: .9rem; color: var(--accent); }
+.mprog { color: var(--muted); font-size: .9rem; margin: -.25rem 0 .5rem; }
+.mprog.done { color: var(--done); font-weight: 600; }
+.mhead h3 svg { vertical-align: -3px; margin-right: .3rem; color: var(--accent); }
+.mhead .sit h3 svg { color: var(--q); }
+p.skills { display: flex; gap: .55rem; align-items: flex-start; }
+p.skills svg { flex: none; margin-top: .2rem; color: var(--signal); }
+h2.mod .icon { width: 3rem; height: 3rem; background: var(--accent); color: var(--bg); }
+h2.mod .icon svg { width: 26px; height: 26px; }
+button svg { vertical-align: -3px; }
+.pager { display: flex; justify-content: space-between; gap: 1rem; margin: 2.5rem 0 0; padding-top: 1rem; border-top: 1px solid var(--rule); }
+a.next { margin-left: auto; }
+.pager a, a.next { display: inline-block; padding: .5rem .8rem; border: 1px solid var(--rule); border-radius: 8px; text-decoration: none; }
+.pager a:hover, a.next:hover { background: var(--tint); }
+
+@media (max-width: 860px) {
+  .layout { display: block; }
+  /* On a phone the side nav is a row of module chips, shown only inside a module */
+  .side { display: none; position: static; max-height: none; padding: .6rem 16px 0; overflow-x: auto; }
+  body.in-module .side { display: block; }
+  .side ol { display: flex; gap: .35rem; }
+  .side a { grid-template-columns: auto auto; padding: .25rem .5rem .25rem .25rem; border: 1px solid var(--rule); }
+  .side a[aria-current] { box-shadow: none; border-color: var(--accent); }
+  .side .t { display: none; }
+  .side .icon { width: 1.8rem; height: 1.8rem; }
+  .applinks { display: none; }
+  .openapp { display: inline-block; }
+  .tabs .overall { display: none; }
+}
+@media print {
+  .tabs, .appbar { display: none; }
+  input.tick { accent-color: #000; }
+  .view[hidden] { display: none; }
+}

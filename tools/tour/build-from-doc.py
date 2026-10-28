@@ -31,6 +31,26 @@ ICONS = {
 SVG = ('<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" '
        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{}</svg>')
 
+# Small icons for the module boxes, the tabs and the question marker (E-244), same line style.
+GLYPHS = {
+    'Setup': '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/>'
+             '<circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+    'Goals': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    'Situation': '<path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+    'skills': '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+    'q': '<path d="M4 5h16v11H10l-5 4v-4H4z"/>',
+    'start': '<path d="M5 22V3M5 4h12l-2.5 4L17 12H5"/>',
+    'modules': '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/>'
+               '<circle cx="4.5" cy="18" r="1.2"/>',
+    'tell': '<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/>',
+    'sheet': '<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4V2h6v2M8.5 12l2 2 4-4"/>',
+    'print': '<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2"/><rect x="6" y="14" width="12" height="7"/>',
+}
+
+
+def glyph(name, size=18):
+    return SVG.replace('width="22" height="22"', f'width="{size}" height="{size}" aria-hidden="true"').format(GLYPHS[name])
+
 # Who each module needs, for the route table (the doc's route is a chart, not text).
 WHO = {1: 'solo', 2: 'solo or pairs', 3: 'solo or pairs', 4: 'solo', 5: 'best with a crew',
        6: 'solo', 7: 'solo', 8: 'optional; your laptop and a phone', 9: 'optional; a phone'}
@@ -165,6 +185,7 @@ def build(root):
                 m = re.match(r'Module (\d+) — (.*)', title)
                 if m:
                     module = int(m.group(1))
+                    out.append(f'<!--view:m{module}-->')
                     out.append(f'<h2 id="m{module}" class="mod"><span class="icon" aria-hidden="true">'
                                f'{SVG.format(ICONS[module])}</span><span><span class="mnum">Module {module}</span> '
                                f'{html.escape(m.group(2), quote=False)}</span></h2>')
@@ -177,6 +198,9 @@ def build(root):
                                f'<tr><th>Module</th><th>What</th><th>Who</th></tr>{rows}</table></div>')
                 elif title.startswith('Telling us'):
                     out.append(f'<h2 id="telling-us">{html.escape(title, quote=False)}</h2>')
+                elif title == 'Last stop':
+                    out.append('<!--view:finish-->')
+                    out.append(f'<h2 id="last-stop">{text}</h2>')
                 else:
                     out.append(f'<h2>{text}</h2>')
                 continue
@@ -185,7 +209,7 @@ def build(root):
             elif text.startswith('<strong>What you need.</strong>'):
                 out.append(f'<p id="need">{text}</p>')
             elif text.startswith('<strong>Skills learned:</strong>'):
-                out.append(f'<p class="skills">{text}</p>')
+                out.append(f'<p class="skills">{glyph("skills")} <span>{text}</span></p>')
             else:
                 out.append(f'<p>{text}</p>')
         elif t == 'blockquote':
@@ -198,7 +222,8 @@ def build(root):
                 label, body = m.group(1), m.group(2)
                 body = body[:1].upper() + body[1:]
                 cls = ' sit' if label == 'Situation' else ''
-                boxes.append(f'<div class="box{cls}"><h3>{label}</h3><p>{body}</p></div>')
+                icon = glyph(label, 16) if label in GLYPHS else ''
+                boxes.append(f'<div class="box{cls}"><h3>{icon}{label}</h3><p>{body}</p></div>')
             if boxes:
                 out.append('<div class="mhead">' + ''.join(boxes) + '</div>')
             else:
@@ -220,6 +245,7 @@ def build(root):
                     body = re.sub(r'^(<strong>)?' + re.escape(iid) + r'(</strong>)?\s*', '', text)
                     body = body.replace('<em>Op</em><em>tional.</em>', '<em>Optional.</em>')
                     spans = ''
+                    ids = [iid]
                     rng = re.match(r'(?:<strong>)?to(?:</strong>)?\s*<strong>([TQ]\d+)\.(\d+)</strong>', body)
                     if rng:
                         stem, last = rng.group(1), int(rng.group(2))
@@ -238,8 +264,13 @@ def build(root):
                     if cls == 'q' and prev == 't':
                         cls = 'q first'
                     prev = cls[0]
-                    lis.append(f'<li id="{iid}" class="{cls}">{spans}<strong>{iid}</strong> {body} '
-                               f'<a class="self" href="#{iid}" aria-label="Link to {iid}">#</a></li>')
+                    # A tick box per step (E-244); a range item ticks every ID it covers.
+                    what = 'Answered' if cls[0] == 'q' else 'Done'
+                    tick = (f'<input type="checkbox" class="tick" data-ids="{" ".join(ids)}" '
+                            f'aria-label="{what}: {iid}">')
+                    mark = glyph('q', 15) if cls[0] == 'q' else ''
+                    lis.append(f'<li id="{iid}" class="{cls}">{spans}{tick}<div><strong>{mark}{iid}</strong> {body} '
+                               f'<a class="self" href="#{iid}" aria-label="Link to {iid}">#</a></div></li>')
                 else:
                     lis.append(f'<li>{text}</li>')
             out.append(('<ul class="checks">' if check else '<ul>') + ''.join(lis) + '</ul>')
@@ -271,10 +302,60 @@ def build(root):
     body = body.replace('<strong>Review and send. It becomes a public GitHub issue, so keep real names and mission data out</strong>',
                         '<strong>Review and send</strong>. It becomes a public GitHub issue, so keep real names and mission data out')
 
-    sheet = ''.join(f'<tr><td><a href="#{x}">{x}</a></td><td>{short(b)}</td><td></td><td></td><td></td></tr>'
-                    for x, b in items)
-    return body, sheet
+    # One view per tab and per module (E-244): tour.js shows one at a time; without it, or when
+    # printing the whole tour, they read as the old long page.
+    names = {n: titles[str(n)] for n in range(1, 10)}
+    views = re.split(r'<!--view:(\w+)-->\n?', body)
+    html_views = [f'<section class="view" id="start">{views[0]}<p class="noprint">'
+                  f'<button type="button" id="print-all">{glyph("print", 16)} Print the whole tour</button> '
+                  '<a class="next" href="#m1">Start with module 1 →</a></p></section>']
+    for key, content in zip(views[1::2], views[2::2]):
+        if key.startswith('m'):
+            n = int(key[1:])
+            prev = (f'<a href="#m{n - 1}">← {n - 1} · {names[n - 1]}</a>' if n > 1
+                    else '<a href="#start">← Start</a>')
+            nxt = (f'<a class="next" href="#m{n + 1}">{n + 1} · {names[n + 1]} →</a>' if n < 9
+                   else '<a class="next" href="#last-stop">Last stop →</a>')
+            content = content.replace('</h2>', f'</h2>\n<p class="mprog" data-m="{n}"></p>', 1)
+            html_views.append(f'<section class="view" data-view="{key}">{content}'
+                              f'<nav class="pager" aria-label="Modules">{prev}{nxt}</nav></section>')
+        else:
+            html_views.append(f'<section class="view" id="{key}">{content}</section>')
+    body = '\n'.join(html_views)
 
+    side = ''.join(f'<li><a href="#m{n}" data-m="{n}"><span class="icon">{SVG.format(ICONS[n])}</span>'
+                   f'<span class="t"><span class="mnum">Module {n}</span>{names[n]}</span>'
+                   f'<span class="count"></span></a></li>' for n in range(1, 10))
+    side = f'<nav class="side" aria-label="Modules"><ol>{side}</ol></nav>'
+
+    rows, last = [], None
+    for x, b in items:
+        m = int(x[1:].split('.')[0])
+        if m != last:
+            label = f'Module {m} · {names[m]}' if m in names else 'Last stop'
+            rows.append(f'<tr class="grp"><th colspan="6">{label}</th></tr>')
+            last = m
+        rows.append(f'<tr><td><input type="checkbox" class="tick" data-ids="{x}" aria-label="Done: {x}"></td>'
+                    f'<td><a href="#{x}">{x}</a></td><td>{short(b)}</td><td></td><td></td><td></td></tr>')
+    return body, ''.join(rows), side, len(items)
+
+
+# The brand mark as the app's navbar draws it: currentColor, so it shows on the dark bar.
+MARK = ('<svg class="mark" width="16" height="27" viewBox="0 0 155 260" aria-hidden="true">'
+        '<g fill="none" stroke="currentColor" stroke-linejoin="round">'
+        '<path d="M 52 239 L 18.4 175.8 A 38 38 0 1 1 85.6 175.8 Z" stroke-width="12"/>'
+        '<path d="M 52 96 L 52 150" stroke-width="5" stroke-linecap="round"/></g>'
+        '<rect x="44" y="142" width="16" height="58" rx="6" fill="currentColor"/>'
+        '<circle cx="52" cy="88" r="8" fill="currentColor"/>'
+        '<g class="waves" fill="none" stroke-width="7" stroke-linecap="round" vector-effect="non-scaling-stroke">'
+        '<path transform="translate(52,88) scale(0.80) translate(-52,-88)" d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>'
+        '<path transform="translate(52,88) scale(1.30) translate(-52,-88)" d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>'
+        '<path transform="translate(52,88) scale(1.85) translate(-52,-88)" d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>'
+        '</g></svg>')
+
+# The app's own pages, as its navbar lists them, so a tester can jump back from any step.
+APP_LINKS = [('/', 'Entry'), ('/map', 'Map'), ('/radio-log', 'Radio Log'), ('/messages', 'Messages'),
+             ('/rangers', 'Rangers'), ('/mission', 'Mission'), ('/after-action', 'After action'), ('/help', 'Help')]
 
 HEAD = '''<!doctype html>
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later
@@ -291,25 +372,40 @@ HEAD = '''<!doctype html>
 <meta name="description" content="A nine-module tour of RangerTrak for beta testers, with numbered tests and questions.">
 <link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="tour.css">
-<script src="tour.js" defer></script>
 </head>
 <body>
 <header class="top">
-  <a class="home" href="/"><img src="/assets/icons/rangertrak-mark.svg" alt="" width="28" height="28"> RangerTrak</a>
-  <nav><a href="#route">Route</a> <a href="#telling-us">Telling us</a> <a href="#sheet">Tour Checklist</a></nav>
+  <div class="appbar">
+    <a class="home" href="/">{mark}<span>RangerTrak</span></a>
+    <nav class="applinks" aria-label="RangerTrak">{applinks}</nav>
+    <a class="openapp" href="/">Open the app →</a>
+  </div>
+  <nav class="tabs" aria-label="Tour Guide">
+    <a href="#start">{i_start}<span>Start</span></a>
+    <a href="#m1" id="tab-modules">{i_modules}<span>Modules</span></a>
+    <a href="#last-stop">{i_tell}<span>Telling us</span></a>
+    <a href="#sheet">{i_sheet}<span>Checklist</span></a>
+    <span class="overall"><span id="done-count">0</span> of {total} done</span>
+  </nav>
 </header>
+<div class="layout">
+{side}
 <main>
 '''
 
-TAIL = '''<section id="sheet">
+TAIL = '''<section class="view" id="sheet">
 <h2>Tour Checklist</h2>
-<p class="noprint">Every test and question in one list. <button type="button" id="print-sheet">Print the Tour Checklist</button></p>
+<p class="noprint">Every test and question in one list. Tick boxes here or beside each step: they stay in this browser,
+on this device. <button type="button" id="print-sheet">{i_print} Print the Tour Checklist</button>
+<button type="button" id="clear-ticks">Clear my ticks</button></p>
 <p class="fields">Name ____________________ &nbsp; Date __________ &nbsp; Device and browser ____________________ &nbsp; RangerTrak version __________</p>
-<div class="scroll"><table class="sheet"><tr><th>ID</th><th>Step</th><th>Pass</th><th>Fail</th><th>Note</th></tr>
+<div class="scroll"><table class="sheet"><tr><th>Done</th><th>ID</th><th>Step</th><th>Pass</th><th>Fail</th><th>Note</th></tr>
 {rows}</table></div>
 </section>
 </main>
+</div>
 <footer><a href="/">Open RangerTrak</a> · <a href="https://rangertrak.com/">rangertrak.com</a> · Free software under the GNU AGPL v3 or later</footer>
+<script src="tour.js"></script>
 </body>
 </html>
 '''
@@ -317,7 +413,13 @@ TAIL = '''<section id="sheet">
 if __name__ == '__main__':
     src = sys.argv[1]
     dst = sys.argv[2] if len(sys.argv) > 2 else 'tools/tour/index.html'
-    body, rows = build(load(src))
+    body, rows, side, total = build(load(src))
+    head = (HEAD.replace('{mark}', MARK)
+            .replace('{applinks}', ''.join(f'<a href="{h}">{t}</a>' for h, t in APP_LINKS))
+            .replace('{i_start}', glyph('start')).replace('{i_modules}', glyph('modules'))
+            .replace('{i_tell}', glyph('tell')).replace('{i_sheet}', glyph('sheet'))
+            .replace('{total}', str(total)).replace('{side}', side))
+    tail = TAIL.replace('{rows}', rows).replace('{i_print}', glyph('print', 16))
     with open(dst, 'w', encoding='utf-8', newline='\n') as f:
-        f.write(HEAD + body + '\n' + TAIL.replace('{rows}', rows))
+        f.write(head + body + '\n' + tail)
     print('wrote', dst)
