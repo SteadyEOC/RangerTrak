@@ -24,15 +24,16 @@ import { ViewService } from '../services/view.service'
   // E-231: in the header row beside AAR/214 and Help, and the same outlined button as them. Its edge
   // is always plum, the colour of the options it reveals; the explanation is hover text, not a line
   // on the page. A plain button with a dot, empty for Simple and plum-filled for Full, in place of
-  // Material's slide toggle (John 2026-10-27).
+  // Material's slide toggle (John 2026-10-27). E-248 (John 2026-10-28): the rest of the outline shows
+  // the state, plum for Full and the normal grey for Simple; the left edge stays plum in both.
   styles: `
     :host { display: block; min-width: 0; max-width: 100%; }
     .view-switch { display: flex; justify-content: flex-end; max-width: 100%; }
     /* The same 3px left edge that marks Full-view-only options (_patterns.scss .rt-advanced). */
-    button { --mat-button-outlined-outline-color: var(--rt-advanced); box-shadow: inset 3px 0 0 var(--rt-advanced); }
-    .view-switch--full button { box-shadow: inset 3px 0 0 var(--rt-advanced), inset 0 0 0 1px var(--rt-advanced); }
+    button { box-shadow: inset 3px 0 0 var(--rt-advanced); }
+    .view-switch--full button { --mat-button-outlined-outline-color: var(--rt-advanced); }
     .view-switch__dot {
-      display: inline-block; width: 12px; height: 12px; margin-inline-end: 8px;
+      display: inline-block; width: 16px; height: 16px; margin-inline-end: 8px;
       border: 2px solid var(--rt-advanced); border-radius: 50%; box-sizing: border-box;
     }
     .view-switch--full .view-switch__dot { background: var(--rt-advanced); }`,

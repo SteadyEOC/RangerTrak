@@ -536,8 +536,9 @@ device ready before you no longer have a connection to fall back on.
 
 **Simple view and Full view.** A new install starts in **Simple view**, which shows the everyday
 controls. **Full view** shows every option, including **Attach**, From / To stations, the
-Alternative map and Print map. Switch with **Full view** at the top of Entry, Map, Mission or
-Rangers & Teams; each device keeps its own choice. Simple view never hides something your
+Alternative map and Print map. Press the **Full view** button at the top of Entry, Map, Mission or
+Rangers & Teams to switch (its dot is empty in Simple view, filled plum in Full view); each device
+keeps its own choice. Simple view never hides something your
 mission already uses: once an entry has an attachment, **Attach** shows in Simple view too.
 Switching changes only what is shown, never your data.
 
