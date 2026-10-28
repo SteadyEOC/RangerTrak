@@ -67,6 +67,7 @@ import { sendReportPacket } from '../shared/export/report-packet-send'
 import { ImportSafetyCardComponent } from '../shared/import-safety/import-safety-card.component'
 import { PHOTOS_LEFT_OUT_MESSAGE } from '../domain/report-packet-files'
 import type { ViewContext } from '../domain/view'
+import { devDiagnostics } from '../shared/dev-diagnostics'
 
 // TODO: IDEA: use https://material.angular.io/components/badge/ ???
 
@@ -666,7 +667,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       this.log.error(`Could not find enter__Submit-info field`, this.id)
     }
 
-    if (this.settings?.debugMode) {
+    if (devDiagnostics()) {
       Utility.displayShow(this.document.getElementById("enter__frm-reguritation")!)
       Utility.displayShow(this.document.getElementById("enter__where-debug")!)
     }
@@ -1190,7 +1191,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // report". Shows the id alone by default - the full JSON dump it used to always
       // append is raw diagnostic data, so it now rides along only in debug mode, matching
       // the #enter__frm-reguritation panel's own gating in ngOnInit above.
-      this.submitInfo.innerText = this.settings?.debugMode
+      this.submitInfo.innerText = devDiagnostics()
         ? `Entry id # ${newReport.id} Saved. Data: ${formDataJSON}`
         : `Entry id # ${newReport.id} saved`
       Utility.resetMaterialFadeAnimation(this.submitInfo)
@@ -1205,7 +1206,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // asked for it to be debug-only: "the fading display at TOP of the page, once submit is
     // clicked, should only happen if debug mode is on." The lower fading line above is the
     // one a scribe actually needs, and it stays unconditional.
-    if (this.settings?.debugMode) {
+    if (devDiagnostics()) {
       this.alert.OpenSnackBar(`Entry id # ${newReport.id} Saved: ${formDataJSON} `, `Entry id # ${newReport.id} `, 3000)
     }
 

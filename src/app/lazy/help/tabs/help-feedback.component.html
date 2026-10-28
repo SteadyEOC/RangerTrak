@@ -56,7 +56,6 @@
      to read/copy/send the log is for feedback purposes... I don't imagine too much feedback
      were we need it." See ExpandableSectionComponent's own doc comment for why this is a
      deliberate, named exception to the 2026-08-25 "no collapsible sections" removal. -->
-@if (view.isShown('debug-log')) {
 <rangertrak-expandable-section summary="Diagnostic log (optional)">
   <p>
     RangerTrak keeps a running record of what it did this session - useful when something
@@ -67,18 +66,15 @@
     <a matButton="outlined" routerLink="/log">Open the Log page</a>
   </p>
 
-  <div class="note">
-    There is no menu entry for it on purpose - it is a diagnostic tool, not something you need
-    during normal use. This section exists so it is still easy to find when you do need it.
-  </div>
-
-  <!-- F29-29: replaces the old "export the log and attach it to your report" instruction,
-       which was not actually possible - the feedback form above is plain text with no
-       attach capability. -->
+  <!-- E-258 (2026-10-28): Debug mode is gone. The section is always here; the form above has an
+       opt-in diagnostic report, and an unexpected error offers "Report it". -->
   <p>
-    On the Log page, press <span class="ui">Copy log to clipboard</span>, then paste it into
-    the message field above (or into a GitHub issue). It is far more useful to a diagnosis
-    than a description of what went wrong.
+    The easiest way to include it is the <span class="ui">Include a diagnostic report</span> box on
+    the feedback form above: press <span class="ui">Preview</span> to see exactly what would be
+    added. It holds your version, browser and storage details and a short list of what the app
+    did, and leaves out ranger names, report text and places. To keep a copy for yourself, press
+    <span class="ui">Copy diagnostics</span>. For the full record, press
+    <span class="ui">Copy log to clipboard</span> on the Log page and paste it into a private email
+    rather than the public form.
   </p>
 </rangertrak-expandable-section>
-}

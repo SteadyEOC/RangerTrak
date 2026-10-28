@@ -15,6 +15,7 @@ import { delay, throwError } from 'rxjs'
 
 import { CommonModule, DOCUMENT } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
+import { devDiagnostics } from '../shared/dev-diagnostics'
 import {
   AfterViewInit, Component, ElementRef, EventEmitter, Inject, Input, OnDestroy, OnInit, Output,
   signal, ViewChild, ChangeDetectionStrategy
@@ -211,7 +212,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
       this.log.error(`ngOnInit - Settings have yet to be read!`, this.id)
     }
 
-    if (this.settings?.debugMode) {
+    if (devDiagnostics()) {
       Utility.displayShow(this.document.getElementById("Entry__LMinimap-debug")!)
     } else {
 

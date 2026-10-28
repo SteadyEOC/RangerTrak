@@ -113,9 +113,7 @@
   color: var(--mat-sys-error);
 }
 
-// .mission__debug/.mission__debug-note moved 2026-09-28 to
-// mission-advanced-options.component.scss - the "Debug mode" checkbox now lives on that
-// component's own new Advanced card (see mission.component.html's item 7b comment).
+// E-258 (2026-10-28): the Debug mode checkbox and its .mission__debug styles are gone.
 
 // E-168 (2026-10-01): the Mode card at the top of the page.
 .mission__mode-card {

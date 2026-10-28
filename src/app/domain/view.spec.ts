@@ -5,7 +5,7 @@ describe('Simple view and Full view (E-207, D-62)', () => {
   const blank: ViewContext = {
     statusesCustomised: false, locationCategoriesCustomised: false, locationCount: 0,
     mapSettingsCustomised: false, recipientsCustomised: false, tacticalCallCount: 0, boardInUse: false,
-    attachmentCount: 0, encryptionOn: false, fieldMode: false, debugMode: false,
+    attachmentCount: 0, encryptionOn: false, fieldMode: false,
     nonDefaultSourceCount: 0, toStationCount: 0, evidenceLocationCount: 0, layerCount: 0,
     mapEngineIsAlternative: false, mapExtraLayersOn: false,
     setupFileAsked: false, activityLineCount: 0,
@@ -29,7 +29,6 @@ describe('Simple view and Full view (E-207, D-62)', () => {
 
   describe('isShown in Simple view: shown while the mission uses it', () => {
     const cases: { id: string, ctx: Partial<ViewContext> }[] = [
-      { id: 'debug-log', ctx: { debugMode: true } },
       { id: 'statuses', ctx: { statusesCustomised: true } },
       { id: 'location-categories', ctx: { locationCategoriesCustomised: true } },
       { id: 'locations-list', ctx: { locationCount: 1 } },

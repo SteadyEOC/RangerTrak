@@ -3212,6 +3212,7 @@ async function checkMissionFormSave() {
   // 2026-08-26 (Material-M3 pass): all three selectors below changed, and TWO of them were
   // already broken before this suite ever noticed.
   //
+  //  - (E-258, 2026-10-28: the Debug mode checkbox is gone and its assertions with it.)
   //  - debugMode was `input[placeholder="debugMode"]`. It is a <mat-checkbox> now, which
   //    renders its own nested native input, so the control is reached through a
   //    data-testid on the host. The old line then did `debugMode.checked = ...` on null.
@@ -3226,30 +3227,19 @@ async function checkMissionFormSave() {
   //    change event from the native input's, and that is the path a real user takes.
   const before = await evaluate(`(() => {
     const mission = document.querySelector('input[placeholder="e.g. 26-0142"]');
-    const debugBox = document.querySelector('[data-testid="debug-mode"] input[type="checkbox"]');
     const setNative = (el, value) => {
       Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, value);
       el.dispatchEvent(new Event('input', { bubbles: true }));
     };
     if (mission) setNative(mission, 'E2E-SIGNAL-FORMS');
-    const wasChecked = debugBox ? debugBox.checked : null;
-    if (debugBox) debugBox.click();
     return {
       hasMission: !!mission,
-      hasDebugMode: !!debugBox,
-      hasSaveBtn: !!document.querySelector('[data-testid="mission-save"]'),
-      debugModeSet: debugBox ? debugBox.checked : null,
-      debugModeFlipped: debugBox ? (debugBox.checked !== wasChecked) : false
+      hasSaveBtn: !!document.querySelector('[data-testid="mission-save"]')
     };
   })()`)
   check('mission input found', before.hasMission, true)
-  check('debugMode checkbox found', before.hasDebugMode, true)
   // E-145 (2026-09-30): the Save settings button is gone - the page autosaves.
   check('there is no Save settings button any more', before.hasSaveBtn, false)
-  // Guards the assertion below from passing vacuously: if the click never actually moved
-  // the checkbox, "the saved value matches what we set" is trivially true and proves nothing.
-  check('the debugMode checkbox actually toggled', before.debugModeFlipped, true)
-
   // E-145: no click, no reload. The autosave fires ~800 ms after the last change.
   await sleep(1800)
   check('the page did not reload itself when saving',
@@ -3259,10 +3249,9 @@ async function checkMissionFormSave() {
 
   const after = await evaluate(`(() => {
     const s = JSON.parse(localStorage.getItem('appSettings') || '{}');
-    return { mission: s.mission, debugMode: s.debugMode };
+    return { mission: s.mission };
   })()`)
   check('edited mission value was autosaved', after.mission, 'E2E-SIGNAL-FORMS')
-  check('edited debugMode value was autosaved', after.debugMode, before.debugModeSet)
   // ...and still there after a reload.
   await goto('/mission')
   check('autosaved mission value survives a reload',

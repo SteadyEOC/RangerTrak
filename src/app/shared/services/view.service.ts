@@ -77,7 +77,6 @@ export class ViewService {
       attachmentCount: entries.reduce((n, e) => n + liveRefs(e).length, 0),
       encryptionOn: this.recordStore.isEncryptionEnabled(),
       fieldMode: this.fieldMode.enabled(),
-      debugMode: !!s?.debugMode,
       nonDefaultSourceCount: entries.filter(e => !!e.source && e.source !== 'Voice').length,
       toStationCount: entries.filter(e => !!(e.toTactical || e.toCallsign || e.toRangerUid)).length,
       evidenceLocationCount: entries.filter(e => !!e.evidenceLocation).length,

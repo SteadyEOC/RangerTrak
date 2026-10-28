@@ -478,10 +478,6 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
       //this.alert.OpenSnackBar(`Imported "${this.rangers().length}" rangers.`, `Nota Bene`, 1000)
     }
 
-    if (!this.settings?.debugMode) {
-      //this.displayHide("rangers__Fake")
-      //this.displayHide("ranger__ImportExcel")
-    }
   }
 
   /**

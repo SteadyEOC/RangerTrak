@@ -88,6 +88,7 @@ export class MissionAdvancedOptionsComponent {
       }, 300)
     })
 
+  // E-258 (2026-10-28): the Debug mode checkbox is gone; `form` stays for the other blocks.
   // 2026-09-28, John: the "Debug mode" checkbox moved here from mission.component.html (see
   // this component's own doc comment on the new Advanced card) - it needs the same settings
   // FieldTree every other section already takes as `[form]`, for the exact same reason

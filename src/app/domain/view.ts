@@ -40,8 +40,6 @@ export type ViewContext = {
   encryptionOn: boolean,
   /** This device is a field phone (E-114). */
   fieldMode: boolean,
-  /** Debug mode is on. */
-  debugMode: boolean,
   /** Radio log entries whose source is not the default. */
   nonDefaultSourceCount: number,
   /** Radio log entries with a To station. */
@@ -72,7 +70,9 @@ const never = () => false
 
 export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   // Navigation
-  { id: 'debug-log', label: 'Debug log', isInUse: ctx => ctx.debugMode },
+  // E-258: Debug mode is gone; the Log section on Help > Contact us is always shown, but the id
+  // stays so the Simple-view rules and docs that name it keep working.
+  { id: 'debug-log', label: 'Diagnostic log', isInUse: never },
   // Mission page
   { id: 'statuses', label: 'Radio log statuses', isInUse: ctx => ctx.statusesCustomised },
   { id: 'location-categories', label: 'Place categories', isInUse: ctx => ctx.locationCategoriesCustomised },
@@ -84,7 +84,7 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'attachments-budget', label: 'Attachments budget', isInUse: ctx => ctx.attachmentCount > 0 },
   { id: 'setup-file', label: 'Setup file', isInUse: ctx => ctx.setupFileAsked },
   { id: 'device-encryption', label: 'Device encryption', isInUse: ctx => ctx.encryptionOn },
-  { id: 'advanced-debug', label: 'Advanced and debug', isInUse: ctx => ctx.fieldMode || ctx.debugMode },
+  { id: 'advanced-debug', label: 'Field phone card', isInUse: ctx => ctx.fieldMode },
   { id: 'field-phone', label: 'Field phone', isInUse: ctx => ctx.fieldMode },
   // Entry
   { id: 'stations', label: 'From and To station', isInUse: ctx => ctx.tacticalCallCount > 0 || ctx.toStationCount > 0 },

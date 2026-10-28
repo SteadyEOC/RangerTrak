@@ -30,3 +30,30 @@
 .feedback__submit {
   align-self: flex-start;
 }
+
+// E-258 (2026-10-28): opt-in diagnostic report controls.
+.feedback__diagnostics {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: center;
+  gap        : 0.5rem;
+}
+
+.feedback__hint,
+.feedback__copied {
+  @include type.type-body-sm;
+  color: var(--rt-ink-2);
+  margin: 0;
+}
+
+.feedback__preview {
+  @include type.type-body-sm;
+  margin     : 0;
+  padding    : 0.75rem;
+  max-height : 16rem;
+  overflow   : auto;
+  white-space: pre-wrap;
+  word-break : break-word;
+  border     : 1px solid var(--rt-ink-3);
+  border-radius: 4px;
+}

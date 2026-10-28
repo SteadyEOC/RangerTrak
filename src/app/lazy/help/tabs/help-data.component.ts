@@ -25,6 +25,6 @@ import { MoreAboutComponent } from '../../../shared/view/more-about.component'
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class HelpDataComponent {
-  /** E-207: the Log page link is hidden in Simple view unless debug mode is on; Attach's whereabouts depend on the view. */
+  /** E-207: Attach's whereabouts depend on the view. */
   protected readonly view = inject(ViewService)
 }

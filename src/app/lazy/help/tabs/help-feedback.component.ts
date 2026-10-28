@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component } from '@angular/core'
 import { RouterLink } from '@angular/router'
 import { MatButtonModule } from '@angular/material/button'
 
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import { FeedbackComponent } from '../../../shared/feedback/feedback.component'
-import { ViewService } from '../../../shared/services/view.service'
 
 /**
  * Help tab: where to report a problem or suggest something - was "Log" (0.74.0), renamed and
@@ -33,6 +32,5 @@ import { ViewService } from '../../../shared/services/view.service'
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class HelpFeedbackComponent {
-  /** E-207: the diagnostic Log section is hidden in Simple view unless debug mode is on. */
-  protected readonly view = inject(ViewService)
+  // E-258 (2026-10-28): the Log section is always shown now (it was gated on Debug mode).
 }

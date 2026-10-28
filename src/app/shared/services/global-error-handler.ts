@@ -1,5 +1,8 @@
-import { ErrorHandler, inject, Injectable } from '@angular/core'
+import { ErrorHandler, inject, Injectable, Injector } from '@angular/core'
+import { MatSnackBar } from '@angular/material/snack-bar'
+import { Router } from '@angular/router'
 
+import { redact } from '../redact'
 import { LogService } from './log.service'
 
 /**
@@ -21,6 +24,11 @@ export class GlobalErrorHandler implements ErrorHandler {
 
   private id = 'Unhandled Error'
   private log = inject(LogService)
+  // E-258: Router and MatSnackBar are fetched lazily from this - injecting them here would
+  // make the ErrorHandler depend on services that can themselves be mid-construction when an
+  // error is thrown (a circular DI at startup).
+  private injector = inject(Injector)
+  private lastPromptAt = 0
 
   constructor() {
     window.addEventListener('error', (ev: ErrorEvent) => {
@@ -46,6 +54,37 @@ export class GlobalErrorHandler implements ErrorHandler {
       this.log.error(`${origin}: ${this.describe(error)}`, this.id)
     } catch {
       console.error('GlobalErrorHandler failed to record an error', error)
+    }
+    this.offerReport(error)
+  }
+
+  /**
+   * E-258 (2026-10-28): replaces the old Debug mode as the way a problem reaches the developers.
+   * At most one prompt a minute (an error loop must not bury the screen). The draft carries only
+   * the first line of the error, redacted; the diagnostic report box is pre-ticked but nothing is
+   * sent until the person presses Send. Can never throw.
+   */
+  private offerReport(error: unknown): void {
+    try {
+      const now = Date.now()
+      if (now - this.lastPromptAt < 60_000) {
+        return
+      }
+      this.lastPromptAt = now
+      const first = (error instanceof Error ? error.message : String(error ?? '')).split('\n')[0]
+      const draft = 'Something went wrong:\n' + redact(first).slice(0, 300) + '\n\nWhat I was doing: '
+      this.injector.get(MatSnackBar)
+        .open('Something went wrong.', 'Report it', { duration: 15000 })
+        .onAction().subscribe(() => {
+          try {
+            this.injector.get(Router).navigate(['/help'], {
+              queryParams: { tab: 'feedback' },
+              state: { feedbackDraft: draft, includeDiagnostics: true },
+            })
+          } catch { /* never throw from the error path */ }
+        })
+    } catch {
+      // Nothing more to do: the error is already in the Log.
     }
   }
 

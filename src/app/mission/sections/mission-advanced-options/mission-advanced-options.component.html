@@ -157,7 +157,8 @@
   </mat-card-content>
 </mat-card>
 
-<!-- ══ Advanced ══ 2026-09-28, John: "Debug mode" moved here from a stray full-width row
+<!-- ══ Field phone ══ E-258 (2026-10-28): Debug mode was retired (see devDiagnostics()), so this
+     card, once "Advanced", holds only the Field phone block. Earlier note, 2026-09-28, John: "Debug mode" moved here from a stray full-width row
      between the form and its action bar (mission.component.html) - it read as furniture
      rather than a setting, and sat oddly between the grid of real setup cards and the Save
      button. A dedicated Advanced/diagnostics card, positioned right before Danger zone,
@@ -165,31 +166,12 @@
 @if (view.isShown('advanced-debug')) {
 <mat-card appearance="outlined" class="rt-mission-card" [rtAdvanced]="'advanced-debug'">
   <mat-card-header>
-    <mat-card-title>Advanced</mat-card-title>
+    <mat-card-title>Field phone</mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <!-- Debug is a saved setting, not a live mode, so it is a checkbox rather than a
-         slide-toggle (see the redesign's selection-control rule: a toggle is for something
-         that takes effect the moment you flip it; this one waits for Save like every other
-         field on the page). Bound through the FieldState's own WritableSignal because
-         Signal Forms' [formField] cannot drive a Material checkbox - angular/components#32072,
-         same as the coordinate-system and map-marker checkboxes. -->
-    <div class="mission__debug">
-      <!-- data-testid, not a class: tools/e2e.js needs a stable hook for this control, and
-           a styling class is the wrong thing to hang that on (it can be renamed by a purely
-           visual change - which is exactly how the old `.mission__Save-button` selector in
-           that suite came to be looking for a class that no longer existed). -->
-      <mat-checkbox data-testid="debug-mode" [checked]="form.debugMode().value()"
-        (change)="form.debugMode().value.set($event.checked)">Debug mode</mat-checkbox>
-      <span class="mission__debug-note">
-        Adds a diagnostic panel to the Entry screen and verbose entries to the Log page.
-      </span>
-    </div>
-
     @if (view.isShown('field-phone')) {
     <!-- 2026-09-29, John: the laptop/desktop way into field mode - the Entry welcome panel
          only asks on phones and tablets now. See onBtnUseAsFieldPhone()'s own comment. -->
-    <h3 class="mission__subhead">Field phone</h3>
     <p class="mission__note">
       Makes this device a ranger&rsquo;s own field phone: only Radio Log Entry and Help stay on
       the menu, and <strong>Send my reports</strong> passes reports to the command post.

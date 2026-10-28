@@ -25,6 +25,27 @@
         placeholder="email, callsign, whatever reaches you" [disabled]="status() === 'sending'" />
     </mat-form-field>
 
+    <!-- E-258 (2026-10-28): replaces the old Debug mode. Off unless ticked; Preview shows exactly
+         what would be added to the message. -->
+    <div class="feedback__diagnostics">
+      <mat-checkbox [checked]="includeDiagnostics" (change)="onToggleDiagnostics($event.checked)"
+        [disabled]="status() === 'sending'" data-testid="feedback-include-diagnostics">
+        Include a diagnostic report
+      </mat-checkbox>
+      <button matButton type="button" (click)="onTogglePreview()">
+        {{ showPreview() ? 'Hide preview' : 'Preview' }}
+      </button>
+      <button matButton="outlined" type="button" (click)="onCopyDiagnostics()">Copy diagnostics</button>
+      @if (copied()) { <span class="feedback__copied" role="status">Copied</span> }
+    </div>
+    <p class="feedback__hint">
+      Technical details only - your version, browser, how much is stored, and what the app did,
+      and left out on purpose: ranger names, report text and places. It becomes public along with the rest of your report.
+    </p>
+    @if (showPreview()) {
+      <pre class="feedback__preview" data-testid="feedback-diagnostics-preview">{{ report() }}</pre>
+    }
+
     @if (status() === 'error') {
       <p class="feedback__error">
         Couldn't submit that automatically. You can

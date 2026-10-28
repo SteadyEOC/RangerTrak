@@ -35,7 +35,7 @@ export type MissionType = {
 
   application: string,
   version: string,
-  debugMode: boolean,
+  debugMode: boolean, // E-258: no longer read; kept so stored settings stay valid.
 
   defLat: number,
   defLng: number,
