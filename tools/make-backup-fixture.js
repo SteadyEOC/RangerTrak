@@ -4,7 +4,7 @@
  * restores in this one" - the 1.0.0-rc.1 gate is that a backup made in the alpha restores in
  * the rc. Run it ON THE DAY A RELEASE IS TAGGED, against that release's build:
  *
- *   npm run build && npm run backup-fixture -- 0.99.0-alpha
+ *   npm run build && npm run backup-fixture -- 1.0.0-beta.N
  *
  * then commit the new tools/backup-fixtures/<version>/ folder. tools/e2e.js
  * (checkBackupFixturesRestore, in --full) restores every folder there into the current build.
