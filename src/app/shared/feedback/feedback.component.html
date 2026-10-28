@@ -39,8 +39,10 @@
       @if (copied()) { <span class="feedback__copied" role="status">Copied</span> }
     </div>
     <p class="feedback__hint">
-      Technical details only - your version, browser, how much is stored, and what the app did,
-      and left out on purpose: ranger names, report text and places. It becomes public along with the rest of your report.
+      Technical details - your version, browser, how much is stored, and when the app did what.
+      Warnings and errors are included with email addresses, phone numbers and coordinates
+      removed, but they can still mention a name, so read the preview first. It becomes public
+      along with the rest of your report.
     </p>
     @if (showPreview()) {
       <pre class="feedback__preview" data-testid="feedback-diagnostics-preview">{{ report() }}</pre>

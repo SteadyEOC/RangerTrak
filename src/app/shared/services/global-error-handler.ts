@@ -2,6 +2,7 @@ import { ErrorHandler, inject, Injectable, Injector } from '@angular/core'
 import { MatSnackBar } from '@angular/material/snack-bar'
 import { Router } from '@angular/router'
 
+import { ReportItSnackbarComponent } from '../feedback/report-it-snackbar.component'
 import { redact } from '../redact'
 import { LogService } from './log.service'
 
@@ -29,6 +30,10 @@ export class GlobalErrorHandler implements ErrorHandler {
   // error is thrown (a circular DI at startup).
   private injector = inject(Injector)
   private lastPromptAt = 0
+  private promptCount = 0
+  /** John 10-28: "Max of 3 appearances" - per page session, plus "Don't show again". */
+  private static readonly MAX_PROMPTS = 3
+  private static readonly MUTE_KEY = 'rt-report-it-muted'
 
   constructor() {
     window.addEventListener('error', (ev: ErrorEvent) => {
@@ -67,15 +72,24 @@ export class GlobalErrorHandler implements ErrorHandler {
   private offerReport(error: unknown): void {
     try {
       const now = Date.now()
-      if (now - this.lastPromptAt < 60_000) {
+      if (now - this.lastPromptAt < 60_000 || this.promptCount >= GlobalErrorHandler.MAX_PROMPTS
+        || this.isMuted()) {
         return
       }
       this.lastPromptAt = now
+      this.promptCount++
       const first = (error instanceof Error ? error.message : String(error ?? '')).split('\n')[0]
       const draft = 'Something went wrong:\n' + redact(first).slice(0, 300) + '\n\nWhat I was doing: '
-      this.injector.get(MatSnackBar)
-        .open('Something went wrong.', 'Report it', { duration: 15000 })
-        .onAction().subscribe(() => {
+      const ref = this.injector.get(MatSnackBar)
+        .openFromComponent(ReportItSnackbarComponent, { duration: 15000 })
+      // sessionStorage, so "Don't show again" lasts until the tab closes - a reload alone
+      // would otherwise bring it straight back.
+      ref.afterDismissed().subscribe(() => {
+        if (ref.instance.muted) {
+          try { sessionStorage.setItem(GlobalErrorHandler.MUTE_KEY, '1') } catch { /* private mode */ }
+        }
+      })
+      ref.onAction().subscribe(() => {
           try {
             this.injector.get(Router).navigate(['/help'], {
               queryParams: { tab: 'feedback' },
@@ -86,6 +100,10 @@ export class GlobalErrorHandler implements ErrorHandler {
     } catch {
       // Nothing more to do: the error is already in the Log.
     }
+  }
+
+  private isMuted(): boolean {
+    try { return sessionStorage.getItem(GlobalErrorHandler.MUTE_KEY) === '1' } catch { return false }
   }
 
   private describe(error: unknown): string {
