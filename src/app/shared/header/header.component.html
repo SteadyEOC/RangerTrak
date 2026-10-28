@@ -15,6 +15,17 @@
          only ever used here, inside this unified pill). Plain CSS :hover/:focus-within reveal
          (.rt-mission-info-panel below), same proven pattern as that old per-dot tooltip used -
          no JS hover-tracking, no MatMenu open/close timing to get right. -->
+    <!-- 2026-10-28, John: a field phone has no mission of its own, so no mission name, op-period
+         timer or info panel. It shows the clock, Online/Offline, and its reports' send state. -->
+    @if (fieldMode.enabled()) {
+    <div class="status-cluster status-cluster--field" data-testid="header-field-status">
+      <span class="clock" [title]="clockDisplay()"><span class="clock__date">{{clockDate()}}, </span>{{clockTime()}}</span>
+      <span class="status-divider"></span>
+      <span class="field-status__net" [class.field-status__net--off]="!isOnline()">{{ isOnline() ? 'Online' : 'Offline' }}</span>
+      <span class="status-divider"></span>
+      <span class="field-status__reports" data-testid="header-field-reports">{{ fieldReportsLine() }}</span>
+    </div>
+    } @else {
     <div class="status-cluster" [class.rt-panel-open-touch]="panelOpenOnTouch()"
     [attr.data-mode]="usage.mode()"
     (click)="onStatusClusterClick($event)"
@@ -85,6 +96,7 @@
       </div>
     </div>
     </div>
+    }
 
     <!-- Material-M3 pass, 2026-08-25: the single entry point to this screen's reference
          material, in the same place on every page. What it opens used to be

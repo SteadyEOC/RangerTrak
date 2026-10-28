@@ -1,6 +1,7 @@
 import { Subscription, timer } from 'rxjs'
 
 import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core'
+import { toSignal } from '@angular/core/rxjs-interop'
 import { Router, RouterLink } from '@angular/router'
 import { MatButtonModule } from '@angular/material/button'
 import { MatIconModule } from '@angular/material/icon'
@@ -9,7 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar'
 
 import {
   AarNoteService, ClockService, FieldModeService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService,
-  OfflineBasemapService, UsageStateService, MissionModeType
+  OfflineBasemapService, RadioLogService, UsageStateService, MissionModeType
 } from '../services'
 import { Utility } from '../'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
@@ -56,6 +57,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
   /** E-04 / D-63: a field phone keeps the plain "AAR note" button; everyone else gets "AAR/214". */
   readonly fieldMode = inject(FieldModeService)
   private readonly aarNotes = inject(AarNoteService)
+
+  // 2026-10-28, John: a field phone's header reads "5 reports on this phone · 2 not sent yet".
+  private readonly radioLog = toSignal(inject(RadioLogService).getRadioLogObserver())
+  readonly fieldReportsLine = computed(() => {
+    const entries = this.radioLog()?.logEntries ?? []
+    const sent = this.fieldMode.sentUids()
+    const unsent = entries.filter(e => !e.uid || !sent.has(e.uid)).length
+    const on = `${entries.length} report${entries.length === 1 ? '' : 's'} on this phone`
+    if (!entries.length) return on
+    return `${on} · ${unsent ? `${unsent} not sent yet` : 'all sent'}`
+  })
+  readonly isOnline = signal(navigator.onLine)
+  private readonly onOnline = () => this.isOnline.set(true)
+  private readonly onOffline = () => this.isOnline.set(false)
 
   private id = 'Header component'
 
@@ -204,6 +219,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.missionService.settings) {
       this.onNewSettings(this.missionService.settings)
     }
+
+    window.addEventListener('online', this.onOnline)
+    window.addEventListener('offline', this.onOffline)
   }
 
   ngOnInit(): void {
@@ -383,5 +401,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.missionSubscription?.unsubscribe()
     this.clockSubscription?.unsubscribe()
     this.timeDisplaySubscription?.unsubscribe()
+    window.removeEventListener('online', this.onOnline)
+    window.removeEventListener('offline', this.onOffline)
   }
 }

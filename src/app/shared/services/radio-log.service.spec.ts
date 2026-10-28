@@ -376,6 +376,21 @@ describe('RadioLogService', () => {
       expect(built!.count).toBe(1);
       expect(built!.filename).toMatch(/\.txt$/);
     });
+
+    // 2026-10-28, John: a field phone has no mission of its own, so its packet names none.
+    it('leaves mission, event and op period blank on a field phone', () => {
+      localStorage.setItem('fieldMode', 'true');
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers: [provideHttpClient()] });
+      const mission = TestBed.inject(MissionService);
+      mission.updateMission({ ...mission.settings, mission: '26-0142', event: 'Storm', opPeriod: 'OP 1' });
+      const service = TestBed.inject(RadioLogService);
+      service.addRadioLogEntry(makeReport());
+
+      const parsed = JSON.parse(service.buildReportPacketText('REW-1')!.text);
+
+      expect([parsed.mission, parsed.event, parsed.opPeriod]).toEqual(['', '', '']);
+    });
   });
 
   describe('recalcRadioLogBounds (bounds calc)', () => {

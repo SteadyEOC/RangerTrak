@@ -119,11 +119,6 @@ $filledColor: var(--rt-surface-2);
   font-size    : var(--rt-type-body-sm-size);
   background   : var(--rt-surface-2);
   color        : var(--rt-ink-2);
-
-  &--offline {
-    background: var(--rt-notice);
-    color     : var(--rt-notice-ink);
-  }
 }
 
 // E-114 Phase 1: same plain-text-button treatment as .entry-welcome__demo's sibling controls,

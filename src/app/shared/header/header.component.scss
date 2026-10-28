@@ -330,6 +330,26 @@
     .status-divider--clock {
       display: none;
     }
+
+    // 2026-10-28, John: a field phone's pill has room for the clock (no op-period reading).
+    .status-cluster--field .clock {
+      display: inline;
+    }
+  }
+
+  .field-status__net,
+  .field-status__reports {
+    @include type.type-body-sm;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  // Was Entry's badge until 2026-10-28; same notice colours.
+  .field-status__net--off {
+    padding      : 0 0.4em;
+    border-radius: var(--rt-box-radius);
+    background   : var(--rt-notice);
+    color        : var(--rt-notice-ink);
   }
 
   // Material-M3 pass, 2026-08-25: the status cluster and the new Guide button share the

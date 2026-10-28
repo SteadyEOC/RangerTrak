@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { HeaderComponent } from './header.component';
 import { ViewService } from '../services/view.service';
-import { MissionType } from '../services';
+import { FieldModeService, MissionType, RadioLogEntryType, RadioLogService } from '../services';
 import { Utility } from '../';
 
 function settingsWith(mission: string, event: string): MissionType {
@@ -109,6 +109,35 @@ describe('HeaderComponent', () => {
       const items = component.readinessItems();
       expect(items.length).toBe(5);
       expect(items.some(i => i.label.includes('Alternative map warmed'))).toBeFalse();
+    });
+  });
+
+  // 2026-10-28, John: a field phone's header has no mission, timer or panel - just the clock,
+  // Online/Offline, and how many of its reports are not sent yet.
+  describe('on a field phone', () => {
+    beforeEach(() => {
+      TestBed.inject(FieldModeService).enabled.set(true);
+      fixture.detectChanges();
+    });
+    afterEach(() => localStorage.removeItem('fieldModeSentUids'));
+
+    it('shows the field readout instead of the mission pill', () => {
+      const root: HTMLElement = fixture.nativeElement;
+      expect(root.querySelector('[data-testid="header-field-status"]')).not.toBeNull();
+      expect(root.querySelector('.opPeriod')).toBeNull();
+      expect(root.querySelector('.rt-mission-info-panel')).toBeNull();
+      expect(root.textContent).toMatch(/Online|Offline/);
+    });
+
+    it('counts reports on this phone and the ones not sent yet', () => {
+      const log = TestBed.inject(RadioLogService);
+      const base = { ...log.getCurrentRadioLog() };
+      const entry = (uid: string) => ({ uid, date: new Date(), location: { lat: 47.4, lng: -122.4 } }) as unknown as RadioLogEntryType;
+      log.replaceAllRadioLog({ ...base, numReport: 3, logEntries: [entry('a'), entry('b'), entry('c')] });
+      TestBed.inject(FieldModeService).markSent(['a']);
+      expect(component.fieldReportsLine()).toBe('3 reports on this phone · 2 not sent yet');
+      TestBed.inject(FieldModeService).markSent(['b', 'c']);
+      expect(component.fieldReportsLine()).toBe('3 reports on this phone · all sent');
     });
   });
 

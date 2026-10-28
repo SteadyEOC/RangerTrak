@@ -3,6 +3,7 @@ import { Injectable, signal } from "@angular/core"
 import { LogService } from "./log.service"
 
 const FIELD_MODE_KEY = 'fieldMode'
+const SENT_UIDS_KEY = 'fieldModeSentUids'
 
 /**
  * E-114 §1a (2026-08-31, Private Roadmap.md): "lite mode" - a restricted device role for a
@@ -23,7 +24,27 @@ export class FieldModeService {
 
   readonly enabled = signal(localStorage.getItem(FIELD_MODE_KEY) === 'true')
 
+  /** 2026-10-28, John: the uids of the reports this phone has put in a Report Packet, so its
+   *  header can say how many are "not sent yet". A share or download counts as sent: the app
+   *  can't see what happens after the share sheet. */
+  readonly sentUids = signal<ReadonlySet<string>>(FieldModeService.readSent())
+
   constructor(private log: LogService) { }
+
+  private static readSent(): ReadonlySet<string> {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SENT_UIDS_KEY) ?? '[]')
+      return new Set(Array.isArray(raw) ? raw.filter(u => typeof u === 'string') : [])
+    } catch {
+      return new Set()
+    }
+  }
+
+  markSent(uids: readonly string[]): void {
+    const next = new Set([...this.sentUids(), ...uids])
+    localStorage.setItem(SENT_UIDS_KEY, JSON.stringify([...next]))
+    this.sentUids.set(next)
+  }
 
   enable(): void {
     localStorage.setItem(FIELD_MODE_KEY, 'true')
@@ -35,6 +56,7 @@ export class FieldModeService {
    *  (HelpStartComponent.onTurnOffFieldMode()), which confirms first and reloads after. */
   disable(): void {
     localStorage.removeItem(FIELD_MODE_KEY)
+    localStorage.removeItem(SENT_UIDS_KEY)
     this.enabled.set(false)
     this.log.info('Turned field mode (lite mode) off for this device.', this.id)
   }

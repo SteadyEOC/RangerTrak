@@ -98,9 +98,10 @@
        visible before any field is touched. Paired here with the "Send my reports" action
        (E-114 Phase 1) - the one place a field-mode device can reach it, since its route to
        RadioLogComponent's own identical button is hidden (fieldModeGuard). -->
+  <!-- 2026-10-28, John: Online/Offline moved up into the page header, beside the phone's
+       "not sent yet" count, so only the Send button stays here. -->
   @if (fieldMode.enabled()) {
-  <p class="entry-connectivity" [class.entry-connectivity--offline]="!isOnline()">
-    {{ isOnline() ? 'Online' : 'Offline' }}
+  <p class="entry-connectivity">
     <button type="button" class="entry-connectivity__send" (click)="onBtnSendMyReports()">
       Send my reports
     </button>

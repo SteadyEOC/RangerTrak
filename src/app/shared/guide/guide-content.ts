@@ -253,7 +253,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'A merged-in report is marked with a small 📦 in its own column (or next to the callsign on a phone) — a quick way to tell it apart from one typed directly on this device.',
               'A report that can\'t be read — a bad timestamp or an out-of-range position, usually a sign the file was hand-edited or corrupted — is skipped on its own and you\'re told how many, rather than the whole file being refused.',
               'Importing the exact same file twice is safe — the second time changes nothing, so there is no harm in re-sending one if you are not sure it landed.',
-              'If the file names a different mission than this device\'s current one, you are warned and asked to confirm before anything is merged in.',
+              'If the file names a different mission than this device\'s current one, you are warned and asked to confirm before anything is merged in. A field phone\'s packet names no mission, so instead you are warned if any of its reports are dated before this mission started or in the future (an old packet, or a phone clock that is wrong).',
               'The file names real people and describes an active incident — treat it like a printed page from the log: keep it on a device you control, and delete it once its reports are safely merged in here.'
             ]
           },

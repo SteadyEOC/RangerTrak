@@ -435,7 +435,7 @@ export class RadioLogService {
    * Returns null when there is nothing to send - both callers show the identical "no reports
    * yet" message either way, so this stays a decision this method makes once.
    */
-  public buildReportPacketText(operator: string): { text: string; filename: string; count: number } | null {
+  public buildReportPacketText(operator: string): { text: string; filename: string; count: number; uids: string[] } | null {
     const entries = this.getCurrentRadioLog().logEntries
     if (!entries.length) {
       return null
@@ -445,9 +445,12 @@ export class RadioLogService {
     // already use for "Should not import the named export ... from default-exporting module."
     const appVersion = JSON.parse(JSON.stringify(packageJson)).version
 
+    // 2026-10-28, John: a field phone has no mission of its own (its header shows none), so its
+    // packet names none. The command post skips the name check when it is blank and checks the
+    // reports' times instead (packet-time-check.ts).
     const packet = buildReportPacket({
       entries,
-      settings: this.settings,
+      settings: this.fieldMode.enabled() ? { mission: '', event: '', opPeriod: '' } : this.settings,
       operator,
       appVersion,
     })
@@ -455,6 +458,7 @@ export class RadioLogService {
       text: JSON.stringify(packet, null, 2),
       filename: reportPacketFilename(packet.mission, packet.exportedAt),
       count: entries.length,
+      uids: entries.map(e => e.uid).filter((u): u is string => !!u),
     }
   }
 

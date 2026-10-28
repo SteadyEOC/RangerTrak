@@ -629,11 +629,12 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       alert('There are no reports on this device to send yet.')
       return
     }
-    const { text, filename, count } = built
+    const { text, filename, count, uids } = built
     // D-60 item 6: this phone's photos go beside the .txt, in the same share.
     const media = await this.radioLogService.reportPacketMedia()
     const outcome = await sendReportPacket(text, filename, media, this.document,
       (why) => this.log.warn(`Sharing the Report Packet was cancelled or failed, so it was downloaded instead: ${why}`, this.id))
+    this.fieldMode.markSent(uids)   // the header's "not sent yet" count
     if (outcome === 'downloaded') {
       this.journal.record('packet-exported', `Downloaded Report Packet: ${filename} (${count} reports, ${media.length} files).`)
       return
@@ -679,8 +680,6 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.tryGpsAutoFill()
 
-    window.addEventListener('online', this.onOnline)
-    window.addEventListener('offline', this.onOffline)
   }
 
   /**
@@ -732,19 +731,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     )
   }
 
-  /**
-   * E-114 §2b (2026-08-31): "flag immediately if the connection is unavailable" - shown only
-   * on a field-mode device (see the template), since a command-post laptop's own online/
-   * offline state has never mattered to Entry (this app is offline-first by design for
-   * everyone, per the welcome panel's own text). Same plain `navigator.onLine`/online/
-   * offline idiom `location.component.ts`'s own `isOnline` already established, reused
-   * rather than a new shared service - deliberately narrow for now: informational only, not
-   * wired to block submission or to the actual hand-off transport yet (§2's queued-transport
-   * design is still open - see Private Roadmap.md's own open questions).
-   */
-  isOnline = signal(navigator.onLine)
-  private readonly onOnline = () => this.isOnline.set(true)
-  private readonly onOffline = () => this.isOnline.set(false)
+  // E-114 §2b's Online/Offline badge lived here until 2026-10-28; it is in the page header now
+  // (HeaderComponent, field phone only).
 
 
   /**
@@ -1268,7 +1256,5 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.rangersSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()
     //this.timeSubscription?.unsubscribe()
-    window.removeEventListener('online', this.onOnline)
-    window.removeEventListener('offline', this.onOffline)
   }
 }

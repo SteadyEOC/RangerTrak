@@ -94,7 +94,7 @@ describe('EntryComponent', () => {
     it('falls back to a download when Web Share is unavailable', async () => {
       const radioLog = TestBed.inject(RadioLogService);
       spyOn(radioLog, 'buildReportPacketText').and.returnValue({
-        text: '{"entries":[]}', filename: 'rangertrak-report-packet-test.txt', count: 1,
+        text: '{"entries":[]}', filename: 'rangertrak-report-packet-test.txt', count: 1, uids: [],
       });
       // Forced false regardless of whether this particular Chrome build actually implements
       // Web Share (headless environments vary) - deterministic either way, and exercises the

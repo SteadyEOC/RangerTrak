@@ -46,6 +46,7 @@ import { escapeHtml } from '../shared/escape-html'
 import { capGridToScreens, GRID_MAX_SCREENS } from '../shared/grid-width-cap'
 import { AttachmentViewerService } from '../shared/attachments/attachment-viewer.service'
 import { parseReportPacket, REPORT_PACKET_SCHEMA_VERSION } from '../shared/export/report-packet'
+import { checkPacketTimes, packetTimeWarning } from '../domain/packet-time-check'
 import { diagnoseFile, REPORT_PACKET_DAMAGED_MESSAGE } from '../shared/export/import-file'
 import { MISSION_EXPORT_SCHEMA_VERSION } from '../shared/services/backup.service'
 import { sendReportPacket } from '../shared/export/report-packet-send'
@@ -1221,6 +1222,21 @@ export class RadioLogComponent implements OnInit, OnDestroy {
           + `is "${currentMission}".\n\nImport its ${packet.entries.length} report`
           + `${packet.entries.length === 1 ? '' : 's'} anyway?`)) {
           this.log.verbose('onReportPacketFileSelected: user cancelled on mission mismatch.', this.id)
+          return
+        }
+      }
+
+      // 2026-10-28, John: a field phone's packet names no mission, so ask about time instead:
+      // reports from before this mission started, or from the future. Warn, never block (D-46).
+      // A catch-up file in Exercise mode carries scenario times, so it is left alone.
+      if (!(isCatchUp && inExercise)) {
+        const check = checkPacketTimes({
+          incoming: packet.entries, existing: this.radioLogService.getCurrentRadioLog().logEntries,
+          opPeriodStart: this.settings?.opPeriodStart, now: Date.now(),
+        })
+        const warning = packetTimeWarning(check, packet.entries.length, d => d.toLocaleString([], { hour12: false }))
+        if (warning && !confirm(warning)) {
+          this.log.verbose('onReportPacketFileSelected: user cancelled on report times outside this mission.', this.id)
           return
         }
       }
