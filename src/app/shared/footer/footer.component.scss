@@ -72,6 +72,9 @@
   // name) had no room of its own and sat flush against the viewport edge. Matches the
   // existing left margin rather than inventing a new value.
   margin-right: 1vw;
+  // 2026-10-28, John: the Install pill (this row's tallest item) ran into the page bottom.
+  // Matches the hr's 8px margin above the row, so the row sits evenly between the two.
+  padding-bottom: 0.5rem;
 }
 
 .rt-footer__mode {
