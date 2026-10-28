@@ -232,7 +232,7 @@
          found it. A field phone's menu now has it too. -->
     @if (fieldMode.enabled()) {
     <li><button type="button" class="nav-link-button" data-testid="nav-leave-field-mode"
-        (click)="closeNav(); fieldMode.confirmAndTurnOff()"
+        (click)="closeNav(); onLeaveFieldMode()"
         title="Bring back every page: roster, map, radio log and Mission">Leave field mode</button></li>
     }
     <li *ngIf="isNavigating()" class="Navbar__progressBar">Loading... <span class="smaller"> (Please 'Refresh' the

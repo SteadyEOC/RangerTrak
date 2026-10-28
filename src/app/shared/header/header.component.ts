@@ -62,8 +62,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly radioLog = toSignal(inject(RadioLogService).getRadioLogObserver())
   readonly fieldReportsLine = computed(() => {
     const entries = this.radioLog()?.logEntries ?? []
-    const sent = this.fieldMode.sentUids()
-    const unsent = entries.filter(e => !e.uid || !sent.has(e.uid)).length
+    const unsent = this.fieldMode.unsentCount(entries)
     const on = `${entries.length} report${entries.length === 1 ? '' : 's'} on this phone`
     if (!entries.length) return on
     return `${on} · ${unsent ? `${unsent} not sent yet` : 'all sent'}`

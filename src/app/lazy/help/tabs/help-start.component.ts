@@ -6,6 +6,7 @@ import { DemoPickerComponent } from '../../../shared/demo-picker/demo-picker.com
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import { MoreAboutComponent } from '../../../shared/view/more-about.component'
 import { FieldModeService } from '../../../shared/services/field-mode.service'
+import { RadioLogService } from '../../../shared/services/radio-log.service'
 
 /**
  * Help tab: the first five minutes on a new device, as one linear checklist, plus reference
@@ -35,7 +36,7 @@ import { FieldModeService } from '../../../shared/services/field-mode.service'
 })
 export class HelpStartComponent {
 
-  constructor(public fieldMode: FieldModeService) { }
+  constructor(public fieldMode: FieldModeService, private radioLog: RadioLogService) { }
 
   /**
    * E-142 (2026-09-29, John): the way out of field mode. Lives in Help because Help is one of
@@ -44,6 +45,6 @@ export class HelpStartComponent {
    * it reveals nothing but this phone's own reports.
    */
   onTurnOffFieldMode(): void {
-    this.fieldMode.confirmAndTurnOff()
+    this.fieldMode.confirmAndTurnOff(this.fieldMode.unsentCount(this.radioLog.getCurrentRadioLog().logEntries))
   }
 }

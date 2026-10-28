@@ -50,6 +50,11 @@ export class NavbarComponent implements OnInit {
     this.navOpen.set(false)
   }
 
+  /** 2026-10-28, John: "Leave field mode", which warns if any reports have not been sent. */
+  onLeaveFieldMode(): void {
+    this.fieldMode.confirmAndTurnOff(this.fieldMode.unsentCount(this.radioLog.getCurrentRadioLog().logEntries))
+  }
+
   protected readonly skins = SKINS
 
   /**

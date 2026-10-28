@@ -40,6 +40,12 @@ export class FieldModeService {
     }
   }
 
+  /** How many of these reports have not been in a Report Packet yet. */
+  unsentCount(entries: readonly { uid?: string }[]): number {
+    const sent = this.sentUids()
+    return entries.filter(e => !e.uid || !sent.has(e.uid)).length
+  }
+
   markSent(uids: readonly string[]): void {
     const next = new Set([...this.sentUids(), ...uids])
     localStorage.setItem(SENT_UIDS_KEY, JSON.stringify([...next]))
@@ -56,10 +62,17 @@ export class FieldModeService {
    *  from the field phone's menu ("Leave field mode") as well as Help's "Turn off field mode",
    *  so the confirm and reload live here. Nav and route gating read enabled() at construction
    *  time, so a reload is the reliable reset (same as EntryComponent.onEnableFieldMode()). */
-  confirmAndTurnOff(): void {
-    if (!confirm('Turn off field mode on this device?\n\n'
-      + 'Every page comes back to the menu: the roster, map, radio log and Mission. '
-      + 'Reports already on this device stay.')) {
+  confirmAndTurnOff(unsent: number): void {
+    // 2026-10-28, John: leaving forgets which reports were sent, and a full-app packet names this
+    // device's mission, so warn when some have not gone out yet and point at Send my reports.
+    const message = unsent
+      ? `${unsent} report${unsent === 1 ? ' on this phone has' : 's on this phone have'} not been sent yet.\n\n`
+        + 'To send them first, choose Cancel, then Send my reports on Entry.\n\n'
+        + 'Leave field mode anyway? The reports stay on this device.'
+      : 'Turn off field mode on this device?\n\n'
+        + 'Every page comes back to the menu: the roster, map, radio log and Mission. '
+        + 'Reports already on this device stay.'
+    if (!confirm(message)) {
       return
     }
     this.disable()
