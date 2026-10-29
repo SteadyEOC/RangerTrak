@@ -122,6 +122,28 @@ svg.trail { display: block; width: 100%; min-width: 560px; margin: .5rem 0 1rem;
 .tabs .overall { margin-left: auto; padding-left: 1rem; color: var(--muted); font-size: .9rem; white-space: nowrap; }
 #done-count { font-weight: 700; color: var(--done); }
 
+/* Search: a box beside the tabs, its hits in a panel under the bar */
+.tabrow { display: flex; align-items: center; gap: .5rem; padding-right: 12px; }
+.tabrow .tabs { flex: 1; min-width: 0; }
+.search { display: flex; align-items: center; gap: .4rem; flex: 0 1 15rem; min-width: 9rem; padding: 0 .7rem;
+  border: 1px solid var(--rule); border-radius: 999px; color: var(--muted); background: var(--bg); }
+.search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--fg); font: inherit; font-size: .95rem;
+  padding: .45rem 0; outline: none; }
+.search[hidden], .hits[hidden] { display: none; }
+.hits { position: absolute; top: 100%; right: 12px; width: min(32rem, calc(100vw - 32px)); max-height: min(70vh, 32rem);
+  overflow-y: auto; padding: .3rem; background: var(--bg); border: 1px solid var(--rule); border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .2); }
+.hits .count { margin: .3rem .55rem .4rem; color: var(--muted); font-size: .85rem; }
+.hits a { display: block; padding: .45rem .6rem; border-radius: 6px; text-decoration: none; color: var(--fg); }
+.hits a:hover, .hits a:focus-visible { background: var(--tint); outline: 2px solid var(--accent); outline-offset: -2px; }
+.hits .h { font-weight: 600; color: var(--accent); }
+.hits .w { margin-left: .5rem; font-size: .8rem; color: var(--muted); }
+.hits .s { display: block; margin-top: .1rem; font-size: .9rem; color: var(--muted); }
+.hits mark { background: none; color: var(--fg); font-weight: 700; text-decoration: underline 2px var(--signal); }
+.found { animation: found 2.5s ease-out; }
+@keyframes found { from { background: var(--tint); box-shadow: 0 0 0 3px var(--accent); } }
+
 .layout { display: grid; grid-template-columns: 15.5rem minmax(0, 46rem); justify-content: center; gap: 0 1.5rem; }
 .side { position: sticky; top: 6.5rem; align-self: start; padding: 1.25rem 0 1rem 12px; max-height: calc(100vh - 7rem); overflow-y: auto; }
 .side ol { list-style: none; margin: 0; padding: 0; }
@@ -178,9 +200,12 @@ a.next { margin-left: auto; }
   .applinks { display: none; }
   .openapp { display: inline-block; }
   .tabs .overall { display: none; }
+  .tabrow { flex-wrap: wrap; padding-right: 0; }
+  .search { flex: 1 1 100%; margin: 0 16px .5rem; }
+  .hits { left: 16px; right: 16px; width: auto; }
 }
 @media print {
-  .tabs, .appbar { display: none; }
+  .tabs, .appbar, .search, .hits { display: none; }
   input.tick { accent-color: #000; }
   .view[hidden] { display: none; }
 }

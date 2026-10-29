@@ -45,6 +45,7 @@ GLYPHS = {
     'tell': '<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/>',
     'sheet': '<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4V2h6v2M8.5 12l2 2 4-4"/>',
     'print': '<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2"/><rect x="6" y="14" width="12" height="7"/>',
+    'search': '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>',
 }
 
 
@@ -380,6 +381,7 @@ HEAD = '''<!doctype html>
     <nav class="applinks" aria-label="RangerTrak">{applinks}</nav>
     <a class="openapp" href="/">Open the app →</a>
   </div>
+  <div class="tabrow">
   <nav class="tabs" aria-label="Tour Guide">
     <a href="#start">{i_start}<span>Start</span></a>
     <a href="#m1" id="tab-modules">{i_modules}<span>Modules</span></a>
@@ -387,6 +389,10 @@ HEAD = '''<!doctype html>
     <a href="#sheet">{i_sheet}<span>Checklist</span></a>
     <span class="overall"><span id="done-count">0</span> of {total} done</span>
   </nav>
+  <div class="search" role="search" hidden>{i_search}<input type="search" id="tour-q" placeholder="Search the Tour"
+    aria-label="Search the Tour" aria-controls="tour-hits" autocomplete="off"></div>
+  </div>
+  <div class="hits" id="tour-hits" hidden></div>
 </header>
 <div class="layout">
 {side}
@@ -418,6 +424,7 @@ if __name__ == '__main__':
             .replace('{applinks}', ''.join(f'<a href="{h}">{t}</a>' for h, t in APP_LINKS))
             .replace('{i_start}', glyph('start')).replace('{i_modules}', glyph('modules'))
             .replace('{i_tell}', glyph('tell')).replace('{i_sheet}', glyph('sheet'))
+            .replace('{i_search}', glyph('search'))
             .replace('{total}', str(total)).replace('{side}', side))
     tail = TAIL.replace('{rows}', rows).replace('{i_print}', glyph('print', 16))
     with open(dst, 'w', encoding='utf-8', newline='\n') as f:
