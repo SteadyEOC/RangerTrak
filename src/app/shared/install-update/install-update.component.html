@@ -1,8 +1,8 @@
 <!-- E-168 (2026-10-01, John): while real work is going on the full-width Reload bar is not shown
-     (the footer's quiet chip stays, now saying to reload when convenient), and the install offer
+     (the quiet chip, saying to reload when convenient, shows instead: E-236), and the install offer
      is not made. Nothing is dropped: both come back when the mission quiets down. -->
-@if (updateReady && showUpdate && !(detailed && usage.quiet())) {
-  @if (detailed) {
+@if (updateReady && showUpdate) {
+  @if (detailed && !usage.quiet()) {
     <!-- [stickyBottom] gets its own class so it can be pinned to the viewport (see .scss) -
          independent of whatever this instance is nested inside (currently only the footer). -->
     <div class="rt-install-update rt-install-update--update" [class.rt-install-update--sticky-bottom]="stickyBottom"
@@ -22,7 +22,10 @@
          the pill's own `overflow: hidden` (needed elsewhere to clip the button/help-icon
          zones to the pill's rounded ends) - the panel is a sibling of the pill, not a
          child of it. -->
-    <span class="rt-install-update__anchor">
+    <!-- E-236 (John 10-28): a [detailed] instance used to show nothing while live, so a phone
+         (live most of the time it is in use) had the notice only in the footer, far below.
+         Now it shows this quiet chip in the same place instead of the full bar. -->
+    <span class="rt-install-update__anchor" [class.rt-install-update__anchor--header]="detailed">
       <div class="rt-install-update rt-install-update--update" [class.rt-install-update--sticky-bottom]="stickyBottom">
         <button type="button" class="rt-install-update__main" (click)="onReload()">
           <svg class="rt-install-update__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">

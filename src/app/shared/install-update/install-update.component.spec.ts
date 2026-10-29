@@ -99,4 +99,26 @@ describe('InstallUpdateComponent', () => {
       expect(fixture.nativeElement.querySelector('.rt-install-update__text')).not.toBeNull();
     });
   });
+
+  // E-236 (John 10-28): the app-wide [detailed] instance under the navbar showed nothing while
+  // live, so a phone in use saw the update only in its footer.
+  describe('[detailed]=true while live (E-236)', () => {
+    it('shows the quiet chip in place of the full Reload bar', () => {
+      fixture.componentRef.setInput('detailed', true);
+      (TestBed.inject(UsageStateService).quiet as ReturnType<typeof signal<boolean>>).set(true);
+      TestBed.inject(UpdateService).updateReady.set(true);
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.rt-install-update--detailed')).toBeNull();
+      expect(el.querySelector('.rt-install-update__anchor--header')).not.toBeNull();
+      expect(el.querySelector('.rt-install-update__main')?.textContent).toContain('reload when convenient');
+    });
+
+    it('still shows the full bar when not live', () => {
+      fixture.componentRef.setInput('detailed', true);
+      TestBed.inject(UpdateService).updateReady.set(true);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.rt-install-update--detailed')).not.toBeNull();
+    });
+  });
 });
