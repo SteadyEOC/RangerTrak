@@ -75,6 +75,7 @@ describe('mission journal chain', () => {
     const list = chain(2)
     expect(describeCheck(verifyJournal(list))).toMatch(/^Journal intact: 2 entries, latest [0-9a-f]{4}…[0-9a-f]{4}$/)
     expect(describeCheck(verifyJournal([{ ...list[0], summary: 'x' }, list[1]]))).toBe('Journal broken at entry 1')
+    expect(describeCheck(verifyJournal(chain(1)))).toMatch(/^Journal intact: 1 entry, latest /)
   })
 })
 

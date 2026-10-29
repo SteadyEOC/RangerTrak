@@ -201,7 +201,7 @@ export function describeCheck(check: JournalCheck): string {
     const first = check.trimmedBefore + 1
     return `Intact from entry ${first.toLocaleString('en-US')} (${check.trimmedBefore.toLocaleString('en-US')} earlier entries trimmed), latest ${latest}`
   }
-  return `Journal intact: ${check.count.toLocaleString('en-US')} entries, latest ${latest}`
+  return `Journal intact: ${check.count.toLocaleString('en-US')} ${check.count === 1 ? 'entry' : 'entries'}, latest ${latest}`
 }
 
 const CSV_HEADINGS = ['seq', 'at', 'mission', 'mode', 'action', 'summary', 'prev', 'hash']
