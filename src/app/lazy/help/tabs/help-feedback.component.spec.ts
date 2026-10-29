@@ -52,10 +52,11 @@ describe('HelpFeedbackComponent', () => {
     expect(link).not.toBeNull();
   });
 
-  // E-207 / D-62: the debug Log is advanced; Simple view leaves it out of Help.
-  it('leaves the Log link out in Simple view but keeps the feedback form', () => {
+  // E-207 / D-62 left the Log link out of Simple view while it hung off Debug mode. E-258
+  // (2026-10-28) retired Debug mode and made the Diagnostic log section always shown.
+  it('keeps the feedback form and the Log link in Simple view too', () => {
     useView('simple');
     expect(fixture.nativeElement.textContent).toContain("What's on your mind?");
-    expect(fixture.nativeElement.querySelector('a[href="/log"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href="/log"]')).not.toBeNull();
   });
 });
