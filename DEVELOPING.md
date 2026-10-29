@@ -38,6 +38,12 @@ with SPA fallback and HTTP range support. Range support is required — the PMTi
 is fetched by byte range. It also serves `.mjs` as `text/javascript`, which the MapLibre
 module worker requires; **any production host needs that same MIME mapping.**
 
+**After editing a Help tab** (`src/app/lazy/help/tabs/*.html`), run
+`node tools/help-index/build.js` and commit the regenerated
+`src/app/shared/guide/help-index.generated.ts`: it is the index behind Help's search box and
+the 404 page's suggestions. CI runs `npm run check:help-index` and stops a deploy when the
+index is stale. The screens' Guide text (`guide-content.ts`) is searched directly and needs no step.
+
 ## Testing
 
 ```bash

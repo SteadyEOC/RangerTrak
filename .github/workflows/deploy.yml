@@ -56,6 +56,11 @@ jobs:
       - name: Icon font subset covers every icon used
         run: npm run check:icons
 
+      # E-264: Help's search index is generated from the Help tab templates; a stale one
+      # would search yesterday's text.
+      - name: Help search index matches the Help tabs
+        run: npm run check:help-index
+
       # The suite is expected to be all green (80 specs). Deploying past a red
       # suite to an emergency-response tool is not a trade worth making.
       - name: Unit tests

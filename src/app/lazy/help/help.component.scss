@@ -127,6 +127,12 @@ filter: brightness(30%);
   font-weight : bold;
 }
 
+// E-264: the search box, between the heading and the section pills.
+.help-search-row {
+  display     : block;
+  margin-block: 0.75rem 0.25rem;
+}
+
 .imgCredit {
   text-align: right;
   font-size : x-small;

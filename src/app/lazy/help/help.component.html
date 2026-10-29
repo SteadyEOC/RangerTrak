@@ -24,6 +24,9 @@
     <!-- John 2026-10-27: one Help navigation, the same row of pills as the Help drawer
          (HELP_SECTIONS), with "Take the Tour!" at the end of the row. A mat-tab-group cannot
          hold a link in its tab strip, so this is a row of buttons over one section body. -->
+    <!-- E-264 (tester, 2026-10-28): search every Help tab and every screen's Guide. -->
+    <rangertrak-help-search class="help-search-row"></rangertrak-help-search>
+
     <div class="help-tabs">
       <nav class="help-nav" aria-label="Help sections">
         @for (section of sections; track section.key; let i = $index) {

@@ -1,0 +1,38 @@
+<div class="help-search" role="search">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="help-search__field">
+    <mat-label>Search Help</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input matInput type="search" data-testid="help-search" autocomplete="off" [value]="query()"
+      (input)="onInput($any($event.target).value)" (keydown.escape)="clear()" />
+    @if (query()) {
+    <button matIconButton matSuffix type="button" aria-label="Clear the search" (click)="clear()">
+      <mat-icon>close</mat-icon>
+    </button>
+    }
+  </mat-form-field>
+
+  @if (loadFailed()) {
+  <p class="help-search__none">Help could not be loaded. Check the connection and try again.</p>
+  } @else if (query().trim().length >= 2) {
+  <p class="help-search__count" aria-live="polite">
+    @if (hits().length) {
+    {{ hits().length }} {{ hits().length === 1 ? 'section' : 'sections' }} found
+    } @else {
+    Nothing in Help matches that. Try fewer or different words.
+    }
+  </p>
+  @if (hits().length) {
+  <ul class="help-search__hits" data-testid="help-search-hits">
+    @for (hit of hits(); track hit.where + hit.heading) {
+    <li>
+      <button type="button" class="help-search__hit" (click)="go(hit)">
+        <span class="help-search__heading">{{ hit.heading }}</span>
+        <span class="help-search__where">{{ hit.where }}</span>
+        <span class="help-search__snippet">@for (part of hit.snippet; track $index) {@if (part.match) {<mark>{{ part.text }}</mark>} @else {{{ part.text }}}}</span>
+      </button>
+    </li>
+    }
+  </ul>
+  }
+  }
+</div>

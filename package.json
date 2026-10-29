@@ -23,6 +23,7 @@
     "check:regional": "node tools/check-regional-tools.js",
     "check:storage": "node tools/check-storage-inventory.js",
     "check:icons": "node tools/icon-font/scan.js --check",
+    "check:help-index": "node tools/help-index/build.js --check",
     "test:regional": "node tools/regional/demo/test-demo-region.js && node tools/regional/demo/test-make-montecito-demo.js && node tools/regional/demo/test-make-oso-demo.js",
     "deploy": "run-s build check:secrets deploy:only",
     "deploy:only": "wrangler deploy",

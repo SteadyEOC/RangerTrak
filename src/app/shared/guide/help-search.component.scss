@@ -1,0 +1,64 @@
+// E-264: the Help search box and its results. Theme tokens only, so it reads the same in every
+// skin and scheme; one column, so it fits a 360 px phone.
+.help-search {
+  max-width: 44rem;
+}
+
+.help-search__field {
+  width: 100%;
+}
+
+.help-search__count,
+.help-search__none {
+  margin: 0.5rem 0;
+  color : var(--rt-ink-2);
+}
+
+.help-search__hits {
+  list-style: none;
+  margin    : 0 0 1rem;
+  padding   : 0;
+  display   : grid;
+  gap       : 0.5rem;
+}
+
+.help-search__hit {
+  display      : grid;
+  gap          : 0.15rem;
+  width        : 100%;
+  min-height   : var(--rt-tap-min);
+  padding      : 0.5rem 0.75rem;
+  text-align   : left;
+  font         : inherit;
+  color        : var(--rt-ink);
+  background   : var(--rt-surface);
+  border       : 1px solid var(--rt-line);
+  border-radius: var(--rt-box-radius);
+  cursor       : pointer;
+}
+
+.help-search__hit:hover,
+.help-search__hit:focus-visible {
+  border-color: var(--rt-accent);
+  outline     : none;
+}
+
+.help-search__heading {
+  font-weight: 600;
+}
+
+.help-search__where {
+  font-size: 0.8rem;
+  color    : var(--rt-ink-2);
+}
+
+.help-search__snippet {
+  font-size  : 0.9rem;
+  line-height: 1.4;
+}
+
+.help-search__snippet mark {
+  background   : var(--rt-notice);
+  color        : var(--rt-notice-ink);
+  border-radius: 2px;
+}
