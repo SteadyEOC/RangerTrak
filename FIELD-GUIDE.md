@@ -154,6 +154,14 @@ Look for the **Install** button in the top-right of the header. Installing gives
 proper icon, a window without browser clutter, and makes the device far more likely to
 keep your data.
 
+No Install button? It shows only when the browser offers to install, and it is held back
+while a mission is under way. Install from the browser instead: in Chrome or Edge, the icon
+at the right of the address bar or the browser menu; on Android, the menu's **Add to Home
+screen**; on iPhone or iPad, **Share** then **Add to Home Screen**; in Safari on a Mac,
+**File** then **Add to Dock**. Firefox on a computer, a private window, and the built-in
+browser of an email or chat app can't install: open rangertrak.org in Chrome or Edge, in an
+ordinary window. Help → FAQ has the details.
+
 On an iPhone or iPad, do this *before* setting up a mission or loading a map file. An
 installed (Home Screen) app keeps its own storage, separate from Safari's — a mission
 started in a Safari tab will not appear once you install. If you already started in

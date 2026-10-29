@@ -146,6 +146,33 @@
     </ul>
   </rangertrak-expandable-section>
 
+  <!-- E-239 (2026-10-29): when the Install button doesn't show, and how to install anyway.
+       The button appears only when the browser fires beforeinstallprompt, and is held back
+       while a mission is live (usage.quiet(); see install-update.component.html). -->
+  <rangertrak-expandable-section summary="There's no Install button. How do I install anyway?">
+    The <span class="ui">Install</span> button shows only when your browser offers to install the
+    app, and RangerTrak holds it back while a mission is under way. You can still install from the
+    browser itself:
+    <ul>
+      <li><strong>During a mission:</strong> in Chrome or Edge, use the install icon at the right of
+        the address bar, or the browser menu (<em>Install RangerTrak</em>, or <em>Cast, save and
+        share</em> then <em>Install page as app</em>). On an Android phone, use the menu,
+        <em>Add to Home screen</em>, then <em>Install</em>.</li>
+      <li><strong>Already installed:</strong> there is nothing to do. Open RangerTrak from its icon
+        rather than a browser tab.</li>
+      <li><strong>iPhone or iPad:</strong> there is never a button. Tap <em>Share</em>, then
+        <em>Add to Home Screen</em>. Do this before you set up a mission: the installed app does
+        not see what you did in the browser tab.</li>
+      <li><strong>Safari on a Mac:</strong> choose <em>File</em>, then <em>Add to Dock</em>.</li>
+      <li><strong>Firefox on a computer:</strong> it does not install web apps. Install from Chrome
+        or Edge, or keep using the Firefox tab and back up the mission often.</li>
+      <li><strong>Opened from a link in an email, chat or social app:</strong> that app's own
+        built-in browser can't install. Use its menu to open the page in your real browser.</li>
+      <li><strong>Private or incognito window:</strong> it can't install, and everything is wiped
+        when the window closes. Open rangertrak.org in an ordinary window.</li>
+    </ul>
+  </rangertrak-expandable-section>
+
   <rangertrak-expandable-section summary="I pressed Print but it saved a PDF instead.">
     Every Print button opens your browser's own print dialog, and the browser starts on the
     last place you printed to, which is often "Save as PDF". Choose your printer there once;
