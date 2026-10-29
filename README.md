@@ -92,11 +92,17 @@ the place for comments and feature suggestions, and
 neither is a complete picture of day-to-day work. A consolidated public `ROADMAP.md` will
 follow once the next release's scope is firm.
 
-Note on version numbers: the minor version bumps **rapidly and deliberately**. `0.x.0` means
-"a meaningful batch of work landed," not "this is stable and supported." The release others
-are actively encouraged to adopt will be `1.0.0-rc.1`, and it is not near.
+Note on version numbers: RangerTrak is in **beta**. Releases are tagged `1.0.0-beta.N`
+about weekly; changes between them go live as they land, and the footer shows the build date
+and commit. Beta means "ready to try in exercises and tell us what breaks," not "stable and
+supported." The release others are actively encouraged to adopt will be `1.0.0-rc.1`.
 
 Known gaps worth stating plainly:
+
+- **Nothing syncs between devices.** Each device keeps its own log, and logs move only as
+  files someone sends and merges by hand: a scribe's hand-over file, or a field phone's report
+  packet. The optional Board shows a read-only copy of one device's log to others on the
+  station's Wi-Fi.
 
 - It will not **interrupt** you. Overdue teams are shaded green through red on the map, the
   roster and the Radio Log, against your mission's own check-in interval — but nothing beeps
