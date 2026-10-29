@@ -383,6 +383,21 @@ async function importRoster(filePath, label = 'Add to roster') {
   return await clickImportDialog(label)
 }
 
+/**
+ * Replace roster, whatever the device's usage state. Outside a live mission it is one confirm(),
+ * which the default handler accepts. On a live one (real rangers beside the seeded op period that
+ * is "running now") the guard first asks "back it up first?", where OK means stop: the import
+ * dialog stays open, so press Replace again, carrying on without a backup and typing REPLACE.
+ */
+async function replaceRoster(filePath) {
+  const before = dialogs.length
+  await importRoster(filePath, 'Replace roster')
+  await sleep(500)
+  if (!dialogs.slice(before).some(d => d.startsWith('This mission looks like it is in use'))) return
+  queueDialogs(false, 'REPLACE')
+  await clickImportDialog('Replace roster')
+}
+
 async function goto(route, settleMs = 3500) {
   consoleErrors.length = 0
   await send('Page.navigate', { url: BASE + route })
@@ -1087,7 +1102,7 @@ async function checkMapLayers(fx) {
 async function checkRangerDeleteOne(fx) {
   console.log('\nRangers (E-262): a row added by mistake can be deleted on its own')
   await goto('/rangers')
-  await importRoster(fx.rosterPath, 'Replace roster')
+  await replaceRoster(fx.rosterPath)
   await sleep(2000)
   await goto('/rangers')
   const count = () => evaluate(`parseInt(document.querySelector('.rangers__actions .rt-action-bar__status')?.textContent || '-1', 10)`)
@@ -1115,7 +1130,7 @@ async function checkRosterChangesExport(fx) {
   console.log('\nExport changes since import: only what changed after the import comes back')
   await goto('/rangers')
   // Replace (not Add): the baseline must be the whole roster, and earlier checks left other rows here.
-  await importRoster(fx.rosterPath, 'Replace roster')
+  await replaceRoster(fx.rosterPath)
   // Wait for THIS import's baseline (named for the file), not merely a big enough one: earlier checks
   // left a baseline behind, and E-187's import no longer reloads the page after saving.
   const baselineRows = await pollUntil(
@@ -1149,7 +1164,7 @@ async function checkRosterChangesExport(fx) {
   check('...marked as added, with its uid', cells[0] === 'added' && !!cells[cells.length - 1], true)
 
   await goto('/rangers')
-  await importRoster(fx.rosterPath, 'Replace roster')
+  await replaceRoster(fx.rosterPath)
   await pollUntil(async () => (JSON.parse((await idbGetRaw('rangers')) || '{"rangers":[]}').rangers || []).length,
     n => n === fx.rangers.length)
 }
