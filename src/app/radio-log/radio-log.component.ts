@@ -20,6 +20,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox'
 import { MatSelectModule } from '@angular/material/select'
 import { FilterChipsComponent } from '../shared/filter-chips/filter-chips.component';
 import { describeGridFilters, FilterChip } from '../domain/grid-filter-chips';
+import { hasOtherOpPeriod, isCurrentOpPeriod } from '../domain/op-period';
 
 // 2026-09-02: also imported from its own file now, not the '../shared/' barrel - same
 // reason as rangerColorFor below (the barrel re-exports ranger-icon.ts's Leaflet-typed
@@ -144,8 +145,29 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   /** Export every row, ignoring the selection and any filters. */
   public allRows = signal(false)
   /** E-190: one chip per column filter that is on, and how many rows get through them. */
-  public filterChips = signal<FilterChip[]>([])
+  private gridChips = signal<FilterChip[]>([])
   public shownCount = signal(0)
+
+  /** E-234: the Mission's current op period label, as a signal so the toggle follows it. */
+  public opPeriodLabel = signal('')
+  /** E-234: "Current op period" toggle. Off by default, never stored: every visit starts with it off. */
+  public currentOnly = signal(false)
+  static readonly CURRENT_CHIP_KEY = '__currentOpPeriod'
+  /** E-234: the toggle's wording while it is off; blank (no toggle) when there is nothing to separate. */
+  public toggleLabel = computed(() =>
+    !this.currentOnly() && hasOtherOpPeriod(this.radioLogEntries(), this.opPeriodLabel())
+      ? `Current op period (${this.opPeriodLabel().trim()})` : '')
+  /** E-190 chips, plus E-234's "Current op period" chip while that toggle is on. */
+  public filterChips = computed<FilterChip[]>(() => {
+    const grid = this.isPhone() ? [] : this.gridChips()
+    return this.currentOnly()
+      ? [{ key: RadioLogComponent.CURRENT_CHIP_KEY, label: `Current op period (${this.opPeriodLabel().trim()})` }, ...grid]
+      : grid
+  })
+  /** What the phone's card list shows: everything, or only the current op period. */
+  public cardEntries = computed(() => this.currentOnly()
+    ? this.radioLogEntries().filter(e => isCurrentOpPeriod(e, this.opPeriodLabel()))
+    : this.radioLogEntries())
 
   // Material-M3 pass, 2026-08-26: the export controls' state, replacing three
   // getElementById reads (see getParamValue/onBtnExport below for why each had to go -
@@ -259,7 +281,17 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         colId: 'msgNo', headerName: 'Msg #', maxWidth: 110, editable: false,
         headerTooltip: 'The message number: station letter and sequence, such as A007. Set when the entry is logged and never changed. Hover a number for the mission and operational period. It cannot be edited.',
         valueGetter: (params: { data: RadioLogEntryType }) => formatMsgNoShort(params.data?.msgNo),
-        tooltipValueGetter: (params: { data: RadioLogEntryType }) => formatMsgNoFull(params.data?.msgNo) || undefined,
+        // E-234: a current-period number takes the period colour and says so to hover and screen readers.
+        cellClass: (params: { data: RadioLogEntryType }) => isCurrentOpPeriod(params.data, this.settings?.opPeriod) ? 'rt-current-period-cell' : undefined,
+        cellRenderer: (params: { data: RadioLogEntryType, value: string }) => {
+          const cur = isCurrentOpPeriod(params.data, this.settings?.opPeriod)
+          return `${params.value ?? ''}${cur ? '<span class="visually-hidden">, current op period</span>' : ''}`
+        },
+        tooltipValueGetter: (params: { data: RadioLogEntryType }) => {
+          const full = formatMsgNoFull(params.data?.msgNo)
+          if (!full) return undefined
+          return isCurrentOpPeriod(params.data, this.settings?.opPeriod) ? `${full} · current op period` : full
+        },
         comparator: (_a: unknown, _b: unknown, nodeA: { data: RadioLogEntryType }, nodeB: { data: RadioLogEntryType }) =>
           (nodeA.data.msgNo?.seq ?? 0) - (nodeB.data.msgNo?.seq ?? 0),
       },
@@ -456,6 +488,11 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // Stable row identity, so a new rowData array (gotNewRadioLog) updates rows in place and
     // keeps the selection, instead of rebuilding the grid on every cell edit.
     getRowId: (params) => String(params.data.id),
+    // E-234: the "Current op period" toggle is an external filter, so shownCount, export, print-visible
+    // and the maps' shown rows follow it with no further change. The left edge marks current rows.
+    isExternalFilterPresent: () => this.currentOnly(),
+    doesExternalFilterPass: (node) => isCurrentOpPeriod(node.data, this.settings?.opPeriod),
+    rowClassRules: { 'rt-current-period': (p) => isCurrentOpPeriod(p.data, this.settings?.opPeriod) },
     // v32.2+ object form. checkboxes/headerCheckbox off + enableClickSelection keeps the
     // original "multiple" behavior (click a row to select, ctrl/shift to extend) rather
     // than the new default, which would add a checkbox column the layout doesn't expect.
@@ -594,6 +631,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
         this.settings = newMission
+        this.opPeriodLabel.set(newMission?.opPeriod ?? '')
         this.columnDefs = this.buildColumnDefs()
       },
       error: (e) => this.log.error('Settings Subscription got:' + e, this.id)
@@ -916,18 +954,29 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     if (!this.gridApi?.getFilterModel) return
     const headerFor = (colId: string): string =>
       this.gridApi.getColumn(colId)?.getColDef().headerName ?? colId
-    this.filterChips.set(describeGridFilters(this.gridApi.getFilterModel(), headerFor))
+    this.gridChips.set(describeGridFilters(this.gridApi.getFilterModel(), headerFor))
     let shown = 0
     this.gridApi.forEachNodeAfterFilter?.(() => shown++)
     this.shownCount.set(shown)
   }
 
+  /** E-234: for the phone cards' left edge. */
+  isCurrent(e: RadioLogEntryType): boolean { return isCurrentOpPeriod(e, this.opPeriodLabel()) }
+
+  /** E-234: the toggle, from the chip strip (on) or its x (off). */
+  onToggleCurrentOpPeriod(on: boolean): void {
+    this.currentOnly.set(on)
+    this.gridApi?.onFilterChanged()
+  }
+
   async onClearFilter(colId: string): Promise<void> {
+    if (colId === RadioLogComponent.CURRENT_CHIP_KEY) { this.onToggleCurrentOpPeriod(false); return }
     await this.gridApi?.setColumnFilterModel(colId, null)
     await this.gridApi?.onFilterChanged()
   }
 
   onClearAllFilters(): void {
+    this.onToggleCurrentOpPeriod(false)
     this.gridApi?.setFilterModel(null)
   }
 

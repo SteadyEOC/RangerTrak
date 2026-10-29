@@ -351,7 +351,9 @@ Both pages work the same way:
 
 - **Fit to screen** sizes the columns to the window.
 - When a column filter is on, a strip above the table names it, so nobody forgets rows are
-  hidden. The x on a filter removes it; **Show everything** clears them all.
+  hidden. The x on a filter removes it; **Show everything** clears them all. On the Radio Log,
+  entries from the current op period carry a coloured edge, and **Current op period** above the
+  table shows only those (it starts off each visit; change the period name on Mission when a new one begins).
 - The Export card says how many rows it will save: every row if **All rows** is ticked,
   otherwise the rows you have selected, otherwise the rows the table is showing. The printed
   ICS-309 follows the filter too.

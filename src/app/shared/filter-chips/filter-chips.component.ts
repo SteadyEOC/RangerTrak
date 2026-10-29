@@ -21,4 +21,7 @@ export class FilterChipsComponent {
   chips = input<FilterChip[]>([])
   clear = output<string>()
   clearAll = output<void>()
+  /** E-234: wording of an optional off-by-default toggle chip; blank hides it. */
+  toggleLabel = input('')
+  toggle = output<void>()
 }

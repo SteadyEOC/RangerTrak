@@ -18,6 +18,10 @@
   background   : var(--rt-surface);
 }
 
+.radio-log-cards__card--current {
+  border-left  : 4px solid var(--rt-current-period);   // E-234
+}
+
 .radio-log-cards__header {
   display        : flex;
   justify-content: space-between;

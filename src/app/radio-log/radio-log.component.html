@@ -17,7 +17,7 @@
       <p class="radio-log__empty">No radio log entries yet. Add one on the <a routerLink="/">Entry page</a>, or load a demo mission from the Mission page.</p>
     }
     @if (!isPhone()) {
-      <rangertrak-filter-chips [chips]="filterChips()" (clear)="onClearFilter($event)" (clearAll)="onClearAllFilters()" />
+      <rangertrak-filter-chips [chips]="filterChips()" [toggleLabel]="toggleLabel()" (toggle)="onToggleCurrentOpPeriod(true)" (clear)="onClearFilter($event)" (clearAll)="onClearAllFilters()" />
       <ag-grid-angular #reportsGrid rowAnimation style="width: 100%;" [style.height]="gridHeight()" (gridReady)="onGridReady($event)"
         (click)="onGridClick($event)"
         [gridOptions]="gridOptions" [rowData]="radioLogEntries()" [columnDefs]="columnDefs"
@@ -269,9 +269,10 @@
       <!-- Phone carve-out (Sprint F): a completed comms log read on a phone away from
            the command post, per Private Roadmap.md's Field Reports/ICS-309 carve-out.
            Read-only - corrections still happen on a wider screen where the grid runs. -->
+      <rangertrak-filter-chips [chips]="filterChips()" [toggleLabel]="toggleLabel()" (toggle)="onToggleCurrentOpPeriod(true)" (clear)="onClearFilter($event)" (clearAll)="onClearAllFilters()" />
       <div class="radio-log-cards" role="list">
-        @for (report of radioLogEntries(); track report.id) {
-          <article class="radio-log-cards__card" role="listitem">
+        @for (report of cardEntries(); track report.id) {
+          <article class="radio-log-cards__card" [class.radio-log-cards__card--current]="isCurrent(report)" role="listitem">
             <header class="radio-log-cards__header">
               <span class="radio-log-cards__callsign">{{ stationFrom(report) }}</span>
               @if (isScenario(report)) {

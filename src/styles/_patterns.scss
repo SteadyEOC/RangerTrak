@@ -408,6 +408,16 @@ rangertrak-io-panel.rt-advanced.rt-advanced {
 // background shows around it. `--rt-cell-fill` carries the colour: Status sets it inline
 // (its fill comes from the mission's status list), Elapsed takes it from the E-118 ramp.
 // The cell itself keeps no background, so row hover and selection still read through.
+// E-234: current-op-period rows. A 4 px edge on the first cell (not a row tint: status cells are tinted
+// already and a tint fights them), and the Msg # in the same colour.
+.ag-row.rt-current-period > .ag-cell:first-of-type {
+  box-shadow: inset 4px 0 0 var(--rt-current-period);
+}
+.ag-cell.rt-current-period-cell {
+  color: var(--rt-current-period);
+  font-weight: 600;
+}
+
 .ag-cell.rt-fill-cell,
 .ag-cell.rt-elapsed {
   isolation: isolate; // the ::before sits behind the text but inside this cell

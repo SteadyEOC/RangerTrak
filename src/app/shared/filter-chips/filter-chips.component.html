@@ -1,5 +1,12 @@
-@if (chips().length > 0) {
+@if (chips().length > 0 || toggleLabel()) {
   <div class="filter-chips" role="status" aria-live="polite">
+    @if (toggleLabel()) {
+      <!-- E-234: a filter that is off by default needs its own control; once on it is a normal chip below. -->
+      <mat-chip-listbox class="filter-chips__toggle" aria-label="Quick filters">
+        <mat-chip-option class="filter-chips__option" [selected]="false" (selectionChange)="toggle.emit()">{{ toggleLabel() }}</mat-chip-option>
+      </mat-chip-listbox>
+    }
+    @if (chips().length > 0) {
     <span class="filter-chips__lead">Filters on:</span>
     <mat-chip-set class="filter-chips__set" aria-label="Active filters">
       @for (chip of chips(); track chip.key) {
@@ -13,5 +20,6 @@
       }
     </mat-chip-set>
     <button matButton type="button" class="filter-chips__all" (click)="clearAll.emit()">Show everything</button>
+    }
   </div>
 }

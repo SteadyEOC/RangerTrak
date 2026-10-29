@@ -38,4 +38,17 @@ describe('FilterChipsComponent', () => {
     ;(el().querySelector('.filter-chips__all') as HTMLButtonElement).click()
     expect(n).toBe(1)
   })
+
+  it('E-234: shows an off-by-default toggle with no chips, and emits toggle when picked', () => {
+    fixture.componentRef.setInput('toggleLabel', 'Current op period (OP 3)')
+    fixture.detectChanges()
+    expect(el().querySelector('.filter-chips__lead')).toBeNull()
+    expect(el().querySelector('.filter-chips__all')).toBeNull()
+    const opt = el().querySelector('mat-chip-option') as HTMLElement
+    expect(opt.textContent).toContain('Current op period (OP 3)')
+    let n = 0
+    fixture.componentInstance.toggle.subscribe(() => n++)
+    ;(opt.querySelector('.mdc-evolution-chip__action') as HTMLElement).click()
+    expect(n).toBe(1)
+  })
 })

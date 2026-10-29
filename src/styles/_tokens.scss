@@ -110,6 +110,13 @@
   --rt-mode-exercise: #{light-dark(#1565C0, #6CB0FF)};
   --rt-mode-incident: #{light-dark(#BF360C, #FF8A65)};
 
+  // ── Current op period (E-234) ───────────────────────────────────────
+  // The 4 px left edge on Radio Log rows and phone cards from the current op period, and the colour
+  // of their Msg #. A deep indigo, apart from demo violet, exercise blue, advanced plum and the
+  // status colours. Not per-skin, same argument as readiness. Screen only: nothing on the ICS-309.
+  // Non-text contrast (3:1 needed): about 8:1 on white (light), about 8:1 on the dark skins' surfaces.
+  --rt-current-period: #{light-dark(#3F3FA8, #A9AEF5)};
+
   // ── Simple view / Full view (E-207, ADR D-62) ──────────────────────
   // One plum that marks "Advanced" wherever it appears: the pill and rule on advanced cards and
   // controls, and the view switch. Plum because every nearer hue already means something here
