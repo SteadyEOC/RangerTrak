@@ -2231,6 +2231,47 @@ async function checkCards() {
  * Entry and Map pages' own Guide drawers - both were screen-specific operating instructions,
  * which is what the Guide (not general Help) is for. Six tabs now.
  */
+/**
+ * E-264 / E-256: Help's search finds a section and a result opens its tab below the sticky
+ * header; an unknown address guesses the page and searches Help with its words.
+ */
+async function checkHelpSearchAnd404() {
+  console.log('\nE-264/E-256: Help search opens the section; the 404 page guesses where you meant')
+  await goto('/help')
+  const r = await evaluate(`(async () => {
+    const sleep = ms => new Promise(res => setTimeout(res, ms))
+    const inp = document.querySelector('[data-testid=help-search]')
+    if (!inp) return { box: false }
+    inp.value = 'undo import'; inp.dispatchEvent(new Event('input'))
+    for (let i = 0; i < 30 && !document.querySelector('.help-search__hit'); i++) await sleep(200)
+    const hit = [...document.querySelectorAll('.help-search__hit')].find(b => b.textContent.includes('Undo last import'))
+    if (!hit) return { box: true, hit: false }
+    hit.click(); await sleep(1500)
+    const h = document.getElementById('undo-import')
+    const header = document.querySelector('.app-sticky-header').getBoundingClientRect().bottom
+    const top = h ? h.getBoundingClientRect().top : -1
+    return { box: true, hit: true, url: location.search + location.hash, visible: top >= header && top < header + 60 }
+  })()`)
+  check('Help has a search box', r.box, true)
+  check('searching "undo import" finds the Your data section', r.hit, true)
+  check('...and the result opens that tab at its heading', r.url, '?tab=data#undo-import')
+  check('...with the heading below the sticky header, not under it', r.visible, true)
+
+  await goto('/roster')
+  const g = await evaluate(`(async () => {
+    for (let i = 0; i < 30 && !document.querySelector('.help-search__hit'); i++) await new Promise(res => setTimeout(res, 200))
+    return {
+      guesses: [...document.querySelectorAll('[data-testid=x404-guesses] a')].map(a => a.textContent.trim()),
+      query: document.querySelector('[data-testid=help-search]')?.value,
+      hits: document.querySelectorAll('.help-search__hit').length,
+      video: !!document.querySelector('object, embed, iframe'),
+    }
+  })()`)
+  check('/roster guesses Rangers first', g.guesses[0], 'Rangers')
+  check('...and searches Help for "roster"', g.query === 'roster' && g.hits > 0, true)
+  check('...with no embedded video', g.video, false)
+}
+
 async function checkHelpTabs() {
   console.log('\nE-84: Help renders six tabs and switching them changes the body')
   await goto('/help')
@@ -2244,7 +2285,7 @@ async function checkHelpTabs() {
   // 2026-08-30: "Entering reports" and "Maps" moved into the Entry/Map pages' own Guide
   // drawers (screen-specific operating instructions, not general Help) - see guide-content.ts.
   check('six tabs, in the planned order', labels,
-    'Start here|FAQ|Your data|After mission|About|Contact us')
+    'Start here|FAQ|After mission|Your data|About|Contact us')
 
   const firstBody = await evaluate(`document.querySelector('.help-tabs rangertrak-help-start') ? 'start' : 'missing'`)
   check('the first tab shows the Start here body', firstBody, 'start')
@@ -5499,6 +5540,7 @@ async function main() {
     if (want('radiolog')) await checkFieldReportsPhoneLayout()
     if (want('shell')) await checkGridThemeUsesTokens()
     if (want('shell')) await checkHelpTabs()
+    if (want('shell')) await checkHelpSearchAnd404() // E-264, E-256
     if (want('controls')) await checkControls() // E-209; read-only
 
     if (READ_ONLY) {
