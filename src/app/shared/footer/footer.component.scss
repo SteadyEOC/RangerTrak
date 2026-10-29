@@ -72,6 +72,10 @@
   // name) had no room of its own and sat flush against the viewport edge. Matches the
   // existing left margin rather than inventing a new value.
   margin-right: 1vw;
+  // E-250 (John 10-28): the round back-to-top button (fixed, bottom right) sat over the
+  // rangertrak.com link once scrolled to the end. Keep its width plus its own right offset
+  // and a small gap clear, so the link ends before the button starts.
+  padding-right: calc(var(--rt-tap-min) + 1.5rem + env(safe-area-inset-right, 0px));
   // 2026-10-28, John: the Install pill (this row's tallest item) ran into the page bottom.
   // Matches the hr's 8px margin above the row, so the row sits evenly between the two.
   padding-bottom: 0.5rem;
