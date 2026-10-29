@@ -396,8 +396,8 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             ]
           },
           {
-            heading: 'Emptying the roster',
-            text: 'Delete all rangers empties it and it stays empty, including after a reload.'
+            heading: 'Deleting rangers',
+            text: 'To remove one or a few, click their rows to select them and press Delete beside Add; it asks first and names who goes. Delete all rangers empties the roster, and it stays empty, including after a reload. Either way, radio log entries already filed are kept with the call sign they were logged with. Two rangers with the same ID or call sign are allowed but shown in red, so a typo stands out.'
           },
           {
             heading: 'Moving a whole mission',

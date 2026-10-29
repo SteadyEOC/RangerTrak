@@ -350,6 +350,9 @@ Both pages work the same way:
 - **Print roster** (Rangers, *Import, export & print*) prints a contact sheet of those rows by
   team: call sign, name, role, phone and ID. It carries names and phone numbers, so keep the
   paper safe.
+- To remove a ranger, click their row on **Rangers** (more rows if you like) and press
+  **Delete** beside **Add**. It asks first. Reports already logged stay as they are.
+- Two rangers with the same ID or call sign are allowed, but shown in red so a typo stands out.
 
 ### Attaching photos, video and audio
 
