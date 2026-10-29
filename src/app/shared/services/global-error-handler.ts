@@ -34,6 +34,8 @@ export class GlobalErrorHandler implements ErrorHandler {
   private injector = inject(Injector)
   private lastPromptAt = 0
   private promptCount = 0
+  /** The prompt now on screen: it has no timeout (John 10-29), so a second error waits for it. */
+  private open = false
   /** John 10-28: "Max of 3 appearances" - per page session, plus "Don't show again". */
   private static readonly MAX_PROMPTS = 3
 
@@ -67,26 +69,34 @@ export class GlobalErrorHandler implements ErrorHandler {
 
   /**
    * E-258 (2026-10-28): replaces the old Debug mode as the way a problem reaches the developers.
-   * At most one prompt a minute (an error loop must not bury the screen). The draft carries only
-   * the first line of the error, redacted; the diagnostic report box is pre-ticked but nothing is
-   * sent until the person presses Send. Can never throw.
+   * At most one prompt a minute (an error loop must not bury the screen), and none while one is
+   * still up: it stays until a button is pressed. The draft carries only the first line of the
+   * error, redacted; the diagnostic report box is pre-ticked but nothing is sent until the person
+   * presses Send. Can never throw.
    */
   private offerReport(error: unknown): void {
     try {
       const now = Date.now()
-      if (now - this.lastPromptAt < 60_000 || this.promptCount >= GlobalErrorHandler.MAX_PROMPTS
-        || this.isMuted()) {
+      if (this.open || now - this.lastPromptAt < 60_000
+        || this.promptCount >= GlobalErrorHandler.MAX_PROMPTS || this.isMuted()) {
         return
       }
       this.lastPromptAt = now
       this.promptCount++
       const first = (error instanceof Error ? error.message : String(error ?? '')).split('\n')[0]
       const draft = 'Something went wrong:\n' + redact(first).slice(0, 300) + '\n\nWhat I was doing: '
-      const ref = this.injector.get(MatSnackBar)
-        .openFromComponent(ReportItSnackbarComponent, { duration: 15000 })
+      const ref = this.injector.get(MatSnackBar).openFromComponent(ReportItSnackbarComponent, {
+        data: { n: this.promptCount, max: GlobalErrorHandler.MAX_PROMPTS },
+        // 0 = no timeout. Must be explicit: app.config.ts gives every snackbar 2.5 s by default.
+        duration: 0,
+        panelClass: 'rt-report-it',
+        politeness: 'assertive',
+      })
+      this.open = true
       // sessionStorage, so "Don't show again" lasts until the tab closes - a reload alone
       // would otherwise bring it straight back.
       ref.afterDismissed().subscribe(() => {
+        this.open = false
         if (ref.instance.muted) {
           try { sessionStorage.setItem(REPORT_IT_MUTE_KEY, '1') } catch { /* private mode */ }
         }

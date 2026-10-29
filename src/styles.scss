@@ -157,6 +157,19 @@ body {
   ));
 }
 
+// E-258 (John 10-29): the "Something went wrong" prompt was easy to miss as a dark snackbar. It
+// is the amber notice colours with the bright orange signal border, light and dark alike.
+.rt-report-it {
+  @include mat.snack-bar-overrides((
+    container-color: var(--rt-notice),
+    supporting-text-color: var(--rt-notice-ink),
+    button-color: var(--rt-notice-ink),
+  ));
+  .mat-mdc-snackbar-surface {
+    border: 3px solid var(--rt-signal);
+  }
+}
+
 // E-209: at 14px the five coordinate formats (DD ... UTM) no longer fit 360px, which the old
 // per-page 12px text hid. Narrow screens take a little side padding off each toggle, and any
 // group still too wide wraps instead of running off the screen. The padding rule names the group
