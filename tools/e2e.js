@@ -1081,6 +1081,31 @@ async function checkMapLayers(fx) {
 }
 
 /**
+ * E-262 (tester, 2026-10-28): "+ Add" once too often left a row only Delete all could remove. The
+ * added row comes up selected, so Delete for the selection shows; it asks first, naming the row.
+ */
+async function checkRangerDeleteOne(fx) {
+  console.log('\nRangers (E-262): a row added by mistake can be deleted on its own')
+  await goto('/rangers')
+  await importRoster(fx.rosterPath, 'Replace roster')
+  await sleep(2000)
+  await goto('/rangers')
+  const count = () => evaluate(`parseInt(document.querySelector('.rangers__actions .rt-action-bar__status')?.textContent || '-1', 10)`)
+  const before = await count()
+  await evaluate(`[...document.querySelectorAll('.rt-action-bar__buttons button')].find(b => b.textContent.trim().endsWith('Add'))?.click()`)
+  await sleep(1000)
+  check('Add put one more row in the roster', await count(), before + 1)
+  const label = await pollUntil(() => evaluate(`document.querySelector('[data-testid=rangers-delete-selected]')?.textContent.trim() || ''`), t => !!t)
+  check('the added row is selected, so Delete is offered for it', label, 'delete Delete 1 ranger')
+  const asked = dialogs.length
+  await evaluate(`document.querySelector('[data-testid=rangers-delete-selected]')?.click()`)
+  await sleep(1000)
+  check('Delete asks first, naming what goes', (dialogs[asked] || '').startsWith('Delete this ranger from this browser?'), true)
+  check('...and the roster is back to where it was', await count(), before)
+  check('nothing selected, so Delete is gone again', await evaluate(`!document.querySelector('[data-testid=rangers-delete-selected]')`), true)
+}
+
+/**
  * "Export changes since import" (2026-10-05): an import records a baseline; a ranger added
  * afterwards is the only thing the export hands back. The download is caught in the page by
  * wrapping URL.createObjectURL, since CDP has no simple hook for an <a download> click.
@@ -5482,6 +5507,7 @@ async function main() {
         if (want('roster')) await checkSetupFileMerge(fx)
         if (want('roster')) await checkRosterCsvImport(fx)
         if (want('roster')) await checkRosterChangesExport(fx)
+        if (want('roster')) await checkRangerDeleteOne(fx)
         // 2026-10-16: E2E-AA1's device photo is stored by checkRosterLifecycle / checkSetupFileMerge
         // above, both --full only. Run in a fast pass, this check always failed ("uses the device
         // photo") unless an earlier full run had left that photo behind. The photo comes from the

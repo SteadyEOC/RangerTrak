@@ -132,6 +132,15 @@
         <button matButton="outlined" type="button" (click)="onDeselectAll()">
           Clear selection
         </button>
+
+        <!-- E-262: shown only with rows selected; asks first, naming who goes. -->
+        @if (selectedCount() > 0) {
+        <button matButton="outlined" type="button" (click)="onBtnDeleteSelected()" data-testid="rangers-delete-selected"
+          title="Delete the selected rangers from the roster. Reports already filed are kept.">
+          <mat-icon>delete</mat-icon>
+          Delete {{ selectedCount() === 1 ? '1 ranger' : selectedCount() + ' rangers' }}
+        </button>
+        }
       </div>
     </div>
 

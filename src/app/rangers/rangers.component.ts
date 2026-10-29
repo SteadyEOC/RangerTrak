@@ -295,6 +295,10 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // idCellRenderer below, since a blank `id` ("hasn't checked in yet") is the state that
   // actually leaves a report unattributable.
   callsignCellRenderer = (params: { data: RangerType }) => {
+    if (this.sharedWithOthers('callsign', params.data)) {
+      return `<span aria-hidden title="Another ranger has the same call sign. Reports logged with it go to the first match, so the rows can't be told apart." `
+        + `style="color:#c0392b;font-weight:700"> ⚠ ${escapeHtml(params.data.callsign)}</span>`
+    }
     const title = escapeHtml(`${params.data.fullName} | ${params.data.phone}`)
     return `<span aria-hidden title="${title}"> ${escapeHtml(params.data.callsign)}</span>`
   }
@@ -305,7 +309,19 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!params.data.id?.trim()) {
       return `<span aria-hidden title="No id set - not checked in yet, or no credential on file. Radio log entries from this ranger can't be attributed by id until one is." style="color:#c0392b;font-weight:700"> ⚠ (none set)</span>`
     }
-    return `<span aria-hidden> ${params.data.id}</span>`
+    // E-263 (tester, 2026-10-28): a shared ID is allowed - capability, not policy (D-46) - but marked,
+    // the same way import's rosterWarnings() already reports it, so a typo is caught.
+    if (this.sharedWithOthers('id', params.data)) {
+      return `<span aria-hidden title="Another ranger has the same ID. Reports matched by ID go to the first match." `
+        + `style="color:#c0392b;font-weight:700"> ⚠ ${escapeHtml(params.data.id)}</span>`
+    }
+    return `<span aria-hidden> ${escapeHtml(params.data.id)}</span>`
+  }
+
+  /** True when another roster row has the same non-blank value (case and spaces ignored). */
+  private sharedWithOthers(field: 'id' | 'callsign', ranger: RangerType): boolean {
+    const key = (ranger[field] ?? '').trim().toUpperCase()
+    return !!key && this.rangerService.rangers.some(r => r !== ranger && r.uid !== ranger.uid && (r[field] ?? '').trim().toUpperCase() === key)
   }
 
   /** Same grouping key drawTrails()/displayMarkers() use (ADR D-42 phase 5): `rangerUid`
@@ -592,14 +608,32 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   private onCellEdited() {
     this.log.info(`Edited a ranger in the grid.`, this.id)
     this.rangerService.updateLocalStorageAndPublish()
+    // E-263: an edit can make (or end) a duplicate on another row, so redraw both columns' marks.
+    this.gridApi?.refreshCells?.({ columns: ['id', 'callsign'], force: true })
   }
 
-  // ADR D-43: takes the surrogate uid, not a callsign - a blank or duplicated callsign could
-  // otherwise delete the wrong row. No UI caller today; kept as the obvious hook for a
-  // per-row delete on the grid.
-  onBtnDeleteRanger(uid: string) {
-    this.log.info(`Deleted ranger ${uid}.`, this.id)
-    this.rangerService.deleteRangerByUid(uid)
+  /**
+   * E-262 (tester, 2026-10-28): "+ Add" pressed once too often left a row nobody could remove
+   * short of Delete all. Deletes the selected rows. ADR D-43: by surrogate uid, not callsign -
+   * a blank or duplicated callsign could otherwise delete the wrong row.
+   */
+  onBtnDeleteSelected() {
+    const selected: RangerType[] = this.gridApi?.getSelectedRows?.() ?? []
+    if (!selected.length) return
+    const label = (r: RangerType) => r.callsign?.trim() || r.fullName?.trim() || r.id?.trim() || '(blank row)'
+    const names = selected.slice(0, 5).map(label).join(', ') + (selected.length > 5 ? ` and ${selected.length - 5} more` : '')
+    const what = selected.length === 1 ? 'this ranger' : `these ${selected.length} rangers`
+    if (!Utility.getConfirmation(
+      `Delete ${what} from this browser?\n\n${names}\n\n`
+      + `Radio log entries already filed are not deleted. They keep the call sign they were logged with, `
+      + `but no longer link to a roster row.`)) return
+    selected.forEach(r => { if (r.uid) this.rangerService.deleteRangerByUid(r.uid) })
+    this.log.info(`Deleted ${selected.length} ranger(s).`, this.id)
+    this.journal.record('rangers-deleted', `Deleted ${selected.length} ranger${selected.length === 1 ? '' : 's'} from the roster.`)
+    this.layerService.prune('people', new Set(this.rangerService.rangers.flatMap(r => r.uid ? [r.uid] : [])))
+    this.gridApi?.setGridOption('rowData', this.rangers())
+    this.selectedCount.set(0)
+    this.refreshGrid()
   }
 
   onBtnDeleteRangers() {

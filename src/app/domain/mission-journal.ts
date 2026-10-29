@@ -23,7 +23,7 @@ export type JournalAction =
   | 'radio-log-cleared' | 'report-reassigned' | 'reports-merged' | 'handover-built' | 'handover-merged' | 'packet-exported' | 'radio-log-exported'
   | 'print-309' | 'print-213' | 'print-213-auto' | 'pdf-213-saved'
   | 'attachments-removed' | 'attachments-restored'
-  | 'roster-cleared' | 'roster-imported' | 'roster-exported' | 'print-roster' | 'photos-exported'
+  | 'roster-cleared' | 'rangers-deleted' | 'roster-imported' | 'roster-exported' | 'print-roster' | 'photos-exported'
   | 'roster-changes-exported' | 'photos-imported' | 'photos-cleared'
   | 'places-imported' | 'places-exported' | 'print-places' | 'layer-removed' | 'print-map'
   | 'custom-map-stored' | 'custom-map-cleared'
@@ -65,7 +65,7 @@ export interface JournalCheck {
 export const SUGGEST_FOR_214: ReadonlySet<JournalAction> = new Set<JournalAction>([
   'demo-loaded', 'real-mission-started', 'demo-left', 'mode-changed', 'mission-reset', 'mission-restored',
   'import-undone', 'encryption-on', 'encryption-off', 'radio-log-cleared', 'reports-merged', 'handover-built', 'handover-merged',
-  'packet-exported', 'radio-log-exported', 'print-309', 'roster-cleared', 'roster-imported', 'roster-exported',
+  'packet-exported', 'radio-log-exported', 'print-309', 'roster-cleared', 'rangers-deleted', 'roster-imported', 'roster-exported',
   'print-roster', 'photos-exported', 'roster-changes-exported', 'photos-imported', 'photos-cleared',
   'places-imported', 'places-exported', 'print-places', 'print-map', 'setup-file-built', 'setup-file-applied',
   'backup-exported', 'backup-attachments-exported', 'aar-notes-cleared', 'print-aar', 'aar-exported',
