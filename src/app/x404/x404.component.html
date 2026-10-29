@@ -1,20 +1,19 @@
 <rangertrak-page [title]="title" [description]="pageDescr">
-  <div style="background-color: rgb(230, 97, 97); font-weight: bold; padding:1em">
-    We can't find that page: Error 404<br />
-    <a href="/">Return Home</a>
-  </div>
-  <object width="1024px" height="600px">
-    <param name="movie" value="https://player.vimeo.com/video/26192400?h=85463dcf19" />
-    <param name="allowFullScreen" value="true" />
-    <param name="allowscriptaccess" value="always" />
-    <param name="autoplay" value="true" />
+  <div class="x404">
+    <p class="x404__line">Station not found. Say again?</p>
+    <p>There is no page at <code class="x404__path">{{ path }}</code> in RangerTrak.</p>
 
-    <embed width="100%" height="80vh" src="https://player.vimeo.com/video/26192400?h=85463dcf19" class="youtube-player"
-      type="text/html" allowscriptaccess="always" allowfullscreen="true" />
-  </object>
+    @if (guesses.length) {
+    <p>Did you mean:</p>
+    <div class="x404__guesses" data-testid="x404-guesses">
+      @for (g of guesses; track g.route) {
+      <a matButton="outlined" [routerLink]="g.route">{{ g.label }}</a>
+      }
+    </div>
+    }
 
-  <div>
-    Many Thanks (& laughs) for the above. Credits to Steve Lambert:
-    <a href="https://visitsteve.com/" target="_blank">Visit Steve!</a>
+    <rangertrak-help-search [initialQuery]="searchFor" [limit]="5"></rangertrak-help-search>
+
+    <p><a matButton="filled" routerLink="/">Go to Entry</a></p>
   </div>
 </rangertrak-page>

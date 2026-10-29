@@ -1,1 +1,24 @@
 // `.main` now lives in PageComponent - see shared/page/page.component.scss.
+
+// E-256: one column that fits a 360 px phone; theme tokens only.
+.x404 {
+  max-width: 44rem;
+  color    : var(--rt-ink);
+}
+
+.x404__line {
+  font-size  : 1.4rem;
+  font-weight: 600;
+  margin     : 0.5rem 0;
+}
+
+.x404__path {
+  overflow-wrap: anywhere;
+}
+
+.x404__guesses {
+  display  : flex;
+  flex-wrap: wrap;
+  gap      : 0.5rem;
+  margin   : 0 0 1rem;
+}
