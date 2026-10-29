@@ -6,6 +6,9 @@ import { ReportItSnackbarComponent } from '../feedback/report-it-snackbar.compon
 import { redact } from '../redact'
 import { LogService } from './log.service'
 
+/** sessionStorage: set to `1` by "Don't show again", for this tab only (ARCHITECTURE.md's storage table). */
+export const REPORT_IT_MUTE_KEY = 'rt-report-it-muted'
+
 /**
  * Routes otherwise-invisible failures into the in-app Log page.
  *
@@ -33,7 +36,6 @@ export class GlobalErrorHandler implements ErrorHandler {
   private promptCount = 0
   /** John 10-28: "Max of 3 appearances" - per page session, plus "Don't show again". */
   private static readonly MAX_PROMPTS = 3
-  private static readonly MUTE_KEY = 'rt-report-it-muted'
 
   constructor() {
     window.addEventListener('error', (ev: ErrorEvent) => {
@@ -86,7 +88,7 @@ export class GlobalErrorHandler implements ErrorHandler {
       // would otherwise bring it straight back.
       ref.afterDismissed().subscribe(() => {
         if (ref.instance.muted) {
-          try { sessionStorage.setItem(GlobalErrorHandler.MUTE_KEY, '1') } catch { /* private mode */ }
+          try { sessionStorage.setItem(REPORT_IT_MUTE_KEY, '1') } catch { /* private mode */ }
         }
       })
       ref.onAction().subscribe(() => {
@@ -103,7 +105,7 @@ export class GlobalErrorHandler implements ErrorHandler {
   }
 
   private isMuted(): boolean {
-    try { return sessionStorage.getItem(GlobalErrorHandler.MUTE_KEY) === '1' } catch { return false }
+    try { return sessionStorage.getItem(REPORT_IT_MUTE_KEY) === '1' } catch { return false }
   }
 
   private describe(error: unknown): string {
