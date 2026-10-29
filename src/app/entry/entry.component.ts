@@ -1,4 +1,5 @@
 import { OperatorNameService } from '../shared/services/operator-name.service'
+import { EntryDraftService, draftHasContent, type EntryDraft } from './entry-draft.service'
 import {
   debounceTime, map, Observable, startWith, subscribeOn, Subscription, switchMap
 } from 'rxjs'
@@ -405,6 +406,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   private attachmentStore = inject(AttachmentStoreService)
   private journal = inject(MissionJournalService)
   private attachmentIntake = inject(AttachmentIntakeService)
+  private drafts = inject(EntryDraftService)
   /** The budget line shows beside Attach once past 80% (D-60 item 7). */
   readonly attachmentBudget = inject(AttachmentBudgetService)
 
@@ -661,6 +663,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
     this.initEntryForm()
+    this.restoreDraft()
 
     this.submitInfo = this.document.getElementById("enter__Submit-info")
     if (!this.submitInfo) {
@@ -1252,7 +1255,48 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /** E-261: the unsent report, as it stands - see EntryDraftService. */
+  private currentDraft(): EntryDraft {
+    const m = this.entryModel()
+    const loc = this.locationParent
+    const atDefault = !this.settings || (loc.lat === this.settings.defLat && loc.lng === this.settings.defLng)
+    return {
+      callsign: this.callsignCtrl.value ?? '', to: this.toCtrl.value ?? '',
+      status: this.entryControlsForm.value.status ?? '',
+      notes: m.notes, date: m.date, source: m.source,
+      generates213: m.generates213, replyRequested213: m.replyRequested213,
+      message213: m.message213, recipients213: m.recipients213, subject213: m.subject213,
+      selectedRecipients213: [...this.selectedRecipients213()],
+      location: atDefault || JSON.stringify(loc) === JSON.stringify(undefinedLocation) ? undefined : loc,
+      pendingFiles: this.pendingFiles(),
+    }
+  }
+
+  /**
+   * E-261: puts back what the scribe had typed before visiting another page. The report time comes
+   * back as it was (when they started it), and the position only if they had moved it off the
+   * mission default. The evidence location is not kept: its child component holds its own fields.
+   */
+  private restoreDraft(): void {
+    const d = this.drafts.take()
+    if (!d) return
+    if (d.location) this.onNewLocationEvent(d.location)
+    this.entryModel.update(m => ({
+      ...m, notes: d.notes, date: d.date, source: d.source,
+      generates213: d.generates213, replyRequested213: d.replyRequested213,
+      message213: d.message213, recipients213: d.recipients213, subject213: d.subject213,
+    }))
+    this.callsignCtrl.setValue(d.callsign)
+    this.toCtrl.setValue(d.to)
+    if (d.status) this.entryControlsForm.setValue({ status: d.status })
+    this.selectedRecipients213.set(new Set(d.selectedRecipients213))
+    this.pendingFiles.set(d.pendingFiles)
+    this.log.info('Put back the report you were typing before you left this page.', this.id)
+  }
+
   ngOnDestroy() {
+    const draft = this.currentDraft()
+    this.drafts.save(draftHasContent(draft) ? draft : null)
     //this.locationChange?.unsubscribe()
     this.rangersSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()
