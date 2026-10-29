@@ -52,7 +52,7 @@ export class DiagnosticsService {
       }
     } catch { /* leave it out */ }
     lines.push(`Storage protected: ${yn(this.persistence.persisted())}${usage}`)
-    lines.push(`Service worker active: ${yn(!!navigator.serviceWorker?.controller)}`)
+    lines.push(`Service worker active: ${await this.serviceWorkerState()}`)
 
     const counts = [
       ['rangers', safe(() => this.rangers.rangers.length)],
@@ -63,8 +63,16 @@ export class DiagnosticsService {
       lines.push(`Counts: ${counts.join(', ')}`)
     }
 
+    // Local time, as the Log page shows it, so a report and a screenshot of the Log line up.
+    // The offset is stated once rather than on every line: the report has a character cap.
+    lines.push(`Times: local, ${utcOffset(new Date())}`)
+
     const entries = this.log.entries()
-    const stamp = (d: Date) => new Date(d).toISOString().slice(11, 19)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const stamp = (d: Date) => {
+      const t = new Date(d)
+      return `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`
+    }
     const problems = entries.filter(e => e.level >= LogLevel.Warn).slice(-20)
     if (problems.length) {
       lines.push('', 'Problems this session (newest last):')
@@ -73,7 +81,8 @@ export class DiagnosticsService {
       }
     }
     lines.push('', 'Recent activity (times and sources only):')
-    for (const e of entries.slice(-30)) {
+    // Info and up: Verbose/Excessive start-up chatter otherwise fills the list.
+    for (const e of entries.filter(e => e.level >= LogLevel.Info).slice(-30)) {
       lines.push(`${stamp(e.date)} ${LogLevelNames[e.level]} ${e.source}`)
     }
 
@@ -85,4 +94,32 @@ export class DiagnosticsService {
     return window.matchMedia?.('(display-mode: standalone)').matches
       || (navigator as unknown as { standalone?: boolean }).standalone === true
   }
+
+  /** `controller` alone is always null after a hard refresh, though the worker is installed. */
+  private async serviceWorkerState(): Promise<string> {
+    try {
+      const sw = navigator.serviceWorker
+      if (!sw) {
+        return 'no (not supported)'
+      }
+      if (sw.controller) {
+        return 'yes'
+      }
+      return await sw.getRegistration() ? 'registered, not controlling this load' : 'no'
+    } catch {
+      return 'unknown'
+    }
+  }
+}
+
+/** `UTC−7`, `UTC+5:30`, `UTC` - the device's offset at that moment. */
+export function utcOffset(d: Date): string {
+  const mins = -d.getTimezoneOffset()
+  if (mins === 0) {
+    return 'UTC'
+  }
+  const abs = Math.abs(mins)
+  const h = Math.floor(abs / 60)
+  const m = abs % 60
+  return `UTC${mins < 0 ? '−' : '+'}${h}${m ? ':' + String(m).padStart(2, '0') : ''}`
 }

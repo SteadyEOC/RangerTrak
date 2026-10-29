@@ -112,8 +112,14 @@ export class GlobalErrorHandler implements ErrorHandler {
     if (error instanceof Error) {
       // The stack is the point of capturing this at all, but a full trace crowds out every
       // other line on the Log page, so keep the top few frames.
-      const stack = error.stack?.split('\n').slice(0, 5).join(' | ') ?? '(no stack)'
-      return `${error.name}: ${error.message} — ${stack}`
+      // Chrome's stack opens with "Name: message", which would print the message twice.
+      const head = error.message ? `${error.name}: ${error.message}` : error.name
+      let stack = error.stack ?? ''
+      if (stack.startsWith(head)) {
+        stack = stack.slice(head.length)
+      }
+      const frames = stack.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 5).join(' | ')
+      return `${head} — ${frames || '(no stack)'}`
     }
     if (typeof error === 'string') {
       return error
