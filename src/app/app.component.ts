@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common'
+import { CommonModule, ViewportScroller } from '@angular/common'
 import { ApplicationRef, Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core'
 import { RouterModule } from '@angular/router'
 import { MatSnackBarModule } from '@angular/material/snack-bar'
@@ -57,6 +57,10 @@ export class AppComponent implements OnInit {
     private commandPostPublish: CommandPostPublishService,
     // E-194: never called; injected so the delegated 📎 chip hover listeners start once.
     private attachmentHoverPreview: AttachmentHoverPreviewService) {
+    // E-264: the router's anchorScrolling put a `#fragment` target at the very top, under the
+    // sticky navbar (about 200 px on a phone with a banner), so the heading it linked to was hidden.
+    inject(ViewportScroller).setOffset(() =>
+      [0, Math.ceil(document.querySelector('.app-sticky-header')?.getBoundingClientRect().bottom ?? 0) + 8])
   }
 
 

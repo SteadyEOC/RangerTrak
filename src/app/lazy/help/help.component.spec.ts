@@ -60,7 +60,7 @@ describe('HelpComponent fragments', () => {
       imports: [HelpComponent, NoopAnimationsModule],
       providers: [provideRouter([]), {
         provide: ActivatedRoute,
-        useValue: { queryParamMap: of(convertToParamMap({ tab })), snapshot: { fragment } },
+        useValue: { queryParamMap: of(convertToParamMap({ tab })), snapshot: { fragment }, fragment: of(fragment) },
       }],
     }).compileComponents()
     const fixture = TestBed.createComponent(HelpComponent)

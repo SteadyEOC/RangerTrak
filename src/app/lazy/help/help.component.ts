@@ -16,6 +16,8 @@ import { HelpFeedbackComponent } from './tabs/help-feedback.component'
 import { HelpDataComponent } from './tabs/help-data.component'
 import { HelpFaqComponent } from './tabs/help-faq.component'
 import { HELP_SECTIONS, TOUR_URL } from '../../shared/guide/help-sections'
+import { HelpSearchComponent } from '../../shared/guide/help-search.component'
+import { slugForHelp } from '../../shared/guide/help-search'
 
 /**
  * The in-app user documentation, and (E-84 decision, 2026-08-24) the canonical one: it ships
@@ -48,6 +50,7 @@ import { HELP_SECTIONS, TOUR_URL } from '../../shared/guide/help-sections'
     CommonModule, PageComponent,
     HelpAboutComponent, HelpStartComponent,
     HelpDataComponent, HelpAfterMissionComponent, HelpFeedbackComponent, HelpFaqComponent,
+    HelpSearchComponent,
   ],
   templateUrl: './help.component.html',
   styleUrls: ['./help.component.scss'],
@@ -71,6 +74,7 @@ export class HelpComponent implements OnDestroy {
   readonly tourUrl = TOUR_URL
   public selectedIndex = signal(0)
   private routeSubscription: Subscription
+  private fragmentSubscription: Subscription
 
   constructor(
     private log: LogService,
@@ -84,9 +88,11 @@ export class HelpComponent implements OnDestroy {
       if (index >= 0) {
         this.selectedIndex.set(index)
       }
-      // The router's own anchorScrolling runs before the chosen tab's content exists, so the
-      // fragment is scrolled to here, once the tab has rendered.
-      const fragment = route.snapshot.fragment
+    })
+    // The router's own anchorScrolling runs before the chosen tab's content exists, so the
+    // fragment is scrolled to here, once the tab has rendered. Its own stream, not read inside
+    // the tab's: a Help search result on the tab already showing changes only the fragment.
+    this.fragmentSubscription = route.fragment.subscribe(fragment => {
       if (fragment) {
         setTimeout(() => HelpComponent.revealFragment(fragment))
       }
@@ -108,7 +114,10 @@ export class HelpComponent implements OnDestroy {
    * or the reader arrives at a closed heading.
    */
   static revealFragment(fragment: string): void {
+    // E-264: a search result for a heading with no id links to a slug of the heading.
     const target = document.getElementById(fragment)
+      ?? [...document.querySelectorAll('.help-tab-body h3, .help-tab-body rangertrak-expandable-section[summary]')]
+        .find(el => slugForHelp(el.getAttribute('summary') ?? el.textContent ?? '') === fragment)
     if (!target) {
       return
     }
@@ -120,11 +129,15 @@ export class HelpComponent implements OnDestroy {
         }
       }
     }
-    target.scrollIntoView()
+    // E-264: not scrollIntoView, which put the heading under the sticky navbar. Same offset as
+    // AppComponent gives the router's anchorScrolling, so the two land in the same place.
+    const header = Math.ceil(document.querySelector('.app-sticky-header')?.getBoundingClientRect().bottom ?? 0)
+    window.scrollTo(0, target.getBoundingClientRect().top + window.scrollY - header - 8)
   }
 
   ngOnDestroy() {
     this.missionSubscription?.unsubscribe()
     this.routeSubscription?.unsubscribe()
+    this.fragmentSubscription?.unsubscribe()
   }
 }
