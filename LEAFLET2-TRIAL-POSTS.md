@@ -84,7 +84,7 @@ below refer to it. Nothing here names a team, region or person beyond the app it
 > stored) tiles never satisfy, so any re-save over stored tiles never ends either. A `try/catch` in
 > `loader()`, counting failed and skipped tiles, and firing `saveend` once all are attempted would fix both.
 >
-> Build and bundle verified with Leaflet `main`.
+> With the patch, saving an area and showing the saved tiles both work on Leaflet `main` in our app.
 > Happy to open a PR if you'd like.
 >
 > *(attach `patches/leaflet.offline+3.2.1.patch`)*
@@ -112,8 +112,8 @@ below refer to it. Nothing here names a team, region or person beyond the app it
 >    against Leaflet's own types (no global `L` namespace any more), so `MarkerClusterGroup` isn't
 >    assignable to `Layer`. Named `import type { … } from 'leaflet'` and a top-level export fix it.
 >
-> Patch attached (patch-package format). Cluster/spiderfy behaviour with real data is still being
-> hand-checked on our side; I'll update if anything else turns up.
+> Patch attached (patch-package format). With it, clustering and spiderfy work in our app on Leaflet
+> `main`, including a print layout that reuses the spiral; I'll update if anything else turns up.
 >
 > *(attach `patches/@kristjan.esperanto+leaflet.markercluster+3.0.3.patch`)*
 
@@ -121,10 +121,8 @@ below refer to it. Nothing here names a team, region or person beyond the app it
 
 ### Before posting
 
-- [ ] Hand checks (below) done, so the posts don't claim more than we verified.
+- [x] Hand checks (John 10-31, on :8096 from the worktree): clusters and spiderfy, Save tiles + offline
+      layer, Print map, layers-control overlay toggles. Not checked: trail elapsed-time labels, long-press
+      on touch (neither is claimed in the posts).
 - [ ] Post 1 first; posts 2 and 3 can reference it.
 - [ ] Append a row to `..\claude\go-to-market\publishing-log.md`? (Not marketing; John's call.)
-
-Hand checks, on `http://localhost:8095` from the worktree build (`node tools/serve-dist.js` with
-`PORT=8095`), Fernhollow demo: clusters and spiderfy, Save tiles + offline layer, Print map,
-trail elapsed-time labels, long-press on touch, layers-control overlay toggles.
