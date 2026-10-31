@@ -111,3 +111,156 @@ first types item, since plugin authors will hit it before anything else.
 `LatLngTuple` and `LeafletMouseEvent` (both widely used from `@types/leaflet`) have no export on
 `main`. `Map.mouseEventToLatLng` is now `pointerEventToLatLng`, and `DomUtil.addClass` is gone
 (use `classList`). All easy once known; a rename table in the upgrade guide would cover them.
+
+### F-7 (friction, npm/our setup): `$leaflet` override fails when Leaflet is a `file:` dependency
+
+To make `leaflet.offline` (which *depends on* `leaflet ^1.6.0`, see F-4) share our copy we tried
+`"overrides": { "leaflet.offline": { "leaflet": "$leaflet" } }`. With `"leaflet": "file:vendor/leaflet-main-c152e0d.tgz"`:
+
+```
+npm ERR! Invalid comparator: file:vendor/leaflet-main-c152e0d.tgz
+```
+
+`"*"` installs but leaves the stale nested `leaflet@1.9.4` in the lockfile (1.9.4 satisfies `*`).
+`">=2.0.0-alpha.1"` works: `npm ls leaflet` then shows a single `leaflet@2.0.0-alpha.1`, deduped under both plugins.
+Not a Leaflet bug; recorded because anyone testing `main` from a tarball will hit it.
+
+### F-8 (blocker, plugin: @kristjan.esperanto/leaflet.markercluster 3.0.3): imports `Browser`
+
+The fork's peer range is `leaflet >=2.0.0-alpha.1` and it was written against alpha.1, so it breaks on `main`:
+
+```
+X [ERROR] No matching export in "node_modules/leaflet/src/Leaflet.js" for import "Browser"
+    node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js:14:77
+```
+
+It uses only `Browser.mobile` and `Browser.touch`. Patch: a two-line local object
+(`/mobi/i.test(navigator.userAgent)`, `navigator.maxTouchPoints > 0`).
+
+### F-9 (blocker, plugin): still built on `Class.extend()` and `initialize()`
+
+After F-8 the app builds, but the first page that loads the plugin dies at module evaluation:
+
+```
+Uncaught TypeError: Marker.extend is not a function
+    at node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js:372:32
+```
+
+Three classes use it (`MarkerCluster`, `MarkerClusterGroup`, `MarkerClusterNonAnimated`), with
+`options:` on the prototype, `initialize:` and `Marker.prototype.initialize.call(...)`. We converted
+them to `class X extends Y` with the constructor body taken from `initialize`, `X.mergeOptions({...})`
+for the options, `X.include({...methods})` for the rest, `Marker.defaultOptions.pane` in place of
+`Marker.prototype.options.pane`, and `this.options.icon = this` after `super()` (the cluster
+marker is its own icon). Leaflet's guard message (`initialize() is not called in Leaflet 2.
+Rename it to constructor()`) is helpful. `Class.include` and `mergeOptions` kept the conversion
+small (about 40 changed lines in a 2,900-line file); the spiderfy code needed no change.
+Cluster rendering and spiderfy are NOT verified by the e2e groups we ran (see end of this file).
+
+### F-10 (friction, plugin types): the fork's `.d.ts` cannot resolve Leaflet names
+
+`types/index.d.ts` is written as `import * as L from "leaflet"; declare module "leaflet" { ... } export = L;`.
+Against Leaflet `main` every name inside the augmentation is unresolved:
+
+```
+index.d.ts(7,47): error TS2552: Cannot find name 'LayerOptions'.
+index.d.ts(139,36): error TS2304: Cannot find name 'FeatureGroup'.
+```
+
+so `MarkerClusterGroup` degrades to something not assignable to `Layer`
+(`TS2345: Argument of type 'MarkerClusterGroup' is not assignable to parameter of type 'LayerBase<LayerOptions, LayerEventMap>'`).
+`@types/leaflet` declared a global `L` namespace; the first-party types do not. Patch: named
+`import type { ... } from 'leaflet'`, top-level `export class MarkerClusterGroup`, options typed
+`InteractiveLayerOptions & MarkerClusterGroupOptions` (the v2 base class wants the fully
+resolved options, see F-5), and the `Marker.refreshIconOptions` augmentation kept in `declare module "leaflet"`.
+
+### F-11 (blocker, plugin: leaflet.offline 3.2.1): the four calls from F-4, patched
+
+Patched with `patch-package` (`patches/leaflet.offline+3.2.1.patch`, about 6 changed lines in
+`dist/bundle.js`, 2 in the `.d.ts`), the seed of a PR for allartk/leaflet.offline:
+
+- `Util.bind(f, ctx, ...a)` becomes `f.bind(ctx, ...a)` (2 places)
+- `Browser.retina` becomes `window.devicePixelRatio > 1`
+- `bounds(a, b)` becomes `new Bounds(a, b)`
+- `DomEvent.on(link, 'mousedown dblclick', stopPropagation).on(...)` becomes separate `DomEvent.on` calls, and `mousedown` becomes `pointerdown`
+- `.d.ts`: `tileLayerOffline(url, options: TileLayerOptions)` becomes `options?: Partial<TileLayerOptions>` (F-5); `createTile(...): HTMLElement` becomes `HTMLImageElement` (F-13)
+
+The `window.L` registration blocks are harmless and were left. Saving tiles (the `savetiles`
+control and `downloadTile`) is NOT verified at runtime, only type-checked and bundled.
+
+### F-12 (friction, Leaflet docs): the default-icon idiom `Marker.prototype.options.icon = ...` now throws at load
+
+A very common snippet (also the standard fix for bundlers breaking the default marker image):
+
+```ts
+L.Marker.prototype.options.icon = iconDefault
+// TypeError: Cannot set properties of undefined (setting 'icon')   (at module evaluation of the lazy /map chunk)
+```
+
+TypeScript did not catch it, and the unit tests never load that module. It surfaced only as a
+router NavigationError on `/map` in a real browser; our first e2e run failed on it (36/37).
+Fix: `L.Marker.mergeOptions({ icon: iconDefault })`. Suggest the upgrade guide list
+"`prototype.options` is gone, use `mergeOptions` / `defaultOptions`" with this exact example.
+
+### F-13 (friction, Leaflet types): `Tooltip` is not a `Layer`; `createTile` is typed `HTMLImageElement`
+
+- We add a permanent `Tooltip` (a text label at a lat/lng) to a `LayerGroup`:
+  `TS2345: Argument of type 'Tooltip<...>' is not assignable to parameter of type 'Layer<...>'`.
+  `Tooltip` now extends `DivOverlay extends LayerBase`, and `LayerGroup.addLayer(layer: Layer)`.
+  At runtime it should work, because `Map.addLayer` only needs `_layerAdd` (not verified in a browser). We cast.
+  `LayerGroup.addLayer` could take `LayerBase`, as `Map.addLayer` already does.
+- We override `createTile` to return a `div` (a "no tile here" placeholder). v1 typed it `HTMLElement`;
+  v2 types `TileLayer.createTile` as `HTMLImageElement`: `TS2322: Type 'HTMLElement' is missing the following properties from type 'HTMLImageElement'`. We cast.
+
+### F-14 (note, Leaflet types): more removed names and renamed events
+
+Beyond F-6: `L.MarkerClusterGroup` (a global augmentation before, now an import from the plugin);
+`import L from 'leaflet'` has no default export (use `import * as L`); a bare `import 'leaflet'`
+now draws an esbuild warning because the package's `sideEffects` array excludes it.
+`LeafletMouseEvent` becomes `LeafletPointerEvent`. Event names we changed on map and marker
+listeners: `mousemove` to `pointermove`, `mouseover`/`mouseout` to `pointerover`/`pointerout`
+(`click` is unchanged). `bubblingMouseEvents` still works (the `?? bubblingPointerEvents`
+fallback in `_fireDOMEvent` is a good touch).
+
+### F-15 (note, ours): the mechanical port, for scale
+
+About 100 factory calls in 10 files became `new X(...)` (marker 13, point 10, divIcon 8, layerGroup 8,
+tileLayer 7, map / latLng / latLngBounds / polyline 5 each, bounds 4, icon 4, a few others);
+`L.control.layers` / `L.control.scale` became `new L.LayersControl` / `new L.ScaleControl`;
+`L.control({...})` with an `onAdd` assignment became `new L.Control({...})`;
+`DomUtil.addClass` became `classList.add` (3); `mouseEventToLatLng` became `pointerEventToLatLng` (3);
+`L.LatLngTuple` became `[number, number]`; `L.PolylineOptions` annotations became `Partial<...>` (2).
+Non-mechanical edits in our own code: about 10 lines.
+
+### F-16 (friction, observation, cause not found): Entry page LCP and CLS got worse
+
+Local Lighthouse, same method as the baseline: `/` went from perf 75 / LCP 2.98 s / CLS 0.012
+to perf 68 / LCP about 4.9 s / CLS about 0.08 (six runs, very consistent). `/map` improved (below).
+Not bisected. The Entry page embeds the Leaflet mini-map, so it may be Leaflet 2 behaviour
+(tile load order, container sizing), the plugin, or our port. Needs a trace before anything
+is reported upstream; treat as unconfirmed.
+
+## After (Leaflet main c152e0d)
+
+- Leaflet is native ESM now but still lands in the eager `main.js`: **140.9 KB** of an 817 KB
+  `main.js` (baseline 145.9 KB of 802 KB). The cause is ours, not Leaflet's: `entry.component.ts`
+  statically imports `MiniMapLeafletComponent`, which imports Leaflet. Tree-shaking of
+  `import * as L` saved only about 5 KB. Plugins stay lazy: markercluster fork 34.2 KB
+  (was 33.5), leaflet.offline 7.0 KB (was 6.9).
+- Initial total 1.88 MB raw / 414.00 kB transfer (baseline 1.89 MB / 415.20 kB).
+- Build: 0 errors (first attempt 107). Unit tests: 1413/1413 pass.
+- e2e `map` + `entry`: 70/70 pass (after the F-12 fix; the first run was 36/37).
+- Local Lighthouse 13.5.0 desktop, medians of 3: Entry `/` perf 68, LCP 5.00 s, TBT 30 ms,
+  CLS 0.080, unused JS 625 KB. Map `/map` perf 71, LCP 3.63 s, TBT 3 ms, CLS 0.034, unused JS 912 KB.
+
+| | Baseline (1.9.4) | After (main c152e0d) |
+| --- | --- | --- |
+| Leaflet in eager main.js | 145.9 KB of 802 KB | 140.9 KB of 817 KB |
+| markercluster / offline (lazy) | 33.5 / 6.9 KB | 34.2 / 7.0 KB |
+| Initial total raw / transfer | 1.89 MB / 415.20 kB | 1.88 MB / 414.00 kB |
+| e2e map + entry | 70/70 | 70/70 |
+| Entry perf / LCP / TBT / CLS | 75 / 2.98 s / 31 ms / 0.012 | 68 / 5.00 s / 30 ms / 0.080 |
+| Map perf / LCP / TBT / CLS | 64 / 8.87 s / 16 ms / 0.035 | 71 / 3.63 s / 3 ms / 0.034 |
+
+Not verified (hand checks): marker clustering and spiderfy with real data, offline tile saving and
+the saved-tiles layer, Print map, trail elapsed-time labels (the F-13 cast), touch / long-press
+`contextmenu`, the layers control's overlay toggles.
