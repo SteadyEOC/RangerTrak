@@ -1,5 +1,5 @@
 diff --git a/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js b/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
-index cff0341..99a3080 100644
+index cff0341..4040a5f 100644
 --- a/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
 +++ b/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
 @@ -11,7 +11,12 @@
@@ -16,6 +16,174 @@ index cff0341..99a3080 100644
  
  /**
   * @typedef {import('leaflet').Point} Point
+@@ -364,14 +369,11 @@ const quickHullMethods = {
+   },
+ };
+ 
+-const MarkerCluster$1 = Marker.extend({
+-  ...quickHullMethods,
+-
+-  options: Icon.prototype.options,
+-
+-  initialize: function (group, zoom, a, b) {
+-    Marker.prototype.initialize.call(this, a ? (a._cLatLng || a.getLatLng()) : new LatLng(0, 0),
+-      { icon: this, pane: group.options.clusterPane });
++// Leaflet main removed Class.extend() and initialize(): ES classes with the methods mixed in via include().
++class MarkerCluster$1 extends Marker {
++  constructor(group, zoom, a, b) {
++    super(a ? (a._cLatLng || a.getLatLng()) : new LatLng(0, 0), { pane: group.options.clusterPane });
++    this.options.icon = this;
+ 
+     this._group = group;
+     this._zoom = zoom;
+@@ -390,7 +392,11 @@ const MarkerCluster$1 = Marker.extend({
+     if (b) {
+       this._addChild(b);
+     }
+-  },
++  }
++}
++MarkerCluster$1.mergeOptions(Icon.defaultOptions);
++MarkerCluster$1.include({
++  ...quickHullMethods,
+ 
+   // Recursively retrieve all child markers of this cluster
+   getAllChildMarkers: function (storageArray, ignoreDraggedMarker) {
+@@ -1176,60 +1182,10 @@ const animationMethods = {
+  */
+ 
+ 
+-const MarkerClusterGroup = FeatureGroup.extend({
+-  ...refreshMethods,
+-  ...animationMethods,
+-
+-  options: {
+-    maxClusterRadius: 80, // A cluster will cover at most this many pixels from its center
+-    iconCreateFunction: null,
+-    clusterPane: Marker.prototype.options.pane,
+-
+-    spiderfyOnEveryZoom: false,
+-    spiderfyOnMaxZoom: true,
+-    showCoverageOnHover: true,
+-    zoomToBoundsOnClick: true,
+-    singleMarkerMode: false,
+-
+-    disableClusteringAtZoom: null,
+-
+-    // Accessibility: Title for cluster markers (can be a string or function)
+-    // Function signature: function(cluster) { return 'title text'; }
+-    clusterMarkerTitle: null,
+-
+-    // Setting this to false prevents the removal of any clusters outside of the viewpoint, which
+-    // is the default behaviour for performance reasons.
+-    removeOutsideVisibleBounds: true,
+-
+-    // Set to false to disable all animations (zoom and spiderfy).
+-    // If false, option animateAddingMarkers below has no effect.
+-    animate: true,
+-
+-    // Whether to animate adding markers after adding the MarkerClusterGroup to the map
+-    // If you are adding individual markers set to true, if adding bulk markers leave false for massive performance gains.
+-    animateAddingMarkers: false,
+-
+-    // Make it possible to provide custom function to calculate spiderfy shape positions
+-    spiderfyShapePositions: null,
+-
+-    // Increase to increase the distance away that spiderfied markers appear from the center
+-    spiderfyDistanceMultiplier: 1,
+-
+-    // Make it possible to specify a polyline options on a spider leg
+-    spiderLegPolylineOptions: { weight: 1.5, color: '#222', opacity: 0.5 },
+-
+-    // When bulk adding layers, adds markers in chunks. Means addLayers may not add all the layers in the call, others will be loaded during setTimeouts
+-    chunkedLoading: true,
+-    chunkInterval: 80, // process markers for a maximum of ~ n milliseconds (then trigger the chunkProgress callback)
+-    chunkDelay: 20, // at the end of each interval, give n milliseconds back to system/browser
+-    chunkProgress: null, // progress callback: function(processed, total, elapsed) (e.g. for a progress indicator)
++class MarkerClusterGroup extends FeatureGroup {
++  constructor(options) {
++    super([], options);
+ 
+-    // Options to pass to the Polygon constructor
+-    polygonOptions: {},
+-  },
+-
+-  initialize: function (options) {
+-    Util.setOptions(this, options);
+     if (!this.options.iconCreateFunction) {
+       this.options.iconCreateFunction = this._defaultIconCreateFunction;
+     }
+@@ -1261,7 +1217,59 @@ const MarkerClusterGroup = FeatureGroup.extend({
+     // Register event listeners for spiderfier lifecycle
+     this.on('add', this._spiderfierSetup, this);
+     this.on('remove', this._spiderfierCleanup, this);
+-  },
++  }
++}
++MarkerClusterGroup.mergeOptions({
++  maxClusterRadius: 80, // A cluster will cover at most this many pixels from its center
++  iconCreateFunction: null,
++  clusterPane: Marker.defaultOptions.pane,
++
++  spiderfyOnEveryZoom: false,
++  spiderfyOnMaxZoom: true,
++  showCoverageOnHover: true,
++  zoomToBoundsOnClick: true,
++  singleMarkerMode: false,
++
++  disableClusteringAtZoom: null,
++
++  // Accessibility: Title for cluster markers (can be a string or function)
++  // Function signature: function(cluster) { return 'title text'; }
++  clusterMarkerTitle: null,
++
++  // Setting this to false prevents the removal of any clusters outside of the viewpoint, which
++  // is the default behaviour for performance reasons.
++  removeOutsideVisibleBounds: true,
++
++  // Set to false to disable all animations (zoom and spiderfy).
++  // If false, option animateAddingMarkers below has no effect.
++  animate: true,
++
++  // Whether to animate adding markers after adding the MarkerClusterGroup to the map
++  // If you are adding individual markers set to true, if adding bulk markers leave false for massive performance gains.
++  animateAddingMarkers: false,
++
++  // Make it possible to provide custom function to calculate spiderfy shape positions
++  spiderfyShapePositions: null,
++
++  // Increase to increase the distance away that spiderfied markers appear from the center
++  spiderfyDistanceMultiplier: 1,
++
++  // Make it possible to specify a polyline options on a spider leg
++  spiderLegPolylineOptions: { weight: 1.5, color: '#222', opacity: 0.5 },
++
++  // When bulk adding layers, adds markers in chunks. Means addLayers may not add all the layers in the call, others will be loaded during setTimeouts
++  chunkedLoading: true,
++  chunkInterval: 80, // process markers for a maximum of ~ n milliseconds (then trigger the chunkProgress callback)
++  chunkDelay: 20, // at the end of each interval, give n milliseconds back to system/browser
++  chunkProgress: null, // progress callback: function(processed, total, elapsed) (e.g. for a progress indicator)
++
++  // Options to pass to the Polygon constructor
++  polygonOptions: {},
++});
++MarkerClusterGroup.include({
++  ...refreshMethods,
++  ...animationMethods,
++
+ 
+   addLayer: function (layer) {
+     if (layer instanceof LayerGroup) {
+@@ -2554,7 +2562,8 @@ const MarkerClusterSpiderfierMethods = {
+ };
+ 
+ // Non Animated versions of everything
+-const MarkerClusterNonAnimated = MarkerCluster$1.extend({
++class MarkerClusterNonAnimated extends MarkerCluster$1 {}
++MarkerClusterNonAnimated.include({
+   _animationSpiderfy: function (childMarkers, positions) {
+     const group = this._group,
+       map = group._map,
 diff --git a/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts b/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts
 index f41169b..b5970c3 100644
 --- a/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts
