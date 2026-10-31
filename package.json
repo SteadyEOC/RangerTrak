@@ -70,7 +70,7 @@
     "crypto-js": "^4.2.0",
     "fflate": "^0.8.3",
     "idb": "^8.0.4",
-    "leaflet": "^1.9.4",
+    "leaflet": "file:vendor/leaflet-main-c152e0d.tgz",
     "leaflet.markercluster": "^1.5.3",
     "leaflet.offline": "^3.2.0",
     "maplibre-gl": "^6.16.0",
