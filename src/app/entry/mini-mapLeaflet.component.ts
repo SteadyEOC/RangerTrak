@@ -45,7 +45,7 @@ const markerIcon = new L.Icon({
   iconUrl: '../../assets/icons/marker-icon.png',
   shadowUrl: '../../assets/icons/marker-shadow.png'
 })
-L.Marker.prototype.options.icon = iconDefault;
+L.Marker.mergeOptions({ icon: iconDefault }); // v2: prototype.options is gone; defaults live on static defaultOptions
 //or L.Marker.prototype.options.icon = new L.Icon.Default;
 //type LatLng = { lat: number, lng: number }
 

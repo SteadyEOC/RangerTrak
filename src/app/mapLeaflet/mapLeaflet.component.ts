@@ -73,7 +73,7 @@ const iconDefault = new L.Icon({
   tooltipAnchor: [16, -28],
   shadowSize: [41, 41]
 })
-L.Marker.prototype.options.icon = iconDefault;
+L.Marker.mergeOptions({ icon: iconDefault }); // v2: prototype.options is gone; defaults live on static defaultOptions
 
 // See MapLeafletComponent.ringStepIndex: 0 = Auto, n = RING_STEPS_MILES[n - 1].
 const ringStepIndex = signal(0)
