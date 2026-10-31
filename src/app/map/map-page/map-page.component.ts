@@ -89,7 +89,7 @@ export class MapPageComponent implements OnInit, OnDestroy {
     protected usage: UsageStateService) { }
 
   /** E-207: the advanced controls on this page that Simple view can hide. */
-  protected readonly advancedIds = ['maplibre', 'print-map', 'places-import'] as const
+  protected readonly advancedIds = ['maplibre', 'places-import'] as const
 
   /** E-207 / D-62 item 3: the page's own facts for ViewService (the Alternative map is the one showing). */
   mapHere(): Partial<ViewContext> {

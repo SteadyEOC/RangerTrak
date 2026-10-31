@@ -5340,8 +5340,8 @@ async function checkSimpleView(fx) {
     check('Entry has the header Full view switch', await has('[data-testid=view-switch-header]'), true)
 
     await goto('/map', 5500)
-    check('Map hides the Alternative map switch, Print map and the places panel',
-      await firstPresent(['[data-testid=mapEngineSwitch]', '[data-testid=printMap]', 'rangertrak-places-io']), null)
+    check('Map hides the Alternative map switch and the places panel',
+      await firstPresent(['[data-testid=mapEngineSwitch]', 'rangertrak-places-io']), null)
     check('Map keeps Zoom to Extent and Zoom to offline tiles',
       [await has('[data-testid=zoomToExtent]'), await has('[data-testid=zoomToOfflineTiles]')], [true, true])
     const rows = await evaluate(`(() => {
@@ -5447,11 +5447,11 @@ async function checkSimpleView(fx) {
 
     // ── the header switch on Map ──────────────────────────────────────
     await goto('/map', 5500)
-    check('Map still hides Print map in Simple view', await has('[data-testid=printMap]'), false)
+    check('Map shows Print map in Simple view (John 10-31)', await has('[data-testid=printMap]'), true)
     await setSwitch(true)
     await sleep(800)
     check('the header switch turns Full view on, source user', await viewState(), ['full', 'user'])
-    check('...and the page now shows Print map and the Alternative map switch',
+    check('...and the page now shows the Alternative map switch (Print map in both views)',
       [await has('[data-testid=printMap]'), await has('[data-testid=mapEngineSwitch]')], [true, true])
     check('...and Full view now marks controls with the left edge', await has('.rt-advanced'), true)
 

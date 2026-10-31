@@ -141,13 +141,11 @@
         <!-- G: prints the map alone (rt-print-map body class, styles.scss) - same approach
              as Radio Log's ICS-309 print, After Action's own onPrint(), and LmapComponent's
              copy of this button on the Leaflet engine. -->
-        @if (view.isShown('print-map')) {
-        <button matButton="outlined" type="button" (click)="onBtnPrintMap()" [rtAdvanced]="'print-map'"
+        <button matButton="outlined" type="button" (click)="onBtnPrintMap()"
           data-testid="printMap" title="Print this map. Opens your browser's print dialog; choose your printer there">
           <mat-icon>print</mat-icon>
           Print map
         </button>
-        }
 
         <!-- ADR D-49: arms the next plain map click to place a Location there instead of
              copying coordinates - see placingLocation's own comment (mapLibre.component.ts)

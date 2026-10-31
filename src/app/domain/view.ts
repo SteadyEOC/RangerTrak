@@ -95,7 +95,6 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   // Map
   { id: 'maplibre', label: 'Alternative map', isInUse: ctx => ctx.mapEngineIsAlternative },
   { id: 'map-layers-extra', label: 'Extra map layers', isInUse: ctx => ctx.mapExtraLayersOn },
-  { id: 'print-map', label: 'Print map', isInUse: never },
   { id: 'places-import', label: 'Places import and export', isInUse: ctx => ctx.locationCount > 0 },
   // Navigation (E-04 / D-63 item 7): After action, the page that holds the ICS-214 log. Not on the
   // menu otherwise (reached from the AAR/214 box); Simple view lists it once the mission has a line.

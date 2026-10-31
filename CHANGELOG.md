@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+
+### Features
+
+* **map:** Print map is now shown in Simple view too, not only Full view (John 10-31)
+
+
 ## [1.0.0-beta.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.97-alpha...v1.0.0-beta.1) (2026-10-28)
 
 

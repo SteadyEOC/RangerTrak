@@ -56,7 +56,6 @@ import { attachmentChipHtml, attachmentChipUid } from '../shared/attachments/att
 import { AttachmentViewerService } from '../shared/attachments/attachment-viewer.service'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
 import { ViewService } from '../shared/services/view.service'
-import { AdvancedDirective } from '../shared/view/advanced.directive'
 import { MapPrintFurnitureComponent } from '../map/map-print/map-print-furniture.component'
 import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.component'
 
@@ -88,7 +87,7 @@ const ringStepIndex = signal(0)
   selector: 'rangertrak-mapLeaflet',
   standalone: true,
   imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatButtonToggleModule, MatSliderModule, MatIconModule,
-    FilterChipsComponent, MapPrintLegendComponent, MapPrintFurnitureComponent, AdvancedDirective],
+    FilterChipsComponent, MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [
     './mapLeaflet.component.scss'
