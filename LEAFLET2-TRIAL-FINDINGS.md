@@ -345,3 +345,4 @@ outline. Fixed upstream in allartk/leaflet.offline#517 (works on both Leaflet 1 
 
 Upstream PRs (opened 2026-10-31, from VashJuan forks): allartk/leaflet.offline#516 (save keeps going past
 failed tiles; F-18) and #517 (Leaflet 2 alongside Leaflet 1; F-4, F-11, F-19).
+KristjanESPERANTO/Leaflet.markercluster#8 (draft; F-8, F-9, F-10, F-17; targets Leaflet main, so CI on their alpha.1 devDependency fails until beta.1). Branches live on the VashJuan forks; local clones were in a session scratchpad, so re-clone the fork to revise.
