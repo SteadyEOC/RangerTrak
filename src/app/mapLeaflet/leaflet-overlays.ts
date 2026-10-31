@@ -1,4 +1,3 @@
-import 'leaflet'
 import * as L from 'leaflet'
 import { forward as mgrsForward } from 'mgrs'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../domain/overdue'
@@ -50,14 +49,14 @@ export class LeafletOverlays {
   // E-80 phase 1: per-callsign route trails, static (no animation/timer - see the roadmap
   // scoping). A plain layer group, not clustered - clustering exists to collapse crowded
   // point markers and would be actively wrong for line geometry.
-  readonly myTrailsLayer = L.layerGroup()
+  readonly myTrailsLayer = new L.LayerGroup()
   // Mile grid overlay (see MILE_METERS' own comment) - redrawn on pan/zoom by
   // refreshMileGrid(), only while this layer is actually checked on in the layers control.
-  readonly mileGridLayer = L.layerGroup()
+  readonly mileGridLayer = new L.LayerGroup()
   // 2026-09-30, John: E-162 - USNG / MGRS grid overlay; redrawn by refreshUsngGrid() the same way.
-  readonly usngGridLayer = L.layerGroup()
+  readonly usngGridLayer = new L.LayerGroup()
   // 2026-09-30, John: E-162 - range rings around the command post; see refreshRangeRings().
-  readonly rangeRingsLayer = L.layerGroup()
+  readonly rangeRingsLayer = new L.LayerGroup()
 
   constructor(private readonly host: LeafletOverlaysHost) { }
 
@@ -123,7 +122,7 @@ export class LeafletOverlays {
     // would visibly drift from the true grid line over a mile-plus span at typical
     // operational zoom levels.
     const STEPS = 6
-    const gridStyle: L.PolylineOptions = { color: '#3355ff', weight: 1, opacity: 0.55, interactive: false }
+    const gridStyle: Partial<L.PolylineOptions> = { color: '#3355ff', weight: 1, opacity: 0.55, interactive: false }
 
     const startE = Math.ceil(minE / MILE_METERS) * MILE_METERS
     for (let e = startE; e <= maxE; e += MILE_METERS) {
@@ -134,7 +133,7 @@ export class LeafletOverlays {
         if (dd) pts.push([dd.lat, dd.lng])
       }
       if (pts.length > 1) {
-        this.mileGridLayer.addLayer(L.polyline(pts, gridStyle))
+        this.mileGridLayer.addLayer(new L.Polyline(pts, gridStyle))
       }
     }
 
@@ -147,7 +146,7 @@ export class LeafletOverlays {
         if (dd) pts.push([dd.lat, dd.lng])
       }
       if (pts.length > 1) {
-        this.mileGridLayer.addLayer(L.polyline(pts, gridStyle))
+        this.mileGridLayer.addLayer(new L.Polyline(pts, gridStyle))
       }
     }
   }
@@ -179,7 +178,7 @@ export class LeafletOverlays {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return
     }
-    const centre = L.latLng(lat, lng)
+    const centre = new L.LatLng(lat, lng)
     const view = this.lMap.getBounds()
     const viewMeters = Math.min(
       this.lMap.distance(view.getNorthWest(), view.getNorthEast()),
@@ -194,7 +193,7 @@ export class LeafletOverlays {
     // Only the rings that can cross the view: from the nearest point of the view (0 when the
     // post is on screen) out to its farthest corner, capped so a post far off screen at a
     // close zoom can't produce thousands of circles.
-    const nearest = L.latLng(
+    const nearest = new L.LatLng(
       Math.min(Math.max(lat, view.getSouth()), view.getNorth()),
       Math.min(Math.max(lng, view.getWest()), view.getEast()))
     const farthest = Math.max(...[view.getNorthWest(), view.getNorthEast(), view.getSouthWest(), view.getSouthEast()]
@@ -209,14 +208,14 @@ export class LeafletOverlays {
 
     for (let k = first; k <= last; k++) {
       const meters = k * step
-      this.rangeRingsLayer.addLayer(L.circle(centre, {
+      this.rangeRingsLayer.addLayer(new L.Circle(centre, {
         radius: meters, color: '#8a3ffc', weight: 1.5, opacity: 0.8, dashArray: '6 4',
         fill: false, interactive: false, className: 'rt-range-ring',
       }))
       const at = destinationPoint(lat, lng, meters, labelBearing)
-      this.rangeRingsLayer.addLayer(L.marker([at.lat, at.lng], {
+      this.rangeRingsLayer.addLayer(new L.Marker([at.lat, at.lng], {
         interactive: false, keyboard: false,
-        icon: L.divIcon({
+        icon: new L.DivIcon({
           className: 'rt-range-ring-label', iconSize: [0, 0],
           html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
             + `font:600 11px/1 sans-serif;color:#6929c4;background:rgba(255,255,255,.85);padding:1px 4px;border-radius:3px">`
@@ -293,10 +292,10 @@ export class LeafletOverlays {
 
       const inside = (p: LL | null): p is LL => !!p && p.lng >= zoneLo && p.lng <= zoneHi
       const trace = (f: (t: number) => LL | null, weight: number) => {
-        const style: L.PolylineOptions = { color, weight, opacity: 0.6, interactive: false }
+        const style: Partial<L.PolylineOptions> = { color, weight, opacity: 0.6, interactive: false }
         let seg: L.LatLngExpression[] = []
         const flush = () => {
-          if (seg.length > 1) this.usngGridLayer.addLayer(L.polyline(seg, style))
+          if (seg.length > 1) this.usngGridLayer.addLayer(new L.Polyline(seg, style))
           seg = []
         }
         // The last point still inside the zone between tIn (inside) and tOut (outside).
@@ -334,9 +333,9 @@ export class LeafletOverlays {
       const label = (at: LL | null, value: number) => {
         if (!inside(at) || !view.contains([at.lat, at.lng])) return
         const digits = String(Math.floor((value % 100000) / spacing)).padStart(labelDigits, '0')
-        this.usngGridLayer.addLayer(L.marker([at.lat, at.lng], {
+        this.usngGridLayer.addLayer(new L.Marker([at.lat, at.lng], {
           interactive: false, keyboard: false,
-          icon: L.divIcon({
+          icon: new L.DivIcon({
             className: '', iconSize: [0, 0],
             html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
               + `font:600 11px/1 sans-serif;color:${color};text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff">${digits}</span>`,
@@ -370,9 +369,9 @@ export class LeafletOverlays {
       const c = view.getCenter()
       const id = mgrsForward([c.lng, c.lat], 0)  // e.g. "10TDT"
       const text = `${id.slice(0, id.length - 2)} ${id.slice(-2)}`
-      this.usngGridLayer.addLayer(L.marker([view.getNorth() - 0.05 * (view.getNorth() - view.getSouth()), c.lng], {
+      this.usngGridLayer.addLayer(new L.Marker([view.getNorth() - 0.05 * (view.getNorth() - view.getSouth()), c.lng], {
         interactive: false, keyboard: false,
-        icon: L.divIcon({
+        icon: new L.DivIcon({
           className: '', iconSize: [0, 0],
           html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
             + `font:700 13px/1 sans-serif;color:${color};background:rgba(255,255,255,.8);padding:2px 6px;border-radius:4px">${text}</span>`,
@@ -444,7 +443,7 @@ export class LeafletOverlays {
         // older -> newer. Default SVG renderer (no preferCanvas anywhere), so CSS applies.
         const isNewest = i === segmentCount - 1
         const weight = segmentCount === 1 ? 4 : 1.2 + 2.8 * i / (segmentCount - 1)
-        const segment = L.polyline(
+        const segment = new L.Polyline(
           [
             [ordered[i].location.lat, ordered[i].location.lng],
             [ordered[i + 1].location.lat, ordered[i + 1].location.lng]
@@ -466,14 +465,14 @@ export class LeafletOverlays {
       const newest = ordered[ordered.length - 1]
       const elapsedMin = elapsedMinutes(newest.date)
       const elapsedBand = overdueBand(elapsedMin, intervalMin)
-      const label = L.tooltip([newest.location.lat, newest.location.lng], {
+      const label = new L.Tooltip([newest.location.lat, newest.location.lng], {
         permanent: true,
         direction: 'top',
         offset: [0, -8],
         className: `rt-trail-elapsed rt-trail-elapsed--${elapsedBand}`,
         opacity: 1,
       }).setContent(`${elapsedMin}`)
-      this.myTrailsLayer.addLayer(label)
+      this.myTrailsLayer.addLayer(label as unknown as L.Layer) // v2 Tooltip is a LayerBase, not a Layer (types only; Map.addLayer accepts it)
       const newestMarker = this.entryMarkers.get(newest)
       if (newestMarker) {
         this.badgeMarkers.set(label, newestMarker)

@@ -54,7 +54,7 @@ export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
   const shape = rangerShapeMarkup(key)
 
   if (!statusColor) {
-    return L.divIcon({
+    return new L.DivIcon({
       className: 'rt-ranger-marker',
       html: `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" stroke="white" stroke-width="1" stroke-linejoin="round">${shape}</svg>`,
       iconSize: [20, 20],
@@ -66,7 +66,7 @@ export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
   // Halo sits in its own 28x28 viewBox with the shape's original 0-20 coordinate system
   // shifted +4/+4 via <g transform>, so MARKER_SHAPES' own path/point coordinates need no
   // change to support this.
-  return L.divIcon({
+  return new L.DivIcon({
     className: 'rt-ranger-marker',
     html: `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
       <circle cx="14" cy="14" r="13" fill="${statusColor}" opacity="0.55"/>
@@ -87,7 +87,7 @@ export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
  * mission overview too.
  */
 export function evidenceIconFor(): L.DivIcon {
-  return L.divIcon({
+  return new L.DivIcon({
     className: 'rt-evidence-marker',
     html: evidenceMarkerSvg(),
     iconSize: [22, 26],

@@ -2,13 +2,7 @@
 
 // also: https://github.com/onthegomap/planetiler
 //import { openDB, deleteDB, wrap, unwrp } from 'idb'
-// Leaflet must be *evaluated* before leaflet.markercluster: the plugin is old-style and
-// reads the global `L` at module-evaluation time ("L is not defined" otherwise). This bare
-// side-effect import guarantees that, and sorts ahead of the plugin alphabetically so
-// import-sort cannot undo it. It used to work only by accident, via the eager
-// `import L from 'leaflet'` that RadioLogService no longer has.
-import 'leaflet'
-import 'leaflet.markercluster'
+import { MarkerClusterGroup } from '@kristjan.esperanto/leaflet.markercluster'
 //import { markerClusterGroup } from 'leaflet'
 import * as L from 'leaflet'
 import { removeLeafletMap } from '../shared/mapping/leaflet-teardown'
@@ -69,7 +63,7 @@ import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.compo
 const iconRetinaUrl = 'assets/icons/marker-icon-2x.png'
 const iconUrl = 'assets/icons/marker-icon.png'
 const shadowUrl = 'assets/icons/marker-shadow.png'
-const iconDefault = L.icon({
+const iconDefault = new L.Icon({
   iconRetinaUrl,
   iconUrl,
   shadowUrl,
@@ -139,9 +133,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   overviewMapLeafletType = { cur: 2, types: { type: ['roadmap', 'terrain', 'satellite', 'hybrid',] } }
 
   // Removed 2026-09-22: the `mapCursor` L.icon pointed at assets/icons/my-icon.png, which
-  // has never existed in this repo, and its only use was a commented-out L.marker() call.
+  // has never existed in this repo, and its only use was a commented-out new L.Marker() call.
 
-  myMarkerCluster = new window.L.MarkerClusterGroup()
+  myMarkerCluster = new MarkerClusterGroup()
   // The trails, mile grid, USNG grid and range rings layers now live in LeafletOverlays
   // (leaflet-overlays.ts); these stay as the component's public names for them.
   get myTrailsLayer() { return this.overlays.myTrailsLayer }
@@ -156,7 +150,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // to find. `locations` is cached from the subscription below and redrawn in full on every
   // change, same "redraw from scratch" reasoning displayMarkers() already documents for
   // radio log entries - cheap enough at the count a mission's own location list ever reaches.
-  private locationsLayer = L.layerGroup()
+  private locationsLayer = new L.LayerGroup()
   private locations: MissionLocationType[] = []
   private locationsSubscription!: Subscription
 
@@ -328,7 +322,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       this.initOverviewMap()
 
       // Highlight main map location via a rectangle on the overview map
-      let rectangle = L.rectangle(this.lMap.getBounds(), { color: 'Blue', fillOpacity: 0.07, weight: 1 })
+      let rectangle = new L.Rectangle(this.lMap.getBounds(), { color: 'Blue', fillOpacity: 0.07, weight: 1 })
       rectangle.addTo(this.overviewMapLeaflet)
 
       // 2026-09-30, John: E-157 - "1st going to map page, the minimap is zoomed in, not out."
@@ -365,7 +359,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       // commented out - leaving markers off-screen on open. It is now a plain
       // BoundsType, converted to Leaflet's [SW, NE] form right here.
       const b = this.radioLog.bounds
-      this.lMap.fitBounds(L.latLngBounds([b.south, b.west], [b.north, b.east]))
+      this.lMap.fitBounds(new L.LatLngBounds([b.south, b.west], [b.north, b.east]))
       this.syncOverview?.()  // E-157: see above - don't rely on the fit firing 'move'
     }
 
@@ -447,7 +441,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // MarkerClusterGroup extends FeatureGroup, retaining it's methods, e.g., clearLayers() & removeLayers()
     // https://leaflet.github.io/Leaflet.markercluster/
     // per https://stackoverflow.com/a/71574063/18004414 & https://github.com/Leaflet/Leaflet/issues/8451
-    this.myMarkerCluster = new window.L.MarkerClusterGroup({ removeOutsideVisibleBounds: true })
+    this.myMarkerCluster = new MarkerClusterGroup({ removeOutsideVisibleBounds: true })
 
 
     // ---------------- Init Main Map -----------------
@@ -462,7 +456,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // TODO: Provide fullscreen button: https://tomik23.github.io/leaflet-examples/#27.fullscreen
 
     // https://leafletjs.com/reference.html#map-locate
-    this.lMap = L.map(this.mapContainer.nativeElement, {
+    this.lMap = new L.Map(this.mapContainer.nativeElement, {
       center: [this.settings ? this.settings.defLat : 0, this.settings ? this.settings.defLng : 0],
       zoom: this.settings ? this.settings.leaflet.defZoom : 15,
       // https://github.com/Leaflet/Leaflet.fullscreen
@@ -487,11 +481,11 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     ;(this.mapContainer.nativeElement as unknown as { __rtMarkerCluster?: unknown }).__rtMarkerCluster = this.myMarkerCluster
 
     // https://stackoverflow.com/questions/14106687/how-do-i-change-the-default-cursor-in-leaflet-maps
-    L.DomUtil.addClass(this.lMap.getContainer(), 'crosshair-cursor-enabled')  //  Enable crosshairs
+    this.lMap.getContainer().classList.add('crosshair-cursor-enabled')  //  Enable crosshairs
     // L.DomUtil.removeClass(map._container,'crosshair-cursor-enabled') // Disable crosshairs
 
     // gmap: draggableCursor: 'crosshair', //https://www.w3.org/TR/CSS21/ui.html#propdef-cursor has others...
-    //L.marker([50.505, 30.57], { icon: this.mapCursor }).addTo(this.lMap)
+    //new L.Marker([50.505, 30.57], { icon: this.mapCursor }).addTo(this.lMap)
 
     // map can be either Leaflet or Google Map (in the abstract class) -
     // But we know it is JUST Leaflet map in this file!
@@ -527,7 +521,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // (200, real metadata) - a plain `World_Hillshade` at the root, as originally guessed
     // from the service's own display name, does not exist. A tile fetch at the corrected
     // URL returns a real JPEG, confirmed with curl before touching this file.
-    const hillshadeOverlay = L.tileLayer(
+    const hillshadeOverlay = new L.TileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',
       {
         maxZoom: 16, minZoom: 3, opacity: 0.5,
@@ -544,7 +538,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // the wording waymarkedtrails.org asks for: map data OpenStreetMap contributors
     // (CC-BY-SA), rendering waymarkedtrails.org. Host is in the CSP img-src (src/_headers).
     // Off by default. Tiles go to zoom 18.
-    const trailsOverlay = L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+    const trailsOverlay = new L.TileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
       maxZoom: 18, minZoom: 3, opacity: 0.85,
       attribution: 'Hiking trails: &copy; <a href="https://hiking.waymarkedtrails.org">waymarkedtrails.org</a>, '
         + 'data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors '
@@ -566,7 +560,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // maxZoom 19 is the service's usual detail limit; past it Leaflet just enlarges tiles.
     // Attribution is the service's own copyrightText (MapServer?f=json); Esri changed Maxar to
     // Vantor in 2026. E-162 re-check, 2026-10-20.
-    const satelliteTiles = L.tileLayer(
+    const satelliteTiles = new L.TileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
         maxZoom: 19, minZoom: 3,
@@ -578,10 +572,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // whichever base is showing; meant for Satellite, harmless over the others. Same host as
     // the imagery (already in the CSP), no API key, online only, off by default. Esri's terms
     // re-check before 1.0 covers these too (roadmap E-162). Both tile URLs checked with curl.
-    const esriReference = (service: string) => L.tileLayer(
+    const esriReference = (service: string) => new L.TileLayer(
       `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/${service}/MapServer/tile/{z}/{y}/{x}`,
       { maxZoom: 19, minZoom: 3, attribution: 'Roads and labels: &copy; <a href="https://www.esri.com">Esri</a>' })
-    const roadsLabelsOverlay = L.layerGroup([
+    const roadsLabelsOverlay = new L.LayerGroup([
       esriReference('World_Transportation'),
       esriReference('World_Boundaries_and_Places'),
     ])
@@ -608,7 +602,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'Hiking trails (Waymarked Trails)': trailsOverlay,
       'Roads and place names (for Satellite)': roadsLabelsOverlay,
     }
-    const layersControl = L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
+    const layersControl = new L.LayersControl(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
     // E-207 / D-62: the layers box extras that Simple view hides while none is on (see syncLayerExtras()).
     this.layerExtras = [
       ['USNG / MGRS grid', this.usngGridLayer], ['Range rings (from command post)', this.rangeRingsLayer],
@@ -679,7 +673,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // control - both units shown (its own default), a scribe can read whichever they
     // think in, rather than this app guessing which one that is.
     // 2026-09-30, John: "Longer scale at bottom?" - 200 px rather than Leaflet's 100 px default.
-    L.control.scale({ position: 'bottomleft', maxWidth: 200 }).addTo(this.lMap)
+    new L.ScaleControl({ position: 'bottomleft', maxWidth: 200 }).addTo(this.lMap)
 
     // 2026-09-30, John: E-138 - the 2026-08-26 "zoom out to the saved extent when the layers-menu
     // checkbox goes on" behaviour moved to onBtnZoomToOfflineTiles() (the "Zoom to offline
@@ -699,10 +693,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       svgElement.setAttribute('viewBox', "0 0 200 200");
       svgElement.innerHTML = '<rect width="200" height="200"/><rect x="75" y="23" width="50" height="50" style="fill:red"/><rect x="75" y="123" width="50" height="50" style="fill:#0013ff"/>';
       svgElement.innerHTML = '<rect x="80" y="60" width="250" height="250" rx="20" fill="#F00"/> <rect x="140" y="120" width="250" height="250" rx="40" fill="#00F" fill-opacity=".7"/>';
-      L.svgOverlay(svgElement, [[0, 0], [1024, 1152]]).addTo(this.lMap);
+      new L.SVGOverlay(svgElement, [[0, 0], [1024, 1152]]).addTo(this.lMap);
 
       // let svgElementBounds = [[32, -130], [13, -100]]  // as number[][]
-      // L.svgOverlay(svgElement, svgElementBounds).addTo(this.lMap);
+      // new L.SVGOverlay(svgElement, svgElementBounds).addTo(this.lMap);
   */
 
     if (!this.radioLog) {
@@ -778,7 +772,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
     // instantiate the overview map without controls
     // https://leafletjs.com/reference.html#map-example
-    this.overviewMapLeaflet = L.map(this.overviewContainer.nativeElement, {
+    this.overviewMapLeaflet = new L.Map(this.overviewContainer.nativeElement, {
       center: [this.settings.defLat, this.settings.defLng],
       zoom: this.settings.leaflet.defZoom,
       zoomControl: false,
@@ -789,7 +783,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
     this.overviewMap = this.overviewMapLeaflet
 
-    const overviewTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const overviewTiles = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: this.settings.leaflet.overviewMaxZoom,
       minZoom: this.settings.leaflet.overviewMinZoom,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -797,7 +791,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
     overviewTiles.addTo(this.overviewMapLeaflet)
 
-    L.DomUtil.addClass(this.overviewMapLeaflet.getContainer(), 'crosshair-cursor-enabled')  //  Enable crosshairs
+    this.overviewMapLeaflet.getContainer().classList.add('crosshair-cursor-enabled')  //  Enable crosshairs
 
     // if (this.overviewMapLeaflet === null || this.overviewMapLeaflet === undefined) {
     //   return
@@ -857,7 +851,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       return
     }
 
-    let latlng = this.lMap.mouseEventToLatLng(ev)
+    let latlng = this.lMap.pointerEventToLatLng(ev)
 
     // ADR D-49: armed by the "Add Location" button. Takes over this one click instead of the
     // usual copy-to-clipboard, then disarms - see placingLocation's own comment for why this
@@ -1007,7 +1001,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         const statusColor = radioLogStatusColor(i.status, this.settings.radioLogStatuses)
         // D-42 phase 5: rangerUid (unique per ranger, set even with a blank callsign) takes
         // priority over callsign - see ranger-icon.ts's header comment for why.
-        let marker = L.marker(new L.LatLng(i.location.lat, i.location.lng), {
+        let marker = new L.Marker(new L.LatLng(i.location.lat, i.location.lng), {
           title: title, icon: rangerIconFor(i.rangerUid || i.callsign, statusColor)
         })
         marker.bindPopup(layer => this.entryPopup(i, title, layer))
@@ -1020,7 +1014,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         // ranger-icon.ts) so a scribe recognizes it instantly on the mission overview too.
         if (i.evidenceLocation) {
           let evidenceTitle = `Evidence/clue from ${i.callsign} at ${formatReportTime(i.date)}`
-          let evidenceMarker = L.marker(
+          let evidenceMarker = new L.Marker(
             new L.LatLng(i.evidenceLocation.lat, i.evidenceLocation.lng),
             { title: evidenceTitle, icon: evidenceIconFor() }
           )
@@ -1063,13 +1057,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.locations.forEach(loc => {
       const color = locationCategoryColor(loc.type, this.settings.locationTypes)
       const icon = resolveLocationIcon(loc.type, this.settings.locationTypes)
-      const marker = L.marker([loc.lat, loc.lng], { title: loc.name, icon: locationIconFor(icon, color) })
+      const marker = new L.Marker([loc.lat, loc.lng], { title: loc.name, icon: locationIconFor(icon, color) })
       // Leaflet's default bubblingMouseEvents means a marker click ALSO reaches the map's
       // own click handler (onMouseClick, bound on the container div in the template) unless
       // stopped here - without this, clicking a location would also copy its coordinates to
       // the clipboard and, worse, would fire the "place a new location" flow if placingLocation
       // happened to be armed at the same time.
-      marker.on('click', (ev: L.LeafletMouseEvent) => {
+      marker.on('click', (ev: L.LeafletPointerEvent) => {
         ev.originalEvent?.stopPropagation()
         this.openLocationDialog(loc)
       })
@@ -1124,7 +1118,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       return
     }
     // maxZoom matters: without it, two reports 10m apart would slam the map to max zoom.
-    this.lMap.fitBounds(L.latLngBounds([b.south, b.west], [b.north, b.east]), { padding: [24, 24], maxZoom: 16 })
+    this.lMap.fitBounds(new L.LatLngBounds([b.south, b.west], [b.north, b.east]), { padding: [24, 24], maxZoom: 16 })
   }
 
   /** "Zoom to offline tiles" button (template): see LeafletOfflineController.onBtnZoomToOfflineTiles(). */
@@ -1245,7 +1239,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
   // https://blog.mestwin.net/leaflet-angular-marker-clustering/
   private getDefaultIcon() {
-    return L.icon({
+    return new L.Icon({
       iconSize: [25, 41],
       iconAnchor: [13, 41],
       iconUrl: './../../assets/icons/marker-icon.png'
@@ -1279,7 +1273,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         });
         _marker.on('popupclose', function() {
         });
-        _marker.on('mouseout', function() {
+        _marker.on('pointerout', function() {
           _map.closePopup();
         });
         if (_map.getZoom() > 15 && _map.hasLayer(_marker)) {
@@ -1313,7 +1307,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   /*
   for (var i = 0; i < users.length; i++) {
     (function (user) {
-        var marker = L.marker([users[i].lat, users[i].lon], {icon: iconOff})
+        var marker = new L.Marker([users[i].lat, users[i].lon], {icon: iconOff})
             .on('mouseover', function() { this.setIcon(iconOn); })
             .on('mouseout', function() { this.setIcon(iconOff); })
             .addTo(map);
@@ -1427,7 +1421,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         return;
       }
 
-      const legend = L.control({ position: "bottomleft" });
+      const legend = new L.Control({ position: "bottomleft" });
 
       legend.onAdd = function () {
         let div = L.DomUtil.create("div", "description");
@@ -1439,7 +1433,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       legend.addTo(this._map);
     },
     addCircle: function ({ accuracy, latitude, longitude }) {
-      return L.circle([latitude, longitude], accuracy / 2, {
+      return new L.Circle([latitude, longitude], accuracy / 2, {
         className: "circle-test",
         weight: 2,
         stroke: false,
@@ -1448,10 +1442,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       });
     },
     addMarker: function ({ latitude, longitude }) {
-      return L.marker([latitude, longitude], {
-        icon: L.divIcon({
+      return new L.Marker([latitude, longitude], {
+        icon: new L.DivIcon({
           className: "located-animation",
-          iconSize: L.point(17, 17),
+          iconSize: new L.Point(17, 17),
           popupAnchor: [0, -15],
         }),
       }).bindPopup("Your are here :)");

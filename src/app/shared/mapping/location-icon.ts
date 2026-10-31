@@ -15,7 +15,7 @@ import { locationMarkerSvg } from './location-marker'
  * via `resolveLocationIcon()` first, same as `locationMarkerSvg()` itself now expects.
  */
 export function locationIconFor(icon: LocationIconId, color: string): L.DivIcon {
-  return L.divIcon({
+  return new L.DivIcon({
     className: 'rt-location-marker',
     html: locationMarkerSvg(icon, color),
     iconSize: [24, 24],

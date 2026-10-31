@@ -1,4 +1,3 @@
-import 'leaflet'
 import * as L from 'leaflet'
 import {
   downloadTile, getStorageInfo, getStoredTilesAsJson, getTileImageSource, getTilePoints, getTileUrl, hasTile, saveTile, savetiles,
@@ -215,7 +214,7 @@ export class LeafletOfflineController {
       }
     )
     this.usgsReliefOverlay = usgsReliefOverlay
-    usgsReliefOverlay.createTile = (coords: L.Coords, done: L.DoneCallback) => reliefTileWithFallback(usgsReliefOverlay, coords, done)
+    usgsReliefOverlay.createTile = (coords: L.Coords, done: L.DoneCallback) => reliefTileWithFallback(usgsReliefOverlay, coords, done) as HTMLImageElement // it is really a div; v2 types createTile as HTMLImageElement
 
     // Region download manager, phase A (scoped 2026-08-25, built 2026-08-26 on request):
     // "a browsable/verifiable record of which specific areas are on disk," not just the
@@ -232,7 +231,7 @@ export class LeafletOfflineController {
     // document to inherit a token from - same reasoning that ruled out a token for
     // MapLibre's own paint config just above (a different renderer, same underlying
     // problem). Matches the blue MapLibre's own report-cluster circles already use.
-    const savedTilesOverlay = L.geoJSON(undefined, {
+    const savedTilesOverlay = new L.GeoJSON(undefined, {
       style: { color: '#2266aa', weight: 1, fillOpacity: 0.15 },
     })
     this.savedTilesLayer = savedTilesOverlay  // E-138: shown by onBtnZoomToOfflineTiles(), not the menu
@@ -402,7 +401,7 @@ export class LeafletOfflineController {
     const url = (relief as unknown as { _url: string })._url
     const view = this.lMap.getBounds()
     const jobs = levels.flatMap(z => getTilePoints(
-      L.bounds(this.lMap.project(view.getNorthWest(), z), this.lMap.project(view.getSouthEast(), z)), L.point(256, 256))
+      new L.Bounds(this.lMap.project(view.getNorthWest(), z), this.lMap.project(view.getSouthEast(), z)), new L.Point(256, 256))
       .map(p => ({ x: p.x, y: p.y, z })))
     let saved = 0
     const worker = async () => {
@@ -538,7 +537,7 @@ export class LeafletOfflineController {
       // one, so the number on the button matches what pressing it really does (P1-2).
       const bounds = this.lMap.getBounds()
       const tileCount = zoomLevels.reduce((sum, levelZoom) => {
-        const area = L.bounds(
+        const area = new L.Bounds(
           this.lMap.project(bounds.getNorthWest(), levelZoom),
           this.lMap.project(bounds.getSouthEast(), levelZoom)
         )
@@ -546,8 +545,8 @@ export class LeafletOfflineController {
       }, 0)
       // The USGS shaded relief, when it's on, is saved with the base layer (saveReliefTiles()).
       const reliefCount = this.reliefSaveLevels(zoomLevels).reduce((sum, levelZoom) => sum + getTilePoints(
-        L.bounds(this.lMap.project(bounds.getNorthWest(), levelZoom), this.lMap.project(bounds.getSouthEast(), levelZoom)),
-        L.point(256, 256)).length, 0)
+        new L.Bounds(this.lMap.project(bounds.getNorthWest(), levelZoom), this.lMap.project(bounds.getSouthEast(), levelZoom)),
+        new L.Point(256, 256)).length, 0)
       this.reliefSaveCount = reliefCount
 
       getStorageInfo(urlTemplate).then((stored) => {
@@ -592,7 +591,7 @@ export class LeafletOfflineController {
       return false
     }
     const view = this.lMap.getBounds()
-    const area = L.bounds(this.lMap.project(view.getNorthWest(), z), this.lMap.project(view.getSouthEast(), z))
+    const area = new L.Bounds(this.lMap.project(view.getNorthWest(), z), this.lMap.project(view.getSouthEast(), z))
     const url = (layer as unknown as { _url: string })._url
     const subdomain = (layer.options.subdomains as string | string[] | undefined)?.[0]
     const keys = getTilePoints(area, layer.getTileSize())
@@ -647,7 +646,7 @@ export class LeafletOfflineController {
     layer.eachLayer(l => {
       const b = (l as L.Polygon).getBounds?.()
       if (b?.isValid()) {
-        areas.push(L.latLngBounds(b.getSouthWest(), b.getNorthEast()))
+        areas.push(new L.LatLngBounds(b.getSouthWest(), b.getNorthEast()))
       }
     })
     // Merge until no two areas touch; a few passes at most for the tile counts a phone holds.

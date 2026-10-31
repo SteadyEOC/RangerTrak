@@ -1,10 +1,4 @@
-// Leaflet must be *evaluated* before leaflet.markercluster: the plugin is old-style and
-// reads the global `L` at module-evaluation time ("L is not defined" otherwise). This bare
-// side-effect import guarantees that, and sorts ahead of the plugin alphabetically so
-// import-sort cannot undo it. It used to work only by accident, via the eager
-// `import L from 'leaflet'` that RadioLogService no longer has.
-import 'leaflet'
-import 'leaflet.markercluster'
+import { MarkerClusterGroup } from '@kristjan.esperanto/leaflet.markercluster'
 import { tileLayerOffline } from 'leaflet.offline' // https://github.com/allartk/leaflet.offline
 //import { markerClusterGroup } from 'leaflet'
 import * as L from 'leaflet'
@@ -36,7 +30,7 @@ import {
 const iconRetinaUrl = 'assets/icons/marker-icon-2x.png'
 const iconUrl = 'assets/icons/marker-icon.png'
 const shadowUrl = 'assets/icons/marker-shadow.png'
-const iconDefault = L.icon({
+const iconDefault = new L.Icon({
   iconRetinaUrl,
   iconUrl,
   shadowUrl,
@@ -46,7 +40,7 @@ const iconDefault = L.icon({
   tooltipAnchor: [16, -28],
   shadowSize: [41, 41]
 })
-const markerIcon = L.icon({
+const markerIcon = new L.Icon({
   iconSize: [20, 25],
   iconUrl: '../../assets/icons/marker-icon.png',
   shadowUrl: '../../assets/icons/marker-shadow.png'
@@ -130,7 +124,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     } else {
       // See evidenceIconFor()'s own doc comment (shared/mapping/ranger-icon.ts) for why this
       // is a distinct shared icon rather than something drawn inline here.
-      this.evidenceMarker = L.marker([newLocation.lat, newLocation.lng], {
+      this.evidenceMarker = new L.Marker([newLocation.lat, newLocation.lng], {
         icon: evidenceIconFor(), title: 'Evidence/clue location'
       })
       this.evidenceMarker.addTo(this.lMap)
@@ -169,7 +163,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
   // TODO: Leaflet's version of following?
   overviewMapLeafletType = { cur: 0, types: { type: ['roadmap', 'terrain', 'satellite', 'hybrid',] } }
 
-  myMarkerCluster = new window.L.MarkerClusterGroup()
+  myMarkerCluster = new MarkerClusterGroup()
   //myMarkers: L.Marker[] = []
   mapOptions = ""
 
@@ -198,7 +192,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     // intent before touching either flag.
     this.hasSelectedReports = false
     // per https://stackoverflow.com/a/71574063/18004414 & https://github.com/Leaflet/Leaflet/issues/8451
-    this.myMarkerCluster = new window.L.MarkerClusterGroup()
+    this.myMarkerCluster = new MarkerClusterGroup()
   }
 
   // override ngOnInit() {
@@ -220,7 +214,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
 
     // Following moved from InitMainMap to avoid: map not a leaflet or google map
     // Set intial map position, though AddMarker rescales/centers map as needed
-    this.lMap = L.map(this.mapContainer.nativeElement, {
+    this.lMap = new L.Map(this.mapContainer.nativeElement, {
       center: [this.settings ? this.settings.defLat : 0, this.settings ? this.settings.defLng : 0],
       zoom: this.settings ? this.settings.leaflet.defZoom : 15,
       // ROOT-CAUSED 2026-08-30 (live phone-width e2e failure): Leaflet's CSS3 zoom-animation
@@ -318,7 +312,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     // previews of the same spot look consistent. A plain L.tileLayer, not tileLayerOffline:
     // advisory shading laid over the base map, not a navigation layer of its own, so it sits
     // outside the offline-caching story above (same reasoning as the full map's copy).
-    const hillshadeOverlay = L.tileLayer(
+    const hillshadeOverlay = new L.TileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',
       {
         maxZoom: 16, minZoom: 3, opacity: 0.5,
@@ -333,7 +327,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
       svgElement.setAttribute('viewBox', "0 0 200 200");
       svgElement.innerHTML = '<rect width="200" height="200"/><rect x="75" y="23" width="50" height="50" style="fill:red"/><rect x="75" y="123" width="50" height="50" style="fill:#0013ff"/>';
       var svgElementBounds = [ [ 32, -130 ], [ 13, -100 ] ];
-      L.svgOverlay(svgElement, svgElementBounds).addTo(map);
+      new L.SVGOverlay(svgElement, svgElementBounds).addTo(map);
     */
 
     tiles.addTo(this.lMap)
@@ -346,14 +340,14 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
       this.displayMarkers()
       const b = this.radioLog.bounds
       // bounds is stored as a plain, serializable BoundsType - Leaflet takes [SW, NE]
-      this.lMap.fitBounds(L.latLngBounds([b.south, b.west], [b.north, b.east]))
+      this.lMap.fitBounds(new L.LatLngBounds([b.south, b.west], [b.north, b.east]))
     } else {
       this.log.error(`initMainMap() did not have displayReports or radioLog!`, this.id)
     }
 
-    L.DomUtil.addClass(this.lMap.getContainer(), 'crosshair-cursor-enabled')  //  Enable crosshairs
+    this.lMap.getContainer().classList.add('crosshair-cursor-enabled')  //  Enable crosshairs
 
-    this.lMap.on('zoomend', (ev: L.LeafletEvent) => { //: MouseEvent  :PointerEvent //HTMLDivElement L.LeafletEvent L.LeafletMouseEvent
+    this.lMap.on('zoomend', (ev: L.LeafletEvent) => { //: MouseEvent  :PointerEvent //HTMLDivElement L.LeafletEvent L.LeafletPointerEvent
       if (this.lMap) {
         let z = this.lMap.getZoom()
         if (z === undefined) {
@@ -399,7 +393,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
    *
    */
   // Unreachable: the constructor sets hasOverviewMap = false and this template has no
-  // overview div, so the L.map('overview') below is the one global-id lookup left in the
+  // overview div, so the new L.Map('overview') below is the one global-id lookup left in the
   // app. Left as-is rather than converted, because there is no element to convert it to -
   // if this is ever switched on, add a #overviewContainer div and a ViewChild for it.
   initOverviewMap() {
@@ -409,7 +403,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
 
     // instantiate the overview map without controls
     // https://leafletjs.com/reference.html#map-example
-    this.overviewMapLeaflet = L.map('overview', {
+    this.overviewMapLeaflet = new L.Map('overview', {
       center: [this.settings.defLat, this.settings.defLng],
       zoom: this.settings.leaflet.defZoom,
       zoomControl: false,
@@ -420,7 +414,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
 
     this.overviewMap = this.overviewMapLeaflet
 
-    const overviewTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const overviewTiles = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: this.settings.leaflet.overviewMaxZoom,
       minZoom: this.settings.leaflet.overviewMinZoom,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -476,7 +470,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
       this.log.error(`Leaflet map not created, so can't get lat & lng`, this.id)
       return
     }
-    let latlng = this.lMap.mouseEventToLatLng(ev)
+    let latlng = this.lMap.pointerEventToLatLng(ev)
     const lat = Math.round(latlng.lat * 10000) / 10000
     const lng = Math.round(latlng.lng * 10000) / 10000
     let coords = `${lat}, ${lng}`
@@ -570,7 +564,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
         // CURRENT report, not a mission overview), reverted same day once that was raised.
         // D-42 phase 5: rangerUid (unique per ranger, set even with a blank callsign) takes
         // priority over callsign - see ranger-icon.ts's header comment for why.
-        let marker = L.marker(new L.LatLng(i.location.lat, i.location.lng), { title: title, icon: rangerIconFor(i.rangerUid || i.callsign) })
+        let marker = new L.Marker(new L.LatLng(i.location.lat, i.location.lng), { title: title, icon: rangerIconFor(i.rangerUid || i.callsign) })
         marker.bindPopup(title)
         this.myMarkerCluster.addLayer(marker);
       } else {
@@ -615,7 +609,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     // the map while it holds it unclustered and in view, so earlier pins could stay (three
     // at once on a phone, map taps plus GPS updates). Now one tracked pin, on the map only,
     // like evidenceMarker above.
-    this.positionMarker = L.marker(new L.LatLng(lat, lng), { title: title })
+    this.positionMarker = new L.Marker(new L.LatLng(lat, lng), { title: title })
     this.positionMarker.bindPopup(title)
     this.positionMarker.addTo(this.lMap)
 
