@@ -76,7 +76,15 @@ below refer to it. Nothing here names a team, region or person beyond the app it
 >     `options?: Partial<TileLayerOptions>`. In v2's types, `TileLayerOptions` is the fully
 >     resolved shape with every field required.
 >
-> Build and bundle verified; tile saving at runtime still to be hand-checked on our side.
+> Separately, and on Leaflet 1.9.4 too, a bug that hit us in real use: one failed tile download stops a save
+> worker for good, and `saveend` never fires after a partial save. `downloadTile()` throws on a non-OK
+> response (OpenTopoMap 504s under load), and `loader()` isn't awaited or caught, so with `parallel: 3`, three
+> failures stop the whole save silently. Repro: 49 tiles, every 4th fetch answered 504 → 12 fetches, 9 tiles
+> stored, no `saveend`. `saveend` also needs `lengthSaved === lengthToBeSaved`, which skipped (already
+> stored) tiles never satisfy, so any re-save over stored tiles never ends either. A `try/catch` in
+> `loader()`, counting failed and skipped tiles, and firing `saveend` once all are attempted would fix both.
+>
+> Build and bundle verified with Leaflet `main`.
 > Happy to open a PR if you'd like.
 >
 > *(attach `patches/leaflet.offline+3.2.1.patch`)*

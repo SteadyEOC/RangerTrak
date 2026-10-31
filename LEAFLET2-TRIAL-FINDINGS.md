@@ -305,3 +305,25 @@ ESM is what makes it possible at all. Under 1.9.4's CommonJS it could not be spl
 Not verified (hand checks): marker clustering and spiderfy with real data, offline tile saving and
 the saved-tiles layer, Print map, trail elapsed-time labels (the F-13 cast), touch / long-press
 `contextmenu`, the layers control's overlay toggles.
+
+### F-18 (blocker for users, plugin: leaflet.offline 3.2.1, NOT Leaflet-2-specific): one failed tile stops a save worker; `saveend` never fires
+
+Found by John's hand check on the **1.9.4** build, then reproduced on the trial: the save offered
+~309 tiles and stopped at 229 with no message, and the "saved" info never updated. In `_saveTiles()`:
+
+1. `downloadTile()` throws on any non-OK response (OpenTopoMap returns 504 Gateway Timeout under
+   load). `loader()` is started without `await`/`catch`, so the rejection is unhandled and that
+   worker stops for good. With `parallel: N`, N failures anywhere stop the whole save.
+2. `saveend` fires only when `lengthSaved === lengthToBeSaved`. A failed tile, or one skipped
+   because `hasTile()` already had it (`alwaysDownload: false`), is never counted, so `saveend`
+   never fires after a partial save or any re-save over stored tiles.
+
+Repro on the trial (Chrome, `parallel: 3`, 49-tile view, store cleared, every 4th tile fetch
+answered 504): 12 fetches, 3 unhandled rejections `Request failed with status Gateway Timeout`,
+**9 of 49 tiles stored**, no `saveend`, no error shown.
+
+Suggested upstream fix: `try/catch` around `_loadTile` in `loader()`, count failures and skips,
+fire `saveend` (with `lengthFailed`) once every tile has been attempted, and optionally retry
+5xx/429 with backoff. Ours: own the save loop (we already use the exported `downloadTile` /
+`saveTile` / `hasTile` for relief tiles), with retries, a progress line and a "N tiles failed,
+save again to fill the gaps" message.
