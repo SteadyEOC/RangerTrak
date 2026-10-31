@@ -302,8 +302,12 @@ Reading: performance is neutral to slightly better; the TBT drop on Map is the o
 gain. The real bundle win (Leaflet out of `main.js`) is our barrel fix to make, and v2's
 ESM is what makes it possible at all. Under 1.9.4's CommonJS it could not be split.
 
+Hand-checked by John 2026-10-31: **Print map works** (Oso demo, landscape PDF: sharp tiles, markers, the
+E-152b print fan of overlapping markers with leader lines, range rings, edge ticks, legend page). The PDF has
+three blank trailing pages; the 1.9.4 print has one too, so that comes from our print CSS, not Leaflet.
+
 Not verified (hand checks): marker clustering and spiderfy with real data, offline tile saving and
-the saved-tiles layer, Print map, trail elapsed-time labels (the F-13 cast), touch / long-press
+the saved-tiles layer, trail elapsed-time labels (the F-13 cast), touch / long-press
 `contextmenu`, the layers control's overlay toggles.
 
 ### F-18 (blocker for users, plugin: leaflet.offline 3.2.1, NOT Leaflet-2-specific): one failed tile stops a save worker; `saveend` never fires
