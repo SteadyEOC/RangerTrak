@@ -122,7 +122,7 @@ below refer to it. Nothing here names a team, region or person beyond the app it
 ### Before posting
 
 - [x] Hand checks (John 10-31, on :8096 from the worktree): clusters and spiderfy, Save tiles + offline
-      layer, Print map, layers-control overlay toggles. Not checked: trail elapsed-time labels, long-press
-      on touch (neither is claimed in the posts).
+      layer, Print map, layers-control overlay toggles, trail elapsed-time labels. Not checked: long-press
+      on touch (not claimed in the posts).
 - [ ] Post 1 first; posts 2 and 3 can reference it.
 - [ ] Append a row to `..\claude\go-to-market\publishing-log.md`? (Not marketing; John's call.)
