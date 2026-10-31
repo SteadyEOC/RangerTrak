@@ -1,0 +1,50 @@
+<!-- Post to: Comment on Leaflet/Leaflet#10435 -->
+
+Thanks for picking v2 back up. We ported a production app to `main` @ c152e0d this week, in
+case early feedback before beta.1 is useful.
+
+**Context:** RangerTrak, an offline-first PWA for volunteer field teams (CERT/SAR/ham). Angular 22 +
+esbuild, TypeScript strict. Leaflet is the default map engine, in 10 files (~100 factory
+calls), with markercluster and leaflet.offline. Built from `main` via `npm pack`.
+
+**Result:** builds clean and our map e2e suite passes (70/70). Performance is neutral to
+slightly better (Lighthouse desktop, median of 3: Map TBT 16 → 10 ms). ESM is the big win for
+us: under 1.x's CommonJS, esbuild always hoisted Leaflet into our eager bundle, and now
+we can split it out. The factory → constructor port was mechanical, and the
+`initialize() is not called in Leaflet 2` guard message saved us time.
+
+**Things that cost us time, in case they help the upgrade guide:**
+
+1. **`Map.getRenderer()` now requires a `Path`** (#10438). It used to fall back to a map-level
+   renderer; now it calls `layer._createRenderer()`. markercluster's spiderfier (and every fork
+   of it) calls `this._map.getRenderer(this)` with the cluster group, so it fails only at
+   runtime, when the layer is added: `TypeError: t._createRenderer is not a function`. The
+   types say `(layer: Path)`, but plain-JS plugins never see them. Could it keep a map-level
+   fallback, or throw a clear "expects a Path" error ("break loudly")?
+2. **Option type names changed meaning.** In `@types/leaflet`, `TileLayerOptions`,
+   `PolylineOptions` etc. are the all-optional bag you pass. In the new types, the same names are the
+   *resolved* options with every field required (constructors correctly take `Partial<O>`).
+   Existing annotations and plugin `.d.ts` files still compile against the names, but now fail with
+   "missing pane, attribution, bubblingPointerEvents, stroke, and 11 more". leaflet.offline's
+   `tileLayerOffline(url, options: TileLayerOptions)` is one example. Keeping the v1 meaning for
+   the public names and giving the resolved shape another name would spare every plugin author.
+3. **`Marker.prototype.options.icon = …` throws at module load** ("Cannot set properties of
+   undefined"). It's the standard bundler fix for the default marker image, so it's very widespread.
+   `Marker.mergeOptions({icon})` works; worth a line in the guide with that exact example.
+4. **Small type gaps:** `LayerGroup.addLayer(layer: Layer)` rejects a `Tooltip` (now a
+   `LayerBase`, which `Map.addLayer` accepts); `TileLayer.createTile` is typed `HTMLImageElement`,
+   so overrides returning a `div` need a cast.
+5. **Rename table wanted:** `LatLngTuple` and `LeafletMouseEvent` (→ `LeafletPointerEvent`)
+   have no export; `mouseEventToLatLng` → `pointerEventToLatLng`; `DomUtil.addClass` gone;
+   `mousemove/over/out` → `pointer*` on layer listeners.
+6. **Housekeeping for testers on `main`:** `main` still says `2.0.0-alpha.1` in package.json
+   and `version`, so a `main` build can't be told from the 2025 alpha. And CHANGELOG has nothing
+   after alpha.1, though `Browser` (#10447), `PosAnimation` (#10446), DomEvent chaining,
+   `preferCanvas` (#10438) etc. have changed since. A `-dev` version and an "Unreleased"
+   section would help.
+
+**Plugins:** markercluster is the blocker for most apps. Upstream #984 only fixes the import,
+not v2. The v2 fork `@kristjan.esperanto/leaflet.markercluster@3.0.3` targets alpha.1 and needed
+four fixes for `main` (`Browser` import, `Class.extend`, item 1, and its types). leaflet.offline needed four
+small changes. Patches available if useful, and I'll file 1 and 2 as separate issues if you'd
+prefer them tracked.
