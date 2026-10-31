@@ -306,8 +306,10 @@ Hand-checked by John 2026-10-31: **Print map works** (Oso demo, landscape PDF: s
 E-152b print fan of overlapping markers with leader lines, range rings, edge ticks, legend page). The PDF has
 three blank trailing pages; the 1.9.4 print has one too, so that comes from our print CSS, not Leaflet.
 
-Not verified (hand checks): marker clustering and spiderfy with real data, offline tile saving and
-the saved-tiles layer, trail elapsed-time labels (the F-13 cast), touch / long-press
+Also hand-checked by John 2026-10-31: **clusters expand (spiderfy) OK, saving tiles OK** (the patched
+leaflet.offline loop; F-18 still applies when tiles fail), **overlay toggles in the layers control OK**.
+
+Not verified (hand checks): trail elapsed-time labels (the F-13 cast), touch / long-press
 `contextmenu`, the layers control's overlay toggles.
 
 ### F-18 (blocker for users, plugin: leaflet.offline 3.2.1, NOT Leaflet-2-specific): one failed tile stops a save worker; `saveend` never fires
