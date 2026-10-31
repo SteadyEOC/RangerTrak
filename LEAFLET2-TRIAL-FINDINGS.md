@@ -333,3 +333,15 @@ fire `saveend` (with `lengthFailed`) once every tile has been attempted, and opt
 5xx/429 with backoff. Ours: own the save loop (we already use the exported `downloadTile` /
 `saveTile` / `hasTile` for relief tiles), with retries, a progress line and a "N tiles failed,
 save again to fill the gaps" message.
+
+### F-19 (blocker for one feature, plugin: leaflet.offline 3.2.1): `CRS.EPSG3857` does not exist in Leaflet 2
+
+Found 2026-10-31 while preparing the upstream PR. Leaflet 2 exports `EPSG3857` at the top level and `CRS`
+no longer carries it as a static, so leaflet.offline's `getStoredTilesAsJson()` (the saved-area outline)
+throws `Cannot read properties of undefined (reading 'pointToLatLng')`. Our "Zoom to offline tiles" button
+stayed disabled on the trial (the error is caught and logged in `refreshSavedTilesOverlay`). Patched
+(`leaflet.CRS.EPSG3857` → `leaflet.EPSG3857`); after the fix the button enables after a save and draws the
+outline. Fixed upstream in allartk/leaflet.offline#517 (works on both Leaflet 1 and 2).
+
+Upstream PRs (opened 2026-10-31, from VashJuan forks): allartk/leaflet.offline#516 (save keeps going past
+failed tiles; F-18) and #517 (Leaflet 2 alongside Leaflet 1; F-4, F-11, F-19).

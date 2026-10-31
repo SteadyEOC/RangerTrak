@@ -1,5 +1,5 @@
 diff --git a/node_modules/leaflet.offline/dist/bundle.js b/node_modules/leaflet.offline/dist/bundle.js
-index d758473..10157e1 100644
+index d758473..2005c57 100644
 --- a/node_modules/leaflet.offline/dist/bundle.js
 +++ b/node_modules/leaflet.offline/dist/bundle.js
 @@ -116,7 +116,7 @@
@@ -11,6 +11,17 @@ index d758473..10157e1 100644
      }
      function getTilePoints(area, tileSize) {
          const points = [];
+@@ -155,8 +155,8 @@
+         for (let i = 0; i < tiles.length; i += 1) {
+             const topLeftPoint = new leaflet.Point(tiles[i].x * tileSize.x, tiles[i].y * tileSize.y);
+             const bottomRightPoint = new leaflet.Point(topLeftPoint.x + tileSize.x, topLeftPoint.y + tileSize.y);
+-            const topLeftlatlng = leaflet.CRS.EPSG3857.pointToLatLng(topLeftPoint, tiles[i].z);
+-            const botRightlatlng = leaflet.CRS.EPSG3857.pointToLatLng(bottomRightPoint, tiles[i].z);
++            const topLeftlatlng = leaflet.EPSG3857.pointToLatLng(topLeftPoint, tiles[i].z);
++            const botRightlatlng = leaflet.EPSG3857.pointToLatLng(bottomRightPoint, tiles[i].z);
+             featureCollection.features.push({
+                 type: 'Feature',
+                 properties: tiles[i],
 @@ -224,8 +224,8 @@
      class TileLayerOffline extends leaflet.TileLayer {
          createTile(coords, done) {
@@ -47,9 +58,18 @@ index d758473..10157e1 100644
              }
              return tiles;
 diff --git a/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts b/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts
-index c4d9c9b..2b55502 100644
+index c4d9c9b..cd19f24 100644
 --- a/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts
 +++ b/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts
+@@ -2,7 +2,7 @@ import { Bounds, Coords, DoneCallback, TileLayer, TileLayerOptions } from 'leafl
+ import { TileInfo } from './TileManager';
+ export declare class TileLayerOffline extends TileLayer {
+     _url: string;
+-    createTile(coords: Coords, done: DoneCallback): HTMLElement;
++    createTile(coords: Coords, done: DoneCallback): HTMLImageElement;
+     /**
+      * get key to use for storage
+      * @private
 @@ -19,4 +19,4 @@ export declare class TileLayerOffline extends TileLayer {
       */
      getTileUrls(bounds: Bounds, zoom: number): TileInfo[];
