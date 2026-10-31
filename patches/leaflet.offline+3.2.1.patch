@@ -1,0 +1,58 @@
+diff --git a/node_modules/leaflet.offline/dist/bundle.js b/node_modules/leaflet.offline/dist/bundle.js
+index d758473..10157e1 100644
+--- a/node_modules/leaflet.offline/dist/bundle.js
++++ b/node_modules/leaflet.offline/dist/bundle.js
+@@ -116,7 +116,7 @@
+         });
+     }
+     function getTileUrl(urlTemplate, data) {
+-        return leaflet.Util.template(urlTemplate, Object.assign(Object.assign({}, data), { r: leaflet.Browser.retina ? '@2x' : '' }));
++        return leaflet.Util.template(urlTemplate, Object.assign(Object.assign({}, data), { r: window.devicePixelRatio > 1 ? '@2x' : '' }));
+     }
+     function getTilePoints(area, tileSize) {
+         const points = [];
+@@ -224,8 +224,8 @@
+     class TileLayerOffline extends leaflet.TileLayer {
+         createTile(coords, done) {
+             const tile = document.createElement('img');
+-            leaflet.DomEvent.on(tile, 'load', leaflet.Util.bind(this._tileOnLoad, this, done, tile));
+-            leaflet.DomEvent.on(tile, 'error', leaflet.Util.bind(this._tileOnError, this, done, tile));
++            leaflet.DomEvent.on(tile, 'load', this._tileOnLoad.bind(this, done, tile));
++            leaflet.DomEvent.on(tile, 'error', this._tileOnError.bind(this, done, tile));
+             if (this.options.crossOrigin || this.options.crossOrigin === '') {
+                 tile.crossOrigin =
+                     this.options.crossOrigin === true ? '' : this.options.crossOrigin;
+@@ -340,10 +340,10 @@
+             link.innerHTML = html;
+             link.href = '#';
+             link.ariaRoleDescription = 'button';
+-            leaflet.DomEvent.on(link, 'mousedown dblclick', leaflet.DomEvent.stopPropagation)
+-                .on(link, 'click', leaflet.DomEvent.stop)
+-                .on(link, 'click', fn, this)
+-                .on(link, 'click', this._refocusOnMap, this);
++            leaflet.DomEvent.on(link, 'pointerdown dblclick', leaflet.DomEvent.stopPropagation);
++            leaflet.DomEvent.on(link, 'click', leaflet.DomEvent.stop);
++            leaflet.DomEvent.on(link, 'click', fn, this);
++            leaflet.DomEvent.on(link, 'click', this._refocusOnMap, this);
+             return link;
+         }
+         _saveTiles() {
+@@ -395,7 +395,7 @@
+             }
+             const latlngBounds = this.options.bounds || this._map.getBounds();
+             for (let i = 0; i < zoomlevels.length; i += 1) {
+-                const area = leaflet.bounds(this._map.project(latlngBounds.getNorthWest(), zoomlevels[i]), this._map.project(latlngBounds.getSouthEast(), zoomlevels[i]));
++                const area = new leaflet.Bounds(this._map.project(latlngBounds.getNorthWest(), zoomlevels[i]), this._map.project(latlngBounds.getSouthEast(), zoomlevels[i]));
+                 tiles = tiles.concat(this._baseLayer.getTileUrls(area, zoomlevels[i]));
+             }
+             return tiles;
+diff --git a/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts b/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts
+index c4d9c9b..2b55502 100644
+--- a/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts
++++ b/node_modules/leaflet.offline/dist/types/src/TileLayerOffline.d.ts
+@@ -19,4 +19,4 @@ export declare class TileLayerOffline extends TileLayer {
+      */
+     getTileUrls(bounds: Bounds, zoom: number): TileInfo[];
+ }
+-export declare function tileLayerOffline(url: string, options: TileLayerOptions): TileLayerOffline;
++export declare function tileLayerOffline(url: string, options?: Partial<TileLayerOptions>): TileLayerOffline;

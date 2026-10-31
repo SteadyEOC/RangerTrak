@@ -37,7 +37,8 @@
     "lint:ts": "eslint \"src/**/*.{ts,html}\"",
     "lint:ts:fix": "eslint --fix \"src/**/*.{ts,html}\"",
     "lint:tsc": "tsc --noEmit --skipLibCheck -p tsconfig.app.json && tsc --noEmit --skipLibCheck -p tsconfig.spec.json",
-    "init:env": "init-dev-env generate-dot-env example.env -f"
+    "init:env": "init-dev-env generate-dot-env example.env -f",
+    "postinstall": "patch-package"
   },
   "private": true,
   "dependencies": {
@@ -55,6 +56,7 @@
     "@angular/router": "^22.2.3",
     "@angular/service-worker": "^22.2.3",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
+    "@kristjan.esperanto/leaflet.markercluster": "3.0.3",
     "@material/banner": "^14.0.0",
     "@material/icon-button": "^14.0.0",
     "@material/slider": "^14.0.0",
@@ -62,8 +64,6 @@
     "@material/top-app-bar": "^14.0.0",
     "@mdi/js": "^7.4.47",
     "@types/core-js": "^2.5.8",
-    "@types/leaflet": "^1.9.21",
-    "@types/leaflet.markercluster": "^1.5.6",
     "ag-grid-angular": "^36.1.0",
     "ag-grid-community": "^36.1.0",
     "ajv": "^8.17.1",
@@ -71,7 +71,6 @@
     "fflate": "^0.8.3",
     "idb": "^8.0.4",
     "leaflet": "file:vendor/leaflet-main-c152e0d.tgz",
-    "leaflet.markercluster": "^1.5.3",
     "leaflet.offline": "^3.2.0",
     "maplibre-gl": "^6.16.0",
     "mediabunny": "^1.62.1",
@@ -108,6 +107,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "^2.3.0",
     "npm-run-all": "^4.1.5",
+    "patch-package": "^8.0.1",
     "prettier": "^3.9.10",
     "prettier-plugin-organize-imports": "^4.3.0",
     "rimraf": "^6.1.2",
@@ -118,7 +118,10 @@
     "wrangler": "^4.153.0"
   },
   "overrides": {
-    "vite": "8.3.5"
+    "vite": "8.3.5",
+    "leaflet.offline": {
+      "leaflet": ">=2.0.0-alpha.1"
+    }
   },
   "importSort": {
     ".ts, .tsx": {
