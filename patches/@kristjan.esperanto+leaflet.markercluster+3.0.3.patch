@@ -1,5 +1,5 @@
 diff --git a/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js b/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
-index cff0341..4040a5f 100644
+index cff0341..60a839c 100644
 --- a/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
 +++ b/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
 @@ -11,7 +11,12 @@
@@ -184,6 +184,16 @@ index cff0341..4040a5f 100644
    _animationSpiderfy: function (childMarkers, positions) {
      const group = this._group,
        map = group._map,
+@@ -2828,7 +2837,8 @@ const MarkerClusterGroupSpiderfierMethods = {
+     this._map.on('zoomend', this._noanimationUnspiderfy, this);
+ 
+     if (!Browser.touch) {
+-      this._map.getRenderer(this);
++      // Leaflet main: Map.getRenderer(layer) now needs a Path (#10438); a cluster group is not one.
++      this._map.getRenderer(new Polyline([]));
+       // Needs to happen in the pageload, not after, or animations don't work in webkit
+       //  http://stackoverflow.com/questions/8455200/svg-animate-with-dynamically-added-elements
+       // Disable on touch browsers as the animation messes up on a touch zoom and isn't very noticable
 diff --git a/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts b/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts
 index f41169b..b5970c3 100644
 --- a/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts

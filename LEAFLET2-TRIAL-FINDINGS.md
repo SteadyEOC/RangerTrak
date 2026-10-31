@@ -231,35 +231,76 @@ tileLayer 7, map / latLng / latLngBounds / polyline 5 each, bounds 4, icon 4, a 
 `L.LatLngTuple` became `[number, number]`; `L.PolylineOptions` annotations became `Partial<...>` (2).
 Non-mechanical edits in our own code: about 10 lines.
 
-### F-16 (friction, observation, cause not found): Entry page LCP and CLS got worse
+### F-16 (resolved, ours to catch): the Entry "regression" was F-17 throwing
 
-Local Lighthouse, same method as the baseline: `/` went from perf 75 / LCP 2.98 s / CLS 0.012
-to perf 68 / LCP about 4.9 s / CLS about 0.08 (six runs, very consistent). `/map` improved (below).
-Not bisected. The Entry page embeds the Leaflet mini-map, so it may be Leaflet 2 behaviour
-(tile load order, container sizing), the plugin, or our port. Needs a trace before anything
-is reported upstream; treat as unconfirmed.
+The first trial run measured Entry at perf 68 / LCP 5.00 s / CLS 0.080. The CLS was a
+"Something went wrong" notice: our global error handler had caught F-17's `TypeError` and
+showed a snackbar. Lighthouse and our e2e both missed it, because a caught error never reaches
+the console as uncaught. With F-17 fixed, Entry is back to baseline (below). Nothing for Leaflet
+here beyond F-17.
 
-## After (Leaflet main c152e0d)
+### F-17 (blocker at runtime, Leaflet behaviour change): `Map.getRenderer()` now requires a `Path`
 
-- Leaflet is native ESM now but still lands in the eager `main.js`: **140.9 KB** of an 817 KB
-  `main.js` (baseline 145.9 KB of 802 KB). The cause is ours, not Leaflet's: `entry.component.ts`
-  statically imports `MiniMapLeafletComponent`, which imports Leaflet. Tree-shaking of
-  `import * as L` saved only about 5 KB. Plugins stay lazy: markercluster fork 34.2 KB
-  (was 33.5), leaflet.offline 7.0 KB (was 6.9).
-- Initial total 1.88 MB raw / 414.00 kB transfer (baseline 1.89 MB / 415.20 kB).
-- Build: 0 errors (first attempt 107). Unit tests: 1413/1413 pass.
-- e2e `map` + `entry`: 70/70 pass (after the F-12 fix; the first run was 36/37).
-- Local Lighthouse 13.5.0 desktop, medians of 3: Entry `/` perf 68, LCP 5.00 s, TBT 30 ms,
-  CLS 0.080, unused JS 625 KB. Map `/map` perf 71, LCP 3.63 s, TBT 3 ms, CLS 0.034, unused JS 912 KB.
+```
+TypeError: t._createRenderer is not a function
+    at Map.getRenderer
+    at MarkerClusterGroup._spiderfierSetup
+    at MarkerClusterGroup.fire / onAdd
+```
+
+In 1.9.4, `map.getRenderer(layer)` accepted any layer with `options`; if nothing else matched,
+it fell back to the map's own `_createRenderer()`. Since #10438 ("Move getRenderer into Map,
+drop `preferCanvas`") the fallback is `layer._createRenderer()`, which only `Path` has:
+
+```js
+getRenderer(layer) {
+	const renderer = layer.options.renderer ?? this._getPaneRenderer(layer) ?? this.options.renderer ??
+		(this._renderer ??= layer._createRenderer());
+```
+
+The new types do say `getRenderer(layer: Path)`, but plugins are plain JS and never see them. So
+this compiles, bundles and passes unit tests, and fails only when the layer is added to a map.
+markercluster's spiderfier calls `this._map.getRenderer(this)` with the cluster group, to create
+the SVG renderer early ("needs to happen in the pageload ... or animations don't work in
+webkit"). Every markercluster derivative has this line, and other plugins may use the same idiom.
+
+Our patch to the fork (in `patches/`): `this._map.getRenderer(new Polyline([]))`.
+
+Suggestion for Leaflet: keep a map-level fallback when `layer._createRenderer` is missing
+(`layer._createRenderer?.() ?? this._createDefaultRenderer()`), or throw a clear error
+("getRenderer() expects a Path"), in line with #10435's "break loudly". Either way, list it in
+the upgrade guide.
+
+## After (Leaflet main c152e0d, with the F-17 patch)
+
+- Build: 0 errors (first attempt 107). Unit tests: 1413/1413 pass. e2e `map` + `entry`: 70/70
+  (after the F-12 fix; the first run was 36/37). Hand check in Chrome: Entry mini-map shows
+  18 tiles and no error notice; `/map` shows 51 tiles plus zoom, layers, scale, attribution and
+  save-tiles controls, with no console errors.
+- Leaflet is native ESM now but still lands in the eager `main.js`: **140.9 KB** of an 816 KB
+  `main.js` (baseline 145.9 KB of 802 KB). **The cause is ours, not Leaflet's.** `@defer` works:
+  the mini-map has its own lazy chunk. But our barrels (`shared/index.ts`, `shared/mapping/index.ts`)
+  re-export `AbstractMap` and the Leaflet-typed icon helpers, and eager code imports those barrels.
+  Leaflet's `"sideEffects": ["*.css"]` claim checks out: no top-level registration in `src/`, and
+  `Map.js` imports its handlers, controls, Popup and Tooltip explicitly.
+- Plugins stay lazy: markercluster fork 34.2 KB (was 33.5), leaflet.offline 7.0 KB (was 6.9).
+- Initial total 1.88 MB raw / 412.49 kB transfer (baseline 1.89 MB / 415.20 kB).
+
+Local Lighthouse 13.5.0 desktop, medians of 3, after the F-17 patch. Entry LCP is the first OSM
+tile, so it moves with the tile server: one run in each set was an outlier (4.1 s base, 6.6 s trial).
 
 | | Baseline (1.9.4) | After (main c152e0d) |
 | --- | --- | --- |
-| Leaflet in eager main.js | 145.9 KB of 802 KB | 140.9 KB of 817 KB |
+| Leaflet in eager main.js | 145.9 KB of 802 KB | 140.9 KB of 816 KB |
 | markercluster / offline (lazy) | 33.5 / 6.9 KB | 34.2 / 7.0 KB |
-| Initial total raw / transfer | 1.89 MB / 415.20 kB | 1.88 MB / 414.00 kB |
+| Initial total raw / transfer | 1.89 MB / 415.20 kB | 1.88 MB / 412.49 kB |
 | e2e map + entry | 70/70 | 70/70 |
-| Entry perf / LCP / TBT / CLS | 75 / 2.98 s / 31 ms / 0.012 | 68 / 5.00 s / 30 ms / 0.080 |
-| Map perf / LCP / TBT / CLS | 64 / 8.87 s / 16 ms / 0.035 | 71 / 3.63 s / 3 ms / 0.034 |
+| Entry perf / LCP / TBT / CLS | 75 / 2.98 s / 31 ms / 0.012 | 77 / 2.72 s / 28 ms / 0.012 |
+| Map perf / LCP / TBT / CLS | 64 / 8.87 s / 16 ms / 0.035 | 65 / 8.18 s / 10 ms / 0.035 |
+
+Reading: performance is neutral to slightly better; the TBT drop on Map is the one consistent
+gain. The real bundle win (Leaflet out of `main.js`) is our barrel fix to make, and v2's
+ESM is what makes it possible at all. Under 1.9.4's CommonJS it could not be split.
 
 Not verified (hand checks): marker clustering and spiderfy with real data, offline tile saving and
 the saved-tiles layer, Print map, trail elapsed-time labels (the F-13 cast), touch / long-press
