@@ -558,7 +558,8 @@ mat-slide-toggle {
 // OSM is the active base layer - see refreshEstimatedAreaInfo()'s own comment. pointer-events
 // stops a real click reaching leaflet.offline's own handler at all; confirmSaveTiles() is the
 // defense-in-depth backstop for anything that isn't a plain pointer click (e.g. keyboard).
-:host ::ng-deep a.savetiles.rt-savetiles-disabled {
+:host ::ng-deep a.savetiles.rt-savetiles-disabled,
+:host ::ng-deep a.savetiles.rt-savetiles-busy { // E-266: busy = a save is running
   pointer-events: none;
   opacity       : 0.55;
 }

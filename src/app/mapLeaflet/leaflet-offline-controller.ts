@@ -1,12 +1,13 @@
 import 'leaflet'
 import * as L from 'leaflet'
 import {
-  downloadTile, getStorageInfo, getStoredTilesAsJson, getTileImageSource, getTilePoints, getTileUrl, hasTile, saveTile, savetiles,
+  getStorageInfo, getStoredTilesAsJson, getTileImageSource, getTilePoints, getTileUrl, hasTile, saveTile, savetiles,
   tileLayerOffline
 } from 'leaflet.offline' // https://github.com/allartk/leaflet.offline
-import type { SaveStatus } from 'leaflet.offline'
+import type { SaveStatus, TileInfo } from 'leaflet.offline'
 import type { ElementRef, WritableSignal } from '@angular/core'
 import type { LogService } from '../shared/services'
+import { saveTileJobs, type TileJob, type TileSaveProgress } from './offline-tile-save'
 
 // Offline-area sizing (roadmap: "Offline map area: saved-file sizes, anticipated MB").
 // Real tile bytes aren't known until a tile is actually downloaded, so the "anticipated"
@@ -84,6 +85,19 @@ function reliefTileWithFallback(layer: L.TileLayer, coords: L.Coords, done: L.Do
   }
   tryLevel(0)
   return tile
+}
+
+/**
+ * Fetches one tile for the offline save. Like leaflet.offline's downloadTile(), but the error
+ * carries the HTTP status so offline-tile-save.ts can tell a server hiccup (retry) from a
+ * missing tile (don't).
+ */
+async function fetchTileBlob(url: string): Promise<Blob> {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw Object.assign(new Error(`Request failed with status ${response.status} ${response.statusText}`), { status: response.status })
+  }
+  return response.blob()
 }
 
 function formatBytes(bytes: number): string {
@@ -267,7 +281,8 @@ export class LeafletOfflineController {
       parallel: 3,
       // P1-3: refuse an oversized save outright, and otherwise ask before hammering
       // OpenTopoMap's servers with however many tiles the current view/zoom-depth needs.
-      confirm: (status: SaveStatus, successCallback: Function) => this.confirmSaveTiles(status, successCallback),
+      // E-266: the plugin's successCallback is never called - runOfflineSave() does the download.
+      confirm: (status: SaveStatus) => this.confirmSaveTiles(status),
     }).addTo(this.lMap)
     this.offlineTileLayers = [tiles, openTopoTiles, usgsImageryTiles]
     this.saveTilesControl = saveTilesControl
@@ -341,7 +356,10 @@ export class LeafletOfflineController {
    * calls this with the status it already computed from whatever `options.zoomlevels`/
    * `maxZoom` refreshEstimatedAreaInfo() last set, instead of downloading immediately.
    */
-  private confirmSaveTiles(status: SaveStatus, successCallback: Function): void {
+  private confirmSaveTiles(status: SaveStatus): void {
+    if (this.offlineSaveRunning) {
+      return
+    }
     if (this.satelliteBaseActive) {
       alert('Switch to OpenTopoMap to save for offline use - satellite imagery is online only.')
       return
@@ -365,8 +383,7 @@ export class LeafletOfflineController {
     }
     const estimate = this.saveEstimateText || `${status.lengthToBeSaved.toLocaleString()} tiles`
     if (confirm(`Save this area for offline use (${estimate})?`)) {
-      successCallback()
-      void this.saveReliefTiles()
+      void this.runOfflineSave(status)
     }
   }
 
@@ -388,45 +405,74 @@ export class LeafletOfflineController {
   }
 
   /**
-   * 2026-10-01, John: saves the USGS shaded relief for the same area and zoom levels as the
-   * base layer's save just started (leaflet.offline's save control saves one layer), when the
-   * relief overlay is on. Tiles already saved are skipped; three at a time, like the base save;
-   * a failed tile is skipped rather than stopping the rest.
+   * 2026-10-01, John: the USGS shaded relief for the same area and zoom levels as the base
+   * layer's save, when the relief overlay is on (leaflet.offline's save control saves one
+   * layer). One job per tile: a tile missing from USGS's cache lists its nearest parents as
+   * stand-ins, the one reliefTileWithFallback() will draw in its place (up to
+   * RELIEF_FALLBACK_LEVELS up).
    */
-  private async saveReliefTiles(): Promise<void> {
+  private reliefSaveJobs(): TileJob<TileInfo>[] {
     const relief = this.usgsReliefOverlay
     const levels = this.reliefSaveLevels((this.saveTilesControl?.options.zoomlevels as number[] | undefined) ?? [])
     if (!relief || !levels.length) {
-      return
+      return []
     }
     const url = (relief as unknown as { _url: string })._url
     const view = this.lMap.getBounds()
-    const jobs = levels.flatMap(z => getTilePoints(
+    return levels.flatMap(z => getTilePoints(
       L.bounds(this.lMap.project(view.getNorthWest(), z), this.lMap.project(view.getSouthEast(), z)), L.point(256, 256))
-      .map(p => ({ x: p.x, y: p.y, z })))
-    let saved = 0
-    const worker = async () => {
-      for (let job = jobs.shift(); job; job = jobs.shift()) {
-        // A tile missing from USGS's cache: save the nearest parent instead, the one
-        // reliefTileWithFallback() will draw in its place (up to RELIEF_FALLBACK_LEVELS up).
-        for (let up = 0; up <= RELIEF_FALLBACK_LEVELS && job.z - up >= 0; up++) {
-          const t = { x: Math.floor(job.x / 2 ** up), y: Math.floor(job.y / 2 ** up), z: job.z - up }
+      .map(p => {
+        const stand: TileInfo[] = []
+        for (let up = 0; up <= RELIEF_FALLBACK_LEVELS && z - up >= 0; up++) {
+          const t = { x: Math.floor(p.x / 2 ** up), y: Math.floor(p.y / 2 ** up), z: z - up }
           const key = getTileUrl(url, { ...relief.options, ...t })
-          try {
-            if (!(await hasTile(key))) {
-              const blob = await downloadTile(key)
-              await saveTile({ key, url: key, urlTemplate: url, ...t, createdAt: Date.now() }, blob)
-              saved++
-            }
-            break
-          } catch {
-            // missing at this level (404) - try the parent
-          }
+          stand.push({ key, url: key, urlTemplate: url, ...t, createdAt: Date.now() })
         }
-      }
+        return stand
+      }))
+  }
+
+  /** True while a save runs, so a second click can't start another. */
+  private offlineSaveRunning = false
+  /** Shows the save's progress or result under the buttons; set up by wireOfflineAreaInfo(). */
+  private showOfflineSaveMessage?: (text: string) => void
+  /** Greys out the Save button while a save runs. */
+  private setOfflineSaveBusy?: (busy: boolean) => void
+
+  /**
+   * E-266: the whole "Save this area" download, once the user has confirmed - the base layer's
+   * tiles (from the plugin's own list) plus the shaded relief. The plugin's loop is not used
+   * because one failed tile (OpenTopoMap's 504s) quietly ends it; see offline-tile-save.ts.
+   * Always ends by saying how it went and refreshing the saved-area text and overlay.
+   */
+  private async runOfflineSave(status: SaveStatus): Promise<void> {
+    this.offlineSaveRunning = true
+    this.setOfflineSaveBusy?.(true)
+    try {
+      const jobs: TileJob<TileInfo>[] = [...status._tilesforSave, ...this.reliefSaveJobs()]
+      this.showOfflineSaveMessage?.(`Saving 0 of ${jobs.length} tiles...`)
+      const result = await saveTileJobs(jobs, {
+        has: hasTile,
+        download: fetchTileBlob,
+        save: saveTile
+      }, {
+        parallel: 3,
+        onProgress: (p: TileSaveProgress) => this.showOfflineSaveMessage?.(`Saving ${p.done} of ${p.total} tiles...`)
+      })
+      const ok = result.saved + result.skipped
+      this.showOfflineSaveMessage?.(result.failed === 0
+        ? `Saved ${ok} tiles.`
+        : `Saved ${ok} tiles; ${result.failed} couldn't be downloaded. Save again to fill the gaps.`)
+      this.log.info(`Offline save: ${result.saved} saved, ${result.skipped} already stored, ${result.failed} failed.`, this.id)
+    } catch (err) {
+      this.log.error(`runOfflineSave(): ${err}`, this.id)
+      this.showOfflineSaveMessage?.('Saving stopped unexpectedly. Save again to fill the gaps.')
+    } finally {
+      this.offlineSaveRunning = false
+      this.setOfflineSaveBusy?.(false)
+      this.refreshSavedAreaInfo?.()
+      this.refreshSavedTilesOverlay?.()
     }
-    await Promise.all([worker(), worker(), worker()])
-    this.log.info(`Saved ${saved} USGS shaded relief tiles.`, this.id)
   }
 
   private wireOfflineAreaInfo(
@@ -456,8 +502,18 @@ export class LeafletOfflineController {
     savedInfo.className = 'offline-area-info offline-area-info--saved'
     const estimateInfo = this.document.createElement('span')
     estimateInfo.className = 'offline-area-info offline-area-info--estimate'
+    // E-266: progress while a save runs, then its result ("Saved 300 tiles." ...).
+    const saveProgressInfo = this.document.createElement('span')
+    saveProgressInfo.className = 'offline-area-info offline-area-info--progress'
+    saveProgressInfo.setAttribute('role', 'status')
     container.appendChild(estimateInfo)
+    container.appendChild(saveProgressInfo)
     container.appendChild(savedInfo)
+    this.showOfflineSaveMessage = (text: string) => { saveProgressInfo.textContent = text }
+    this.setOfflineSaveBusy = (busy: boolean) => {
+      saveButton.classList.toggle('rt-savetiles-busy', busy)
+      saveButton.setAttribute('aria-disabled', String(busy || this.osmBaseActive || this.satelliteBaseActive))
+    }
 
     this.refreshSavedAreaInfo = () => {
       getStorageInfo(urlTemplate).then((stored) => {
@@ -509,7 +565,7 @@ export class LeafletOfflineController {
       this.osmBaseActive = activeTiles === osmLayer
       const saveBlocked = this.osmBaseActive || this.satelliteBaseActive
       saveButton.classList.toggle('rt-savetiles-disabled', saveBlocked)
-      saveButton.setAttribute('aria-disabled', String(saveBlocked))
+      saveButton.setAttribute('aria-disabled', String(saveBlocked || this.offlineSaveRunning))
       if (this.satelliteBaseActive) {
         estimateInfo.textContent = 'Esri satellite imagery can\'t be saved (its terms don\'t allow it). '
           + 'Switch to OpenTopoMap, or in the US to USGS aerial photos, to save for offline use.'
@@ -567,9 +623,7 @@ export class LeafletOfflineController {
     // activeTiles/urlTemplate (not whatever layer originally fired the event), this stays
     // correct even for a listener left on a layer that isn't the active one anymore.
     for (const layer of this.offlineTileLayers) {
-      layer.on('saveend', this.refreshSavedAreaInfo)
       layer.on('tilesremoved', this.refreshSavedAreaInfo)
-      layer.on('saveend', this.refreshSavedTilesOverlay)
       layer.on('tilesremoved', this.refreshSavedTilesOverlay)
     }
     this.lMap.on('moveend zoomend', this.refreshEstimatedAreaInfo)
@@ -675,9 +729,7 @@ export class LeafletOfflineController {
   dispose(): void {
     if (this.refreshSavedAreaInfo) {
       for (const layer of this.offlineTileLayers) {
-        layer.off('saveend', this.refreshSavedAreaInfo)
         layer.off('tilesremoved', this.refreshSavedAreaInfo)
-        layer.off('saveend', this.refreshSavedTilesOverlay)
         layer.off('tilesremoved', this.refreshSavedTilesOverlay)
       }
     }

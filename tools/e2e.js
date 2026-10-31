@@ -1096,6 +1096,40 @@ async function checkMapLayers(fx) {
 }
 
 /**
+ * E-266: "Save this area for offline use" used to stop silently when OpenTopoMap answered a few
+ * tiles with 504. fetch is stubbed in the page so every 4th distinct OpenTopoMap tile answers 504
+ * every time (retries included) and the rest answer 200; the save must finish anyway and say how
+ * many tiles it kept and how many it couldn't get. The confirm() is accepted by the dialog handler.
+ */
+async function checkOfflineSavePartial() {
+  console.log('\nE-266: the offline save finishes and reports when some tiles cannot be downloaded')
+  await goto('/map', 3500)
+  const info = sel => evaluate(`document.querySelector('${sel}')?.textContent.trim() || ''`)
+  const savedBefore = await info('.offline-area-info--saved')
+  await evaluate(`(() => {
+    const realFetch = window.fetch.bind(window)
+    const seen = new Map()
+    window.fetch = (input, init) => {
+      const url = typeof input === 'string' ? input : input.url
+      if (!/opentopomap[.]org/.test(url)) return realFetch(input, init)
+      if (!seen.has(url)) seen.set(url, seen.size)
+      return Promise.resolve(seen.get(url) % 4 === 3
+        ? new Response('', { status: 504, statusText: 'Gateway Timeout' })
+        : new Response(new Blob(['tile'], { type: 'image/png' }), { status: 200 }))
+    }
+  })()`)
+  const asked = dialogs.length
+  await evaluate(`document.querySelector('a.savetiles')?.click()`)
+  const end = await pollUntil(() => info('.offline-area-info--progress'), t => /^Saved \d+ tiles/.test(t), 150, 600)
+  const m = /^Saved (\d+) tiles; (\d+) couldn't be downloaded\. Save again to fill the gaps\.$/.exec(end)
+  check('the save asked first', (dialogs[asked] || '').startsWith('Save this area for offline use'), true)
+  check('it ends by saying some tiles saved and some could not be downloaded', !!m && +m[1] > 0 && +m[2] > 0, true)
+  check('the Save button is usable again', await evaluate(`!document.querySelector('a.savetiles').classList.contains('rt-savetiles-busy')`), true)
+  const savedAfter = await pollUntil(() => info('.offline-area-info--saved'), t => t !== savedBefore)
+  check('"Saved on this device" was refreshed', savedAfter !== savedBefore && /^Saved on this device: \d+ tiles/.test(savedAfter), true)
+}
+
+/**
  * E-262 (tester, 2026-10-28): "+ Add" once too often left a row only Delete all could remove. The
  * added row comes up selected, so Delete for the selection shows; it asks first, naming the row.
  */
@@ -5552,6 +5586,7 @@ async function main() {
       if (want('roster')) await checkRangersFilterChips(fx)
       if (want('roster')) await checkRosterLayers(fx) // E-187 C
       if (want('map')) await checkMapLayers(fx) // E-187 C
+      if (want('map')) await checkOfflineSavePartial() // E-266
       if (want('roster') || want('map')) await checkPrintCards(fx) // E-187 D
       if (want('mission')) await checkSetupFileCard(fx) // E-187 D
       if (want('radiolog')) await checkRadioLogFilterChips()
