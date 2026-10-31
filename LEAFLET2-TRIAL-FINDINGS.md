@@ -310,8 +310,7 @@ Also hand-checked by John 2026-10-31: **clusters expand (spiderfy) OK, saving ti
 leaflet.offline loop; F-18 still applies when tiles fail), **overlay toggles in the layers control OK**, **trail elapsed-time labels OK** (so the F-13 Tooltip cast
 holds at runtime).
 
-Not verified (hand checks): (the F-13 cast), touch / long-press
-`contextmenu`, the layers control's overlay toggles.
+Not verified (hand checks): touch / long-press `contextmenu`.
 
 ### F-18 (blocker for users, plugin: leaflet.offline 3.2.1, NOT Leaflet-2-specific): one failed tile stops a save worker; `saveend` never fires
 
