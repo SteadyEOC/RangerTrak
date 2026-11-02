@@ -1,19 +1,14 @@
 {
   "recommendations": [
     "angular.ng-template",
-    "amatiasq.sort-imports",
-    "dskwrk.vscode-generate-getter-setter",
-    "eamodio.gitlens",
+    "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "johnpapa.vscode-peacock",
-    "ms-azuretools.vscode-docker",
-    "ms-vscode.vscode-typescript-tslint-plugin",
-    "pkief.material-icon-theme",
-    "wallabyjs.quokka-vscode",
-    "expertly-simple.ng-evergreen",
-    "hookyqr.beautify",
-    "johnpapa.angular-essentials",
-    "msjsdiag.debugger-for-edge",
-    "yzhang.markdown-all-in-one"
+    "editorconfig.editorconfig",
+    "ms-playwright.playwright",
+    "github.vscode-github-actions",
+    "streetsidesoftware.code-spell-checker",
+    "yzhang.markdown-all-in-one",
+    "mechatroner.rainbow-csv",
+    "usernamehw.errorlens"
   ]
 }
