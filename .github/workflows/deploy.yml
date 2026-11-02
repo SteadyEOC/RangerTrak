@@ -88,6 +88,12 @@ jobs:
       - name: Check for API keys in the build
         run: npm run check:secrets
 
+      # E-265 follow-up: Leaflet and MapLibre belong in the lazy map chunks. A barrel
+      # re-export put ~140 KB of Leaflet back in main.js with the build still green.
+      # See tools/check-eager-bundle.js.
+      - name: Check map libraries stay out of the eager bundle
+        run: npm run check:eager-bundle
+
       - name: Deploy
         uses: cloudflare/wrangler-action@v4
         with:

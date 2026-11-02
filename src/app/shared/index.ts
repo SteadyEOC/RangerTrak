@@ -17,10 +17,10 @@ export { NominatimGeocoder } from "./mapping/nominatim-geocoder"
 export { GoogleGeocoder } from "./mapping/google-geocoder"
 // ./mapping/map-style is deliberately NOT re-exported - see the note in mapping/index.ts.
 export { DDToDMS, DDToDDM, DMSToDD, DDMToDD, DirEnum, DirType, destinationPoint } from "../domain/coordinate"
-export { AbstractMap } from "./mapping/map"
-export { rangerIconFor, evidenceIconFor } from "./mapping/ranger-icon"
+// AbstractMap, rangerIconFor/evidenceIconFor and locationIconFor import `leaflet`, so they are NOT
+// re-exported: any eager importer of this barrel pulled Leaflet into main.js (E-265). Import them
+// from their own files.
 export { rangerColorFor, evidenceMarkerSvg } from "./mapping/ranger-marker"
-export { locationIconFor } from "./mapping/location-icon"
 export { locationMarkerSvg, resolveLocationIcon } from "./mapping/location-marker"
 export { hashString } from "./mapping/hash-color"
 export { radioLogStatusColor, locationCategoryColor, resolveCssColorForCanvas } from "./mapping/report-marker-status"

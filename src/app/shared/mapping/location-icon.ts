@@ -17,7 +17,8 @@ import { locationMarkerSvg } from './location-marker'
 export function locationIconFor(icon: LocationIconId, color: string): L.DivIcon {
   return new L.DivIcon({
     className: 'rt-location-marker',
-    html: locationMarkerSvg(icon, color),
+    // aria-hidden: the marker's `title` names it; the glyph's SVG <text> ("E", "D") would not
+    html: locationMarkerSvg(icon, color).replace('<svg', '<svg aria-hidden="true"'),
     iconSize: [24, 24],
     iconAnchor: [12, 22],
     popupAnchor: [0, -20],

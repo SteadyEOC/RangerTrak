@@ -27,26 +27,7 @@ import {
   undefinedLocation
 } from '../shared/services'
 
-const iconRetinaUrl = 'assets/icons/marker-icon-2x.png'
-const iconUrl = 'assets/icons/marker-icon.png'
-const shadowUrl = 'assets/icons/marker-shadow.png'
-const iconDefault = new L.Icon({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-})
-const markerIcon = new L.Icon({
-  iconSize: [20, 25],
-  iconUrl: '../../assets/icons/marker-icon.png',
-  shadowUrl: '../../assets/icons/marker-shadow.png'
-})
-L.Marker.mergeOptions({ icon: iconDefault }); // v2: prototype.options is gone; defaults live on static defaultOptions
-//or L.Marker.prototype.options.icon = new L.Icon.Default;
+// Plain markers use Leaflet 2's built-in DefaultIcon (an inline SVG pin, no image files).
 //type LatLng = { lat: number, lng: number }
 
 

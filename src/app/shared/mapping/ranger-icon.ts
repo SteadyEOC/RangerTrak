@@ -50,13 +50,15 @@ import { rangerShapeMarkup, evidenceMarkerSvg } from './ranger-marker'
  * back to the plain 20x20 icon) when no status color resolves, so a report with an unknown/
  * blank status draws exactly as it always has.
  */
+// Every SVG here is aria-hidden: Leaflet 2 makes each marker a role="button" tab stop named by
+// its `title`, and SVG <text> (the "?" of an unassigned ranger) would replace that name.
 export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
   const shape = rangerShapeMarkup(key)
 
   if (!statusColor) {
     return new L.DivIcon({
       className: 'rt-ranger-marker',
-      html: `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" stroke="white" stroke-width="1" stroke-linejoin="round">${shape}</svg>`,
+      html: `<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" stroke="white" stroke-width="1" stroke-linejoin="round">${shape}</svg>`,
       iconSize: [20, 20],
       iconAnchor: [10, 10],
       popupAnchor: [0, -10],
@@ -68,7 +70,7 @@ export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
   // change to support this.
   return new L.DivIcon({
     className: 'rt-ranger-marker',
-    html: `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+    html: `<svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
       <circle cx="14" cy="14" r="13" fill="${statusColor}" opacity="0.55"/>
       <g transform="translate(4,4)" stroke="white" stroke-width="1" stroke-linejoin="round">${shape}</g>
     </svg>`,
@@ -89,7 +91,7 @@ export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
 export function evidenceIconFor(): L.DivIcon {
   return new L.DivIcon({
     className: 'rt-evidence-marker',
-    html: evidenceMarkerSvg(),
+    html: evidenceMarkerSvg().replace('<svg ', '<svg aria-hidden="true" '),
     iconSize: [22, 26],
     iconAnchor: [3, 25],
   })

@@ -31,9 +31,13 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 
 import {
-  AbstractMap, Utility, rangerIconFor, evidenceIconFor, radioLogStatusColor,
-  locationCategoryColor, locationIconFor, resolveLocationIcon, formatReportTime, computeExtent, ExtentPoint
+  Utility, radioLogStatusColor, locationCategoryColor, resolveLocationIcon, formatReportTime, computeExtent,
+  ExtentPoint
 } from '../shared'
+// Leaflet-importing helpers come from their own files, never the barrels (E-265 follow-up)
+import { AbstractMap } from '../shared/mapping/map'
+import { rangerIconFor, evidenceIconFor } from '../shared/mapping/ranger-icon'
+import { locationIconFor } from '../shared/mapping/location-icon'
 import {
   COORDINATE_FORMATS, CoordinateFormat, formatLatLng
 } from '../domain/coordinate'
@@ -55,24 +59,10 @@ import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.compo
 
 
 // https://www.digitalocean.com/community/tutorials/angular-angular-and-leaflet
-// Markers are copied into project via virtue of angular.json: search it for leaflet!!!
 
 // TODO: Add heatmap: https://www.patrick-wied.at/static/heatmapjs/example-heatmap-leaflet.html
 
-const iconRetinaUrl = 'assets/icons/marker-icon-2x.png'
-const iconUrl = 'assets/icons/marker-icon.png'
-const shadowUrl = 'assets/icons/marker-shadow.png'
-const iconDefault = new L.Icon({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-})
-L.Marker.mergeOptions({ icon: iconDefault }); // v2: prototype.options is gone; defaults live on static defaultOptions
+// Plain markers use Leaflet 2's built-in DefaultIcon (an inline SVG pin, no image files).
 
 // See MapLeafletComponent.ringStepIndex: 0 = Auto, n = RING_STEPS_MILES[n - 1].
 const ringStepIndex = signal(0)
@@ -1236,32 +1226,12 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // }
 
 
-  // https://blog.mestwin.net/leaflet-angular-marker-clustering/
-  private getDefaultIcon() {
-    return new L.Icon({
-      iconSize: [25, 41],
-      iconAnchor: [13, 41],
-      iconUrl: './../../assets/icons/marker-icon.png'
-    })
-  }
-
-  createMarker() {
-    // TODO: https://github.com/lennardv2/Leaflet.awesome-markers
-    const mapIcon = this.getDefaultIcon();
-    // const coordinates = latLng([this.mapPoint.latitude, this.mapPoint.longitude]);
-    // this.lastLayer = marker(coordinates).setIcon(mapIcon);
-    // this.markerClusterGroup.addLayer(this.lastLayer)
-  }
-
   override addMarker(lat: number, lng: number, title: string = '') {
 
     if (!lat || !lng || !this.lMap) {
       console.error(`bad lat: ${lat} or lng: ${lng} or mapLeaflet: ${this.lMap}`)
     } else {
-      let _marker = new L.Marker([lat, lng], {
-        icon: iconDefault
-        // ??: title
-      })
+      let _marker = new L.Marker([lat, lng])
 
       // TODO: Could add tabs on tooltips: https://tomik23.github.io/leaflet-examples/#51.tabs-in-popup
       /*
@@ -1442,12 +1412,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     },
     addMarker: function ({ latitude, longitude }) {
       return new L.Marker([latitude, longitude], {
+        title: 'You are here',
         icon: new L.DivIcon({
           className: "located-animation",
           iconSize: new L.Point(17, 17),
           popupAnchor: [0, -15],
         }),
-      }).bindPopup("Your are here :)");
+      }).bindPopup("You are here");
     },
     removeLocate: function () {
       this._map.eachLayer(function (layer) {

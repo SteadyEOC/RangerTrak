@@ -10,6 +10,15 @@ All notable changes to this project will be documented in this file. See [standa
 * **map:** Print map is now shown in Simple view too, not only Full view (John 10-31)
 * **map:** E-265 maps run on Leaflet 2 (`2.0.0-beta.1`, ESM), with markercluster from Kristjan Esperanto's v2 fork; both plugins carry small local patches (`patches/`)
 
+### Performance
+
+* **map:** Leaflet left the eager bundle: the `shared` barrels no longer re-export the Leaflet-importing helpers, so `main.js` is ~146 kB smaller (initial 1.88 MB / 412 kB transfer → 1.73 MB / 376 kB). A new CI check (`npm run check:eager-bundle`) fails the deploy if Leaflet or MapLibre comes back
+* **map:** plain markers use Leaflet 2's built-in SVG pin; the three marker PNGs and their asset copy are gone
+
+### Accessibility
+
+* **map:** marker SVGs are hidden from screen readers so each marker is named by its title (an unassigned ranger read as "?", some places as a single letter); the "You are here" marker has a title
+
 
 ## [1.0.0-beta.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.97-alpha...v1.0.0-beta.1) (2026-10-28)
 

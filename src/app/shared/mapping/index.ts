@@ -11,10 +11,10 @@ export { GoogleGeocoder } from "./google-geocoder"
 // directly from './mapping/map-style' instead, which keeps MapLibre inside the lazily-loaded
 // /map route chunk. (E-70: the unwired MiniMapComponent, formerly a second consumer, is gone.)
 export { DDToDMS, DDToDDM, DMSToDD, DDMToDD, DirEnum, DirType, destinationPoint } from "../../domain/coordinate"
-export { AbstractMap } from "./map"
-export { rangerIconFor } from "./ranger-icon"
+// AbstractMap, rangerIconFor/evidenceIconFor and locationIconFor import `leaflet`, so they are NOT
+// re-exported: any eager importer of this barrel pulled Leaflet into main.js (E-265). Import them
+// from their own files.
 export { rangerColorFor, evidenceMarkerSvg } from "./ranger-marker"
-export { locationIconFor } from "./location-icon"
 export { locationMarkerSvg, resolveLocationIcon } from "./location-marker"
 export { hashString } from "./hash-color"
 export { radioLogStatusColor, locationCategoryColor, resolveCssColorForCanvas } from "./report-marker-status"
