@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 * **map:** Print map is now shown in Simple view too, not only Full view (John 10-31)
+* **map:** E-265 maps run on Leaflet 2 (`2.0.0-beta.1`, ESM), with markercluster from Kristjan Esperanto's v2 fork; both plugins carry small local patches (`patches/`)
 
 
 ## [1.0.0-beta.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.97-alpha...v1.0.0-beta.1) (2026-10-28)

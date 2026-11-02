@@ -4912,7 +4912,7 @@ async function checkRangeRingsAndCoordReadout() {
   }
   const ddm = await readoutIn('DDM')
   check('the readout shows DDM after picking DDM', /^\d+° \d+\.\d{3}′ [NS], \d+° \d+\.\d{3}′ [EW]$/.test(ddm), true)
-  const usng = await readoutIn('USNG')
+  const usng = await readoutIn('USNG/MGRS')  // E-208 renamed the button
   check('the readout shows USNG after picking USNG', /^\d{1,2}[C-X] [A-Z]{2} \d{5} \d{5}$/.test(usng), true)
   const dd = await readoutIn('DD')
   check('the readout shows DD after picking DD', /^-?\d+\.\d{5}, -?\d+\.\d{5}$/.test(dd), true)

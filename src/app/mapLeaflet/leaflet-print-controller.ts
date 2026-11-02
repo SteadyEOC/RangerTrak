@@ -1,5 +1,5 @@
-import 'leaflet'
 import * as L from 'leaflet'
+import type { MarkerClusterGroup } from '@kristjan.esperanto/leaflet.markercluster'
 import type { tileLayerOffline } from 'leaflet.offline'
 import type { ElementRef, Signal, TemplateRef, WritableSignal } from '@angular/core'
 import { edgeTickStep, formatEdgeTick, type CoordinateFormat } from '../domain/coordinate'
@@ -17,7 +17,7 @@ export interface LeafletPrintHost {
   map(): L.Map
   settings(): MissionType
   /** The cluster group the component owns (rebuilt by initMainMap()). */
-  myMarkerCluster(): L.MarkerClusterGroup
+  myMarkerCluster(): MarkerClusterGroup
   locationsLayer(): L.LayerGroup
   mapContainer(): ElementRef<HTMLDivElement>
   edgeTicks(): ElementRef<HTMLDivElement>
@@ -281,7 +281,7 @@ export class LeafletPrintController {
       map.removeLayer(this.myTrailsLayer)
     }
 
-    map.fitBounds(L.latLngBounds(places.map(p => [p.lat, p.lng] as L.LatLngTuple)),
+    map.fitBounds(new L.LatLngBounds(places.map(p => [p.lat, p.lng] as [number, number])),
       { padding: [28, 28], maxZoom: 15, animate: false })
     await this.waitForTiles(6000)
 
@@ -359,7 +359,7 @@ export class LeafletPrintController {
     })
     this.lMap.eachLayer(layer => {
       if (layer instanceof L.TileLayer
-        && (online || this.host.offlineTileLayers().includes(layer as ReturnType<typeof tileLayerOffline>))) {
+        && (online || (this.host.offlineTileLayers() as L.TileLayer[]).includes(layer))) {
         candidates.push(layer)
       }
     })
@@ -394,7 +394,7 @@ export class LeafletPrintController {
         return
       }
       undone = true
-      keepBuffers.forEach((keepBuffer, layer) => { (layer.options as L.GridLayerOptions).keepBuffer = keepBuffer })
+      keepBuffers.forEach((keepBuffer, layer) => { (layer.options as Partial<L.GridLayerOptions>).keepBuffer = keepBuffer })
       for (const { layer, tileSize, zoomOffset, maxNativeZoom } of saved) {
         Object.assign(layer.options, { tileSize, zoomOffset, maxNativeZoom })
         if (this.lMap.hasLayer(layer)) {
@@ -414,7 +414,7 @@ export class LeafletPrintController {
    * marker moves from the cluster group to a plain layer, and back afterwards. Runs from the
    * print media change, so Ctrl+P gets it too, not just the Print map button.
    */
-  private readonly printMarkers = L.layerGroup()
+  private readonly printMarkers = new L.LayerGroup()
   /** True while the print swap moves markers between the cluster and plain layers; layer events then are not the user's choice. */
   swappingMarkers = false
   private setPrintMarkers(printing: boolean): void {
@@ -477,7 +477,7 @@ export class LeafletPrintController {
   // 2026-10-01, John: E-152b - what each minutes badge looked like before it moved (the
   // badge-to-marker map, badgeMarkers, is the component's).
   private readonly movedBadges = new Map<L.Tooltip, L.LatLng>()
-  private readonly fanLayer = L.layerGroup()
+  private readonly fanLayer = new L.LayerGroup()
 
   /**
    * 2026-10-16 (John's prints, Windows display scale 150%): in a real print, getBoundingClientRect()
@@ -525,14 +525,14 @@ export class LeafletPrintController {
         // Each marker's leader runs to its OWN true spot; one dot per distinct spot.
         const marker = markers[i]
         const truth = marker.getLatLng()
-        const at = this.lMap.containerPointToLatLng(L.point(plan.positions[i].x, plan.positions[i].y))
+        const at = this.lMap.containerPointToLatLng(new L.Point(plan.positions[i].x, plan.positions[i].y))
         this.fanned.set(marker, truth)
         marker.setLatLng(at)
-        this.fanLayer.addLayer(L.polyline([truth, at], { color: '#222', weight: 1, interactive: false, className: 'rt-fan-leader' }))
+        this.fanLayer.addLayer(new L.Polyline([truth, at], { color: '#222', weight: 1, interactive: false, className: 'rt-fan-leader' }))
         const key = `${Math.round(points[i].x)},${Math.round(points[i].y)}`
         if (!dots.has(key)) {
           dots.add(key)
-          this.fanLayer.addLayer(L.circleMarker(truth, {
+          this.fanLayer.addLayer(new L.CircleMarker(truth, {
             radius: 3, color: '#fff', weight: 1, fillColor: '#222', fillOpacity: 1, interactive: false,
           }))
         }
@@ -565,7 +565,7 @@ export class LeafletPrintController {
       }
       this.movedBadges.set(badge, badge.getLatLng()!)
       badge.options.direction = 'top'
-      badge.options.offset = L.point(0, -BADGE_OVERLAP_PX)
+      badge.options.offset = new L.Point(0, -BADGE_OVERLAP_PX)
       badge.setLatLng(marker.getLatLng())
       const r = rel(badge.getElement())
       items.push({ badge, marker, size: { width: r ? r.right - r.left : 0, height: r ? r.bottom - r.top : 0 } })
@@ -597,8 +597,8 @@ export class LeafletPrintController {
     usable.forEach((it, k) => {
       const side = plan.sides[k]
       it.badge.options.direction = side
-      it.badge.options.offset = side === 'top' ? L.point(0, -BADGE_OVERLAP_PX) : side === 'bottom' ? L.point(0, BADGE_OVERLAP_PX)
-        : side === 'left' ? L.point(-BADGE_OVERLAP_PX, 0) : L.point(BADGE_OVERLAP_PX, 0)
+      it.badge.options.offset = side === 'top' ? new L.Point(0, -BADGE_OVERLAP_PX) : side === 'bottom' ? new L.Point(0, BADGE_OVERLAP_PX)
+        : side === 'left' ? new L.Point(-BADGE_OVERLAP_PX, 0) : new L.Point(BADGE_OVERLAP_PX, 0)
       it.badge.setLatLng(it.marker.getLatLng())
     })
   }
@@ -608,7 +608,7 @@ export class LeafletPrintController {
     this.fanned.clear()
     this.movedBadges.forEach((latlng, badge) => {
       badge.options.direction = 'top'
-      badge.options.offset = L.point(0, -8)
+      badge.options.offset = new L.Point(0, -8)
       badge.setLatLng(latlng)
     })
     this.movedBadges.clear()

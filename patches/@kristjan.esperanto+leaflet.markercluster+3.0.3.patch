@@ -1,0 +1,774 @@
+diff --git a/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js b/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
+index cff0341..60a839c 100644
+--- a/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
++++ b/node_modules/@kristjan.esperanto/leaflet.markercluster/dist/leaflet.markercluster.js
+@@ -11,7 +11,12 @@
+   This file is auto-generated. Do not edit.
+ ***************************************************************************** */
+ 
+-import { Marker, Icon, LatLng, LatLngBounds, Util, LayerGroup, FeatureGroup, Browser, Polygon, DivIcon, Point, Polyline, Path } from 'leaflet';
++import { Marker, Icon, LatLng, LatLngBounds, Util, LayerGroup, FeatureGroup, Polygon, DivIcon, Point, Polyline, Path } from 'leaflet';
++// Leaflet main removed the Browser namespace (#10447); minimal local equivalents.
++const Browser = {
++  mobile: typeof navigator !== 'undefined' && /mobi/i.test(navigator.userAgent),
++  touch: typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0,
++};
+ 
+ /**
+  * @typedef {import('leaflet').Point} Point
+@@ -364,14 +369,11 @@ const quickHullMethods = {
+   },
+ };
+ 
+-const MarkerCluster$1 = Marker.extend({
+-  ...quickHullMethods,
+-
+-  options: Icon.prototype.options,
+-
+-  initialize: function (group, zoom, a, b) {
+-    Marker.prototype.initialize.call(this, a ? (a._cLatLng || a.getLatLng()) : new LatLng(0, 0),
+-      { icon: this, pane: group.options.clusterPane });
++// Leaflet main removed Class.extend() and initialize(): ES classes with the methods mixed in via include().
++class MarkerCluster$1 extends Marker {
++  constructor(group, zoom, a, b) {
++    super(a ? (a._cLatLng || a.getLatLng()) : new LatLng(0, 0), { pane: group.options.clusterPane });
++    this.options.icon = this;
+ 
+     this._group = group;
+     this._zoom = zoom;
+@@ -390,7 +392,11 @@ const MarkerCluster$1 = Marker.extend({
+     if (b) {
+       this._addChild(b);
+     }
+-  },
++  }
++}
++MarkerCluster$1.mergeOptions(Icon.defaultOptions);
++MarkerCluster$1.include({
++  ...quickHullMethods,
+ 
+   // Recursively retrieve all child markers of this cluster
+   getAllChildMarkers: function (storageArray, ignoreDraggedMarker) {
+@@ -1176,60 +1182,10 @@ const animationMethods = {
+  */
+ 
+ 
+-const MarkerClusterGroup = FeatureGroup.extend({
+-  ...refreshMethods,
+-  ...animationMethods,
+-
+-  options: {
+-    maxClusterRadius: 80, // A cluster will cover at most this many pixels from its center
+-    iconCreateFunction: null,
+-    clusterPane: Marker.prototype.options.pane,
+-
+-    spiderfyOnEveryZoom: false,
+-    spiderfyOnMaxZoom: true,
+-    showCoverageOnHover: true,
+-    zoomToBoundsOnClick: true,
+-    singleMarkerMode: false,
+-
+-    disableClusteringAtZoom: null,
+-
+-    // Accessibility: Title for cluster markers (can be a string or function)
+-    // Function signature: function(cluster) { return 'title text'; }
+-    clusterMarkerTitle: null,
+-
+-    // Setting this to false prevents the removal of any clusters outside of the viewpoint, which
+-    // is the default behaviour for performance reasons.
+-    removeOutsideVisibleBounds: true,
+-
+-    // Set to false to disable all animations (zoom and spiderfy).
+-    // If false, option animateAddingMarkers below has no effect.
+-    animate: true,
+-
+-    // Whether to animate adding markers after adding the MarkerClusterGroup to the map
+-    // If you are adding individual markers set to true, if adding bulk markers leave false for massive performance gains.
+-    animateAddingMarkers: false,
+-
+-    // Make it possible to provide custom function to calculate spiderfy shape positions
+-    spiderfyShapePositions: null,
+-
+-    // Increase to increase the distance away that spiderfied markers appear from the center
+-    spiderfyDistanceMultiplier: 1,
+-
+-    // Make it possible to specify a polyline options on a spider leg
+-    spiderLegPolylineOptions: { weight: 1.5, color: '#222', opacity: 0.5 },
+-
+-    // When bulk adding layers, adds markers in chunks. Means addLayers may not add all the layers in the call, others will be loaded during setTimeouts
+-    chunkedLoading: true,
+-    chunkInterval: 80, // process markers for a maximum of ~ n milliseconds (then trigger the chunkProgress callback)
+-    chunkDelay: 20, // at the end of each interval, give n milliseconds back to system/browser
+-    chunkProgress: null, // progress callback: function(processed, total, elapsed) (e.g. for a progress indicator)
++class MarkerClusterGroup extends FeatureGroup {
++  constructor(options) {
++    super([], options);
+ 
+-    // Options to pass to the Polygon constructor
+-    polygonOptions: {},
+-  },
+-
+-  initialize: function (options) {
+-    Util.setOptions(this, options);
+     if (!this.options.iconCreateFunction) {
+       this.options.iconCreateFunction = this._defaultIconCreateFunction;
+     }
+@@ -1261,7 +1217,59 @@ const MarkerClusterGroup = FeatureGroup.extend({
+     // Register event listeners for spiderfier lifecycle
+     this.on('add', this._spiderfierSetup, this);
+     this.on('remove', this._spiderfierCleanup, this);
+-  },
++  }
++}
++MarkerClusterGroup.mergeOptions({
++  maxClusterRadius: 80, // A cluster will cover at most this many pixels from its center
++  iconCreateFunction: null,
++  clusterPane: Marker.defaultOptions.pane,
++
++  spiderfyOnEveryZoom: false,
++  spiderfyOnMaxZoom: true,
++  showCoverageOnHover: true,
++  zoomToBoundsOnClick: true,
++  singleMarkerMode: false,
++
++  disableClusteringAtZoom: null,
++
++  // Accessibility: Title for cluster markers (can be a string or function)
++  // Function signature: function(cluster) { return 'title text'; }
++  clusterMarkerTitle: null,
++
++  // Setting this to false prevents the removal of any clusters outside of the viewpoint, which
++  // is the default behaviour for performance reasons.
++  removeOutsideVisibleBounds: true,
++
++  // Set to false to disable all animations (zoom and spiderfy).
++  // If false, option animateAddingMarkers below has no effect.
++  animate: true,
++
++  // Whether to animate adding markers after adding the MarkerClusterGroup to the map
++  // If you are adding individual markers set to true, if adding bulk markers leave false for massive performance gains.
++  animateAddingMarkers: false,
++
++  // Make it possible to provide custom function to calculate spiderfy shape positions
++  spiderfyShapePositions: null,
++
++  // Increase to increase the distance away that spiderfied markers appear from the center
++  spiderfyDistanceMultiplier: 1,
++
++  // Make it possible to specify a polyline options on a spider leg
++  spiderLegPolylineOptions: { weight: 1.5, color: '#222', opacity: 0.5 },
++
++  // When bulk adding layers, adds markers in chunks. Means addLayers may not add all the layers in the call, others will be loaded during setTimeouts
++  chunkedLoading: true,
++  chunkInterval: 80, // process markers for a maximum of ~ n milliseconds (then trigger the chunkProgress callback)
++  chunkDelay: 20, // at the end of each interval, give n milliseconds back to system/browser
++  chunkProgress: null, // progress callback: function(processed, total, elapsed) (e.g. for a progress indicator)
++
++  // Options to pass to the Polygon constructor
++  polygonOptions: {},
++});
++MarkerClusterGroup.include({
++  ...refreshMethods,
++  ...animationMethods,
++
+ 
+   addLayer: function (layer) {
+     if (layer instanceof LayerGroup) {
+@@ -2554,7 +2562,8 @@ const MarkerClusterSpiderfierMethods = {
+ };
+ 
+ // Non Animated versions of everything
+-const MarkerClusterNonAnimated = MarkerCluster$1.extend({
++class MarkerClusterNonAnimated extends MarkerCluster$1 {}
++MarkerClusterNonAnimated.include({
+   _animationSpiderfy: function (childMarkers, positions) {
+     const group = this._group,
+       map = group._map,
+@@ -2828,7 +2837,8 @@ const MarkerClusterGroupSpiderfierMethods = {
+     this._map.on('zoomend', this._noanimationUnspiderfy, this);
+ 
+     if (!Browser.touch) {
+-      this._map.getRenderer(this);
++      // Leaflet main: Map.getRenderer(layer) now needs a Path (#10438); a cluster group is not one.
++      this._map.getRenderer(new Polyline([]));
+       // Needs to happen in the pageload, not after, or animations don't work in webkit
+       //  http://stackoverflow.com/questions/8455200/svg-animate-with-dynamically-added-elements
+       // Disable on touch browsers as the animation messes up on a touch zoom and isn't very noticable
+diff --git a/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts b/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts
+index f41169b..64fb6fb 100644
+--- a/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts
++++ b/node_modules/@kristjan.esperanto/leaflet.markercluster/types/index.d.ts
+@@ -1,307 +1,295 @@
+-import * as L from "leaflet";
++import { Marker } from "leaflet";
++import type { LayerOptions, Icon, DivIcon, Point, PolylineOptions, FitBoundsOptions, IconOptions, InteractiveLayerOptions, LayerGroup, FeatureGroup, Layer, LatLngBounds } from "leaflet";
+ 
+-declare module "leaflet" {
++type LeafletEventHandlerFn = (event: any) => void;
++
++/**
++ * Options for the MarkerClusterGroup.
++ */
++export interface MarkerClusterGroupOptions extends Partial<InteractiveLayerOptions> {
+   /**
+-   * Options for the MarkerClusterGroup.
+-   */
+-  interface MarkerClusterGroupOptions extends LayerOptions {
+-    /**
+-     * The maximum radius that a cluster will cover from the central marker (in pixels).
+-     * @default 80
+-     */
+-    maxClusterRadius?: number | ((zoom: number) => number);
+-
+-    /**
+-     * Function used to create the cluster icon.
+-     * @default Uses built-in icon creation
+-     */
+-    iconCreateFunction?: (cluster: MarkerCluster) => Icon | DivIcon;
+-
+-    /**
+-     * Map pane where the cluster icons will be added.
+-     * @default 'markerPane'
+-     */
+-    clusterPane?: string;
+-
+-    /**
+-     * When true, spiderfies markers on every zoom level, not just max zoom.
+-     * @default false
+-     */
+-    spiderfyOnEveryZoom?: boolean;
+-
+-    /**
+-     * When true, clicking a cluster at the bottom zoom level will spiderfy it.
+-     * @default true
+-     */
+-    spiderfyOnMaxZoom?: boolean;
+-
+-    /**
+-     * When true, hovering over a cluster shows the bounds of its markers.
+-     * @default true
+-     */
+-    showCoverageOnHover?: boolean;
+-
+-    /**
+-     * When true, clicking a cluster will zoom in to see its child markers.
+-     * @default true
+-     */
+-    zoomToBoundsOnClick?: boolean;
+-
+-    /**
+-     * When true, a cluster will hold only one marker (shows the marker icon but behaves as a cluster).
+-     * @default false
+-     */
+-    singleMarkerMode?: boolean;
+-
+-    /**
+-     * At this zoom level and below, markers will not be clustered.
+-     * @default null
+-     */
+-    disableClusteringAtZoom?: number | null;
+-
+-    /**
+-     * Title for cluster markers. Can be a string or function.
+-     * Function signature: (cluster: MarkerCluster) => string
+-     * @default null
+-     */
+-    clusterMarkerTitle?: string | ((cluster: MarkerCluster) => string) | null;
+-
+-    /**
+-     * When true, clusters and markers outside the viewpoint are removed for performance.
+-     * @default true
+-     */
+-    removeOutsideVisibleBounds?: boolean;
+-
+-    /**
+-     * When true, enables zoom and spiderfy animations.
+-     * @default true
+-     */
+-    animate?: boolean;
+-
+-    /**
+-     * When true, animates markers when adding after the group is added to the map.
+-     * @default false
+-     */
+-    animateAddingMarkers?: boolean;
+-
+-    /**
+-     * Custom function to calculate spiderfy shape positions.
+-     * @default null
+-     */
+-    spiderfyShapePositions?: ((count: number, centerPt: Point) => Point[]) | null;
+-
+-    /**
+-     * Multiplier for the distance spiderfied markers appear from the center.
+-     * @default 1
+-     */
+-    spiderfyDistanceMultiplier?: number;
+-
+-    /**
+-     * Options for the spider leg polylines.
+-     * @default { weight: 1.5, color: '#222', opacity: 0.5 }
+-     */
+-    spiderLegPolylineOptions?: PolylineOptions;
+-
+-    /**
+-     * When true, adds markers in chunks for better performance with large datasets.
+-     * @default true
+-     */
+-    chunkedLoading?: boolean;
+-
+-    /**
+-     * Time interval (in ms) during which addLayers works before pausing.
+-     * @default 80
+-     */
+-    chunkInterval?: number;
+-
+-    /**
+-     * Time (in ms) to wait between chunks.
+-     * @default 20
+-     */
+-    chunkDelay?: number;
+-
+-    /**
+-     * Callback called with progress during chunked loading.
+-     * @default null
+-     */
+-    chunkProgress?: ((processed: number, total: number, elapsed: number) => void) | null;
+-
+-    /**
+-     * Options to pass to the coverage Polygon constructor.
+-     * @default {}
+-     */
+-    polygonOptions?: PolylineOptions;
+-  }
++   * The maximum radius that a cluster will cover from the central marker (in pixels).
++   * @default 80
++   */
++  maxClusterRadius?: number | ((zoom: number) => number);
+ 
+   /**
+-   * Extends FeatureGroup by clustering the markers contained within.
+-   */
+-  class MarkerClusterGroup extends FeatureGroup {
+-    options: MarkerClusterGroupOptions;
+-
+-    constructor(options?: MarkerClusterGroupOptions);
+-
+-    /**
+-     * Adds a marker to the cluster group.
+-     */
+-    addLayer(layer: Layer): this;
+-
+-    /**
+-     * Removes a marker from the cluster group.
+-     */
+-    removeLayer(layer: Layer): this;
+-
+-    /**
+-     * Adds an array of markers to the cluster group.
+-     */
+-    addLayers(layers: Layer[], skipLayerAddEvent?: boolean): this;
+-
+-    /**
+-     * Removes an array of markers from the cluster group.
+-     */
+-    removeLayers(layers: Layer[]): this;
+-
+-    /**
+-     * Removes all markers from the cluster group.
+-     */
+-    clearLayers(): this;
+-
+-    /**
+-     * Returns the bounds of all markers in the cluster group.
+-     */
+-    getBounds(): LatLngBounds;
+-
+-    /**
+-     * Iterates over all markers in the cluster group.
+-     */
+-    eachLayer(fn: (layer: Layer) => void, context?: object): this;
+-
+-    /**
+-     * Returns an array of all markers in the cluster group.
+-     */
+-    getLayers(): Layer[];
+-
+-    /**
+-     * Returns a marker with the given internal ID.
+-     */
+-    getLayer(id: number): Layer | undefined;
+-
+-    /**
+-     * Returns true if the given layer is in this cluster group.
+-     */
+-    hasLayer(layer: Layer): boolean;
+-
+-    /**
+-     * Zooms to show the given layer, spiderfying if necessary.
+-     */
+-    zoomToShowLayer(layer: Layer, callback?: () => void): void;
+-
+-    /**
+-     * Returns the visible parent cluster (or the layer itself if visible) for a marker.
+-     */
+-    getVisibleParent(marker: Marker): Marker | MarkerCluster | null;
+-
+-    /**
+-     * Refreshes the icon of all clusters which are parents of the given marker(s).
+-     */
+-    refreshClusters(layers?: Layer | Layer[] | LayerGroup | MarkerCluster): this;
+-
+-    /**
+-     * Unspiderfies any currently spiderfied cluster.
+-     */
+-    unspiderfy(): this;
+-  }
++   * Function used to create the cluster icon.
++   * @default Uses built-in icon creation
++   */
++  iconCreateFunction?: (cluster: MarkerCluster) => Icon | DivIcon;
+ 
+   /**
+-   * Creates a new MarkerClusterGroup.
++   * Map pane where the cluster icons will be added.
++   * @default 'markerPane'
+    */
+-  function markerClusterGroup(options?: MarkerClusterGroupOptions): MarkerClusterGroup;
++  clusterPane?: string;
+ 
+   /**
+-   * A cluster marker that contains child markers.
++   * When true, spiderfies markers on every zoom level, not just max zoom.
++   * @default false
+    */
+-  class MarkerCluster extends Marker {
+-    /**
+-     * Returns the count of child markers in the cluster.
+-     */
+-    getChildCount(): number;
++  spiderfyOnEveryZoom?: boolean;
+ 
+-    /**
+-     * Returns all child markers of this cluster.
+-     */
+-    getAllChildMarkers(storageArray?: Marker[], ignoreDraggedMarker?: boolean): Marker[];
++  /**
++   * When true, clicking a cluster at the bottom zoom level will spiderfy it.
++   * @default true
++   */
++  spiderfyOnMaxZoom?: boolean;
+ 
+-    /**
+-     * Returns the bounds of all child markers.
+-     */
+-    getBounds(): LatLngBounds;
++  /**
++   * When true, hovering over a cluster shows the bounds of its markers.
++   * @default true
++   */
++  showCoverageOnHover?: boolean;
+ 
+-    /**
+-     * Zooms the map to show all markers in this cluster.
+-     */
+-    zoomToBounds(fitBoundsOptions?: FitBoundsOptions): void;
++  /**
++   * When true, clicking a cluster will zoom in to see its child markers.
++   * @default true
++   */
++  zoomToBoundsOnClick?: boolean;
+ 
+-    /**
+-     * Spiderfies this cluster to show all contained markers.
+-     */
+-    spiderfy(): void;
++  /**
++   * When true, a cluster will hold only one marker (shows the marker icon but behaves as a cluster).
++   * @default false
++   */
++  singleMarkerMode?: boolean;
+ 
+-    /**
+-     * Unspiderfies this cluster.
+-     */
+-    unspiderfy(zoomDetails?: object): void;
+-  }
++  /**
++   * At this zoom level and below, markers will not be clustered.
++   * @default null
++   */
++  disableClusteringAtZoom?: number | null;
+ 
+   /**
+-   * Extends Marker with refreshIconOptions method when used with MarkerClusterGroup.
++   * Title for cluster markers. Can be a string or function.
++   * Function signature: (cluster: MarkerCluster) => string
++   * @default null
+    */
+-  interface Marker {
+-    /**
+-     * Updates the icon options and refreshes the marker.
+-     * Used when the marker is in a MarkerClusterGroup with singleMarkerMode.
+-     */
+-    refreshIconOptions?(options?: IconOptions, directlyRefreshClusters?: boolean): this;
+-  }
++  clusterMarkerTitle?: string | ((cluster: MarkerCluster) => string) | null;
+ 
+   /**
+-   * Events fired by MarkerClusterGroup.
++   * When true, clusters and markers outside the viewpoint are removed for performance.
++   * @default true
+    */
+-  interface LeafletEventHandlerFnMap {
+-    /**
+-     * Fired when a cluster is clicked.
+-     */
+-    clusterclick?: LeafletEventHandlerFn;
++  removeOutsideVisibleBounds?: boolean;
+ 
+-    /**
+-     * Fired when the mouse enters a cluster.
+-     */
+-    clustermouseover?: LeafletEventHandlerFn;
++  /**
++   * When true, enables zoom and spiderfy animations.
++   * @default true
++   */
++  animate?: boolean;
+ 
+-    /**
+-     * Fired when the mouse leaves a cluster.
+-     */
+-    clustermouseout?: LeafletEventHandlerFn;
++  /**
++   * When true, animates markers when adding after the group is added to the map.
++   * @default false
++   */
++  animateAddingMarkers?: boolean;
+ 
+-    /**
+-     * Fired when a cluster is spiderfied.
+-     */
+-    spiderfied?: LeafletEventHandlerFn;
++  /**
++   * Custom function to calculate spiderfy shape positions.
++   * @default null
++   */
++  spiderfyShapePositions?: ((count: number, centerPt: Point) => Point[]) | null;
+ 
+-    /**
+-     * Fired when a cluster is unspiderfied.
+-     */
+-    unspiderfied?: LeafletEventHandlerFn;
++  /**
++   * Multiplier for the distance spiderfied markers appear from the center.
++   * @default 1
++   */
++  spiderfyDistanceMultiplier?: number;
++
++  /**
++   * Options for the spider leg polylines.
++   * @default { weight: 1.5, color: '#222', opacity: 0.5 }
++   */
++  spiderLegPolylineOptions?: PolylineOptions;
+ 
+-    /**
+-     * Fired when the cluster animation ends.
+-     */
+-    animationend?: LeafletEventHandlerFn;
++  /**
++   * When true, adds markers in chunks for better performance with large datasets.
++   * @default true
++   */
++  chunkedLoading?: boolean;
+ 
+-    /**
+-     * Fired when multiple layers are added at once.
+-     */
+-    layersadd?: LeafletEventHandlerFn;
+-  }
++  /**
++   * Time interval (in ms) during which addLayers works before pausing.
++   * @default 80
++   */
++  chunkInterval?: number;
++
++  /**
++   * Time (in ms) to wait between chunks.
++   * @default 20
++   */
++  chunkDelay?: number;
++
++  /**
++   * Callback called with progress during chunked loading.
++   * @default null
++   */
++  chunkProgress?: ((processed: number, total: number, elapsed: number) => void) | null;
++
++  /**
++   * Options to pass to the coverage Polygon constructor.
++   * @default {}
++   */
++  polygonOptions?: PolylineOptions;
++}
++
++/**
++ * Extends FeatureGroup by clustering the markers contained within.
++ */
++export class MarkerClusterGroup extends FeatureGroup<Layer, InteractiveLayerOptions & MarkerClusterGroupOptions> {
++
++  constructor(options?: MarkerClusterGroupOptions);
++
++  /**
++   * Adds a marker to the cluster group.
++   */
++  addLayer(layer: Layer): this;
++
++  /**
++   * Removes a marker from the cluster group.
++   */
++  removeLayer(layer: Layer): this;
++
++  /**
++   * Adds an array of markers to the cluster group.
++   */
++  addLayers(layers: Layer[], skipLayerAddEvent?: boolean): this;
++
++  /**
++   * Removes an array of markers from the cluster group.
++   */
++  removeLayers(layers: Layer[]): this;
++
++  /**
++   * Removes all markers from the cluster group.
++   */
++  clearLayers(): this;
++
++  /**
++   * Returns the bounds of all markers in the cluster group.
++   */
++  getBounds(): LatLngBounds;
++
++  /**
++   * Iterates over all markers in the cluster group.
++   */
++  eachLayer(fn: (layer: Layer) => void, context?: object): this;
++
++  /**
++   * Returns an array of all markers in the cluster group.
++   */
++  getLayers(): Layer[];
++
++  /**
++   * Returns a marker with the given internal ID.
++   */
++  getLayer(id: number): Layer | undefined;
++
++  /**
++   * Returns true if the given layer is in this cluster group.
++   */
++  hasLayer(layer: Layer): boolean;
++
++  /**
++   * Zooms to show the given layer, spiderfying if necessary.
++   */
++  zoomToShowLayer(layer: Layer, callback?: () => void): void;
++
++  /**
++   * Returns the visible parent cluster (or the layer itself if visible) for a marker.
++   */
++  getVisibleParent(marker: Marker): Marker | MarkerCluster | null;
++
++  /**
++   * Refreshes the icon of all clusters which are parents of the given marker(s).
++   */
++  refreshClusters(layers?: Layer | Layer[] | LayerGroup | MarkerCluster): this;
++
++  /**
++   * Unspiderfies any currently spiderfied cluster.
++   */
++  unspiderfy(): this;
++}
++
++/**
++ * A cluster marker that contains child markers.
++ */
++export class MarkerCluster extends Marker {
++  /**
++   * Returns the count of child markers in the cluster.
++   */
++  getChildCount(): number;
++
++  /**
++   * Returns all child markers of this cluster.
++   */
++  getAllChildMarkers(storageArray?: Marker[], ignoreDraggedMarker?: boolean): Marker[];
++
++  /**
++   * Returns the bounds of all child markers.
++   */
++  getBounds(): LatLngBounds;
++
++  /**
++   * Zooms the map to show all markers in this cluster.
++   */
++  zoomToBounds(fitBoundsOptions?: FitBoundsOptions): void;
++
++  /**
++   * Spiderfies this cluster to show all contained markers.
++   */
++  spiderfy(): void;
++
++  /**
++   * Unspiderfies this cluster.
++   */
++  unspiderfy(zoomDetails?: object): void;
++}
++
++/**
++ * Events fired by MarkerClusterGroup.
++ */
++export interface LeafletEventHandlerFnMap {
++  /**
++   * Fired when a cluster is clicked.
++   */
++  clusterclick?: LeafletEventHandlerFn;
++
++  /**
++   * Fired when the mouse enters a cluster.
++   */
++  clustermouseover?: LeafletEventHandlerFn;
++
++  /**
++   * Fired when the mouse leaves a cluster.
++   */
++  clustermouseout?: LeafletEventHandlerFn;
++
++  /**
++   * Fired when a cluster is spiderfied.
++   */
++  spiderfied?: LeafletEventHandlerFn;
++
++  /**
++   * Fired when a cluster is unspiderfied.
++   */
++  unspiderfied?: LeafletEventHandlerFn;
++
++  /**
++   * Fired when the cluster animation ends.
++   */
++  animationend?: LeafletEventHandlerFn;
++
++  /**
++   * Fired when multiple layers are added at once.
++   */
++  layersadd?: LeafletEventHandlerFn;
+ }
+ 
+-export = L;
++declare module "leaflet" {
++  interface Marker {
++    refreshIconOptions?(options?: IconOptions, directlyRefreshClusters?: boolean): this;
++  }
++}

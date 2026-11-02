@@ -1,7 +1,7 @@
 /**
  * Abstract class serving as a repository for common/reused map functions
  */
-import L from 'leaflet'
+import * as L from 'leaflet'
 import { fromEvent, Observable, Subscription } from 'rxjs'
 //import { catchError, mergeMap, toArray } from 'rxjs/operators'
 
@@ -176,7 +176,7 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
       return
     }
 
-    map.on('mousemove', ($event: L.LeafletMouseEvent) => {
+    map.on('pointermove', ($event: L.LeafletPointerEvent) => {
       if ($event.latlng) {
         this.mouseLatLng.set($event.latlng) //.toJSON()
       } else {
@@ -206,7 +206,7 @@ export abstract class AbstractMap implements OnInit, OnDestroy {
     }
 
     // Put coordinates into clipboard
-    let latlng = this.map.mouseEventToLatLng(ev)
+    let latlng = this.map.pointerEventToLatLng(ev)
     let coords = `${Math.round(latlng.lat * 10000) / 10000}, ${Math.round(latlng.lng * 10000) / 10000}`
     navigator.clipboard.writeText(coords)
       .then(() => {

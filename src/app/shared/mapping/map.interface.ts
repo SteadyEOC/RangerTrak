@@ -1,3 +1,4 @@
+import type * as L from 'leaflet'
 export type Map = L.Map
 
 export enum MapType {
