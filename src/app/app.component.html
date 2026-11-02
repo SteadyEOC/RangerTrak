@@ -33,7 +33,10 @@
   <router-outlet (activate)="onRouteActivated()"></router-outlet>
 </div>
 
+<!-- E-272 (2026-11-02): not until the first routed page is in - see AppComponent.routeShown. -->
+@if (routeShown()) {
 <rangertrak-footer></rangertrak-footer>
+}
 
 <!-- E-57(3): app-wide, but self-hiding - it only appears once a page is genuinely tall
      and genuinely scrolled (see the component). Placed here rather than per-page so the

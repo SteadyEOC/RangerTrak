@@ -44,7 +44,12 @@ describe('AppComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('rangertrak-navbar')).toBeTruthy();
-    expect(compiled.querySelector('rangertrak-footer')).toBeTruthy();
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
+
+    // E-272: the footer waits for the first routed page, so it never paints under an empty outlet.
+    expect(compiled.querySelector('rangertrak-footer')).toBeNull();
+    fixture.componentInstance.onRouteActivated();
+    fixture.detectChanges();
+    expect(compiled.querySelector('rangertrak-footer')).toBeTruthy();
   });
 });

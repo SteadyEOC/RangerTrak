@@ -1,5 +1,5 @@
 import { CommonModule, ViewportScroller } from '@angular/common'
-import { ApplicationRef, Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core'
+import { ApplicationRef, Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core'
 import { RouterModule } from '@angular/router'
 import { MatSnackBarModule } from '@angular/material/snack-bar'
 
@@ -43,6 +43,16 @@ export class AppComponent implements OnInit {
 
   private id = "AppComponent"
   private readonly appRef = inject(ApplicationRef)
+
+  /**
+   * E-272, 2026-11-02 (PageSpeed mobile CLS 0.119 on /map and /rangers, all of it on
+   * `rangertrak-footer`). Every page but Entry is a lazy route, so the shell painted first with an
+   * empty router-outlet and the footer sitting right under the navbar (top 91 on a phone) for the
+   * ~0.4 s the page's chunk took to arrive, then the page pushed it down. The footer now joins the
+   * page in onRouteActivated's own tick, so it first paints where it belongs. A newly added
+   * element is not a layout shift; one that moves is.
+   */
+  readonly routeShown = signal(false)
   title = 'RangerTrak'
   pageDescr = `Track & map Rangers' progress & reports on a mission`
 
@@ -96,6 +106,7 @@ export class AppComponent implements OnInit {
    * before the first frame rather than after it.
    */
   onRouteActivated(): void {
+    this.routeShown.set(true)
     try { this.appRef.tick() } catch { /* already inside a tick: the scheduled one will do it */ }
   }
 }
