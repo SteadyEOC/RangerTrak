@@ -80,6 +80,7 @@ h2.mod .mnum { display: block; font-size: .75rem; font-weight: 600; letter-spaci
 .mhead .sit { grid-column: 1 / -1; border-left-color: var(--q); }
 .mhead h3 { margin: 0 0 .2rem; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .mhead p, .mhead ul { margin: 0; }
+.mhead p + p { margin-top: .45rem; }
 .mhead ul { padding-left: 1.1rem; }
 p.skills { background: var(--tint); border-radius: 6px; padding: .5rem .8rem; }
 @media (max-width: 560px) { .mhead { grid-template-columns: 1fr; } }

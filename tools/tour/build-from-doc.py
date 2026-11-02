@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Builds tools/tour/index.html from the Tour Guide doc (the Claude Doc John edits).
+"""Builds tools/tour/index.html from the Tour Guide source.
 
-    python -I tools/tour/build-from-doc.py <doc-export> [tools/tour/index.html]
+    python -I tools/tour/build-from-doc.py tools/tour/tour-source.xml [tools/tour/index.html]
 
-<doc-export> is the doc's "The tour" tab as read through the Claude Docs tools: either the raw
-<doc ...> XML or the saved JSON read result that wraps it. The doc is the draft; this page is what
-testers see. Item IDs (T3.4, Q5.2) and anchors (#m1-#m9, #need, #route, #telling-us, #sheet) are
+The source is tools/tour/tour-source.xml: the "The tour" tab of the Claude Doc John used to edit,
+as the Claude Docs tools exported it (rev 6418, 10-28). The doc itself is gone (11-02), so edit the
+XML: a <text> run per span, <bold>/<italic>/<code> inside it; ids only need to be unique. A saved
+JSON read result that wraps such XML also works. This page is what testers see. Item IDs (T3.4, Q5.2) and anchors (#m1-#m9, #need, #route, #telling-us, #sheet) are
 frozen: retire an ID, never reuse or renumber it.
 """
 import html
@@ -102,6 +103,7 @@ LINKS = [
     ('RangerTrak@steadyeoc.com', 'mailto:RangerTrak@steadyeoc.com?subject=Tour'),
     ('rangertrak.com/full-view.html', 'https://rangertrak.com/full-view.html'),
     ('github.com/SteadyEOC/RangerTrak/issues', 'https://github.com/SteadyEOC/RangerTrak/issues'),
+    ('latest release', 'https://github.com/SteadyEOC/RangerTrak/releases/latest'),
 ]
 
 
@@ -219,14 +221,17 @@ def build(root):
                 text = inline(p)
                 m = re.match(r'<strong>(\w+):</strong>\s*(.*)', text)
                 if not m:
+                    # An unlabelled paragraph continues the box above it (module 8's Setup).
+                    if boxes and text:
+                        boxes[-1][2].append(text)
                     continue
                 label, body = m.group(1), m.group(2)
-                body = body[:1].upper() + body[1:]
-                cls = ' sit' if label == 'Situation' else ''
-                icon = glyph(label, 16) if label in GLYPHS else ''
-                boxes.append(f'<div class="box{cls}"><h3>{icon}{label}</h3><p>{body}</p></div>')
+                boxes.append([label, glyph(label, 16) if label in GLYPHS else '', [body[:1].upper() + body[1:]]])
             if boxes:
-                out.append('<div class="mhead">' + ''.join(boxes) + '</div>')
+                out.append('<div class="mhead">' + ''.join(
+                    f'<div class="box{" sit" if label == "Situation" else ""}"><h3>{icon}{label}</h3>'
+                    + ''.join(f'<p>{x}</p>' for x in paras) + '</div>'
+                    for label, icon, paras in boxes) + '</div>')
             else:
                 # An aside, not a module's Setup / Goals / Situation.
                 paras = ''.join(f'<p>{inline(p)}</p>' for p in b if p.tag == 'paragraph' and inline(p))
