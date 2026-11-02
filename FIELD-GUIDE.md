@@ -324,6 +324,14 @@ genuine field use is exactly what decides what gets added next.
 > - **Address lookup needs Internet.** Without it, you'll see a message saying so.
 >   Coordinates always work offline — if the network is down, work in coordinates.
 
+### Marking a clue or evidence
+
+Tick **Include evidence/clue at a different location** on Entry (or Alt+click the small map)
+to place a clue by distance and bearing from where you are standing. Both bearing and the
+optional **Heading** are in degrees **true** north, 0 to 359. Heading is which way the tracks,
+drag marks or subject were going; it shows as an arrow at the clue on the map, and in the Radio
+Log, the ICS-309 and the CSV. Ask for the heading in degrees true; if they read a compass, note it.
+
 ### Message numbers
 
 Every entry gets a number when it is logged, such as **A007**: the station letter, then a

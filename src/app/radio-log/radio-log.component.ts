@@ -33,6 +33,7 @@ import { rangertrakGridTheme } from '../shared/ag-grid-theme'
 import { rangerColorFor } from '../shared/mapping/ranger-marker'
 import { buildIcs309Log, Ics309Log } from '../shared/export/ics309-log'
 import { formatStation } from '../domain/station-label'
+import { formatHeading } from '../domain/heading'
 import { applyCallsignEdit, callsignEditNotice } from '../domain/ranger-match'
 import { isScenarioEntry, formatScenarioTime, scenarioTimeAt, sameScenarioClock } from '../domain/scenario'
 import { UsageStateService } from '../shared/services/usage-state.service'
@@ -448,6 +449,11 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         colId: 'attachmentFiles', headerName: 'Attachment files', hide: true, suppressColumnsToolPanel: true,
         valueGetter: (params: { data: RadioLogEntryType }) => liveRefs(params.data ?? {}).map(nameWithKind).join('; '),
       },
+      // E-268: the clue heading for the CSV export only (the on-screen face is the Evidence cell).
+      {
+        colId: 'evidenceHeading', headerName: 'Clue heading (true north)', hide: true, suppressColumnsToolPanel: true,
+        valueGetter: (params: { data: RadioLogEntryType }) => formatHeading(params.data?.evidenceDirection),
+      },
       // E-11 (2026-08-26): evidenceLocation was captured on Entry and visible nowhere
       // afterward - not the main map, not here. This is the other of the two places the
       // gap named; see mapLeaflet.component.ts's displayMarkers() for the main-map marker.
@@ -457,7 +463,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         cellRenderer: this.evidenceCellRenderer,
         tooltipValueGetter: (params: { data: RadioLogEntryType }) => {
           const loc = params.data.evidenceLocation
-          return loc ? `Evidence/clue at ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}` : undefined
+          const heading = formatHeading(params.data.evidenceDirection)
+          return loc ? `Evidence/clue at ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}${heading ? `. Heading ${heading}` : ''}` : undefined
         },
       },
     ]
@@ -715,11 +722,18 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     params.api.refreshCells({ rowNodes: [params.node], force: true })
   }
 
+  /** E-268: "45° T (NE)" for the phone card view, '' when none. */
+  headingText(deg: number | null | undefined): string {
+    return formatHeading(deg)
+  }
+
   /** E-11: a compact flag icon when this report has an evidence/clue location, blank otherwise. */
   evidenceCellRenderer = (params: { data: RadioLogEntryType }) => {
     const loc = params.data.evidenceLocation
     if (!loc) return ''
-    return `<span aria-hidden title="Evidence/clue at ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}">🚩</span>`
+    // E-268: the heading, when there is one, reads beside the flag ("🚩 45° T").
+    const heading = params.data.evidenceDirection != null ? ` ${params.data.evidenceDirection}° T` : ''
+    return `<span aria-hidden title="Evidence/clue at ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}">🚩${heading}</span>`
   }
 
   /** E-114 open question 5: a compact marker for a row that arrived via a Report Packet
@@ -996,7 +1010,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       columnKeys: [
         ...this.gridApi.getAllDisplayedColumns().map((c: any) => c.getColId())
           .filter((id: string) => id !== 'handledMark' && id !== 'msgNo'),
-        ...MSG_NO_CSV_COLUMNS, 'attachmentCount', 'attachmentFiles',
+        ...MSG_NO_CSV_COLUMNS, 'attachmentCount', 'attachmentFiles', 'evidenceHeading',
       ],
       fileName: onlySelected ? params.fileName.replace(/\.csv$/, '-selected.csv') : params.fileName,
       exportedRows: this.allRows() ? 'all' : 'filteredAndSorted',

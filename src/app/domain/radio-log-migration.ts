@@ -1,6 +1,7 @@
 import { rehydrateDateFields } from './json-dates'
 import { newUid } from './uid'
 import { numberEntries } from './msg-no'
+import { withSanitizedHeading } from './heading'
 import type { RadioLogType } from '../shared/services/radio-log-entry.interface'
 
 /**
@@ -145,6 +146,7 @@ function restoreDates(store: RadioLogType): RadioLogType {
   return {
     ...withStoreDate,
     logEntries: withStoreDate.logEntries.map(
-      entry => rehydrateHandled(rehydrateDateFields(entry, RADIO_LOG_ENTRY_DATE_FIELDS))),
+      // E-268: a bad clue heading from an old file or backup becomes null here, never an error.
+      entry => withSanitizedHeading(rehydrateHandled(rehydrateDateFields(entry, RADIO_LOG_ENTRY_DATE_FIELDS)))),
   }
 }

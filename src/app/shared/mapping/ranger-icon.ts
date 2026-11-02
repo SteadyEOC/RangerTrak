@@ -1,6 +1,6 @@
 import * as L from 'leaflet'
 
-import { rangerShapeMarkup, evidenceMarkerSvg } from './ranger-marker'
+import { rangerShapeMarkup, evidenceMarkerSvg, headingArrowSvg } from './ranger-marker'
 
 /**
  * The Leaflet half of ranger/evidence marker drawing - `L.DivIcon` wrappers around
@@ -88,11 +88,35 @@ export function rangerIconFor(key: string, statusColor?: string): L.DivIcon {
  * meaning - a scribe who has seen it once on Entry should recognize it instantly on the
  * mission overview too.
  */
-export function evidenceIconFor(): L.DivIcon {
+export function evidenceIconFor(heading?: number | null): L.DivIcon {
+  if (heading != null) return evidenceHeadingIconFor(heading)
   return new L.DivIcon({
     className: 'rt-evidence-marker',
     html: evidenceMarkerSvg().replace('<svg ', '<svg aria-hidden="true" '),
     iconSize: [22, 26],
     iconAnchor: [3, 25],
+  })
+}
+
+/**
+ * E-268 (2026-11-02): the evidence flag plus a heading arrow, as ONE icon so the two cluster,
+ * print and move together. The icon box is 56 px square with the clue's position at its centre:
+ * the flag is placed so its pole base (3,25 in its own 22x26 box) lands there, and the arrow
+ * (tail at its own centre) sits on top, rotated by the heading in degrees TRUE. The rotation is
+ * on an INNER element - Leaflet owns `transform` on the icon root (it positions the marker
+ * with it), so rotating the root would fight it.
+ */
+const HEADING_ICON_BOX = 56
+function evidenceHeadingIconFor(heading: number): L.DivIcon {
+  const c = HEADING_ICON_BOX / 2
+  const flag = evidenceMarkerSvg().replace('<svg ', '<svg aria-hidden="true" ')
+  return new L.DivIcon({
+    className: 'rt-evidence-marker rt-evidence-marker--heading',
+    html: `<div class="rt-heading-icon">
+      <span class="rt-heading-icon__flag" style="left:${c - 3}px;top:${c - 25}px">${flag}</span>
+      <span class="rt-heading-icon__arrow" style="transform:rotate(${heading}deg)">${headingArrowSvg()}</span>
+    </div>`,
+    iconSize: [HEADING_ICON_BOX, HEADING_ICON_BOX],
+    iconAnchor: [c, c],
   })
 }

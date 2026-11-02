@@ -131,6 +131,7 @@
       @defer (on idle) {
       <mini-mapLeaflet [locationUpdated]="locationParent" (locationChange)="onNewLocationEvent($event)"
         [evidenceLocationUpdated]="showEvidenceLocation() ? evidenceLocation : null"
+        [evidenceHeadingUpdated]="showEvidenceLocation() ? evidenceDirection() : null"
         (evidenceLocationClicked)="onEvidenceMapClick($event)">LMAP
         HERE</mini-mapLeaflet>
       } @placeholder {
@@ -296,7 +297,7 @@
           <div [hidden]="!showEvidenceLocation()">
             <rangertrak-evidence-location [origin]="locationParent" [formGeneration]="formGeneration"
               [tabIndexStart]="evidenceLocationTabIndexStart" [clickedPosition]="evidenceClickedPosition()"
-              (locationChange)="onEvidenceLocationChange($event)">
+              (locationChange)="onEvidenceLocationChange($event)" (headingChange)="onEvidenceHeadingChange($event)">
             </rangertrak-evidence-location>
           </div>
         </div>

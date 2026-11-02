@@ -464,3 +464,31 @@ rangertrak-footer {
 // E-219: a placeholder is an example or an instruction, never a value. Italic tells them apart
 // without fading them (contrast in sunlight).
 ::placeholder { font-style: italic; }
+
+// E-268 (2026-11-02): the clue flag with its heading arrow (ranger-icon.ts's
+// evidenceHeadingIconFor), shared by the Entry mini-map and the main Leaflet map. The icon
+// box is 56 px square with the clue's position at its centre; the arrow is rotated on an INNER
+// element because Leaflet owns `transform` on the icon root. Clicks pass through the arrow to
+// the flag underneath.
+.rt-heading-icon {
+  position: relative;
+  width   : 56px;
+  height  : 56px;
+}
+
+.rt-heading-icon__flag,
+.rt-heading-icon__arrow {
+  position: absolute;
+  line-height: 0;
+}
+
+.rt-heading-icon__flag {
+  z-index: 1;
+}
+
+.rt-heading-icon__arrow {
+  inset           : 6px;
+  transform-origin: 50% 50%;
+  pointer-events  : none;
+  z-index         : 2;
+}

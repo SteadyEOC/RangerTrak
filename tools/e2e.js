@@ -1319,7 +1319,8 @@ async function checkEntryTabOrder() {
   // 48, not 47: E-165 (2026-09-30) added the To station box right after the From box (stop 2),
   // pushing Location and everything after it down by one.
   // 49, not 48: E-194 (2026-10-16) added the Attach button as one stop right after Notes.
-  check('Entry exposes the expected number of keyboard stops', r.count, 49)
+  // 50, not 49: E-268 (2026-11-02) added the clue Heading input after the Bearing in the evidence block.
+  check('Entry exposes the expected number of keyboard stops', r.count, 50)
 }
 
 async function checkEntryAutofocusAndReset() {
@@ -1468,6 +1469,80 @@ async function checkEvidenceLocation() {
   })()`)
   check('the section collapses again after submit+reset', afterReset.hiddenAfterReset, true)
   check('the evidence marker is removed after submit+reset', afterReset.markerGone, true)
+}
+
+/**
+ * E-268 (2026-11-02): the optional clue heading (degrees TRUE north). Entry -> mini-map arrow
+ * rotated by the heading -> stored as evidenceDirection, with 360 wrapping to 0 and a blank
+ * heading drawing no arrow. Guards the wiring that is easy to break silently: the child's
+ * headingChange output reaching entry.component.ts, the DivIcon swap on the mini-map, and the
+ * rotation living on an INNER element (Leaflet owns the icon root's transform).
+ */
+async function checkClueHeading() {
+  console.log('\nClue heading: Entry heading rotates the map arrow and is stored in degrees true (E-268)')
+  await goto('/')
+  await idbRemoveRaw('radioLog')
+  await goto('/')
+  await sleep(1500)
+
+  const fill = (value) => evaluate(`(async () => {
+    const el = document.querySelector('[data-testid="evidence-heading"]');
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setter.call(el, ${JSON.stringify(value)});
+    el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true}));
+    await new Promise(r => setTimeout(r, 500));
+  })()`)
+  const arrow = () => evaluate(`(() => {
+    const a = document.querySelector('.rt-heading-icon__arrow');
+    const rootTransform = document.querySelector('.rt-evidence-marker--heading')?.style.transform || '';
+    return { present: !!a, rotate: a ? a.style.transform : null, ariaHidden: a ? a.querySelector('svg')?.getAttribute('aria-hidden') : null, rootRotated: /rotate/.test(rootTransform) };
+  })()`)
+
+  await evaluate(`(async () => {
+    document.querySelector('[data-testid="evidence-toggle"] input[type=checkbox]').click();
+    await new Promise(r => setTimeout(r, 300));
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    const set = (el, v) => { setter.call(el, v); el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); };
+    const [distInput, bearingInput] = [...document.querySelectorAll('rangertrak-evidence-location input[type=number]')];
+    set(distInput, '100'); set(bearingInput, '90');
+    await new Promise(r => setTimeout(r, 500));
+  })()`)
+
+  check('no arrow while the heading is blank', (await arrow()).present, false)
+
+  await fill('45')
+  const a45 = await arrow()
+  check('an arrow appears once a heading is entered', a45.present, true)
+  check('the arrow is rotated by the heading', a45.rotate, 'rotate(45deg)')
+  check('the arrow svg is aria-hidden', a45.ariaHidden, 'true')
+  check('the rotation is on the inner element, not the Leaflet icon root', a45.rootRotated, false)
+
+  await fill('360')
+  check('360 wraps to 0', (await arrow()).rotate, 'rotate(0deg)')
+
+  await fill('400')
+  check('an out-of-range heading draws no arrow', (await arrow()).present, false)
+
+  await fill('270')
+  check('the arrow follows an edited heading', (await arrow()).rotate, 'rotate(270deg)')
+
+  await evaluate(`(async () => {
+    const cs = document.getElementById('enter__Callsign-input');
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setter.call(cs, 'E2E-HEAD');
+    cs.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 900));
+    document.querySelector('.enter__Submit-button')?.click();
+    await new Promise(r => setTimeout(r, 1200));
+  })()`)
+  const raw = await idbGetRaw('radioLog')
+  const stored = (() => {
+    const r = JSON.parse(raw || '{}');
+    return (r.logEntries || []).find(f => f.callsign === 'E2E-HEAD') || null;
+  })()
+  check('the submitted report stored evidenceDirection 270', stored?.evidenceDirection, 270)
+  check('...alongside its evidenceLocation', typeof stored?.evidenceLocation?.lat, 'number')
+  check('the arrow is gone after submit+reset', (await arrow()).present, false)
 }
 
 /**
@@ -5613,9 +5688,10 @@ async function main() {
       if (want('shell')) await checkOneActiveTab() // opens a second tab and submits from it, so read-write only
       if (FULL) {
         if (want('entry')) await checkEvidenceLocation()
+        if (want('entry')) await checkClueHeading()
         if (want('radiolog')) await checkMessagesPage()
       } else {
-        note('fast run: skipping checkEvidenceLocation, checkMessagesPage (pass --full to include)')
+        note('fast run: skipping checkEvidenceLocation, checkClueHeading, checkMessagesPage (pass --full to include)')
       }
       if (want('entry')) await checkDerivedValuesDoNotCarryOver() // also submits, same reason
       if (want('mission')) await checkMissionFormSave()

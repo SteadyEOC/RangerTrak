@@ -20,6 +20,7 @@ import {
 // alongside Leaflet, even though this Leaflet mini-map never touches MapLibre.
 import { AbstractMap } from '../shared/mapping/map'
 import { evidenceIconFor, rangerIconFor } from '../shared/mapping/ranger-icon'
+import { sanitizeHeading } from '../domain/heading'
 import { formatReportTime } from '../shared/mapping/report-time'
 import { Utility } from '../shared/utility'
 import {
@@ -88,6 +89,16 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
   // E-235: the one pin for the report being typed; see addMarker().
   private positionMarker?: L.Marker
 
+  // E-268: the clue's heading (degrees true), drawn as an arrow in the evidence icon. The
+  // heading input is bound after the location one in entry.component.html, so on a first pass
+  // the marker is created without it and evidenceHeadingUpdated swaps the icon in.
+  private evidenceHeading: number | null = null
+
+  @Input() set evidenceHeadingUpdated(heading: number | null) {
+    this.evidenceHeading = sanitizeHeading(heading)
+    this.evidenceMarker?.setIcon(evidenceIconFor(this.evidenceHeading))
+  }
+
   @Input() set evidenceLocationUpdated(newLocation: LocationType | null) {
     if (!this.lMap) {
       // Same "arrived before the map was built" case locationUpdated's own setter guards -
@@ -106,7 +117,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
       // See evidenceIconFor()'s own doc comment (shared/mapping/ranger-icon.ts) for why this
       // is a distinct shared icon rather than something drawn inline here.
       this.evidenceMarker = new L.Marker([newLocation.lat, newLocation.lng], {
-        icon: evidenceIconFor(), title: 'Evidence/clue location'
+        icon: evidenceIconFor(this.evidenceHeading), title: 'Evidence/clue location'
       })
       this.evidenceMarker.addTo(this.lMap)
     }

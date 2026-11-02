@@ -102,6 +102,21 @@ describe('radio-log-migration', () => {
  * localStorage and a .rtmission backup do - rather than hand-writing string literals, so
  * they exercise the real cause rather than a guess at it.
  */
+describe('migrateRadioLog clue heading (E-268)', () => {
+  it('nulls a bad evidenceDirection on load or restore and keeps a good one', () => {
+    const base = { callsign: 'A', status: 'Normal', notes: '', location: { lat: 0, lng: 0, address: '', derivedFromAddress: false }, date: '2026-08-31T12:00:00.000Z' }
+    const out = migrateRadioLog({
+      version: '1', logEntries: [
+        { ...base, id: 0, evidenceDirection: 45 },
+        { ...base, id: 1, evidenceDirection: 999 },
+        { ...base, id: 2, evidenceDirection: 'x' },
+        { ...base, id: 3 },
+      ],
+    })
+    expect(out!.logEntries.map(e => e.evidenceDirection)).toEqual([45, null, null, undefined])
+  })
+})
+
 describe('migrateRadioLog date rehydration', () => {
 
   function roundTripped(extra: Partial<RadioLogType> = {}): RadioLogType {

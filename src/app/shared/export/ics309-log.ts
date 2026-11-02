@@ -1,5 +1,6 @@
 import { RadioLogEntryType } from '../services/radio-log-entry.interface'
 import { formatStation } from '../../domain/station-label'
+import { formatHeading } from '../../domain/heading'
 import { PrintAttachment, printAttachments } from '../../domain/attachments'
 import { formatMsgNoContextLine, formatMsgNoFull, formatMsgNoShort, HANDLED_MARK_GLYPH, HANDLED_MARK_LABEL } from '../../domain/msg-no'
 
@@ -144,7 +145,9 @@ export function buildIcs309Log(
  */
 function formatMessage(report: RadioLogEntryType): string {
   const status = report.status?.trim()
-  const notes = report.notes?.trim() ?? ''
+  // E-268: a clue's heading rides in the message text (the 309 has no column for it).
+  const heading = formatHeading(report.evidenceDirection)
+  const notes = [report.notes?.trim() ?? '', heading ? `Heading ${heading}` : ''].filter(Boolean).join(' - ')
   return status ? `[${status}] ${notes}`.trim() : notes
 }
 

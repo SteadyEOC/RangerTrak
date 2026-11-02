@@ -38,7 +38,8 @@ import {
 // and Entry's own deferred mini-map competes for the same shared chunk - neither is covered
 // by "Leaflet already loaded from /map." Split into ranger-marker.ts (pure, no Leaflet) so
 // this import no longer pulls Leaflet in at all. See ranger-marker.ts's header comment.
-import { rangerColorFor, evidenceMarkerSvg } from '../shared/mapping/ranger-marker'
+import { rangerColorFor, evidenceMarkerSvg, headingArrowSvg } from '../shared/mapping/ranger-marker'
+import { formatHeading, sanitizeHeading } from '../domain/heading'
 // ADR D-49, same 2026-09-02 resolution: locationMarkerSvg() moved to location-marker.ts
 // (pure, no Leaflet import) - previously it lived alongside the Leaflet-typed
 // locationIconFor() in location-icon.ts, which pulled `leaflet` in here too.
@@ -158,6 +159,8 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   // evidence flag is a rare, non-clustered overlay, not a natural fit for the reports
   // GeoJSON source's circle/cluster layers.
   private evidenceMarkers: Marker[] = []
+  // E-268: one heading arrow per clue that has a heading, rotated true-north on the map.
+  private headingMarkers: Marker[] = []
 
   // Armed by the "Add Location" button (template) - the next plain map click places a
   // location there instead of copying coordinates (onMapClick, below), then disarms itself.
@@ -1000,6 +1003,8 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
       return
     }
     this.evidenceMarkers.forEach(m => m.remove())
+    this.headingMarkers.forEach(m => m.remove())
+    this.headingMarkers = []
     this.evidenceMarkers = this.displayedEntries()
       .filter((r): r is RadioLogEntryType & { evidenceLocation: NonNullable<RadioLogEntryType['evidenceLocation']> } =>
         !!r.evidenceLocation)
@@ -1008,7 +1013,20 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
         const el = document.createElement('div')
         el.className = 'rt-evidence-marker'
         el.innerHTML = evidenceMarkerSvg()
-        el.title = `Evidence/clue from ${r.callsign} at ${formatReportTime(r.date)}`
+        const heading = formatHeading(r.evidenceDirection)
+        el.title = `Evidence/clue from ${r.callsign} at ${formatReportTime(r.date)}${heading ? `. Heading ${heading}` : ''}`
+        const dir = sanitizeHeading(r.evidenceDirection)
+        if (dir != null) {
+          // E-268: a separate Marker centred on the clue, turned by the heading. rotationAlignment
+          // 'map' keeps it true-north if the map is ever rotated; pointer-events none (scss) so a
+          // click still reaches the flag.
+          const arrow = document.createElement('div')
+          arrow.className = 'rt-heading-arrow'
+          arrow.innerHTML = headingArrowSvg()
+          this.headingMarkers.push(new Marker({ element: arrow, anchor: 'center', rotation: dir, rotationAlignment: 'map' })
+            .setLngLat([loc.lng, loc.lat])
+            .addTo(this.map))
+        }
         return new Marker({ element: el, anchor: 'bottom' })
           .setLngLat([loc.lng, loc.lat])
           .addTo(this.map)

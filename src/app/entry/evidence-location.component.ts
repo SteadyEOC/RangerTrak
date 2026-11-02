@@ -13,6 +13,7 @@ import { MatChipsModule } from '@angular/material/chips'
 import { MatSelectModule } from '@angular/material/select'
 import { bearingAndDistance, destinationPoint } from '../domain/coordinate'
 import { LocationType, undefinedAddressFlag } from '../shared/services'
+import { sanitizeHeading } from '../domain/heading'
 
 /**
  * Architecture decision, 2026-08-26 (raised live, resolving the "second coordinate" question
@@ -46,6 +47,9 @@ export class EvidenceLocationComponent implements OnChanges {
 
   @Input() tabIndexStart?: number
   @Output() locationChange = new EventEmitter<LocationType | null>()
+  // E-268 (2026-11-02): the optional heading (degrees TRUE north), emitted separately from the
+  // location because it is stored on its own field and may be given without one.
+  @Output() headingChange = new EventEmitter<number | null>()
 
   // Same reset idiom LocationComponent's own derived-block already uses: the parent bumps
   // this on submit/reset (entry.component.ts's resetAll()), so a distance/bearing left over
@@ -68,10 +72,12 @@ export class EvidenceLocationComponent implements OnChanges {
     }
   }
 
-  private model = signal({ distance: null as number | null, unit: 'm' as 'm' | 'ft', bearing: null as number | null })
+  private model = signal({ distance: null as number | null, unit: 'm' as 'm' | 'ft', bearing: null as number | null, heading: null as number | null })
   form = form(this.model, (p) => {
     min(p.distance, 0)
     min(p.bearing, 0); max(p.bearing, 359)
+    // E-268: 360 is accepted and wraps to 0 (sanitizeHeading); anything past it is flagged.
+    min(p.heading, 0); max(p.heading, 360)
   })
 
   /** Base tabindex offset, matching LocationComponent's own ti() idiom. */
@@ -94,6 +100,21 @@ export class EvidenceLocationComponent implements OnChanges {
     return { lat, lng, address: undefinedAddressFlag, derivedFromAddress: false }
   })
 
+  /**
+   * E-268: the heading as it will be stored - a whole number 0-359 (360 wrapped to 0), or null
+   * when blank or not valid. Never a half-guess: a fraction or an out-of-range number is
+   * dropped, and headingInvalid() lets the template say so.
+   */
+  readonly heading = computed<number | null>(() => sanitizeHeading(this.model().heading))
+  readonly headingInvalid = computed(() => {
+    const h = this.model().heading
+    return h != null && this.heading() == null
+  })
+
+  private readonly emitHeadingOnChange = effect(() => {
+    this.headingChange.emit(this.heading())
+  })
+
   // Single emission point for every reason computedLocation can change - a field edit
   // (model changes) or the reporter's own position moving (origin changes, e.g. a fresh
   // GPS fix or address lookup landing after a range/bearing was already entered) both flow
@@ -105,7 +126,7 @@ export class EvidenceLocationComponent implements OnChanges {
   })
 
   reset(): void {
-    this.model.set({ distance: null, unit: 'm', bearing: null })
+    this.model.set({ distance: null, unit: 'm', bearing: null, heading: null })
   }
 
   /**
@@ -123,6 +144,6 @@ export class EvidenceLocationComponent implements OnChanges {
     const origin = this.origin()
     if (!origin || origin.lat == null) return
     const { distanceMeters, bearingDegrees } = bearingAndDistance(origin.lat, origin.lng, lat, lng)
-    this.model.set({ distance: Math.round(distanceMeters), unit: 'm', bearing: Math.round(bearingDegrees) })
+    this.model.set({ distance: Math.round(distanceMeters), unit: 'm', bearing: Math.round(bearingDegrees), heading: this.model().heading })
   }
 }

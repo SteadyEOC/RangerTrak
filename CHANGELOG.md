@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
+* **entry:** E-268 an optional clue heading (degrees true north, 0-359: which way the tracks, drag marks or subject were going). It draws as an arrow at the clue on both map engines, and shows in the clue popup, the Radio Log, the ICS-309 message text, the CSV export and the print-map legend. A bad heading in an imported file or backup is dropped, never a reason to reject the entry
 * **map:** Print map is now shown in Simple view too, not only Full view (John 10-31)
 * **map:** E-265 maps run on Leaflet 2 (`2.0.0-beta.1`, ESM), with markercluster from Kristjan Esperanto's v2 fork; both plugins carry small local patches (`patches/`)
 

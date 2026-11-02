@@ -6,7 +6,7 @@ import { OVERDUE_BAND_COUNT, OVERDUE_RED_MULTIPLE, DEFAULT_CHECK_IN_INTERVAL_MIN
 import { MissionLocationService, MissionService, RadioLogEntryType } from '../../shared/services'
 import { locationMarkerSvg, resolveLocationIcon } from '../../shared/mapping/location-marker'
 import { radioLogStatusColor, locationCategoryColor } from '../../shared/mapping/report-marker-status'
-import { evidenceMarkerSvg, rangerColorFor, rangerShapeMarkup } from '../../shared/mapping/ranger-marker'
+import { evidenceMarkerSvg, headingArrowSvg, rangerColorFor, rangerShapeMarkup } from '../../shared/mapping/ranger-marker'
 
 /**
  * 2026-09-30, John: E-152 part 1 - the legend on the printed map sheet. Hidden on screen
@@ -70,6 +70,9 @@ export class MapPrintLegendComponent {
 
   readonly hasEvidence = computed(() => this.drawn().some(e => !!e.evidenceLocation))
   readonly evidenceSwatch = this.trusted(evidenceMarkerSvg())
+  // E-268: the heading arrow has its own legend line, only when a drawn clue carries a heading.
+  readonly hasHeading = computed(() => this.drawn().some(e => !!e.evidenceLocation && e.evidenceDirection != null))
+  readonly headingSwatch = this.trusted(headingArrowSvg())
 
   /** Leaflet draws a trail for any ranger with two or more reports; MapLibre draws none. */
   readonly hasTrails = computed(() => {

@@ -116,6 +116,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Type a position in whichever format it was read to you — the rest are derived and shown below the fields.',
               'Click the map to move the pin, which fills the coordinates in for you.',
               'Alt+click the map to mark evidence or a clue at a different location instead, once that section is showing.',
+              'A clue can also carry a heading, degrees true north (0 to 359): which way the tracks or subject were going. Ask for the heading in degrees true; if they read a compass, note it.',
               'Every format here assumes WGS84 / modern GPS. A position read off an older paper topo quad may use NAD27 instead, which can be 100–200 m off in the western US.',
               'Every format (DD, DDM, DMS, MGRS, UTM) is always one tap away here, regardless of mission settings — a call in an unexpected format is never blocked. Mission → Location Defaults only picks which one this screen opens on by default; a team that mostly works in MGRS can set that as the default while every other format stays reachable.'
             ]

@@ -142,6 +142,15 @@ mat-slide-toggle {
   height: 26px;
 }
 
+// E-268: the clue's heading arrow - a square box centred on the clue (the shared
+// headingArrowSvg()'s 44 px), turned by MapLibre's own Marker rotation. Clicks reach the flag.
+:host ::ng-deep .rt-heading-arrow {
+  width         : 44px;
+  height        : 44px;
+  line-height   : 0;
+  pointer-events: none;
+}
+
 // G: the whole controls/cards column is interactive-only chrome, same reasoning
 // map-page.component.scss already applies to its own .map-engine-switch/.fullscreen-toggle -
 // pointless on paper, and includes the very "Print map" button that triggered the print.

@@ -179,11 +179,12 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   //
   // Architecture decision, 2026-08-26 (unchanged since): evidence/clue location is hidden by
   // default behind a checkbox - same [hidden]-not-@if reasoning as the 213 fields below, so
-  // its 3 reserved slots (EvidenceLocationComponent's own distance/unit/bearing, see its ti()
+  // its 4 reserved slots (EvidenceLocationComponent's own distance/unit/bearing/heading, see its ti()
   // offsets) don't break tab-order contiguity while collapsed, the common case.
   showEvidenceLocationTabIndex = this.locationTabIndexStart + LocationComponent.TAB_SLOT_COUNT
   evidenceLocationTabIndexStart = this.showEvidenceLocationTabIndex + 1
-  dateTabIndex = this.evidenceLocationTabIndexStart + 3
+  // E-268: 4, not 3 - the clue heading is the fourth input in the block.
+  dateTabIndex = this.evidenceLocationTabIndexStart + 4
   // 2026-08-22: was `timeTabIndex = this.dateTabIndex + 1` (a single slot) - the time
   // picker's hour/minute each need their own tab stop (see
   // TimePickerComponent.TIME_TAB_SLOT_COUNT), same reservation pattern as Location's own
@@ -351,6 +352,15 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onEvidenceLocationChange(newLocation: LocationType | null): void {
     this.evidenceLocation = newLocation
+  }
+
+  // E-268 (2026-11-02): the optional clue heading, degrees true. A plain field for the same
+  // reason evidenceLocation is; a signal as well because the mini-map arrow reads it, and this
+  // app is zoneless.
+  evidenceDirection = signal<number | null>(null)
+
+  onEvidenceHeadingChange(heading: number | null): void {
+    this.evidenceDirection.set(heading)
   }
 
   // E-105 (2026-08-27): Alt+click on the mini-map marks evidence directly instead of typing
@@ -922,6 +932,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // bearing is how a scribe retracts "never mind, not a real clue," and a submitted
       // report shouldn't carry a marker its own scribe just told the form to forget.
       evidenceLocation: this.showEvidenceLocation() ? this.evidenceLocation : null,
+      // E-268: same rule - a heading left in a collapsed section is not part of the report.
+      evidenceDirection: this.showEvidenceLocation() ? this.evidenceDirection() : null,
       // E-103: RadioLogEntryType.recipients213 combines the per-mission checklist's checked
       // options with anything typed into the "Additional" free text - a Set dedupes the rare
       // case a scribe both checks a box AND types the same name again, the same "one
@@ -1035,6 +1047,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // component's own job, since both live here, not inside the child.
     this.showEvidenceLocation.set(false)
     this.evidenceLocation = null
+    this.evidenceDirection.set(null)
     this.selectedRecipients213.set(new Set())
     this.formGeneration++
   }

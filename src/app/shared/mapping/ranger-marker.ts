@@ -82,3 +82,21 @@ export function evidenceMarkerSvg(): string {
       <polygon points="3,2 20,7 3,13" fill="#7c3aed" stroke="white" stroke-width="1"/>
     </svg>`
 }
+
+/**
+ * E-268 (2026-11-02): the heading arrow for a clue - which way the tracks, drag marks or
+ * subject were going. Drawn pointing straight up (north) in a 44x44 box with the tail at the
+ * centre, so the centre is the clue's position; the caller rotates the whole thing by the
+ * heading in degrees TRUE (CSS rotate on an inner element in Leaflet, `Marker` rotation with
+ * `rotationAlignment: 'map'` in MapLibre). Same purple as the flag, with a white halo so it
+ * reads on any tile. Decorative: aria-hidden, the heading is in the popup/title text.
+ */
+export const HEADING_ARROW_BOX = 44
+
+export function headingArrowSvg(): string {
+  return `<svg aria-hidden="true" width="${HEADING_ARROW_BOX}" height="${HEADING_ARROW_BOX}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+      <line x1="22" y1="22" x2="22" y2="12" stroke="white" stroke-width="6" stroke-linecap="round"/>
+      <line x1="22" y1="22" x2="22" y2="10" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/>
+      <polygon points="22,2 31,15 13,15" fill="#7c3aed" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`
+}

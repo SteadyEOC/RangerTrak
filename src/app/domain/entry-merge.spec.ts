@@ -169,6 +169,22 @@ describe('entry-merge (D-59)', () => {
     });
   });
 
+  // E-268: a bad clue heading is cleaned, never a reason to reject the entry.
+  it('keeps an entry whose clue heading is bad, with the heading nulled', () => {
+    const b = new Device([], 0);
+
+    const r = b.receive([
+      entry({ id: 0, uid: 'h1', evidenceDirection: 90 }),
+      entry({ id: 1, uid: 'h2', evidenceDirection: 360 }),
+      entry({ id: 2, uid: 'h3', evidenceDirection: 720 }),
+      entry({ id: 3, uid: 'h4', evidenceDirection: 12.5 }),
+      entry({ id: 4, uid: 'h5', evidenceDirection: 'NE' as never }),
+    ]);
+
+    expect(r.rejected).toBe(0);
+    expect(b.entries.map(e => e.evidenceDirection)).toEqual([90, 0, null, null, null]);
+  });
+
   describe('attachments (D-60)', () => {
     const att = (c: string, over: Partial<AttachmentRef> = {}): AttachmentRef => ({
       sha256: c.repeat(64), name: c + '.jpg', type: 'image/jpeg', size: 10,

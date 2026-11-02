@@ -300,6 +300,7 @@
               <div class="radio-log-cards__row radio-log-cards__coords"
                 title="Evidence/clue location">
                 🚩 {{ report.evidenceLocation.lat | number:'1.0-4' }}, {{ report.evidenceLocation.lng | number:'1.0-4' }}
+                @if (headingText(report.evidenceDirection); as heading) { · Heading {{ heading }} }
               </div>
             }
             @if (report.notes) {

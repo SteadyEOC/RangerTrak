@@ -28,8 +28,21 @@
   </mat-form-field>
 
   <mat-form-field class="evidence-location__field" floatLabel="always">
-    <mat-label>Bearing (0-359&deg;, from your position)</mat-label>
+    <mat-label>Bearing (0-359&deg; true, from your position)</mat-label>
     <input matInput type="number" [formField]="form.bearing" placeholder="e.g. 45" [attr.tabindex]="ti(2)" />
+  </mat-form-field>
+
+  <!-- E-268 (2026-11-02): which way the tracks, drag marks or subject were going. Degrees TRUE
+       north, like the bearing above; blank means none. Optional, and independent of the
+       distance/bearing: it is stored even if no location is placed, but only draws an arrow on
+       the map where there is one. -->
+  <mat-form-field class="evidence-location__field" floatLabel="always">
+    <mat-label>Heading (0-359&deg;, true north)</mat-label>
+    <input matInput type="number" [formField]="form.heading" placeholder="e.g. 45 (tracks heading NE)"
+      data-testid="evidence-heading" [attr.tabindex]="ti(3)" />
+    @if (headingInvalid()) {
+    <mat-hint class="evidence-location__heading-error">Whole degrees, 0 to 359</mat-hint>
+    }
   </mat-form-field>
 
   @if (computedLocation(); as loc) {

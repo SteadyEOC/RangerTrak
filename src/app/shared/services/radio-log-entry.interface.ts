@@ -204,6 +204,13 @@ export type RadioLogEntryType = {
   // as the E-41 fields above: no schema-version bump, a returning user's older reports
   // simply lack it.
   evidenceLocation?: LocationType | null,
+  // E-268 (2026-11-02): which way the clue's tracks, drag marks or subject were heading -
+  // degrees TRUE north, whole numbers 0-359, always labelled true. Optional/additive, same
+  // no-migration treatment as evidenceLocation: no schema-version bump, older reports simply
+  // lack it. A heading may be stored without an evidenceLocation, but the map arrow only
+  // draws where there is one. A bad incoming value is sanitized to null (domain/heading.ts),
+  // never rejected, so it can't fail an import or restore.
+  evidenceDirection?: number | null,
   // Raised live 2026-08-30, tied directly to D-47 (reports/messages stay editable
   // indefinitely, no time lock): that ADR anticipated exactly this pair - "indefinitely
   // editable" and "visibly edited" - as the natural follow-on once it mattered in practice.

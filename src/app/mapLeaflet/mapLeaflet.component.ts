@@ -50,6 +50,7 @@ import { LocationDialogComponent } from '../map/location-dialog/location-dialog.
 import { MapEngineService } from '../map/map-engine.service'
 import { liveRefs } from '../domain/attachments'
 import { formatMsgNoShort } from '../domain/msg-no'
+import { formatHeading, sanitizeHeading } from '../domain/heading'
 import { attachmentChipHtml, attachmentChipUid } from '../shared/attachments/attachment-chip-html'
 import { AttachmentViewerService } from '../shared/attachments/attachment-viewer.service'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
@@ -1005,9 +1006,11 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
           let evidenceTitle = `Evidence/clue from ${i.callsign} at ${formatReportTime(i.date)}`
           let evidenceMarker = new L.Marker(
             new L.LatLng(i.evidenceLocation.lat, i.evidenceLocation.lng),
-            { title: evidenceTitle, icon: evidenceIconFor() }
+            { title: evidenceTitle, icon: evidenceIconFor(sanitizeHeading(i.evidenceDirection)) }
           )
-          evidenceMarker.bindPopup(evidenceTitle)
+          // E-268: "Heading 45° T (NE)" under the title; the arrow is in the icon itself.
+          const heading = formatHeading(i.evidenceDirection)
+          evidenceMarker.bindPopup(heading ? `${evidenceTitle}<br>Heading ${heading}` : evidenceTitle)
           this.myMarkerCluster.addLayer(evidenceMarker)
         }
       } else {

@@ -42,6 +42,12 @@
           <span>Evidence or clue location</span>
         </div>
       }
+      @if (hasHeading()) {
+        <div class="legend__row">
+          <span class="legend__icon" [innerHTML]="headingSwatch"></span>
+          <span>Clue heading, degrees true north (arrow points the way the tracks or subject were going)</span>
+        </div>
+      }
       <!-- 2026-09-30, John: the printed Leaflet map shows every marker on its own (no groups,
            see MapLeafletComponent.setPrintMarkers), so the group row is MapLibre's only. -->
       @if (engine() !== 'leaflet') {

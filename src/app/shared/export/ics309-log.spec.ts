@@ -48,6 +48,17 @@ describe('buildIcs309Log', () => {
     expect(log.rows[0].message).toBe('[All Clear] checked in');
   })
 
+  // E-268: a clue's heading is added to the message text, in degrees true with the compass point.
+  it('adds a clue heading to the message when set, and not when absent', () => {
+    const withHeading = buildIcs309Log([report({ notes: 'boot print', evidenceDirection: 45 })], mission)
+    const without = buildIcs309Log([report({ notes: 'boot print', evidenceDirection: null })], mission)
+    const headingOnly = buildIcs309Log([report({ notes: '', evidenceDirection: 0 })], mission)
+
+    expect(withHeading.rows[0].message).toBe('[Normal] boot print - Heading 45° T (NE)');
+    expect(without.rows[0].message).toBe('[Normal] boot print');
+    expect(headingOnly.rows[0].message).toBe('[Normal] Heading 0° T (N)');
+  })
+
   it('falls back to "(not given)" for a callsignless report - D-42, this is expected data', () => {
     const log = buildIcs309Log([report({ callsign: '' })], mission)
 

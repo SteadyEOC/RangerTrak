@@ -4,6 +4,7 @@ import { bumpHighWater, findMsgNoClashes, nextMsgNo } from './msg-no'
 import type { MsgNoContext } from './msg-no'
 import { mergeAttachmentRefs } from './attachments'
 import { newUid } from './uid'
+import { withSanitizedHeading } from './heading'
 import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
 
 /**
@@ -149,7 +150,8 @@ export function mergeEntries(
     }
 
     // Dates arrive as ISO strings from a JSON file; validating is not converting.
-    const entry = rehydrateHandled(rehydrateDateFields({ ...raw }, [...RADIO_LOG_ENTRY_DATE_FIELDS]))
+    // E-268: a bad clue heading is cleaned to null, not a reason to reject the whole entry.
+    const entry = withSanitizedHeading(rehydrateHandled(rehydrateDateFields({ ...raw }, [...RADIO_LOG_ENTRY_DATE_FIELDS])))
     if (entry.rangerUid) entry.rangerUid = remap(entry.rangerUid)
     if (entry.toRangerUid) entry.toRangerUid = remap(entry.toRangerUid)
 
