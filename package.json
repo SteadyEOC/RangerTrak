@@ -116,7 +116,7 @@
     "tsviz-cli": "^2.0.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1",
-    "wrangler": "^4.153.0"
+    "wrangler": "^4.156.2"
   },
   "overrides": {
     "vite": "8.3.5",
