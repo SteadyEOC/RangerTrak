@@ -35,7 +35,7 @@ export class MapPrintLegendComponent {
   engine = input.required<'leaflet' | 'maplibre'>()
   /**
    * 2026-09-30, John: E-162 - which optional map layers are switched on: 'usng' (USNG / MGRS
-   * grid), 'rings' (range rings), 'hiking' (hiking trails). Leaflet only; MapLibre has none.
+   * grid), 'rings' (range rings), 'hiking' (hiking trails), 'heat' (heat map). Leaflet only; MapLibre has none.
    */
   overlays = input<readonly string[]>([])
 

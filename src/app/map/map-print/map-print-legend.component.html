@@ -68,6 +68,12 @@
           <span>Range rings around the command post, labelled with their distance</span>
         </div>
       }
+      @if (overlays().includes('heat')) {
+        <div class="legend__row">
+          <span class="legend__trail" style="border-top-color: #e8590c; border-top-width: 6px; opacity: 0.5"></span>
+          <span>Heat map: the warmer the colour, the more radio log entries at that spot</span>
+        </div>
+      }
       @if (overlays().includes('hiking')) {
         <div class="legend__row">
           <span class="legend__trail" style="border-top-color: #b45309; border-top-style: dotted"></span>

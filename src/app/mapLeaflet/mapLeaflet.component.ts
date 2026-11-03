@@ -10,6 +10,7 @@ import { FilterChipsComponent } from '../shared/filter-chips/filter-chips.compon
 import {
   MapShowChoice, flaggedStatuses, mapFilterChips, selectMapEntries
 } from '../domain/map-entry-filter'
+import { HEAT_OPACITY, heatPoints } from './heat-points'
 import { LeafletOverlays, RING_STEPS_MILES, formatRingMiles } from './leaflet-overlays'
 import { LeafletOfflineController } from './leaflet-offline-controller'
 import { LeafletPrintController } from './leaflet-print-controller'
@@ -133,6 +134,26 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   get usngGridLayer() { return this.overlays.usngGridLayer }
   get rangeRingsLayer() { return this.overlays.rangeRingsLayer }
   mapOptions = ""
+
+  // 2026-11-03, John: E-274 - heat map of radio log entries. The layers-box checkbox is the only
+  // switch: it toggles this placeholder group, and the HeatLayer (leaflet.heat, lazy-loaded so it
+  // stays out of the eager bundle) is created inside it on first overlayadd.
+  readonly heatGroup = new L.LayerGroup()
+  private heatLayer?: import('leaflet.heat').HeatLayer
+  private heatLoading = false
+  private heatOn() { return this.lMap.hasLayer(this.heatGroup) }
+  private async showHeat() {
+    if (this.heatLayer) { this.heatLayer.setLatLngs(heatPoints(this.shownEntries())); return }
+    if (this.heatLoading) return
+    this.heatLoading = true
+    try {
+      const { HeatLayer } = await import('leaflet.heat')
+      if (!this.heatLayer) {
+        this.heatLayer = new HeatLayer(heatPoints(this.shownEntries()), { pane: 'heatPane', radius: 25, blur: 15 })
+        this.heatGroup.addLayer(this.heatLayer)
+      }
+    } finally { this.heatLoading = false }
+  }
 
   // ADR D-49: Locations (Command Post, Staging Area, Ranger First Aid, ...). A plain layer
   // group, not clustered - locations are few and named, unlike field-report markers, so
@@ -580,10 +601,15 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // (independent on/off, layered over whichever base is active) rather than the base
     // group's radio buttons, which is the "real toggle" this row asked for without any
     // custom UI needed - the control already exists from E-85.
+    // 2026-11-03, John: E-274 - own pane between tiles (200) and overlays (400) / markers (600).
+    const heatPane = this.lMap.createPane('heatPane')
+    heatPane.style.zIndex = '350'
+    heatPane.style.opacity = String(HEAT_OPACITY)
     const overlayLayers: Record<string, L.Layer> = {
       'Places': this.locationsLayer,
       'Radio log entries': this.myMarkerCluster,
       'Ranger paths': this.myTrailsLayer,
+      'Heat map (radio log entries)': this.heatGroup,
       'Hillshade (terrain relief)': hillshadeOverlay,
       'USGS shaded relief (US only, can be saved)': usgsReliefOverlay,
       'Mile grid': this.mileGridLayer,
@@ -595,6 +621,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const layersControl = new L.LayersControl(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
     // E-207 / D-62: the layers box extras that Simple view hides while none is on (see syncLayerExtras()).
     this.layerExtras = [
+      ['Heat map (radio log entries)', this.heatGroup],
       ['USNG / MGRS grid', this.usngGridLayer], ['Range rings (from command post)', this.rangeRingsLayer],
       ['Satellite (Esri World Imagery)', satelliteTiles], ['Roads and place names (for Satellite)', roadsLabelsOverlay],
       ['Hiking trails (Waymarked Trails)', trailsOverlay],
@@ -629,7 +656,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.publishViewBounds()
     // E-162: track which of the new overlays are on, for the printed legend.
     const legendKeys = new Map<L.Layer, string>([
-      [this.usngGridLayer, 'usng'], [this.rangeRingsLayer, 'rings'], [trailsOverlay, 'hiking'],
+      [this.usngGridLayer, 'usng'], [this.rangeRingsLayer, 'rings'], [trailsOverlay, 'hiking'], [this.heatGroup, 'heat'],
     ])
     const syncLegendOverlays = () => this.legendOverlays.set(
       [...legendKeys].filter(([layer]) => this.lMap.hasLayer(layer)).map(([, key]) => key))
@@ -655,6 +682,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       }
       if (e.layer === this.rangeRingsLayer) {
         this.overlays.refreshRangeRings()
+      }
+      if (e.layer === this.heatGroup) {
+        void this.showHeat()
       }
     })
 
@@ -1017,6 +1047,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         console.warn(`displayAllMarkers: skipping report # ${i.id}; bad lat/lng: ${i}: ${JSON.stringify(i)}`)
       }
     })
+
+    // E-274: keep the heat in step with the filter chips, only while it is on.
+    if (this.heatLayer && this.heatOn()) this.heatLayer.setLatLngs(heatPoints(shown))
 
     // E-190: a layer the scribe unticked in the layers control stays off across redraws.
     if (this.entriesOn()) this.lMap.addLayer(this.myMarkerCluster)
