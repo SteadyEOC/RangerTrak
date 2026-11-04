@@ -80,6 +80,15 @@
          bar) follow as their own always-last group - see this page's own doc comment on
          mission-advanced-options's placement. Nothing here changed a component's inputs,
          outputs, ids or data-testids - only which order they render in. -->
+    <!-- E-278 (2026-11-04, John): the SitRep was reachable only from Radio Log and AAR notes. -->
+    @if (!fieldMode.enabled()) {
+    <div class="rt-action-bar__buttons mission__sitrep">
+      <a matButton="outlined" routerLink="/summary" data-testid="mission-sitrep-link"
+        title="Where the mission stands: traffic, teams, what needs attention, for this op period or the whole log">
+        <mat-icon>insights</mat-icon> SitRep
+      </a>
+    </div>
+    }
     <div class="mission__grid" rtMasonry (laidOut)="onGridLaidOut()">
       <!-- E-168 (2026-10-01, John): the long-form home of the mission mode. E-210: an ordinary first card in the grid, one column wide. The header pill's
            panel holds the short version and the switch, and links here ("More about modes"). -->

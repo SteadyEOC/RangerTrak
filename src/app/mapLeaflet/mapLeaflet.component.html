@@ -117,18 +117,15 @@
       <div class="map-box__row" [class.rt-advanced]="markMapExtras()">
         <mat-checkbox [checked]="heatShown()" (change)="onHeat($event.checked)"
           title="Where radio log entries cluster: the warmer the colour, the more entries" data-testid="map-show-heat">Heat map</mat-checkbox>
-        <mat-checkbox [checked]="ringsOn()" (change)="onRings($event.checked)"
-          title="Circles around the command post, each labelled with its distance" data-testid="map-show-rings">Range rings</mat-checkbox>
       </div>
-    }
-    <!-- 2026-09-30, John: ring spacing, shown while the Range rings overlay is on. Far left is
-         Auto (fits the zoom); the other stops are fixed distances. Not saved. -->
-    @if (ringsOn()) {
-      <div class="map-box__row map-ring-spacing">
-        <label for="map-ring-spacing">Range ring spacing: <strong data-testid="ring-spacing-label">{{ ringSpacingLabel() }}</strong></label>
-        <mat-slider min="0" [max]="ringStepCount" step="1" discrete [displayWith]="ringStepShort">
+      <!-- 2026-11-04, John: Range rings is one slider. Far left is Off, then Auto (fits the zoom),
+           then fixed distances. Not saved. Inside the same Simple-view rule as Heat map. -->
+      <div class="map-box__row map-ring-spacing" [class.rt-advanced]="markMapExtras()"
+        title="Circles around the command post, each labelled with its distance">
+        <label for="map-ring-spacing">Range rings: <strong data-testid="ring-spacing-label">{{ ringSpacingLabel() }}</strong></label>
+        <mat-slider min="0" [max]="ringSliderMax" step="1" discrete [displayWith]="ringStepShort">
           <input matSliderThumb id="map-ring-spacing" data-testid="ring-spacing"
-            [value]="ringStepIndex()" (input)="onRingStepChange(+$any($event.target).value)"
+            [value]="ringSliderValue()" (input)="onRingSlider(+$any($event.target).value)"
             [attr.aria-valuetext]="ringSpacingLabel()">
         </mat-slider>
       </div>

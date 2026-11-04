@@ -429,7 +429,7 @@ numbered circle; zoom in to separate them. Click a marker for detail.
   the newest leg slowly flows toward the latest position.
 - **Show on map** (the other box under the map) switches the mission's own overlays and
   narrows what is drawn: **Ranger paths**, **Latest per ranger** (one marker each), **Heat map**
-  (where entries cluster), **Range rings** around the command post (both work with no Internet),
+  (where entries cluster), a **Range rings** slider (Off, Auto, or a fixed distance) around the command post (both work with no Internet),
   a **Statuses** list, and **Needs attention** (the statuses ticked Needs attention on the
   Mission page). A strip along the top of the map lists whatever is
   filtered.
@@ -441,7 +441,7 @@ numbered circle; zoom in to separate them. Click a marker for detail.
   its own marker with its "minutes since" number; reports at nearly the same spot fan out on
   thin lines so each can be read. It takes a few seconds to load a more detailed map for
   paper: online it fetches it, offline it uses your saved area (print at about the zoom you
-  saved at). Use it rather than the browser's own Print command.
+  saved at). Ctrl+P on the Map page does the same; Print in the browser's menu does not.
 - **Print places** (in *Import, export & print* under the map) prints a list of the chosen
   places by category, with a small map of them across the top.
 

@@ -89,6 +89,8 @@ function formatBytes(bytes: number): string {
  */
 @Component({
   selector: 'rangertrak-mapLibre',
+  // 2026-11-04, John: Ctrl+P on the Map page printed the app's header and no map. It runs Print map instead.
+  host: { '(window:keydown)': 'onPrintKey($event)' },
   standalone: true,
   imports: [NgTemplateOutlet, RouterLink, MatSlideToggleModule, MatButtonModule, MatCardModule, MatIconModule,
     ExpandableSectionComponent, MapPrintLegendComponent, MapPrintFurnitureComponent, MasonryDirective],
@@ -1083,6 +1085,14 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     // MapLibre wants [lng, lat] pairs, the reverse of Leaflet - fitToBounds() above already
     // documents this. maxZoom matters: without it, two reports 10m apart would slam to max zoom.
     this.map.fitBounds([[b.west, b.south], [b.east, b.north]], { padding: 40, maxZoom: 16 })
+  }
+
+  /** Ctrl+P / Cmd+P on the Map page runs Print map (the browser's own print has no map sheet). */
+  onPrintKey(event: KeyboardEvent): void {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'p') return
+    event.preventDefault()
+    if (event.repeat) return
+    this.onBtnPrintMap()
   }
 
   /**

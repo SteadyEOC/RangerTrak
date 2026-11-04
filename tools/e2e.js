@@ -3724,7 +3724,7 @@ async function checkMissionSummary() {
   await send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false })
   await goto('/summary')
   check('/summary renders inside the page shell', await evaluate(`!!document.querySelector('rangertrak-page .main [data-testid="summary-stamp"]')`), true)
-  check('the page title is Mission summary', await evaluate(`document.title`), 'Mission summary - RangerTrak')
+  check('the page title is SitRep (E-278)', await evaluate(`document.title`), 'SitRep - RangerTrak')
   check('the stamp names the mission', await evaluate(`document.querySelector('[data-testid="summary-mission"]')?.textContent.trim()`), 'E2E-SUMMARY')
   check('the stamp says when it was generated', await evaluate(`/\\d{4}/.test(document.querySelector('[data-testid="summary-generated"]')?.textContent || '')`), true)
   await clickToggle('Whole log')
@@ -3767,7 +3767,7 @@ async function checkMissionSummary() {
   await goto('/after-action')
   await evaluate(`document.querySelector('[data-testid="aar-summary-link"]')?.click()`)
   await sleep(1500)
-  check('the AAR notes page has a Current summary button that opens /summary', await evaluate(`location.pathname`), '/summary')
+  check('the AAR notes page has a SitRep button that opens /summary', await evaluate(`location.pathname`), '/summary')
   await idbRemoveRaw('aarNotes')
   await goto('/after-action')
   check('...and it is there even when there are no notes',
@@ -3775,7 +3775,14 @@ async function checkMissionSummary() {
   await goto('/radio-log')
   await evaluate(`document.querySelector('[data-testid="radio-log-summary-link"]')?.click()`)
   await sleep(1500)
-  check('the Radio Log page has a Current summary button that opens /summary', await evaluate(`location.pathname`), '/summary')
+  check('the Radio Log page has a SitRep button that opens /summary', await evaluate(`location.pathname`), '/summary')
+  // E-278: the Mission page links it too, and /sitrep is an alias.
+  await goto('/mission')
+  await evaluate(`document.querySelector('[data-testid="mission-sitrep-link"]')?.click()`)
+  await sleep(1500)
+  check('the Mission page has a SitRep button that opens /summary', await evaluate(`location.pathname`), '/summary')
+  await goto('/sitrep')
+  check('/sitrep opens the SitRep', await evaluate(`location.pathname`), '/summary')
 
   // An empty log says so, and still shows the notes.
   await seedNotes()
@@ -4848,6 +4855,8 @@ async function checkMapFilterChips() {
   const strip = () => evaluate(`!!document.querySelector('rangertrak-filter-chips')`)
   const trailsTicked = () => evaluate(`document.querySelector('[data-testid="map-show-trails"] input')?.checked`)
   check('no filters: the strip is not there', await strip(), false)
+  // E-280: the printed sheet's footer says which RangerTrak printed it.
+  check('the map sheet footer carries the RangerTrak version', /^RangerTrak \d+\.\d+\.\d+/.test(await evaluate(`document.querySelector('[data-testid="map-print-version"]')?.textContent.trim() || ''`)), true)
   // E-277: Ranger paths is only in the Show on map box now, not the layers box.
   check('the layers box no longer offers Ranger paths, Heat map or Range rings', await evaluate(`[...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
     .some(l => /Ranger paths|Heat map|Range rings/.test(l.textContent))`), false)
@@ -4949,12 +4958,18 @@ async function checkRangeRingsAndCoordReadout() {
   })()`)
   check('no range rings are drawn while the overlay is off', await ringCount(), 0)
 
-  const ticked = await evaluate(`(() => {
-    const input = document.querySelector('[data-testid="map-show-rings"] input');
-    input?.click();
-    return !!input;
+  // 2026-11-04, John: Range rings is one slider: 0 Off, 1 Auto, then fixed distances.
+  const setRingSlider = (v) => evaluate(`(async () => {
+    const el = document.querySelector('[data-testid="ring-spacing"]');
+    if (!el) return null;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '${v}');
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 300));
+    return document.querySelector('[data-testid="ring-spacing-label"]')?.textContent.trim();
   })()`)
-  check('the Show on map box offers Range rings', ticked, true)
+  check('the Range rings slider starts at Off', await evaluate(`document.querySelector('[data-testid="ring-spacing-label"]')?.textContent.trim()`), 'Off')
+  const ticked = await setRingSlider(1)
+  check('the slider at Auto turns Range rings on', /^Auto/.test(ticked ?? ''), true)
   const before = await pollUntil(visibleLabels, v => v.length > 0)
   const count = await ringCount()
   check('range rings are drawn once the overlay is ticked', count > 0 && count <= 25, true)
@@ -4968,12 +4983,10 @@ async function checkRangeRingsAndCoordReadout() {
   check('zooming in re-picks the ring spacing (labels change)', after.length > 0 && after[0] !== before[0], true)
   note(`ring labels before zoom: ${before.join(' | ')}; after: ${after.join(' | ')}`)
 
-  // The spacing slider (shown only while the overlay is on): stop 4 is a fixed 1 mile.
-  const sliderShown = await evaluate(`!!document.querySelector('[data-testid="ring-spacing"]')`)
-  check('the ring spacing slider shows while Range rings is on', sliderShown, true)
+  // Stop 5 is a fixed 1 mile (0 Off, 1 Auto, 2 = 0.1 mi ... 5 = 1 mi).
   const fixed = await evaluate(`(async () => {
     const el = document.querySelector('[data-testid="ring-spacing"]');
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '4');
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '5');
     el.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise(r => setTimeout(r, 300));
     return {
@@ -4986,6 +4999,8 @@ async function checkRangeRingsAndCoordReadout() {
   check('the rings go bold while the slider moves', fixed.bold, true)
   await sleep(1800)
   check('...and settle back afterwards', await evaluate(`document.getElementById('mapLeaflet-main').classList.contains('rt-range-rings-emphasis')`), false)
+  check('the slider at 0 says Off', await setRingSlider(0), 'Off')
+  check('...and the rings are gone', await pollUntil(ringCount, v => v === 0, 10, 300), 0)
 
   const readoutIn = async (format) => {
     await evaluate(`[...document.querySelectorAll('[data-testid="map-coord-format"] button')]
@@ -5449,8 +5464,8 @@ async function checkSimpleView(fx) {
     })()`)
     check('the layers box hides its extras (grid, satellite, hiking trails) and keeps the base layers',
       [rows.extra > 0, rows.extraHidden, rows.coreShown], [true, true, true])
-    check('the Show on map box hides Heat map and Range rings (E-277)',
-      await firstPresent(['[data-testid=map-show-heat]', '[data-testid=map-show-rings]']), null)
+    check('the Show on map box hides Heat map and the Range rings slider (E-277)',
+      await firstPresent(['[data-testid=map-show-heat]', '[data-testid=ring-spacing]']), null)
     check('Map has the header Full view switch', await has('[data-testid=view-switch-header]'), true)
 
     await goto('/rangers', 4000)

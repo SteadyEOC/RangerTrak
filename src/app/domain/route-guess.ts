@@ -18,7 +18,7 @@ const DESTINATIONS: readonly (RouteGuess & { words: string })[] = [
   { route: '/rangers', label: 'Rangers', words: 'rangers ranger roster people team teams members' },
   { route: '/mission', label: 'Mission', words: 'mission settings setup prep config board backup' },
   { route: '/after-action', label: 'AAR notes', words: 'after action aar notes 214 ics214' },
-  { route: '/summary', label: 'Mission summary', words: 'summary' },
+  { route: '/summary', label: 'SitRep', words: 'summary sitrep' },
   { route: '/messages', label: 'Messages', words: 'messages message msg' },
   { route: '/help', label: 'Help', words: 'help about faq docs documentation guide manual' },
 ]

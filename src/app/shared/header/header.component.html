@@ -64,6 +64,10 @@
         <dt>Starts</dt><dd>{{ opPeriodStartDisplay() }}</dd>
         <dt>Ends</dt><dd>{{ opPeriodEndDisplay() }}</dd>
       </dl>
+      <!-- E-278: the SitRep, one tap from the op period it reports on. Not in field mode. -->
+      @if (!fieldMode.enabled()) {
+      <a class="rt-mission-info-panel__mode-more" routerLink="/summary" data-testid="header-sitrep-link">SitRep for this op period</a>
+      }
 
       <!-- E-168: the mode line and the switch. Details live on the Mission page's Mode card. -->
       <div class="rt-mission-info-panel__mode">

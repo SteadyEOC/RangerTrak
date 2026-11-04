@@ -74,6 +74,8 @@ const ringStepIndex = signal(0)
 
 @Component({
   selector: 'rangertrak-mapLeaflet',
+  // 2026-11-04, John: Ctrl+P on the Map page printed the app's header and no map. It runs Print map instead.
+  host: { '(window:keydown)': 'onPrintKey($event)' },
   standalone: true,
   imports: [NgTemplateOutlet, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatSelectModule, MatSliderModule, MatIconModule, MatCardModule, MasonryDirective,
     FilterChipsComponent, MapPrintLegendComponent, MapPrintFurnitureComponent],
@@ -192,13 +194,12 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     }
   })
 
-  // 2026-09-30, John: the Range ring spacing slider under the map ("more accessible & useful for
+  // 2026-09-30, John: the Range rings slider under the map (Off since 2026-11-04) ("more accessible & useful for
   // experimenting" than a mission setting). Stop 0 is Auto (the spacing fits the view, see
   // refreshRangeRings()); the others are fixed RING_STEPS_MILES distances, for radio-range
   // planning where a 2 mile ring should stay 2 miles at any zoom. Module-level like
   // coordFormat, so it survives leaving the Map page; not saved.
   readonly ringStepIndex = ringStepIndex
-  readonly ringStepCount = RING_STEPS_MILES.length
   /** E-207: the layers box rows that are advanced, with the layers they switch. */
   private layerExtras: { label: string, layer: L.Layer }[] = []
   private layersBox: HTMLElement | null = null
@@ -254,6 +255,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   /** The spacing Auto last picked, for the slider's label. */
   private readonly autoRingMiles = signal<number | undefined>(undefined)
   readonly ringSpacingLabel = computed(() => {
+    if (!this.ringsOn()) return 'Off'
     const i = this.ringStepIndex()
     if (i > 0) {
       return formatRingMiles(RING_STEPS_MILES[i - 1])
@@ -261,7 +263,22 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const auto = this.autoRingMiles()
     return auto === undefined ? 'Auto (fits the zoom)' : `Auto, now ${formatRingMiles(auto)}`
   })
-  readonly ringStepShort = (i: number) => i === 0 ? 'Auto' : `${RING_STEPS_MILES[i - 1]}`
+  /**
+   * 2026-11-04, John: "can range rings just be a slider: if 0 they are off?" The slider is the only
+   * Range rings control: stop 0 is Off, 1 is Auto, the rest are RING_STEPS_MILES. ringStepIndex keeps
+   * its own meaning (0 = Auto), so the slider is ringStepIndex + 1 while the rings are on.
+   */
+  readonly ringSliderMax = RING_STEPS_MILES.length + 1
+  readonly ringSliderValue = computed(() => this.ringsOn() ? this.ringStepIndex() + 1 : 0)
+  readonly ringStepShort = (v: number) => v === 0 ? 'Off' : v === 1 ? 'Auto' : `${RING_STEPS_MILES[v - 2]}`
+
+  onRingSlider(v: number): void {
+    if (v === 0) { this.onRings(false); return }
+    const wasOn = this.lMap?.hasLayer(this.rangeRingsLayer)
+    this.ringStepIndex.set(v - 1)
+    if (!wasOn) { this.onRings(true); return } // overlayadd draws them at the new spacing
+    this.onRingStepChange(v - 1)
+  }
 
   onRingStepChange(i: number): void {
     this.ringStepIndex.set(i)
@@ -1180,6 +1197,14 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.offline.onBtnZoomToOfflineTiles()
   }
 
+  /** Ctrl+P / Cmd+P on the Map page runs Print map (the browser's own print has no map sheet). */
+  onPrintKey(event: KeyboardEvent): void {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'p') return
+    event.preventDefault()
+    if (event.repeat) return
+    if (!this.printPreparing()) void this.onBtnPrintMap()
+  }
+
   /** Print map button (template): see LeafletPrintController.onBtnPrintMap(). */
   onBtnPrintMap(): Promise<void> {
     // E-222: recorded first, so the head printed in the sheet's footer includes this print.
@@ -1301,6 +1326,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
   /** E-277: the Heat map and Range rings checkboxes in the Show on map box. */
   onHeat(on: boolean): void { this.switchLayer(this.heatGroup, on) }
+  /** Range rings on or off (the slider's Off stop, and Show everything). */
   onRings(on: boolean): void { this.switchLayer(this.rangeRingsLayer, on) }
 
   private switchLayer(layer: L.Layer, on: boolean): void {

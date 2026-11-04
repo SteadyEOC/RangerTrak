@@ -53,8 +53,8 @@ const CHART_MIN_WIDTH = 280
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class SummaryComponent implements OnDestroy {
-  title = 'Mission summary'
-  pageDescr = 'Where the mission stands: traffic, teams and notes for a period you choose. '
+  title = 'RangerTrak SitRep'
+  pageDescr = 'Where the mission stands: traffic, teams and notes for a period you choose, from this radio log (not an ICS-209). '
     + 'It only reads the radio log, so logging carries on as normal.'
 
   private radioLogService = inject(RadioLogService)
@@ -351,9 +351,9 @@ export class SummaryComponent implements OnDestroy {
     showFirstPrintTip()
     document.body.classList.add('rt-print-summary')
     window.addEventListener('afterprint', () => document.body.classList.remove('rt-print-summary'), { once: true })
-    const untitle = armPrintTitle('Mission summary', this.settings())
+    const untitle = armPrintTitle('SitRep', this.settings())
     // E-222: recorded first, so the head printed on the sheet includes this print.
-    this.journal.record('print-summary', 'Printed the mission summary.')
+    this.journal.record('print-summary', 'Printed the SitRep.')
     this.appRef.tick()
     window.print()
     untitle()
@@ -365,6 +365,6 @@ export class SummaryComponent implements OnDestroy {
     const s = this.summary()
     const filename = summaryCsvFilename(this.missionName(), s.generatedAt)
     downloadCsv(buildSummaryCsv(s, this.stamp()), filename)
-    this.journal.record('summary-exported', `Exported the mission summary to ${filename}.`)
+    this.journal.record('summary-exported', `Exported the SitRep to ${filename}.`)
   }
 }

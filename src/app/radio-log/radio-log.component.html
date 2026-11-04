@@ -7,10 +7,10 @@
          line say it. -->
     <div class="rt-action-bar__buttons radio-log__add-row">
       <a matButton="filled" routerLink="/">Add entry</a>
-      <!-- E-189: the Mission summary, one tap from the log it reads. It never changes the log. -->
+      <!-- E-189 / E-278: the SitRep (was Current summary), one tap from the log it reads. It never changes the log. -->
       <a matButton="outlined" routerLink="/summary" data-testid="radio-log-summary-link"
         title="Traffic, teams and notes for the mission so far, with a printout for the after-action review">
-        <mat-icon>insights</mat-icon> Current summary
+        <mat-icon>insights</mat-icon> SitRep
       </a>
     </div>
     @if (radioLogEntries().length === 0) {

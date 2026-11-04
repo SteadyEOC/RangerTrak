@@ -49,6 +49,7 @@ import { RecordStore } from '../shared/storage/record-store'
 import { InstallUpdateComponent } from '../shared/install-update/install-update.component'
 import { HasUnsavedChanges } from '../shared/guards/unsaved-changes.guard'
 
+import { FieldModeService } from '../shared/services/field-mode.service'
 import { MatIconModule } from '@angular/material/icon'
 import { MatButtonModule } from '@angular/material/button'
 import { MatCardModule } from '@angular/material/card'
@@ -378,6 +379,8 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   // /mission#readiness-storage-protection is scrolled to by the router before that, so
   // scroll again whenever the grid re-lays-out within a moment of the fragment arriving.
   private readonly routeFragment = inject(ActivatedRoute).fragment
+  /** E-278: the SitRep link is a command-post one; a field-mode phone gets none (as on AAR notes). */
+  readonly fieldMode = inject(FieldModeService)
   private deepLink: { id: string, at: number } | null = null
   private readonly deepLinkSub = this.routeFragment.pipe(takeUntilDestroyed()).subscribe(f => {
     this.deepLink = f ? { id: f, at: performance.now() } : null

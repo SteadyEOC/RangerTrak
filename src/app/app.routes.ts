@@ -104,12 +104,14 @@ export const APP_ROUTES: Routes = [
     title: 'AAR notes - RangerTrak',
     loadComponent: () => import('./after-action/after-action.component').then(m => m.AfterActionComponent),
   },
+  // E-278 (2026-11-04, John): the page is the "RangerTrak SitRep"; /sitrep is an alias.
+  { path: 'sitrep', redirectTo: 'summary' },
   // E-189: where the mission stands. No main-menu item: reached from the AAR notes toolbar and
   // the Radio Log page. Reads only (never locks anything), so it is a command-post page like the
   // Radio Log - a field phone's job is entry, not analysis.
   {
     path: 'summary',
-    title: 'Mission summary - RangerTrak',
+    title: 'SitRep - RangerTrak',
     loadComponent: () => import('./summary/summary.component').then(m => m.SummaryComponent),
     canActivate: [fieldModeGuard],
   },
