@@ -58,13 +58,9 @@
 // 2026-09-30, John: E-144 - "Notes about RangerTrak" and "Delete notes" side by side when there
 // is room, stacked on a phone (same pattern as above).
 .rt-aar__sections {
-  display              : grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
-  gap                  : 0 var(--rt-space-md, 1rem);
-  align-items          : start;
-}
-
-.rt-aar__section {
+  // Layout is the shared card grid (.rt-card-grid + rtMasonry, styles/_patterns.scss, E-210);
+  // the cards carry .rt-mission-card, whose margin-bottom is the row gap. Only the space above
+  // the grid lives here.
   margin-top: var(--rt-space-lg, 1.5rem);
 }
 

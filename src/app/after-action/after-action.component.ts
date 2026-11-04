@@ -1,3 +1,4 @@
+import { MasonryDirective } from '../shared/layout/masonry.directive'
 import { CommonModule } from '@angular/common'
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -42,7 +43,7 @@ type Filter = 'all' | AarNoteAbout
 @Component({
   selector: 'rangertrak-after-action',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageComponent, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatSelectModule],
+  imports: [CommonModule, FormsModule, RouterLink, PageComponent, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatSelectModule, MasonryDirective],
   templateUrl: './after-action.component.html',
   styleUrls: ['./after-action.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,

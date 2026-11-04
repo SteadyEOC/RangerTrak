@@ -17,9 +17,11 @@
       }
     </div>
 
-    <mat-card appearance="outlined">
+    <mat-card appearance="outlined" class="rt-mission-card rt-io-card">
+      <mat-card-header>
+        <mat-card-title>Log levels to display</mat-card-title>
+      </mat-card-header>
       <mat-card-content>
-        <h3>Log levels to display:</h3>
         <section>
           <!-- Other colors: primary, secondary, accent and warn  https://stackoverflow.com/questions/57926149/angular-material-colors -->
           <mat-checkbox [ngModel]="excessive()" (ngModelChange)="excessive.set($event)">Excessive</mat-checkbox>
@@ -35,19 +37,19 @@
           need to keep it.
         </p>
 
-        <button matButton="outlined" (click)="onBtnSaveLog()" title="Download the event log as a CSV file">
+        <div class="rt-action-bar__buttons">
+        <button matButton="filled" type="button" (click)="onBtnSaveLog()" title="Download the event log as a CSV file">
           Save Log File
         </button>
-        &nbsp;
-        <button matButton="outlined" (click)="onBtnCopyLog()"
+        <button matButton="outlined" type="button" (click)="onBtnCopyLog()"
           title="Copy the event log to the clipboard, to paste into a feedback report">
           {{copied() ? 'Copied!' : 'Copy log to clipboard'}}
         </button>
-        &nbsp;
-        <button matButton="outlined" class="log__danger-button" (click)="onBtnClearLog()"
+        <button matButton="outlined" type="button" class="log__danger-button" (click)="onBtnClearLog()"
           title="Discard all log entries currently in memory">
           Clear Log
         </button>
+        </div>
 
         <p class="log-warning">
           ⚠️ The log records what the app did, not what was entered, but it can name call

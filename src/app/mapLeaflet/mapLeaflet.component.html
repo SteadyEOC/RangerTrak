@@ -49,8 +49,8 @@
 </div>
 <!-- 2026-11-04, John: the controls under the map, regrouped (mockup reviewed first). Top to
      bottom: Zoom to Extent + Print map right under the map (they act on the map itself), then two
-     bordered boxes side by side when there is room, "Show on map" and "Offline maps" (the same
-     notched-legend fieldset as Status/Source on the Entry page), then the MapLibre checkbox.
+     bordered boxes side by side when there is room, "Show on map" and "Offline maps" (shared
+     outlined cards in the one card grid, as on the MapLibre map and every other page - E-210), then the MapLibre checkbox.
      The earlier layouts are in git (2026-08-24, 2026-09-30). data-testids and ids are unchanged. -->
 <div class="map-controls map-print-hide">
   <!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now (reports
@@ -73,21 +73,24 @@
   <!-- Add place moved to the places panel under the map (places-io), 2026-11-04, John. -->
 </div>
 
-<div class="map-boxes map-print-hide">
+<div class="rt-card-grid map-boxes map-print-hide" rtMasonry>
   <!-- E-190 / 2026-11-04: what the map draws. The box title says "Show" once, so the rows carry
        no "Show:" labels of their own. Trails is the layers box's Ranger paths (same switch);
        turning it off adds no chip over the map. Selected entries is the old All / Just those
        switch: greyed out while nothing is selected on the Radio Log page (it would draw an empty
        map), but still clickable to turn off while it is on. -->
-  <fieldset class="map-box" data-testid="map-show-box">
-    <legend class="map-box__legend">Show on map</legend>
+  <mat-card appearance="outlined" class="rt-mission-card map-box" data-testid="map-show-box">
+    <mat-card-header>
+      <mat-card-title>Show on map</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
     <div class="map-box__row">
       <mat-checkbox [checked]="pathsOn()" (change)="onTrails($event.checked)"
         title="Each ranger's path (the same switch as Ranger paths in the layers box)" data-testid="map-show-trails">Trails</mat-checkbox>
       <mat-checkbox [checked]="show().latestOnly" (change)="onLatestOnly($event.checked)"
         title="One marker per ranger: their newest report" data-testid="map-show-latest">Latest per ranger</mat-checkbox>
       <mat-checkbox [checked]="selectedOnly()" (change)="onSwitchSelectedRadioLog()"
-        [disabled]="!selectedOnly() && numSelectedRows() === 0"
+        [disabled]="!selectedOnly() && numSelectedRows() === 0" disabledInteractive
         [title]="!selectedOnly() && numSelectedRows() === 0 ? 'Select entries on the Radio Log page first' : 'Only the entries you selected on the Radio Log page'"
         data-testid="allSelectedSwitch">Selected entries ({{numSelectedRows()}} of {{numAllRows()}})</mat-checkbox>
     </div>
@@ -102,9 +105,9 @@
           }
         </mat-select>
       </mat-form-field>
-      <button mat-stroked-button type="button" (click)="onShowStatuses([])" [disabled]="!show().statuses.length"
+      <button matButton="outlined" type="button" (click)="onShowStatuses([])" [disabled]="!show().statuses.length"
         data-testid="map-show-all-statuses">All statuses</button>
-      <button mat-stroked-button type="button" (click)="onShowNeedsAttention()"
+      <button matButton="outlined" type="button" (click)="onShowNeedsAttention()"
         title="The statuses ticked Needs attention on the Mission page (marked ⚑ in the list)"
         data-testid="map-show-attention">Needs attention</button>
     </div>
@@ -120,16 +123,20 @@
         </mat-slider>
       </div>
     }
-  </fieldset>
+    </mat-card-content>
+  </mat-card>
 
   <!-- 2026-11-04, John: everything about saved tiles in one box. The legend icon and the status
        line are green when tiles are saved on this device, amber when nothing is - the same test
        as the header readiness dot's "Offline map tiles saved" row. -->
-  <fieldset class="map-box map-offline" [class.map-offline--none]="!hasOfflineTiles()" data-testid="map-offline-box">
-    <legend class="map-box__legend">
-      <mat-icon class="map-offline__icon" aria-hidden="true">{{ hasOfflineTiles() ? 'offline_pin' : 'warning' }}</mat-icon>
-      Offline maps
-    </legend>
+  <mat-card appearance="outlined" class="rt-mission-card map-box map-offline" [class.map-offline--none]="!hasOfflineTiles()" data-testid="map-offline-box">
+    <mat-card-header>
+      <mat-card-title class="map-box__title">
+        <mat-icon class="map-offline__icon" aria-hidden="true">{{ hasOfflineTiles() ? 'offline_pin' : 'warning' }}</mat-icon>
+        Offline maps
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
     <p class="map-offline__status" data-testid="map-offline-status">
       <mat-icon aria-hidden="true">{{ hasOfflineTiles() ? 'check_circle' : 'warning' }}</mat-icon>
       {{ hasOfflineTiles() ? 'Saved for offline use' : 'Nothing saved on this device yet' }}
@@ -154,7 +161,8 @@
         Zoom to offline tiles
       </button>
     </div>
-  </fieldset>
+    </mat-card-content>
+  </mat-card>
 </div>
 
 <!-- E-152: .map-print-hide (styles.scss) keeps this off the printed sheet. The engine checkbox

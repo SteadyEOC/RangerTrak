@@ -181,7 +181,7 @@
           </mat-card-header>
           <mat-card-content>
             <div class="rt-action-bar__buttons">
-              <button matButton="outlined" type="button" (click)="onBtnBuildReportPacket()"
+              <button matButton="filled" type="button" (click)="onBtnBuildReportPacket()"
                 title="Package every radio log entry on THIS device into one file for another device to merge in">
                 <mat-icon>archive</mat-icon>
                 Build Report Packet
@@ -238,7 +238,7 @@
                     (input)="handoverPassAgain.set($any($event.target).value)" />
                 </mat-form-field>
               }
-              <button matButton="outlined" type="button" data-testid="handover-build"
+              <button matButton="filled" type="button" data-testid="handover-build"
                 [disabled]="handoverBusy()" (click)="onBtnBuildHandover()"
                 title="Save one file with the roster, places and every radio log entry on THIS device">
                 <mat-icon>archive</mat-icon>

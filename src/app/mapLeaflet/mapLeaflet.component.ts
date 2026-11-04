@@ -1,3 +1,5 @@
+import { MatCardModule } from '@angular/material/card'
+import { MasonryDirective } from '../shared/layout/masonry.directive'
 
 
 // also: https://github.com/onthegomap/planetiler
@@ -73,7 +75,7 @@ const ringStepIndex = signal(0)
 @Component({
   selector: 'rangertrak-mapLeaflet',
   standalone: true,
-  imports: [NgTemplateOutlet, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatSelectModule, MatSliderModule, MatIconModule,
+  imports: [NgTemplateOutlet, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatSelectModule, MatSliderModule, MatIconModule, MatCardModule, MasonryDirective,
     FilterChipsComponent, MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [

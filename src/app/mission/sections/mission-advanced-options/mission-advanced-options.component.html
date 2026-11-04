@@ -99,7 +99,7 @@
       encrypted, leave it blank and it is <strong>not</strong>. Either way, store it carefully
       and delete it when the mission is over.
     </p>
-    <button matButton="outlined" type="button" (click)="onBtnExportMission()"
+    <button matButton="filled" type="button" (click)="onBtnExportMission()"
       title="Download the current mission as a JSON file">
       <mat-icon>backup</mat-icon>
       Back up mission
@@ -183,7 +183,7 @@
       <strong>Turn off field mode</strong> in Help.
     </p>
     @if (isBrandNewDevice()) {
-    <button matButton="outlined" type="button" data-testid="use-as-field-phone"
+    <button matButton="filled" type="button" data-testid="use-as-field-phone"
       (click)="onBtnUseAsFieldPhone()"
       title="Hide everything except Radio Log Entry and Help on this device">
       <mat-icon>smartphone</mat-icon>

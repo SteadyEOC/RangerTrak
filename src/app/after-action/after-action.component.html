@@ -88,15 +88,15 @@
       }
     </ul>
 
-    <div class="rt-aar__sections">
+    <div class="rt-card-grid rt-aar__sections" rtMasonry>
     @if (appNotes().length) {
-    <mat-card appearance="outlined" class="rt-aar__section">
+    <mat-card appearance="outlined" class="rt-mission-card rt-aar__section">
       <mat-card-header><mat-card-title>Notes about RangerTrak</mat-card-title></mat-card-header>
       <mat-card-content>
         <p>Send the {{ appNotes().length }} note(s) about the app to its developers. The Feedback form opens
           with them filled in so you can edit or remove anything first. It becomes a public GitHub issue, so
           take out names and places.</p>
-        <button matButton="outlined" type="button" (click)="onSendAppNotes()">
+        <button matButton="filled" type="button" (click)="onSendAppNotes()">
           <mat-icon>send</mat-icon> Review and send
         </button>
         <button matButton type="button" class="rt-aar__danger" (click)="onDeleteAppNotes()" data-testid="aar-delete-app-notes">
@@ -106,7 +106,7 @@
     </mat-card>
     }
 
-    <mat-card appearance="outlined" class="rt-aar__section">
+    <mat-card appearance="outlined" class="rt-mission-card rt-aar__section">
       <mat-card-header><mat-card-title>Delete notes</mat-card-title></mat-card-header>
       <mat-card-content>
         <p>Notes stay on this device until you delete them. Deleting the radio log leaves them alone unless

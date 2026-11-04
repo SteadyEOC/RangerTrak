@@ -542,39 +542,25 @@ mat-slide-toggle {
   color      : var(--rt-ink-2);
 }
 
-// 2026-11-04, John: the two boxes under the map - "Show on map" and "Offline maps". The same
-// notched-legend fieldset as Entry's Status/Source (.enter__field-fieldset). Each box is as wide
-// as its contents and they sit side by side when the row has room, stacking when it does not.
+// 2026-11-04, John: the two boxes under the map - "Show on map" and "Offline maps" - are the
+// shared outlined cards (.rt-mission-card) in the one card grid (.rt-card-grid + rtMasonry,
+// styles/_patterns.scss, E-210), like the MapLibre map's and every other page's cards. Only the
+// rhythm inside a card lives here.
 .map-boxes {
-  display    : flex;
-  flex-wrap  : wrap;
-  align-items: flex-start;
-  gap        : var(--rt-space-md, 1rem);
-  margin     : 0.75rem 0 0.5rem;
+  margin: 0.75rem 0 0.5rem;
 }
 
 .map-box {
-  flex         : 0 1 auto;
-  min-width    : 0;
-  max-width    : 100%;
-  margin       : 0;
-  padding      : var(--rt-space-sm, 0.5rem) var(--rt-space-md, 1rem) var(--rt-space-md, 1rem);
-  border       : 1px solid var(--rt-line-strong);
-  border-radius: var(--rt-radius);
-  display      : flex;
-  flex-direction: column;
-  gap          : 0.5rem;
+  .mat-mdc-card-content {
+    display       : flex;
+    flex-direction: column;
+    gap           : 0.5rem;
+  }
 
-  &__legend {
-    display       : inline-flex;
-    align-items   : center;
-    gap           : 6px;
-    padding       : 0 0.4em;
-    font-size     : var(--rt-type-label-size);
-    line-height   : var(--rt-type-label-line);
-    font-weight   : 500;
-    letter-spacing: 0.4px;
-    color         : var(--rt-ink-2);
+  &__title {
+    display    : inline-flex;
+    align-items: center;
+    gap        : 6px;
   }
 
   &__row {
@@ -739,7 +725,6 @@ mat-slide-toggle {
     white-space: nowrap;
   }
 
-  .map-box,
   .map-show__statuses {
     width: 100%;
   }

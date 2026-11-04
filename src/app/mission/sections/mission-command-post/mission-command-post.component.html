@@ -60,7 +60,7 @@
              besides the server's own console (which scrolls away, or gets closed). Copies
              whatever is CURRENTLY in the field, not a separately-tracked value, so it is
              always what this device would actually try to publish to. -->
-        <button matSuffix mat-icon-button type="button" [disabled]="!clipboardAvailable"
+        <button matSuffix matIconButton type="button" [disabled]="!clipboardAvailable"
           (click)="copyToClipboard('address', form.commandPostServerUrl().value())"
           [attr.aria-label]="clipboardAvailable
             ? 'Copy server address: ' + form.commandPostServerUrl().value()
@@ -73,7 +73,7 @@
       </mat-form-field>
 
       <!-- E-216 slice 2: Test connection works from whatever address is typed above, with publishing on or off. -->
-      <button mat-stroked-button type="button" class="mission-command-post__test" data-testid="board-test"
+      <button matButton="outlined" type="button" class="mission-command-post__test" data-testid="board-test"
         [disabled]="publisher.testing()" (click)="testConnection()">
         <mat-icon>wifi_find</mat-icon>
         {{ publisher.testing() ? 'Testing...' : 'Test connection' }}
@@ -101,11 +101,11 @@
       }
       @if (publisher.unreachable() === 'quick' || publisher.diagnosis()?.cause === 'certificate-not-accepted') {
         <p class="mission-command-post__certificate">
-          <a mat-stroked-button [href]="helloUrl()" target="_blank" rel="noopener">Open the Board</a>
+          <a matButton="outlined" [href]="helloUrl()" target="_blank" rel="noopener">Open the Board</a>
         </p>
       }
       @if (publisher.state() === 'replaced') {
-        <button mat-flat-button type="button" (click)="publisher.takeOver()">Take over</button>
+        <button matButton="filled" type="button" (click)="publisher.takeOver()">Take over</button>
       }
 
       <!-- D-61: the viewers' password. A text field, not a masked one: the scribe reads it out or
