@@ -4848,13 +4848,16 @@ async function checkMapFilterChips() {
   check('no filters: the strip is not there', await strip(), false)
   await evaluate(`[...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
     .find(l => /Ranger paths/.test(l.textContent))?.querySelector('input')?.click()`)
-  await evaluate(`[...document.querySelectorAll('[data-testid="map-show-choice"] button')]
-    .find(b => /Needs attention/.test(b.textContent))?.click()`)
+  // 2026-11-04: Needs attention is a button that picks the flagged statuses; the chip names them.
+  await evaluate(`document.querySelector('[data-testid="map-show-attention"]')?.click()`)
   const two = await pollUntil(chips, v => v.length === 2, 10, 300)
-  check('Ranger paths off + Needs attention: two chips', two.join(' | '), 'Ranger paths hidden | Showing: needs attention')
+  const statusChip = v => /^Showing: \S/.test(v[1] ?? '') && !/latest/.test(v[1])
+  check('Ranger paths off + Needs attention: two chips', `${two[0]} | ${statusChip(two)}`, 'Ranger paths hidden | true')
   await evaluate(`document.querySelector('rangertrak-filter-chips mat-chip button')?.click()`)
   const one = await pollUntil(chips, v => v.length === 1, 10, 300)
-  check('x on the first chip leaves only the Show chip', one.join(' | '), 'Showing: needs attention')
+  check('x on the first chip leaves only the statuses chip', statusChip([null, one[0]]), true)
+  check('Trails is ticked again with Ranger paths', await evaluate(
+    `document.querySelector('[data-testid="map-show-trails"] input')?.checked`), true)
   await evaluate(`[...document.querySelectorAll('rangertrak-filter-chips button')].find(b => /Show everything/.test(b.textContent))?.click()`)
   const gone = await pollUntil(strip, v => v === false, 10, 300)
   check('Show everything: the strip is gone', gone, false)

@@ -129,7 +129,7 @@ async function main() {
       [...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
         .find(l => /USNG/.test(l.textContent))?.querySelector('input')?.click();
       [...document.querySelectorAll('[data-testid="map-coord-format"] button')].find(b => b.textContent.trim() === 'DDM')?.click();
-      if (${FILTERED}) [...document.querySelectorAll('[data-testid="map-show-choice"] button')].find(b => /Needs attention/.test(b.textContent))?.click();
+      if (${FILTERED}) document.querySelector('[data-testid="map-show-attention"]')?.click();
       const input = document.querySelector('.map-prepared-by input');
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(NAME)});
       input.dispatchEvent(new Event('input', { bubbles: true }));
