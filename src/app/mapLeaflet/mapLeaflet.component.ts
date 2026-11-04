@@ -2,7 +2,7 @@
 
 // also: https://github.com/onthegomap/planetiler
 //import { openDB, deleteDB, wrap, unwrp } from 'idb'
-import { MarkerClusterGroup } from '@kristjan.esperanto/leaflet.markercluster'
+import { MarkerClusterGroup } from 'leaflet.markercluster'
 //import { markerClusterGroup } from 'leaflet'
 import * as L from 'leaflet'
 import { removeLeafletMap } from '../shared/mapping/leaflet-teardown'
@@ -126,7 +126,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // Removed 2026-09-22: the `mapCursor` L.icon pointed at assets/icons/my-icon.png, which
   // has never existed in this repo, and its only use was a commented-out new L.Marker() call.
 
-  myMarkerCluster = new MarkerClusterGroup()
+  myMarkerCluster = new MarkerClusterGroup<L.Marker>()
   // The trails, mile grid, USNG grid and range rings layers now live in LeafletOverlays
   // (leaflet-overlays.ts); these stay as the component's public names for them.
   get myTrailsLayer() { return this.overlays.myTrailsLayer }
@@ -452,7 +452,12 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // MarkerClusterGroup extends FeatureGroup, retaining it's methods, e.g., clearLayers() & removeLayers()
     // https://leaflet.github.io/Leaflet.markercluster/
     // per https://stackoverflow.com/a/71574063/18004414 & https://github.com/Leaflet/Leaflet/issues/8451
-    this.myMarkerCluster = new MarkerClusterGroup({ removeOutsideVisibleBounds: true })
+    // leaflet.markercluster 2.0.0-beta.1 (2026-11-04): clusterLabel is the cluster's accessible
+    // name, read out by screen readers; the plugin's own default is "N markers".
+    this.myMarkerCluster = new MarkerClusterGroup<L.Marker>({
+      removeOutsideVisibleBounds: true,
+      clusterLabel: cluster => this.clusterLabel(cluster.getAllChildMarkers()),
+    })
 
 
     // ---------------- Init Main Map -----------------
@@ -954,6 +959,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // this they'd pile up on every toggle/new-report exactly the way markers used to.
     this.myTrailsLayer.clearLayers()
     this.entryMarkers.clear()
+    this.evidenceMarkers.clear()
     this.badgeMarkers.clear()
   }
 
@@ -1011,6 +1017,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // Except "Latest per ranger" (John 2026-10-27): one point each, so no paths at all.
     const shown = this.shownEntries()
     this.legendEntries.set([...shown])
+    // One addLayers() call instead of addLayer() per marker: markercluster 2.0 bulk-adds about 2x faster.
+    const toAdd: L.Marker[] = []
     shown.forEach(i => {
       if (i.location.lat && i.location.lng) {  // TODO: Do this in the FieldReports Service - or also the GMap; thewse only happened when location was broken???
         let title = `${i.callsign} at ${formatReportTime(i.date)}${i.msgNo ? ` (${formatMsgNoShort(i.msgNo)})` : ''} with ${i.status}`
@@ -1026,7 +1034,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         })
         marker.bindPopup(layer => this.entryPopup(i, title, layer))
         this.entryMarkers.set(i, marker)
-        this.myMarkerCluster.addLayer(marker);
+        toAdd.push(marker)
 
         // E-11 (2026-08-26): evidenceLocation was captured on Entry and shown only on its
         // own mini-map - never here, so it was effectively orphaned the moment a report was
@@ -1041,12 +1049,15 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
           // E-268: "Heading 45° T (NE)" under the title; the arrow is in the icon itself.
           const heading = formatHeading(i.evidenceDirection)
           evidenceMarker.bindPopup(heading ? `${evidenceTitle}<br>Heading ${heading}` : evidenceTitle)
-          this.myMarkerCluster.addLayer(evidenceMarker)
+          this.evidenceMarkers.add(evidenceMarker)
+          toAdd.push(evidenceMarker)
         }
       } else {
         console.warn(`displayAllMarkers: skipping report # ${i.id}; bad lat/lng: ${i}: ${JSON.stringify(i)}`)
       }
     })
+
+    this.myMarkerCluster.addLayers(toAdd)
 
     // E-274: keep the heat in step with the filter chips, only while it is on.
     if (this.heatLayer && this.heatOn()) this.heatLayer.setLatLngs(heatPoints(shown))
@@ -1165,6 +1176,18 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   // newest), so the badge can ride with it while printing; and what each badge looked like
   // before it moved. Filled by displayMarkers() / drawTrails(), emptied with the markers.
   private readonly entryMarkers = new Map<RadioLogEntryType, L.Marker>()
+  /** Evidence/clue markers, so a cluster's spoken name can count them apart from entries. */
+  private readonly evidenceMarkers = new Set<L.Marker>()
+
+  /** A cluster's accessible name: "12 radio log entries", or "10 radio log entries, 2 clues". */
+  private clusterLabel(markers: L.Marker[]): string {
+    const clues = markers.filter(m => this.evidenceMarkers.has(m)).length
+    const entries = markers.length - clues
+    const parts: string[] = []
+    if (entries) parts.push(`${entries} radio log ${entries === 1 ? 'entry' : 'entries'}`)
+    if (clues) parts.push(`${clues} ${clues === 1 ? 'clue' : 'clues'}`)
+    return parts.join(', ')
+  }
   private readonly badgeMarkers = new Map<L.Tooltip, L.Marker>()
 
   /** Trails, mile grid, USNG grid and range rings; the component owns its lifetime. */

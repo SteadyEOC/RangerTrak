@@ -91,8 +91,7 @@
               "src/manifest.webmanifest"
             ],
             "styles": [
-              "./node_modules/@kristjan.esperanto/leaflet.markercluster/dist/MarkerCluster.Default.css",
-              "./node_modules/@kristjan.esperanto/leaflet.markercluster/dist/MarkerCluster.css",
+              "./node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "./node_modules/leaflet/dist/leaflet.css",
               "./node_modules/maplibre-gl/dist/maplibre-gl.css",
               "./src/styles.scss"

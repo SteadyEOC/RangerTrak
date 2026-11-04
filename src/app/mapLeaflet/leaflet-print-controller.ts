@@ -1,5 +1,5 @@
 import * as L from 'leaflet'
-import type { MarkerClusterGroup } from '@kristjan.esperanto/leaflet.markercluster'
+import type { MarkerClusterGroup } from 'leaflet.markercluster'
 import type { tileLayerOffline } from 'leaflet.offline'
 import type { ElementRef, Signal, TemplateRef, WritableSignal } from '@angular/core'
 import { edgeTickStep, formatEdgeTick, type CoordinateFormat } from '../domain/coordinate'

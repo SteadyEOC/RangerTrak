@@ -1,4 +1,4 @@
-import { MarkerClusterGroup } from '@kristjan.esperanto/leaflet.markercluster'
+import { MarkerClusterGroup } from 'leaflet.markercluster'
 import { tileLayerOffline } from 'leaflet.offline' // https://github.com/allartk/leaflet.offline
 //import { markerClusterGroup } from 'leaflet'
 import * as L from 'leaflet'
@@ -155,7 +155,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
   // TODO: Leaflet's version of following?
   overviewMapLeafletType = { cur: 0, types: { type: ['roadmap', 'terrain', 'satellite', 'hybrid',] } }
 
-  myMarkerCluster = new MarkerClusterGroup()
+  myMarkerCluster = new MarkerClusterGroup<L.Marker>()
   //myMarkers: L.Marker[] = []
   mapOptions = ""
 
@@ -184,7 +184,9 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     // intent before touching either flag.
     this.hasSelectedReports = false
     // per https://stackoverflow.com/a/71574063/18004414 & https://github.com/Leaflet/Leaflet/issues/8451
-    this.myMarkerCluster = new MarkerClusterGroup()
+    this.myMarkerCluster = new MarkerClusterGroup<L.Marker>({
+      clusterLabel: cluster => `${cluster.getChildCount()} radio log entries`,
+    })
   }
 
   // override ngOnInit() {
@@ -546,6 +548,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     if (!this.displayedRadioLogEntries) {
       this.log.error(`displayMarkers did not find radio log entries to display`, this.id)
     }
+    const toAdd: L.Marker[] = []   // one bulk addLayers() call, faster than addLayer() per marker
     this.displayedRadioLogEntries.forEach(i => {
       if (i.location.lat && i.location.lng) {  // TODO: Do this in the FieldReports Service - or also the GMap; thewse only happened when location was broken???
         let title = `${i.callsign} at ${formatReportTime(i.date)} with ${i.status}`
@@ -558,12 +561,13 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
         // priority over callsign - see ranger-icon.ts's header comment for why.
         let marker = new L.Marker(new L.LatLng(i.location.lat, i.location.lng), { title: title, icon: rangerIconFor(i.rangerUid || i.callsign) })
         marker.bindPopup(title)
-        this.myMarkerCluster.addLayer(marker);
+        toAdd.push(marker)
       } else {
         console.warn(`displayAllMarkers: skipping report # ${i.id}; bad lat/lng: ${i}: ${JSON.stringify(i)}`)
       }
     })
 
+    this.myMarkerCluster.addLayers(toAdd)
     this.lMap.addLayer(this.myMarkerCluster);
 
     // to refresh markers that have changed:
