@@ -116,16 +116,31 @@
       Just those ({{numSelectedRows()}}) selected on the Radio Log page
     </mat-slide-toggle>
   </div>
-  <!-- E-190: thins the entry markers (after the switch above). Paths always show the full trail. -->
-  <div class="map-display__row map-show">
+  <!-- E-190: thins the entry markers (after the switch above). Paths always show the full trail.
+       2026-11-04, John: was one All / Latest per ranger / Needs attention choice. Now a list of
+       statuses to pick any mix from (Needs attention is a preset for it), and Latest per ranger and
+       Trails as their own checkboxes. Trails is the layers box's Ranger paths, same switch. -->
+  <div class="map-display__row map-show" role="group" aria-labelledby="map-show-label">
     <span id="map-show-label">Show:</span>
-    <mat-button-toggle-group class="map-show__choice" hideSingleSelectionIndicator
-      [value]="showChoice()" (change)="onShowChoice($event.value)" aria-labelledby="map-show-label"
-      data-testid="map-show-choice">
-      <mat-button-toggle value="all">All</mat-button-toggle>
-      <mat-button-toggle value="latest" title="One marker per ranger: the newest report, with no trails">Latest per ranger</mat-button-toggle>
-      <mat-button-toggle value="attention" title="Only statuses flagged on the Mission page (Flag on map)">Needs attention</mat-button-toggle>
-    </mat-button-toggle-group>
+    <mat-form-field class="map-show__statuses" subscriptSizing="dynamic">
+      <mat-label>Statuses</mat-label>
+      <mat-select multiple [value]="show().statuses" (selectionChange)="onShowStatuses($event.value)"
+        placeholder="All" data-testid="map-show-statuses">
+        <mat-select-trigger>{{ statusesTrigger() }}</mat-select-trigger>
+        @for (s of statusChoices(); track s.status) {
+          <mat-option [value]="s.status">{{ s.status }}@if (s.flagged) {<span class="map-show__flag" title="Flag on map (Mission page)"> ⚑</span>}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button type="button" (click)="onShowStatuses([])" [disabled]="!show().statuses.length"
+      data-testid="map-show-all-statuses">All statuses</button>
+    <button mat-stroked-button type="button" (click)="onShowNeedsAttention()"
+      title="The statuses ticked Flag on map on the Mission page (marked ⚑ in the list)"
+      data-testid="map-show-attention">Needs attention</button>
+    <mat-checkbox [checked]="show().latestOnly" (change)="onLatestOnly($event.checked)"
+      title="One marker per ranger: their newest report" data-testid="map-show-latest">Latest per ranger</mat-checkbox>
+    <mat-checkbox [checked]="pathsOn()" (change)="onTrails($event.checked)"
+      title="Each ranger's path (the same switch as Ranger paths in the layers box)" data-testid="map-show-trails">Trails</mat-checkbox>
   </div>
   <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
   <!-- 2026-09-30, John: ring spacing, shown while the Range rings overlay is on. Far left is

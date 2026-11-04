@@ -8,9 +8,9 @@ import * as L from 'leaflet'
 import { removeLeafletMap } from '../shared/mapping/leaflet-teardown'
 import { FilterChipsComponent } from '../shared/filter-chips/filter-chips.component'
 import {
-  MapShowChoice, flaggedStatuses, mapFilterChips, selectMapEntries
+  MapShowState, SHOW_EVERYTHING, flaggedStatuses, isStatusFlagged, mapFilterChips, selectMapEntries
 } from '../domain/map-entry-filter'
-import { HEAT_OPACITY, heatPoints } from './heat-points'
+import { HEAT_OPACITY, HEAT_OPTIONS, heatPoints } from './heat-points'
 import { LeafletOverlays, RING_STEPS_MILES, formatRingMiles } from './leaflet-overlays'
 import { LeafletOfflineController } from './leaflet-offline-controller'
 import { LeafletPrintController } from './leaflet-print-controller'
@@ -26,6 +26,8 @@ import {
 } from '@angular/core'
 import { MatButtonModule } from '@angular/material/button'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
+import { MatCheckboxModule } from '@angular/material/checkbox'
+import { MatSelectModule } from '@angular/material/select'
 import { MatSliderModule } from '@angular/material/slider'
 import { MatDialog } from '@angular/material/dialog'
 import { MatIconModule } from '@angular/material/icon'
@@ -72,7 +74,7 @@ const ringStepIndex = signal(0)
 @Component({
   selector: 'rangertrak-mapLeaflet',
   standalone: true,
-  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatButtonToggleModule, MatSliderModule, MatIconModule,
+  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatSelectModule, MatSliderModule, MatIconModule,
     FilterChipsComponent, MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [
@@ -149,7 +151,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     try {
       const { HeatLayer } = await import('leaflet.heat')
       if (!this.heatLayer) {
-        this.heatLayer = new HeatLayer(heatPoints(this.shownEntries()), { pane: 'heatPane', radius: 25, blur: 15 })
+        this.heatLayer = new HeatLayer(heatPoints(this.shownEntries()),
+          { pane: 'heatPane', ...HEAT_OPTIONS })
         this.heatGroup.addLayer(this.heatLayer)
       }
     } finally { this.heatLoading = false }
@@ -228,12 +231,12 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   readonly locationsOn = signal(true)
   readonly entriesOn = signal(true)
   readonly pathsOn = signal(true)
-  readonly showChoice = signal<MapShowChoice>('all')
+  readonly show = signal<MapShowState>(SHOW_EVERYTHING)
   /** Mirrors AbstractMap.showingSelectedOnly (a plain field) so the chips can react to it. */
   readonly selectedOnly = signal(false)
   readonly filterChips = computed(() => mapFilterChips({
     locationsHidden: !this.locationsOn(), entriesHidden: !this.entriesOn(), pathsHidden: !this.pathsOn(),
-    choice: this.showChoice(), selectedOnly: this.selectedOnly(),
+    show: this.show(), selectedOnly: this.selectedOnly(),
   }))
   /** The printed title block's "Filtered: ..." text; empty when nothing is filtered. */
   readonly printFilterLine = computed(() => this.filterChips().map(c => c.label).join('; '))
@@ -1014,7 +1017,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
     // E-190: the Show choice thins the entry MARKERS; trails below still use the full
     // displayedRadioLogEntries (after the selected-only switch), so a path is always the whole trail.
-    // Except "Latest per ranger" (John 2026-10-27): one point each, so no paths at all.
+    // "Latest per ranger" hid the paths from 2026-10-27; since 2026-11-04 Trails is its own switch.
     const shown = this.shownEntries()
     this.legendEntries.set([...shown])
     // One addLayers() call instead of addLayer() per marker: markercluster 2.0 bulk-adds about 2x faster.
@@ -1065,7 +1068,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // E-190: a layer the scribe unticked in the layers control stays off across redraws.
     if (this.entriesOn()) this.lMap.addLayer(this.myMarkerCluster)
 
-    this.overlays.drawTrails(this.showChoice() !== 'latest')
+    this.overlays.drawTrails()
     if (this.pathsOn()) this.lMap.addLayer(this.myTrailsLayer)
 
     // to refresh markers that have changed:
@@ -1240,16 +1243,46 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     deeperTilesSaved: layer => this.offline.deeperTilesSaved(layer),
   }, this.overlays)
 
-  /** E-190: the displayed entries after the Show choice (selected-only has already been applied). */
+  /** E-190: the displayed entries after the Show filters (selected-only has already been applied). */
   private shownEntries(): RadioLogEntryType[] {
-    return selectMapEntries(this.displayedRadioLogEntries, this.showChoice(),
-      flaggedStatuses(this.settings?.radioLogStatuses ?? []))
+    return selectMapEntries(this.displayedRadioLogEntries, this.show())
   }
 
-  /** The Show toggle group (template). */
-  onShowChoice(choice: MapShowChoice): void {
-    this.showChoice.set(choice)
+  /** The Statuses list: the mission's statuses, each marked when it is flagged (Needs attention). */
+  statusChoices(): { status: string, flagged: boolean }[] {
+    return (this.settings?.radioLogStatuses ?? []).map(s => ({ status: s.status, flagged: isStatusFlagged(s) }))
+  }
+
+  /** What the closed Statuses list reads with something picked (with nothing, its placeholder: All). */
+  statusesTrigger(): string {
+    const picked = this.show().statuses
+    return picked.length === 1 ? picked[0] : `${picked.length} picked`
+  }
+
+  private setShow(change: Partial<MapShowState>): void {
+    this.show.update(s => ({ ...s, ...change }))
     this.displayMarkers()
+  }
+
+  /** The Statuses list, and its All statuses button ([] = every status). */
+  onShowStatuses(statuses: string[]): void {
+    this.setShow({ statuses: [...statuses] })
+  }
+
+  /** Needs attention: the statuses flagged on the Mission page. */
+  onShowNeedsAttention(): void {
+    this.setShow({ statuses: [...flaggedStatuses(this.settings?.radioLogStatuses ?? [])] })
+  }
+
+  onLatestOnly(on: boolean): void {
+    this.setShow({ latestOnly: on })
+  }
+
+  /** The Trails checkbox: the Ranger paths layer itself, so the layers box ticks along with it. */
+  onTrails(on: boolean): void {
+    if (on) { if (!this.lMap.hasLayer(this.myTrailsLayer)) this.lMap.addLayer(this.myTrailsLayer) }
+    else this.lMap.removeLayer(this.myTrailsLayer)
+    this.pathsOn.set(this.lMap.hasLayer(this.myTrailsLayer))
   }
 
   /** x on one chip: turns that one filter off. */
@@ -1258,15 +1291,16 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     switch (key) {
       case 'locations': add(this.locationsLayer); break
       case 'entries': add(this.myMarkerCluster); break
-      case 'paths': add(this.myTrailsLayer); break
-      case 'show': this.onShowChoice('all'); break
+      case 'paths': this.onTrails(true); break
+      case 'statuses': this.onShowStatuses([]); break
+      case 'latest': this.onLatestOnly(false); break
       case 'selected': if (this.showingSelectedOnly) this.onSwitchSelectedRadioLog(); break
     }
   }
 
   /** "Show everything": every filter off. */
   onClearAllFilters(): void {
-    for (const key of ['locations', 'entries', 'paths', 'selected', 'show']) this.onClearFilter(key)
+    for (const key of ['locations', 'entries', 'paths', 'selected', 'statuses', 'latest']) this.onClearFilter(key)
   }
 
   override onSwitchSelectedRadioLog() {

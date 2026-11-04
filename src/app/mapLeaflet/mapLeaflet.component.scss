@@ -627,6 +627,11 @@ mat-slide-toggle {
   gap        : 4px 8px;
 }
 
+// 2026-11-04: the Statuses list - wide enough for "Need rest/food", no wider.
+.map-show__statuses {
+  width: 13rem;
+}
+
 // (E-209: the Show and coordinate-format toggles used to carry their own height and font-size
 // here; both come from the global control rule now - styles/_patterns.scss.)
 
