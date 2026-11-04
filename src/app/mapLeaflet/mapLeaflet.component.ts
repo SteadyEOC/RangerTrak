@@ -168,11 +168,12 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private locations: MissionLocationType[] = []
   private locationsSubscription!: Subscription
 
-  // Armed by the "Add Location" button (template) - the NEXT plain map click places a
-  // location there instead of copying coordinates (onMouseClick, below), then disarms
+  // Armed by the Add place button in the places panel under the map - the NEXT plain map click
+  // places a location there instead of copying coordinates (onMouseClick, below), then disarms
   // itself. One-shot, same "click, done" shape as the mini-map's Alt+click-for-evidence
-  // gesture, rather than a persistent mode a scribe could forget is still on.
-  placingLocation = signal(false)
+  // gesture, rather than a persistent mode a scribe could forget is still on. Shared with
+  // MapLibre and the panel - see MapEngineService.placingLocation.
+  get placingLocation() { return this.engineService.placingLocation }
 
   // 2026-09-30, John: the readout under the map (and click-to-copy), in the same five formats
   // as Entry. Module-level, so the choice survives leaving and returning to the Map page; not
@@ -1122,11 +1123,6 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     })
   }
 
-  /** Toggled by the "Add Location" button (template). Arms the next plain map click. */
-  onToggleAddLocation(): void {
-    this.placingLocation.set(!this.placingLocation())
-  }
-
   /**
    * "Zoom to Extent" (maintainer ask, 2026-09-22): re-runnable, unlike the once-at-init
    * fitBounds() in ngOnInit() above, which always covers the WHOLE log regardless of the
@@ -1564,6 +1560,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   override ngOnDestroy(): void {
     super.ngOnDestroy()
     this.engineService.viewBounds.set(null)
+    this.engineService.placingLocation.set(false)
     this.engineService.placesPrinter.set(null)
     this.locationsSubscription?.unsubscribe()
     clearTimeout(this.afterViewInitTimer)

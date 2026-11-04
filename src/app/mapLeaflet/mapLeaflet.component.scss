@@ -330,8 +330,7 @@ mat-slide-toggle {
 // (a "Print map" button printed onto the page it just printed).
 @media print {
   .map-controls,
-  .offline-controls,
-  .map-add-location {
+  .offline-controls {
     display: none;
   }
 

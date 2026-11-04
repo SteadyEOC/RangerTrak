@@ -82,6 +82,7 @@ export class PlacesIoComponent {
   private readonly categoryNames = signal<string[]>([])
 
   readonly engine = this.engineService.engine
+  readonly placingLocation = this.engineService.placingLocation
 
   /** Category names the user has unticked; a category that is new since is ticked by default. */
   readonly excluded = signal<ReadonlySet<string>>(new Set())
@@ -108,6 +109,16 @@ export class PlacesIoComponent {
   /** The format the sheet writes coordinates in; the same one as the map's readout (DD, DDM or USNG). */
   readonly coordFormat = this.engineService.coordFormat
   readonly coordFormats = COORDINATE_FORMATS
+
+  /**
+   * Add place: arms the next plain click on the map (either engine) to place a Place there.
+   * This panel is below the map, so arming brings the map into view to be clicked.
+   */
+  onToggleAddPlace(): void {
+    const armed = !this.placingLocation()
+    this.placingLocation.set(armed)
+    if (armed) this.document.querySelector('.map-fullscreen-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
   setCoordFormat(value: CoordinateFormat): void {
     this.engineService.chooseCoordFormat(value)
   }

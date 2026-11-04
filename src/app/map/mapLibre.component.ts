@@ -47,6 +47,7 @@ import { locationMarkerSvg, resolveLocationIcon } from '../shared/mapping/locati
 // Imported directly, not via the '../shared' barrel - same reasoning as the other
 // shared/mapping/* imports above, this file must not risk pulling Leaflet in.
 import { computeExtent, ExtentPoint } from '../shared/mapping/extent'
+import { MapEngineService } from './map-engine.service'
 import {
   RadioLogType, RadioLogService, RadioLogEntryType, LogService, MissionLocationService,
   MissionLocationType, MissionService, MissionType, CustomPmtilesService, OfflineBasemapService
@@ -162,10 +163,11 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   // E-268: one heading arrow per clue that has a heading, rotated true-north on the map.
   private headingMarkers: Marker[] = []
 
-  // Armed by the "Add Location" button (template) - the next plain map click places a
-  // location there instead of copying coordinates (onMapClick, below), then disarms itself.
-  // Mirrors LmapComponent's own placingLocation - see its comment for why one-shot.
-  public placingLocation = signal(false)
+  // Armed by the Add place button in the places panel under the map - the next plain map click
+  // places a location there instead of copying coordinates (onMapClick, below), then disarms
+  // itself. Shared with Leaflet and the panel - see MapEngineService.placingLocation.
+  private readonly engineService = inject(MapEngineService)
+  public readonly placingLocation = this.engineService.placingLocation
 
   // Safety net for the "adjacent tiles stay gray after a fast zoom-out" bug (root cause:
   // see registerPmtilesProtocol()'s own doc comment in map-style.ts) - maplibre-gl's own
@@ -1045,11 +1047,6 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     })
   }
 
-  /** Toggled by the "Add Location" button (template). Arms the next plain map click. */
-  onToggleAddLocation(): void {
-    this.placingLocation.set(!this.placingLocation())
-  }
-
   /**
    * "Zoom to Extent" (maintainer ask, 2026-09-22): re-runnable, unlike the once-at-load
    * fitToBounds() above, which always covers the WHOLE log and ignores evidence markers and
@@ -1114,6 +1111,7 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.placingLocation.set(false)
     this.missionSubscription?.unsubscribe()
     this.radioLogSubscription?.unsubscribe()
     this.locationsSubscription?.unsubscribe()

@@ -1,8 +1,8 @@
 @if (!fieldMode.enabled()) {
-<rangertrak-expandable-section class="rt-io-trigger" description="Bring lists in, hand them on, print them">
+<rangertrak-expandable-section class="rt-io-trigger" [description]="description()">
   <span rtSummary class="rt-io-summary">
     <mat-icon aria-hidden="true">import_export</mat-icon>
-    Import, export &amp; print
+    {{ label() }}
   </span>
   <div class="rt-io-zone">
     <div class="rt-card-grid" rtMasonry>

@@ -83,14 +83,7 @@
     {{ printPreparing() ? 'Preparing the map…' : 'Print map' }}
   </button>
 
-  <!-- ADR D-49: arms the next plain map click to place a Location there instead of copying
-       coordinates - see placingLocation's own comment (mapLeaflet.component.ts) for why this
-       is one-shot rather than a persistent mode. Moved up into this row 2026-09-30. -->
-  <button matButton="outlined" type="button" class="map-add-location" (click)="onToggleAddLocation()"
-    [attr.aria-pressed]="placingLocation()">
-    <mat-icon>add_location</mat-icon>
-    {{ placingLocation() ? 'Click the map to place it…' : 'Add Place' }}
-  </button>
+  <!-- Add place moved to the places panel under the map (places-io), 2026-11-04, John. -->
 </div>
 
 <!-- Maintainer, 2026-08-24: the offline-save control (Save this area / Remove saved tiles)

@@ -55,6 +55,14 @@ export class MapEngineService {
    */
   readonly placesPrinter = signal<((places: readonly MissionLocationType[]) => Promise<() => void>) | null>(null)
 
+  /**
+   * ADR D-49: armed by the Add place button - the NEXT plain map click places a Place there
+   * instead of copying coordinates, then disarms. One-shot rather than a persistent mode a scribe
+   * could forget is on. Here rather than in either engine because the button lives in the places
+   * panel under the map (John, 2026-11-04); each engine reads it, and disarms it when it goes away.
+   */
+  readonly placingLocation = signal(false)
+
   setEngine(engine: MapEngine): void {
     this.engine.set(engine)
   }

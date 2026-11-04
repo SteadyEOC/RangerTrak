@@ -2,11 +2,13 @@
      panel, in the same card style as the one on Rangers. It hides itself in field mode. Phase D
      (2026-10-16) added the Print card and the print-only places sheet at the foot of this file. The file input is triggered from a real button via .click(), called
      synchronously inside the click handler, as on Rangers. -->
-<rangertrak-io-panel class="map-print-hide" [rtAdvanced]="'places-import'">
+<!-- 2026-11-04, John: the bar names places and says what the panel is for; Add place moved in here. -->
+<rangertrak-io-panel class="map-print-hide" [rtAdvanced]="'places-import'"
+  label="Import, export &amp; print places" description="Edit fixed places on the map">
   <mat-card appearance="outlined" class="rt-mission-card rt-io-card">
     <mat-card-header>
-      <mat-card-title>Import</mat-card-title>
-      <mat-card-subtitle>Adds to the map; no place is deleted.</mat-card-subtitle>
+      <mat-card-title>Import places</mat-card-title>
+      <mat-card-subtitle>Add predefined places as a layer to the map. Existing places remain.</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       <div class="rt-action-bar__buttons">
@@ -17,6 +19,15 @@
         </button>
         <input #importPlacesFile id="importPlacesFile" type="file"
           accept=".csv,.xlsx,.xls,.kml,.kmz,.geojson,.json,.zip" (change)="onImportFileSelected($event)" hidden />
+        <!-- ADR D-49: arms the next plain map click to place one Place there instead of copying
+             coordinates (MapEngineService.placingLocation). Scrolls the map into view, since this
+             panel sits below it. Moved here from the map's own button row 2026-11-04, John. -->
+        <button matButton="outlined" type="button" data-testid="addPlace" (click)="onToggleAddPlace()"
+          [attr.aria-pressed]="placingLocation()" [class.rt-toggled-on]="placingLocation()"
+          title="Then click the map where the place is.">
+          <mat-icon>add_location</mat-icon>
+          {{ placingLocation() ? 'Click the map to place it…' : 'Add place' }}
+        </button>
       </div>
       <p class="places-io__links">
         Rows without coordinates are skipped; addresses are not looked up.

@@ -147,14 +147,7 @@
           Print map
         </button>
 
-        <!-- ADR D-49: arms the next plain map click to place a Location there instead of
-             copying coordinates - see placingLocation's own comment (mapLibre.component.ts)
-             for why this is one-shot rather than a persistent mode. -->
-        <button matButton="outlined" type="button" (click)="onToggleAddLocation()"
-          [attr.aria-pressed]="placingLocation()">
-          <mat-icon>add_location</mat-icon>
-          {{ placingLocation() ? 'Click the map to place it…' : 'Add Place' }}
-        </button>
+        <!-- Add place moved to the places panel under the map (places-io), 2026-11-04, John. -->
       </div>
     </mat-card-content>
   </mat-card>

@@ -1,5 +1,5 @@
 import { MasonryDirective } from '../layout/masonry.directive'
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core'
 
 import { MatIconModule } from '@angular/material/icon'
 import { MatCardModule } from '@angular/material/card'
@@ -28,4 +28,7 @@ import { FieldModeService } from '../services/field-mode.service'
 })
 export class IoPanelComponent {
   protected readonly fieldMode = inject(FieldModeService)
+  /** The bar's title and its right-hand line; a page may name its own (Map: "... places"). */
+  readonly label = input('Import, export & print')
+  readonly description = input('Bring lists in, hand them on, print them')
 }
