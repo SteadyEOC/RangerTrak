@@ -421,15 +421,17 @@ numbered circle; zoom in to separate them. Click a marker for detail.
   roads and place names, marked hiking trails and terrain relief (these need Internet; their
   providers don't allow offline saving); USGS aerial photos and shaded relief (US only, can be
   saved for offline use, about twice OpenTopoMap's size); your **Places**; a USNG / MGRS grid
-  and range rings around the command post (both work with no Internet).
+  (works with no Internet).
 - **Offline maps** (a box under the map) is green when tiles are saved on this device and amber
   when nothing is. **Save this area for offline use**, **Remove saved tiles** and **Zoom to
   offline tiles** (shows the areas you have saved) are all in it.
-- **Trails.** Each ranger's trail runs thin and faint (older) to thick and bright (newest), and
+- **Ranger paths.** Each ranger's trail runs thin and faint (older) to thick and bright (newest), and
   the newest leg slowly flows toward the latest position.
-- **Show on map** (the other box under the map) narrows what is drawn: **Trails**, **Latest per
-  ranger** (one marker each), a **Statuses** list, and **Needs attention** (the statuses ticked
-  Needs attention on the Mission page). A strip along the top of the map lists whatever is
+- **Show on map** (the other box under the map) switches the mission's own overlays and
+  narrows what is drawn: **Ranger paths**, **Latest per ranger** (one marker each), **Heat map**
+  (where entries cluster), **Range rings** around the command post (both work with no Internet),
+  a **Statuses** list, and **Needs attention** (the statuses ticked Needs attention on the
+  Mission page). A strip along the top of the map lists whatever is
   filtered.
 - **Just the selected reports.** Select rows on the **Radio Log**, then on the Map tick
   **Selected entries**. Useful for a single team or incident.

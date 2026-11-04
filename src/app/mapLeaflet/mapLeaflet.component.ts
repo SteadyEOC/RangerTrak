@@ -138,8 +138,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   get rangeRingsLayer() { return this.overlays.rangeRingsLayer }
   mapOptions = ""
 
-  // 2026-11-03, John: E-274 - heat map of radio log entries. The layers-box checkbox is the only
-  // switch: it toggles this placeholder group, and the HeatLayer (leaflet.heat, lazy-loaded so it
+  // 2026-11-03, John: E-274 - heat map of radio log entries. The Heat map checkbox in the Show on map
+  // box (E-277; it was in the layers box) is the only switch: it toggles this placeholder group, and the HeatLayer (leaflet.heat, lazy-loaded so it
   // stays out of the eager bundle) is created inside it on first overlayadd.
   readonly heatGroup = new L.LayerGroup()
   private heatLayer?: import('leaflet.heat').HeatLayer
@@ -204,7 +204,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private layersBox: HTMLElement | null = null
 
   /**
-   * E-207 / D-62: in Simple view the layers box shows its extras (USNG/MGRS grid, range rings, satellite,
+   * E-207 / D-62: in Simple view the layers box shows its extras (USNG/MGRS grid, satellite,
    * hiking trails) only while one of them is on, so a layer in use can always be switched off. Rows are
    * hidden, never removed from the control, so nothing is switched on or off by the view. In Full view each
    * row carries the plum left-edge rule (styles/_patterns.scss).
@@ -227,6 +227,15 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
   /** Whether the Range rings overlay is on (the slider only shows then). */
   readonly ringsOn = signal(false)
+  /** Whether the Heat map is on (its Show on map checkbox). */
+  readonly heatShown = signal(false)
+  /**
+   * E-277: Heat map and Range rings moved from the layers box to the Show on map box, and keep the
+   * layers box's E-207 / D-62 rule: in Simple view they show only while one of them is on.
+   */
+  readonly showMapExtras = computed(() =>
+    this.view.isShown('map-layers-extra', { mapExtraLayersOn: this.heatShown() || this.ringsOn() }))
+  readonly markMapExtras = computed(() => this.view.isAdvanced('map-layers-extra'))
 
   // E-190: the map's filters. Instance signals, NOT module-level and not stored: every visit to
   // the page starts with everything shown (John, 2026-10-15).
@@ -618,25 +627,31 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const overlayLayers: Record<string, L.Layer> = {
       'Places': this.locationsLayer,
       'Radio log entries': this.myMarkerCluster,
-      'Ranger paths': this.myTrailsLayer,
-      'Heat map (radio log entries)': this.heatGroup,
       'Hillshade (terrain relief)': hillshadeOverlay,
       'USGS shaded relief (US only, can be saved)': usgsReliefOverlay,
       'Mile grid': this.mileGridLayer,
       'USNG / MGRS grid': this.usngGridLayer,
-      'Range rings (from command post)': this.rangeRingsLayer,
       'Hiking trails (Waymarked Trails)': trailsOverlay,
       'Roads and place names (for Satellite)': roadsLabelsOverlay,
     }
     const layersControl = new L.LayersControl(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
     // E-207 / D-62: the layers box extras that Simple view hides while none is on (see syncLayerExtras()).
     this.layerExtras = [
-      ['Heat map (radio log entries)', this.heatGroup],
-      ['USNG / MGRS grid', this.usngGridLayer], ['Range rings (from command post)', this.rangeRingsLayer],
+      ['USNG / MGRS grid', this.usngGridLayer],
       ['Satellite (Esri World Imagery)', satelliteTiles], ['Roads and place names (for Satellite)', roadsLabelsOverlay],
       ['Hiking trails (Waymarked Trails)', trailsOverlay],
     ].map(([label, layer]) => ({ label: label as string, layer: layer as L.Layer }))
     this.layersBox = layersControl.getContainer() ?? null
+    // 2026-11-04, John: E-277 - the mission's own overlays (Ranger paths, Heat map, Range rings) left the
+    // layers box for the Show on map box, the way CalTopo / Gaia GPS / Field Maps keep the box for base
+    // maps and reference overlays. The control only fires overlayadd/overlayremove for its own rows, so
+    // these three re-fire them from the map's layeradd/layerremove, and every handler below (legend,
+    // chips, ring and heat refresh, the print's own rings) still sees them.
+    const showBoxLayers = new Set<unknown>([this.myTrailsLayer, this.heatGroup, this.rangeRingsLayer])
+    this.lMap.on('layeradd layerremove', (e: L.LeafletEvent) => {
+      const layer = (e as L.LeafletEvent & { layer: L.Layer }).layer
+      if (showBoxLayers.has(layer)) this.lMap.fire(e.type === 'layeradd' ? 'overlayadd' : 'overlayremove', { layer })
+    })
     this.lMap.on('overlayadd overlayremove baselayerchange', () => this.syncLayerExtras())
     this.syncLayerExtras()
     // E-190: the three data overlays start ON (their checkboxes ticked), before any entries exist
@@ -671,7 +686,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const syncLegendOverlays = () => this.legendOverlays.set(
       [...legendKeys].filter(([layer]) => this.lMap.hasLayer(layer)).map(([, key]) => key))
     this.lMap.on('overlayadd overlayremove', syncLegendOverlays)
-    this.lMap.on('overlayadd overlayremove', () => this.ringsOn.set(this.lMap.hasLayer(this.rangeRingsLayer)))
+    this.lMap.on('overlayadd overlayremove', () => {
+      this.ringsOn.set(this.lMap.hasLayer(this.rangeRingsLayer))
+      this.heatShown.set(this.heatOn())
+    })
     // E-190: the three data overlays feed the filter chips.
     this.lMap.on('overlayadd overlayremove', (e: L.LeafletEvent) => {
       this.locationsOn.set(this.lMap.hasLayer(this.locationsLayer))
@@ -1275,11 +1293,19 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.setShow({ latestOnly: on })
   }
 
-  /** The Trails checkbox: the Ranger paths layer itself, so the layers box ticks along with it. */
+  /** The Ranger paths checkbox in the Show on map box (its only switch since E-277). */
   onTrails(on: boolean): void {
-    if (on) { if (!this.lMap.hasLayer(this.myTrailsLayer)) this.lMap.addLayer(this.myTrailsLayer) }
-    else this.lMap.removeLayer(this.myTrailsLayer)
+    this.switchLayer(this.myTrailsLayer, on)
     this.pathsOn.set(this.lMap.hasLayer(this.myTrailsLayer))
+  }
+
+  /** E-277: the Heat map and Range rings checkboxes in the Show on map box. */
+  onHeat(on: boolean): void { this.switchLayer(this.heatGroup, on) }
+  onRings(on: boolean): void { this.switchLayer(this.rangeRingsLayer, on) }
+
+  private switchLayer(layer: L.Layer, on: boolean): void {
+    if (on) { if (!this.lMap.hasLayer(layer)) this.lMap.addLayer(layer) }
+    else this.lMap.removeLayer(layer)
   }
 
   /** x on one chip: turns that one filter off. */

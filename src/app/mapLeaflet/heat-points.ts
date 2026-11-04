@@ -21,7 +21,7 @@ export const HEAT_OPTIONS = { radius: 25, blur: 15, maxZoom: 14, max: 2, minOpac
 /**
  * The heat map's colours, cold to hot: leaflet.heat's own default, written out so the printed
  * legend's swatch is drawn from the same stops (2026-11-04, John: the swatch was flat salmon while
- * the map showed a rainbow). Passed to the layer as its `gradient` option too.
+ * the map showed a rainbow). Passed to the layer as its gradient option too.
  */
 export const HEAT_GRADIENT: Readonly<Record<number, string>> = { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red' }
 

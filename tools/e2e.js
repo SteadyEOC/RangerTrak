@@ -4848,9 +4848,11 @@ async function checkMapFilterChips() {
   const strip = () => evaluate(`!!document.querySelector('rangertrak-filter-chips')`)
   const trailsTicked = () => evaluate(`document.querySelector('[data-testid="map-show-trails"] input')?.checked`)
   check('no filters: the strip is not there', await strip(), false)
-  await evaluate(`[...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
-    .find(l => /Ranger paths/.test(l.textContent))?.querySelector('input')?.click()`)
-  check('Ranger paths off: Trails unticks', await pollUntil(trailsTicked, v => v === false, 10, 300), false)
+  // E-277: Ranger paths is only in the Show on map box now, not the layers box.
+  check('the layers box no longer offers Ranger paths, Heat map or Range rings', await evaluate(`[...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
+    .some(l => /Ranger paths|Heat map|Range rings/.test(l.textContent))`), false)
+  await evaluate(`document.querySelector('[data-testid="map-show-trails"] input')?.click()`)
+  check('Ranger paths off: its checkbox unticks', await pollUntil(trailsTicked, v => v === false, 10, 300), false)
   check('Ranger paths off: still no strip', await strip(), false)
   // 2026-11-04: Needs attention is a button that picks the flagged statuses; the chip names them.
   await evaluate(`document.querySelector('[data-testid="map-show-attention"]')?.click()`)
@@ -4948,12 +4950,11 @@ async function checkRangeRingsAndCoordReadout() {
   check('no range rings are drawn while the overlay is off', await ringCount(), 0)
 
   const ticked = await evaluate(`(() => {
-    const label = [...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
-      .find(l => /Range rings/.test(l.textContent));
-    label?.querySelector('input')?.click();
-    return !!label;
+    const input = document.querySelector('[data-testid="map-show-rings"] input');
+    input?.click();
+    return !!input;
   })()`)
-  check('the layers box offers Range rings', ticked, true)
+  check('the Show on map box offers Range rings', ticked, true)
   const before = await pollUntil(visibleLabels, v => v.length > 0)
   const count = await ringCount()
   check('range rings are drawn once the overlay is ticked', count > 0 && count <= 25, true)
@@ -5002,15 +5003,13 @@ async function checkRangeRingsAndCoordReadout() {
 
   // 2026-11-03, John: E-274 - the heat map is one checkbox: ticking it draws a canvas in the heat pane.
   const heatBox = (on) => evaluate(`(() => {
-    const label = [...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
-      .find(l => /Heat map/.test(l.textContent));
-    const input = label?.querySelector('input');
+    const input = document.querySelector('[data-testid="map-show-heat"] input');
     if (input && input.checked !== ${on}) input.click();
     return !!input;
   })()`)
   const heatCanvases = () => evaluate(`document.querySelectorAll('#mapLeaflet-main .leaflet-heatPane-pane canvas').length`)
   check('the heat map starts off (no canvas)', await heatCanvases(), 0)
-  check('the layers box offers a Heat map row', await heatBox(true), true)
+  check('the Show on map box offers Heat map', await heatBox(true), true)
   check('ticking Heat map draws a canvas in the heat pane', await pollUntil(heatCanvases, v => v > 0, 10, 300) > 0, true)
   await heatBox(false)
   check('unticking Heat map removes the canvas', await pollUntil(heatCanvases, v => v === 0, 10, 300), 0)
@@ -5443,13 +5442,15 @@ async function checkSimpleView(fx) {
       [await has('[data-testid=zoomToExtent]'), await has('[data-testid=zoomToOfflineTiles]')], [true, true])
     const rows = await evaluate(`(() => {
       const labels = [...document.querySelectorAll('.leaflet-control-layers label')]
-      const extra = labels.filter(l => /USNG|Range rings|Satellite|Hiking|Roads and place/.test(l.textContent))
+      const extra = labels.filter(l => /USNG|Satellite|Hiking|Roads and place/.test(l.textContent))
       const core = labels.filter(l => /OpenStreetMap|Places|Radio log entries/.test(l.textContent))
       return { extra: extra.length, extraHidden: extra.every(l => getComputedStyle(l).display === 'none'),
         coreShown: core.length >= 3 && core.every(l => getComputedStyle(l).display !== 'none') }
     })()`)
-    check('the layers box hides its extras (grid, rings, satellite, hiking trails) and keeps the base layers',
+    check('the layers box hides its extras (grid, satellite, hiking trails) and keeps the base layers',
       [rows.extra > 0, rows.extraHidden, rows.coreShown], [true, true, true])
+    check('the Show on map box hides Heat map and Range rings (E-277)',
+      await firstPresent(['[data-testid=map-show-heat]', '[data-testid=map-show-rings]']), null)
     check('Map has the header Full view switch', await has('[data-testid=view-switch-header]'), true)
 
     await goto('/rangers', 4000)
