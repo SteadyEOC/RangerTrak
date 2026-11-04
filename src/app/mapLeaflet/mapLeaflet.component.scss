@@ -588,7 +588,17 @@ mat-slide-toggle {
 // zoom control (top-left) and clear of the layers control (top-right). A 4-digit z-index puts it
 // above Leaflet's panes and controls (up to 1000). Absent from the DOM when nothing is filtered.
 .mapLeaflet-frame {
-  position: relative;
+  position : relative;
+  // 2026-11-04, John (a longitude label over the open layers menu): Leaflet 2 sets
+  // `isolation: isolate` on .leaflet-container, which shut its controls (1000) into the map's own
+  // stacking context, so the edge ticks (900) and filter chips beside it beat the whole map,
+  // layers menu included. The frame holds the isolation instead: controls, ticks, chips and print
+  // panels stack against each other again, and none of it can paint over the page around the map.
+  isolation: isolate;
+}
+
+#mapLeaflet-main.leaflet-container {
+  isolation: auto;
 }
 
 .map-filter-chips {
