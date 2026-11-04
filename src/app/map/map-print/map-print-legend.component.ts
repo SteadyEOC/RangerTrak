@@ -7,6 +7,7 @@ import { MissionLocationService, MissionService, RadioLogEntryType } from '../..
 import { locationMarkerSvg, resolveLocationIcon } from '../../shared/mapping/location-marker'
 import { radioLogStatusColor, locationCategoryColor } from '../../shared/mapping/report-marker-status'
 import { evidenceMarkerSvg, headingArrowSvg, rangerColorFor, rangerShapeMarkup } from '../../shared/mapping/ranger-marker'
+import { HEAT_OPACITY, heatGradientCss } from '../../mapLeaflet/heat-points'
 
 /**
  * 2026-09-30, John: E-152 part 1 - the legend on the printed map sheet. Hidden on screen
@@ -73,6 +74,9 @@ export class MapPrintLegendComponent {
   // E-268: the heading arrow has its own legend line, only when a drawn clue carries a heading.
   readonly hasHeading = computed(() => this.drawn().some(e => !!e.evidenceLocation && e.evidenceDirection != null))
   readonly headingSwatch = this.trusted(headingArrowSvg())
+  /** The heat map row's swatch: the map's own colour ramp and pane opacity (heat-points.ts). */
+  readonly heatGradient = heatGradientCss()
+  readonly heatOpacity = HEAT_OPACITY
 
   /** Leaflet draws a trail for any ranger with two or more reports; MapLibre draws none. */
   readonly hasTrails = computed(() => {

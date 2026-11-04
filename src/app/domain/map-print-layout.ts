@@ -376,3 +376,30 @@ export function planBadges(badges: readonly BadgeInput[], icons: readonly PrintR
   }
   return fallback ?? { sides: [], scale: 1 }
 }
+
+/**
+ * 2026-11-04, John: E-267 - "Print map PDF ends with blank pages". Chrome counts the printed pages
+ * once, when the print starts and before the print media handler (layoutPrintSheet) runs, then
+ * draws each page from the layout as it is by then. A count taken with the legend still unplaced
+ * (a tall panel hanging off the map) gave 4 pages for 2 of content (Montecito 11-04: "Page 1 of 2",
+ * pages 3-4 empty); a legend that moved to page 2 only after the count would be cut off instead.
+ * So whether the legend gets a page of its own is decided BEFORE window.print(), from its size
+ * alone, and the handler keeps to it.
+ *
+ * The estimate: the compact legend's rows and group headings stacked in one column, times the
+ * column width (~44 mm a column at the 92/134/176 mm widths tried), is the area it covers on the
+ * map whichever width is picked. More than `share` of the printed map (landscape Letter, 980 x
+ * 660 CSS px less the "Prepared by" line) and it goes to page 2. Below that it floats on the map,
+ * over a marker if no clear spot is left (better than losing it).
+ */
+export const LEGEND_ROW_PX = 17     // a compact row: 16 px icon + 0.2 mm
+export const LEGEND_HEADING_PX = 15 // a group heading: 8 pt + 0.6 mm
+const LEGEND_COLUMN_PX = 44 / 25.4 * 96
+
+export function legendNeedsOwnPage(
+  rows: number, groups: number,
+  map: { width: number, height: number } = { width: 980, height: 660 }, share = 0.25,
+): boolean {
+  const stacked = rows * LEGEND_ROW_PX + groups * LEGEND_HEADING_PX
+  return LEGEND_COLUMN_PX * stacked > share * map.width * map.height
+}

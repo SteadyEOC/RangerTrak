@@ -1,4 +1,4 @@
-import { heatPoints } from './heat-points'
+import { HEAT_GRADIENT, heatGradientCss, heatPoints } from './heat-points'
 
 describe('heatPoints (E-274)', () => {
   it('turns entries with a location into [lat, lng] points, one each', () => {
@@ -18,5 +18,15 @@ describe('heatPoints (E-274)', () => {
     const all = [{ location: { lat: 1, lng: 1 } }, { location: { lat: 2, lng: 2 } }, { location: { lat: 3, lng: 3 } }]
     expect(heatPoints(all.filter(e => e.location.lat !== 2))).toEqual([[1, 1], [3, 3]])
     expect(heatPoints([])).toEqual([])
+  })
+})
+
+describe('heatGradientCss', () => {
+  it('writes the heat map stops cold to hot, left to right', () => {
+    expect(heatGradientCss()).toBe('linear-gradient(to right, blue 40%, cyan 60%, lime 70%, yellow 80%, red 100%)')
+  })
+
+  it('is the gradient the layer is given (one source for map and legend)', () => {
+    expect(Object.keys(HEAT_GRADIENT).length).toBe(5)
   })
 })

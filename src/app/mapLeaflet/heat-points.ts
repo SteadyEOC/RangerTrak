@@ -19,6 +19,20 @@ export const HEAT_OPACITY = 0.85
 export const HEAT_OPTIONS = { radius: 25, blur: 15, maxZoom: 14, max: 2, minOpacity: 0.35 } as const
 
 /**
+ * The heat map's colours, cold to hot: leaflet.heat's own default, written out so the printed
+ * legend's swatch is drawn from the same stops (2026-11-04, John: the swatch was flat salmon while
+ * the map showed a rainbow). Passed to the layer as its `gradient` option too.
+ */
+export const HEAT_GRADIENT: Readonly<Record<number, string>> = { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red' }
+
+/** HEAT_GRADIENT as a CSS linear-gradient (left = cold), for the legend swatch. */
+export function heatGradientCss(gradient: Readonly<Record<number, string>> = HEAT_GRADIENT): string {
+  const stops = Object.entries(gradient).sort(([a], [b]) => +a - +b)
+    .map(([at, colour]) => `${colour} ${Math.round(+at * 100)}%`)
+  return `linear-gradient(to right, ${stops.join(', ')})`
+}
+
+/**
  * One [lat, lng] point per radio log entry that has a location. Every entry weighs the same.
  * Same test as the markers use (`location.lat && location.lng`), so what is hot is what is pinned.
  */

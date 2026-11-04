@@ -70,7 +70,7 @@
       }
       @if (overlays().includes('heat')) {
         <div class="legend__row">
-          <span class="legend__trail" style="border-top-color: #e8590c; border-top-width: 6px; opacity: 0.5"></span>
+          <span class="legend__heat" [style.background]="heatGradient" [style.opacity]="heatOpacity"></span>
           <span>Heat map: the warmer the colour, the more radio log entries at that spot</span>
         </div>
       }

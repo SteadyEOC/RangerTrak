@@ -4,7 +4,7 @@ import type { tileLayerOffline } from 'leaflet.offline'
 import type { ElementRef, Signal, TemplateRef, WritableSignal } from '@angular/core'
 import { edgeTickStep, formatEdgeTick, type CoordinateFormat } from '../domain/coordinate'
 import {
-  PrintPoint, PrintRect, choosePanelSpot, planFans, planBadges, padRect, BADGE_OVERLAP_PX,
+  PrintPoint, PrintRect, choosePanelSpot, planFans, planBadges, padRect, BADGE_OVERLAP_PX, legendNeedsOwnPage,
 } from '../domain/map-print-layout'
 import { printMapSheet } from '../map/map-print/map-print-sheet'
 import type { MissionType } from '../shared/services'
@@ -217,7 +217,15 @@ export class LeafletPrintController {
     if (this.printPreparing()) {
       return
     }
-    const undo = await this.prepareSharpPrint()
+    const undoPrep = await this.prepareSharpPrint()
+    // E-267: page 2 or not is settled here, before Chrome counts the pages (planLegendPage()).
+    this.planLegendPage()
+    const undo = () => {
+      this.legendPage2Planned = false
+      this.putLegendHome()
+      this.printLegend?.nativeElement.classList.remove('legend--compact')
+      undoPrep()
+    }
     // 2026-09-30, John: E-152 - the body class, and now a landscape page, live in the shared
     // helper so both engines print the same sheet.
     const started = Date.now()
@@ -668,11 +676,12 @@ export class LeafletPrintController {
       const visible = (selector: string, pad: number) => [...frame.querySelectorAll(selector)]
         .map(el => el.getBoundingClientRect()).filter(r => r.width && r.height)
         .map(r => padRect(rel(r), pad))
-      const hard = [
+      const markerRects = [
         ...visible('.leaflet-marker-icon:not(.rt-range-ring-label) > svg, .leaflet-marker-icon:not(.rt-range-ring-label):not(.rt-ranger-marker):not(.rt-evidence-marker)', 3),
         ...visible('.leaflet-tooltip', 3),
-        ...visible('.furniture, .leaflet-control-scale, .leaflet-control-attribution', 2),
       ]
+      const furniture = visible('.furniture, .leaflet-control-scale, .leaflet-control-attribution', 2)
+      const hard = [...markerRects, ...furniture]
       const soft = visible('.rt-range-ring-label span', 0)
       const segments: [PrintPoint, PrintPoint][] = []
       this.myTrailsLayer.eachLayer(layer => {
@@ -687,11 +696,11 @@ export class LeafletPrintController {
       // The scale bar and credits run along the bottom edge: panels sit above them.
       const credits = visible('.leaflet-control-scale, .leaflet-control-attribution', 0)
       const bottomExtra = credits.length ? Math.max(0, container.height - Math.min(...credits.map(r => r.top))) : 0
-      const place = (el: HTMLElement, extraHard: PrintRect[]) => {
+      const place = (el: HTMLElement, extraHard: PrintRect[], base = { hard, soft }) => {
         const r = rel(el.getBoundingClientRect())
         return choosePanelSpot({
           container, panel: { width: r.right - r.left, height: r.bottom - r.top }, inset, bottomExtra,
-          hard: [...hard, ...extraHard], soft, segments,
+          hard: [...base.hard, ...extraHard], soft: base.soft, segments,
         })
       }
 
@@ -708,15 +717,24 @@ export class LeafletPrintController {
           ? [padRect({ left: titleSpot.left, top: titleSpot.top, right: titleSpot.left + tr.width, bottom: titleSpot.top + tr.height }, 3)] : []
         // A wider, shorter legend (three or four columns) gets a chance before page 2.
         legendSpot = null
-        for (const widthMm of [92, 134, 176]) {
-          legend.style.width = `${widthMm}mm`
-          legendSpot = place(legend, withTitle)
+        // E-267: page 2 only when planLegendPage() said so before the print began; Chrome's page
+        // count was taken then. Otherwise the legend stays on the map: in a clear spot if there is
+        // one, else over the fewest markers (they count as soft here, the furniture stays hard).
+        const markersSoft = { hard: furniture, soft: [...soft, ...markerRects] }
+        for (const base of this.legendPage2Planned ? [] : [undefined, markersSoft]) {
+          for (const widthMm of [92, 134, 176]) {
+            legend.style.width = `${widthMm}mm`
+            legendSpot = place(legend, withTitle, base)
+            if (legendSpot) {
+              break
+            }
+          }
           if (legendSpot) {
             break
           }
         }
         if (!legendSpot) {
-          legendOnPage2 = true
+          legendOnPage2 = true // planned, or bigger than the map itself
         }
       }
       break
@@ -764,6 +782,32 @@ export class LeafletPrintController {
     el.style.bottom = fromBottom ? `${Math.max(0, frame.clientHeight - spot.top - h)}px` : ''
   }
 
+  /**
+   * E-267: before window.print(), whether the legend prints on a page of its own
+   * (legendNeedsOwnPage(), from its size). When it does, it is put there now - compact, after the
+   * "Prepared by" line, with the page-break class - so the page count Chrome takes at the start
+   * of the print already includes it. When it doesn't, the unplaced legend is held inside the
+   * map (the scss caps it) so it can't add pages either.
+   */
+  private legendPage2Planned = false
+  private planLegendPage(): void {
+    const legend = this.printLegend.nativeElement
+    this.legendPage2Planned = legendNeedsOwnPage(
+      legend.querySelectorAll('.legend__row').length, legend.querySelectorAll('.legend__group').length)
+    this.applyPlannedLegend()
+  }
+
+  /** Puts the legend on page 2 if planLegendPage() decided so (again after each reset). */
+  private applyPlannedLegend(): void {
+    const legend = this.printLegend?.nativeElement
+    if (!this.legendPage2Planned || !legend) {
+      return
+    }
+    legend.classList.add('legend--compact', 'map-print-panel--page2')
+    const after = document.querySelector('.map-print-footer') ?? this.printFrame.nativeElement
+    after.insertAdjacentElement('afterend', legend)
+  }
+
   /** The legend lives inside the map frame; page 2 borrows it (see layoutPrintSheet()). */
   private putLegendHome(): void {
     const legend = this.printLegend?.nativeElement
@@ -788,5 +832,8 @@ export class LeafletPrintController {
         el?.style.removeProperty(side)
       }
     }
+    // E-267: a print dialog re-lays the sheet out (print -> screen -> print) and recounts the
+    // pages each time; until the print is over, the planned page 2 must already be in place.
+    this.applyPlannedLegend()
   }
 }

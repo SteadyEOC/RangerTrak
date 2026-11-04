@@ -18,6 +18,12 @@ All notable changes to this project will be documented in this file. See [standa
 * **map:** Leaflet left the eager bundle: the `shared` barrels no longer re-export the Leaflet-importing helpers, so `main.js` is ~146 kB smaller (initial 1.88 MB / 412 kB transfer → 1.73 MB / 376 kB). A new CI check (`npm run check:eager-bundle`) fails the deploy if Leaflet or MapLibre comes back
 * **map:** plain markers use Leaflet 2's built-in SVG pin; the three marker PNGs and their asset copy are gone
 
+### Bug Fixes
+
+* **map:** E-267 Print map no longer ends with blank pages (Montecito: 4 pages for 2). Whether the legend gets a page of its own is decided before the print starts, from its size, because Chrome counts the pages then; a legend that stays on the map can no longer add pages, and with no clear spot it sits over the fewest markers
+* **map:** the printed range-ring label that the map's edge would cut ("km)") is left off; the rings inside still carry their distance
+* **map:** the print legend's heat map swatch shows the map's own blue-to-red colours, not a flat orange
+
 ### Accessibility
 
 * **map:** marker SVGs are hidden from screen readers so each marker is named by its title (an unassigned ranger read as "?", some places as a single letter); the "You are here" marker has a title

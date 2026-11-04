@@ -1,5 +1,5 @@
 import {
-  choosePanelSpot, fanSlots, groupClosePoints, planBadges, badgeRect, planFans, rectsOverlap, segmentCrossesRect, PrintRect,
+  choosePanelSpot, fanSlots, legendNeedsOwnPage, groupClosePoints, planBadges, badgeRect, planFans, rectsOverlap, segmentCrossesRect, PrintRect,
 } from './map-print-layout'
 
 describe('map print layout', () => {
@@ -216,6 +216,21 @@ describe('map print layout', () => {
 
     it('returns null for a panel bigger than the map', () => {
       expect(choosePanelSpot({ ...base, panel: { width: 990, height: 100 } })).toBeNull()
+    })
+  })
+
+  describe('legendNeedsOwnPage (E-267)', () => {
+    it('keeps a small legend on the map', () => {
+      expect(legendNeedsOwnPage(20, 4)).toBeFalse()
+    })
+
+    it('sends a Montecito-sized legend (~120 rows) to page 2', () => {
+      expect(legendNeedsOwnPage(120, 6)).toBeTrue()
+    })
+
+    it('scales with the map: the same legend fits a map twice the size', () => {
+      expect(legendNeedsOwnPage(60, 4)).toBeTrue()
+      expect(legendNeedsOwnPage(60, 4, { width: 1960, height: 660 })).toBeFalse()
     })
   })
 })

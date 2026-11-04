@@ -12,7 +12,7 @@ import { FilterChipsComponent } from '../shared/filter-chips/filter-chips.compon
 import {
   MapShowState, SHOW_EVERYTHING, flaggedStatuses, isStatusFlagged, mapFilterChips, selectMapEntries
 } from '../domain/map-entry-filter'
-import { HEAT_OPACITY, HEAT_OPTIONS, heatPoints } from './heat-points'
+import { HEAT_GRADIENT, HEAT_OPACITY, HEAT_OPTIONS, heatPoints } from './heat-points'
 import { LeafletOverlays, RING_STEPS_MILES, formatRingMiles } from './leaflet-overlays'
 import { LeafletOfflineController } from './leaflet-offline-controller'
 import { LeafletPrintController } from './leaflet-print-controller'
@@ -153,7 +153,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       const { HeatLayer } = await import('leaflet.heat')
       if (!this.heatLayer) {
         this.heatLayer = new HeatLayer(heatPoints(this.shownEntries()),
-          { pane: 'heatPane', ...HEAT_OPTIONS })
+          { pane: 'heatPane', ...HEAT_OPTIONS, gradient: { ...HEAT_GRADIENT } })
         this.heatGroup.addLayer(this.heatLayer)
       }
     } finally { this.heatLoading = false }

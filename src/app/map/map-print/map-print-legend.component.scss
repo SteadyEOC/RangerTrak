@@ -151,6 +151,16 @@
     text-align   : center;
   }
 
+  // 2026-11-04, John: the heat map's own colour ramp, cold to hot (heat-points.ts HEAT_GRADIENT).
+  .legend__heat {
+    flex                      : none;
+    width                     : 20px;
+    height                    : 8px;
+    border-radius             : 2px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust        : exact;
+  }
+
   .legend__trail {
     flex      : none;
     width     : 20px;

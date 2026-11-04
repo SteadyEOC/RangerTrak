@@ -213,13 +213,25 @@ export class LeafletOverlays {
         fill: false, interactive: false, className: 'rt-range-ring',
       }))
       const at = destinationPoint(lat, lng, meters, labelBearing)
+      // 2026-11-04, John's Montecito print: the outermost label sat half off the left edge and
+      // printed as "km)". A label that would be cut by the map's edge is left off; the rings are
+      // evenly spaced, so the ones inside still give the distance. (~6.2 px a character at 11 px
+      // bold, plus the 4 px padding each side; the box is centred on the point.)
+      const text = formatRingMiles(k * stepMiles)
+      const p = this.lMap.latLngToContainerPoint([at.lat, at.lng])
+      const size = this.lMap.getSize()
+      const halfW = text.length * 3.1 + 5
+      const halfH = 8
+      if (p.x - halfW < 0 || p.x + halfW > size.x || p.y - halfH < 0 || p.y + halfH > size.y) {
+        continue
+      }
       this.rangeRingsLayer.addLayer(new L.Marker([at.lat, at.lng], {
         interactive: false, keyboard: false,
         icon: new L.DivIcon({
           className: 'rt-range-ring-label', iconSize: [0, 0],
           html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;`
             + `font:600 11px/1 sans-serif;color:#6929c4;background:rgba(255,255,255,.85);padding:1px 4px;border-radius:3px">`
-            + `${formatRingMiles(k * stepMiles)}</span>`,
+            + `${text}</span>`,
         }),
       }))
     }

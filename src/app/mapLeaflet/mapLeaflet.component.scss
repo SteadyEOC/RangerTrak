@@ -425,6 +425,15 @@ mat-slide-toggle {
     margin   : 0;
   }
 
+  // 2026-11-04, John: E-267 - Chrome counts the pages before layoutPrintSheet() runs. Until then
+  // the legend is unplaced (not yet compact): held inside the map so its full height can't add
+  // blank pages to that count. layoutPrintSheet() makes it compact before measuring it, which
+  // lifts the cap. A legend that needs its own page is already there (planLegendPage()).
+  .map-print-panel--legend:not(.legend--compact) {
+    max-height: calc(100% - 6mm);
+    overflow  : hidden;
+  }
+
   // The title block was written as a one-line band; as a panel the fields stack under the
   // title. Reaches into map-page's template (the title is projected in), hence ng-deep.
   :host ::ng-deep .map-print-panel--title .map-print-header {
