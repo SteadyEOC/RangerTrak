@@ -218,7 +218,7 @@ Both map engines live on the one **Map** page, switched with the toggle above th
   you actually save will be available later. (Saving is only offered on OpenTopoMap and the
   two USGS layers; OpenStreetMap's own rules don't allow bulk offline downloads from its
   servers.)
-- Flip the switch to try the **Alternative map (MapLibre + PMTiles)** at least once. A
+- Tick **Use MapLibre + PMTiles map** to try the alternative map at least once. A
   low-detail world map is built in and works everywhere with no setup; visiting this map
   once while connected is what makes its own offline copy available later with no Internet.
 
@@ -421,15 +421,18 @@ numbered circle; zoom in to separate them. Click a marker for detail.
   roads and place names, marked hiking trails and terrain relief (these need Internet; their
   providers don't allow offline saving); USGS aerial photos and shaded relief (US only, can be
   saved for offline use, about twice OpenTopoMap's size); your **Places**; a USNG / MGRS grid
-  and range rings around the command post (both work with no Internet). **Zoom to offline
-  tiles** shows the areas you have saved.
+  and range rings around the command post (both work with no Internet).
+- **Offline maps** (a box under the map) is green when tiles are saved on this device and amber
+  when nothing is. **Save this area for offline use**, **Remove saved tiles** and **Zoom to
+  offline tiles** (shows the areas you have saved) are all in it.
 - **Trails.** Each ranger's trail runs thin and faint (older) to thick and bright (newest), and
   the newest leg slowly flows toward the latest position.
-- **Show** narrows what is drawn: **Latest per ranger** (one marker each, no trails) or
-  **Needs attention** (statuses flagged on the Mission page). A strip along the top of the map
-  lists whatever is hidden.
-- **Just the selected reports.** Select rows on the **Radio Log**, then on the Map turn on
-  **Just those selected on the Radio Log page**. Useful for a single team or incident.
+- **Show on map** (the other box under the map) narrows what is drawn: **Trails**, **Latest per
+  ranger** (one marker each), a **Statuses** list, and **Needs attention** (the statuses ticked
+  Needs attention on the Mission page). A strip along the top of the map lists whatever is
+  filtered.
+- **Just the selected reports.** Select rows on the **Radio Log**, then on the Map tick
+  **Selected entries**. Useful for a single team or incident.
 - **Print map** makes a one-page landscape map sheet: north arrow, scale bar, map credit,
   latitude/longitude marks, a title box (mission, operational period, time printed), a legend
   of markers, teams and places, range rings and a "Prepared by" line. Every report prints as

@@ -66,10 +66,11 @@
            "Alternative map warmed" row - see mission-readiness.component.ts's own comment. -->
       <div class="map-engine-switch" id="readiness-map-engine-switch" [rtAdvanced]="'maplibre'"
         [class.map-engine-switch--beside-overview]="engine() === 'leaflet'">
-        <mat-slide-toggle data-testid="mapEngineSwitch" [checked]="engine() === 'maplibre'"
-          (change)="onEngineSwitchChanged($event)">
-          Use MapLibre + PMTiles Map - instead of Leaflet Map
-        </mat-slide-toggle>
+        <!-- 2026-11-04, John: a checkbox like the Show on map ones; "instead of Leaflet" is its hover. -->
+        <mat-checkbox data-testid="mapEngineSwitch" [checked]="engine() === 'maplibre'"
+          (change)="onEngineSwitchChanged($event)" title="Instead of the Leaflet map">
+          Use MapLibre + PMTiles map
+        </mat-checkbox>
       </div>
       }
     </ng-template>

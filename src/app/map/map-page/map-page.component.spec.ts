@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 
 import { MapPageComponent } from './map-page.component';
 import { MapLibreComponent } from '../mapLibre.component';
@@ -53,7 +52,7 @@ describe('MapPageComponent', () => {
   it('dynamically imports and mounts MapLibre only when the switch is flipped', async () => {
     expect(component.maplibreComponentType()).toBeNull();
 
-    const fakeEvent = { checked: true } as MatSlideToggleChange;
+    const fakeEvent = { checked: true };
     await component.onEngineSwitchChanged(fakeEvent);
     fixture.detectChanges();
 
@@ -66,11 +65,11 @@ describe('MapPageComponent', () => {
   });
 
   it('flipping back to Leaflet unmounts MapLibre and remounts Leaflet', async () => {
-    const toMaplibre = { checked: true } as MatSlideToggleChange;
+    const toMaplibre = { checked: true };
     await component.onEngineSwitchChanged(toMaplibre);
     fixture.detectChanges();
 
-    const toLeaflet = { checked: false } as MatSlideToggleChange;
+    const toLeaflet = { checked: false };
     await component.onEngineSwitchChanged(toLeaflet);
     fixture.detectChanges();
 

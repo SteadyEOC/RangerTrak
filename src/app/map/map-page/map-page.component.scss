@@ -229,7 +229,7 @@
 // E-190 phone fix: the Leaflet overview mini-map no longer floats beside the controls on a phone,
 // so the engine switch needs no cap for it.
 @include bp.phone {
-  .map-engine-switch--beside-overview mat-slide-toggle {
+  .map-engine-switch--beside-overview mat-checkbox {
     max-width: 100%;
   }
 }

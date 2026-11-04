@@ -465,8 +465,8 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'Under Data safety: "Attachments: 41 MB of 512 MB (8%)" is always shown, with the setting for how much the mission may use. Past 80% the Entry page shows it beside Attach too. Back up mission also saves an attachments file beside the backup when there are any (locked with the same passphrase); Restore takes the backup, the attachments file, or both together, and checks every file against its fingerprint.'
           },
           {
-            heading: 'Flag on map',
-            text: 'Under Radio log statuses, the Flag on map column picks which statuses the Needs attention button on the map picks. Urgent, need-rest-food and evidence statuses are flagged to start with, as is any status with a custom color; tick or untick to change it.'
+            heading: 'Needs attention',
+            text: 'Under Radio log statuses, the Needs attention column picks the statuses the Needs attention button on the map shows (marked ⚑ in its Statuses list) and the Summary lists under Needs attention. Urgent, need-rest-food and evidence statuses are flagged to start with, as is any status with a custom color; tick or untick to change it.'
           },
           {
             heading: 'Location defaults',
@@ -579,7 +579,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Filtering the map',
-            text: 'Under the layers box, Places, Radio log entries and Ranger paths can each be switched off. Show, under the map, narrows the entries: Statuses picks any mix of statuses (Need rest/food and Evidence report together, say), Needs attention picks the statuses flagged on the Mission page (marked with a flag in the list), and All statuses puts every status back. Latest per ranger keeps each ranger\'s newest report only; with Statuses as well, it shows the rangers whose newest report is one of those. Trails is the same switch as Ranger paths, and draws each ranger\'s whole trail whatever Show is set to. A strip on the top edge of the map lists whatever is hidden, each with an x, and Show everything brings it all back. Nothing is remembered: the map starts with everything shown each time. A printed map says "Filtered:" with the same list in its title box when anything is hidden.'
+            text: 'Under the layers box, Places, Radio log entries and Ranger paths can each be switched off. The Show on map box under the map narrows the entries: Statuses picks any mix of statuses (Need rest/food and Evidence report together, say), Needs attention picks the statuses ticked Needs attention on the Mission page (marked ⚑ in the list), and All statuses puts every status back. Latest per ranger keeps each ranger\'s newest report only; with Statuses as well, it shows the rangers whose newest report is one of those. Selected entries shows only the rows selected on the Radio Log page. Trails is the same switch as Ranger paths, and draws each ranger\'s whole trail whatever else is set. A strip on the top edge of the map lists whatever is filtered, each with an x, and Show everything brings it all back. Nothing is remembered: the map starts with everything shown each time. A printed map says "Filtered:" with the same list in its title box when anything is hidden.'
           },
           {
             // 2026-10-15, E-187 phase B (ADR D-58): places in and out, in the Import, export & print panel.

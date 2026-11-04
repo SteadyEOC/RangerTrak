@@ -133,8 +133,10 @@ export class MissionFieldReportStatusesComponent implements OnChanges {
     {
       // E-190: shows the derived value (domain/map-entry-filter.ts); an edit writes an
       // explicit boolean. No schema bump: an absent field already means "the default".
-      headerName: "Flag on map", colId: "flagOnMap", cellDataType: 'boolean', flex: 1, minWidth: 150,
-      headerTooltip: "Picked by the map's Needs attention button",
+      // 2026-11-04, John: was "Flag on map" - one name for one flag, the same words as the map's
+      // Needs attention button and the Summary's Needs attention section.
+      headerName: "Needs attention", colId: "flagOnMap", cellDataType: 'boolean', flex: 1, minWidth: 150,
+      headerTooltip: "Picked by the map's Needs attention button (marked ⚑ in its Statuses list) and listed under Needs attention in the Summary",
       valueGetter: (params: { data?: RadioLogStatusType }) => params.data ? isStatusFlagged(params.data) : false,
       valueSetter: (params: { data: RadioLogStatusType, newValue: unknown }) => {
         params.data.flagOnMap = !!params.newValue

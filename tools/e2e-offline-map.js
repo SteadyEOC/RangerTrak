@@ -127,8 +127,8 @@ async function openAlternativeMap(b) {
   await b.send('Page.navigate', { url: BASE + '/map' })
   await sleep(4000)
   // Click only when off: the engine choice can persist, and a second click turns it back off.
-  await b.evaluate(`(() => { const s = document.querySelector('[data-testid="mapEngineSwitch"] button');
-    if (s && s.getAttribute('aria-checked') !== 'true') s.click() })()`)
+  await b.evaluate(`(() => { const s = document.querySelector('[data-testid="mapEngineSwitch"] input');
+    if (s && !s.checked) s.click() })()`)
   for (let i = 0; i < 20; i++) {
     await sleep(500)
     if (await b.evaluate(`!!document.querySelector('.map-container canvas')`)) break

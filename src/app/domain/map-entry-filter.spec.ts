@@ -75,14 +75,13 @@ describe('isStatusFlagged / flaggedStatuses', () => {
 
 describe('mapFilterChips', () => {
   const none: MapFilterState = {
-    locationsHidden: false, entriesHidden: false, pathsHidden: false, show: SHOW_EVERYTHING, selectedOnly: false,
+    locationsHidden: false, entriesHidden: false, show: SHOW_EVERYTHING, selectedOnly: false,
   }
   const labels = (o: Partial<MapFilterState>) => mapFilterChips({ ...none, ...o }).map(c => c.label)
   it('is empty when nothing is filtered', () => expect(labels({})).toEqual([]))
   it('words each filter', () => {
     expect(labels({ locationsHidden: true })).toEqual(['Places hidden'])
     expect(labels({ entriesHidden: true })).toEqual(['Radio log entries hidden'])
-    expect(labels({ pathsHidden: true })).toEqual(['Ranger paths hidden'])
     expect(labels({ show: { statuses: [], latestOnly: true } })).toEqual(['Showing: latest per ranger'])
     expect(labels({ show: { statuses: ['Urgent', 'Evidence'], latestOnly: false } })).toEqual(['Showing: Urgent, Evidence'])
     expect(labels({ show: { statuses: ['A', 'B', 'C', 'D'], latestOnly: false } })).toEqual(['Showing: 4 statuses'])
@@ -90,9 +89,9 @@ describe('mapFilterChips', () => {
   })
   it('lists every combination together, with stable keys', () => {
     const chips = mapFilterChips({
-      locationsHidden: true, entriesHidden: true, pathsHidden: true, selectedOnly: true,
+      locationsHidden: true, entriesHidden: true, selectedOnly: true,
       show: { statuses: ['Urgent'], latestOnly: true },
     })
-    expect(chips.map(c => c.key)).toEqual(['locations', 'entries', 'paths', 'selected', 'statuses', 'latest'])
+    expect(chips.map(c => c.key)).toEqual(['locations', 'entries', 'selected', 'statuses', 'latest'])
   })
 })

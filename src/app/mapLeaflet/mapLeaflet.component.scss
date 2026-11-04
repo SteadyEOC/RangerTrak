@@ -1,4 +1,5 @@
 @use "../../styles/breakpoints" as bp;
+@use "@angular/material" as mat;
 // @ use '@material/switch/styles';
 
 // E-99 (2026-08-25): `rangertrak-mapleaflet` is an unknown tag to the browser, so with no
@@ -541,21 +542,117 @@ mat-slide-toggle {
   color      : var(--rt-ink-2);
 }
 
-// 2026-09-30, John: the "Display" group (radio-log-entries switch + map engine switch).
-.map-display {
-  margin: 0.5rem 0 1rem;
+// 2026-11-04, John: the two boxes under the map - "Show on map" and "Offline maps". The same
+// notched-legend fieldset as Entry's Status/Source (.enter__field-fieldset). Each box is as wide
+// as its contents and they sit side by side when the row has room, stacking when it does not.
+.map-boxes {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: flex-start;
+  gap        : var(--rt-space-md, 1rem);
+  margin     : 0.75rem 0 0.5rem;
+}
 
-  &__title {
-    font-size     : 0.75rem;
-    font-weight   : 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+.map-box {
+  flex         : 0 1 auto;
+  min-width    : 0;
+  max-width    : 100%;
+  margin       : 0;
+  padding      : var(--rt-space-sm, 0.5rem) var(--rt-space-md, 1rem) var(--rt-space-md, 1rem);
+  border       : 1px solid var(--rt-line-strong);
+  border-radius: var(--rt-radius);
+  display      : flex;
+  flex-direction: column;
+  gap          : 0.5rem;
+
+  &__legend {
+    display       : inline-flex;
+    align-items   : center;
+    gap           : 6px;
+    padding       : 0 0.4em;
+    font-size     : var(--rt-type-label-size);
+    line-height   : var(--rt-type-label-line);
+    font-weight   : 500;
+    letter-spacing: 0.4px;
     color         : var(--rt-ink-2);
   }
 
   &__row {
-    margin: 0.25rem 0;
+    display    : flex;
+    flex-wrap  : wrap;
+    align-items: center;
+    gap        : 4px var(--rt-gap);
   }
+}
+
+// The Statuses list at control height, like the buttons beside it (wider, not taller).
+.map-show__statuses {
+  width     : 15rem;
+  margin-top: 4px;
+  @include mat.form-field-overrides((
+    container-height: var(--rt-control-height),
+    container-vertical-padding: calc((var(--rt-control-height) - 24px) / 2),
+  ));
+}
+
+// Saved / nothing saved: green or amber, the header readiness dot's own test.
+.map-offline {
+  --map-offline-ink : var(--rt-readiness-green);
+  --map-offline-tint: color-mix(in srgb, var(--map-offline-ink) 14%, transparent);
+
+  &--none {
+    --map-offline-ink: var(--rt-readiness-amber);
+  }
+
+  &__icon {
+    font-size: 18px;
+    width    : 18px;
+    height   : 18px;
+    color    : var(--map-offline-ink);
+  }
+
+  &__status {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 6px;
+    align-self   : flex-start;
+    margin       : 0;
+    padding      : 4px 12px 4px 8px;
+    border-radius: 999px;
+    background   : var(--map-offline-tint);
+    color        : var(--map-offline-ink);
+    font-weight  : 500;
+
+    mat-icon {
+      font-size: 18px;
+      width    : 18px;
+      height   : 18px;
+    }
+  }
+}
+
+// The pill already says nothing is saved; the control's own "nothing yet" note would repeat it.
+:host ::ng-deep .map-offline--none .offline-area-info--saved {
+  display: none;
+}
+
+// The note lines wrap to the box's width instead of setting it: without this, a box sized to its
+// contents grows to the length of the longest note on one line (711 px), and the two boxes stack.
+:host ::ng-deep .map-offline .offline-area-info {
+  contain: inline-size;
+}
+
+// The Save / Remove labels lead with a Material icon (they were emoji until 2026-11-04).
+:host ::ng-deep .savetiles.leaflet-bar a .material-icons {
+  font-size   : 18px;
+  width       : 18px; // the global .material-icons box is 24 px; at 18 px the glyph sat at its top
+  height      : 18px;
+  line-height : 1;
+  margin-right: 8px;
+}
+
+.map-engine {
+  margin: 0.25rem 0 1rem;
 }
 
 // P1-4 (offline map coverage scoping, 2026-09-14): OSM's tile usage policy forbids bulk
@@ -619,18 +716,6 @@ mat-slide-toggle {
   margin: 0;
 }
 
-.map-show {
-  display    : flex;
-  flex-wrap  : wrap;
-  align-items: center;
-  gap        : 4px 8px;
-}
-
-// 2026-11-04: the Statuses list - wide enough for "Need rest/food", no wider.
-.map-show__statuses {
-  width: 13rem;
-}
-
 // (E-209: the Show and coordinate-format toggles used to carry their own height and font-size
 // here; both come from the global control rule now - styles/_patterns.scss.)
 
@@ -654,16 +739,9 @@ mat-slide-toggle {
     white-space: nowrap;
   }
 
-  .map-display__row mat-slide-toggle {
+  .map-box,
+  .map-show__statuses {
     width: 100%;
-  }
-
-  :host ::ng-deep .map-display .mdc-form-field {
-    width: 100%;
-  }
-
-  :host ::ng-deep .map-display .mdc-label {
-    flex: 1 1 auto;
   }
 }
 

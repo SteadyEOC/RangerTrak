@@ -273,8 +273,8 @@ export class LeafletOfflineController {
     // hard-coded 19 was wrong for OpenTopoMap, whose own tile generation stops at 17).
     const openTopoMaxZoom = openTopoTiles.options.maxZoom ?? 17
     const saveTilesControl = savetiles(openTopoTiles, {
-      saveText: '💾 Save this area for offline use',
-      rmText: '🗑️ Remove saved tiles',
+      saveText: '<i class="material-icons" aria-hidden="true">download</i>Save this area for offline use',
+      rmText: '<i class="material-icons" aria-hidden="true">delete</i>Remove saved tiles',
       maxZoom: openTopoMaxZoom,
       zoomlevels: zoomLevelsForSave(this.lMap.getZoom(), openTopoMaxZoom),
       parallel: 3,

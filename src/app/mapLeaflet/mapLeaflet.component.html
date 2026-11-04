@@ -47,32 +47,20 @@
   </div>
 
 </div>
-<!-- 2026-09-30, John: tidy the controls under the map (John, desktop screenshot: "a bit
-     unorganized"). Top to bottom now: ONE row of actions, the offline-tile save/remove pair with
-     a short note under it, and a small "Display" group holding the two switches. Nothing here
-     has a clear: both any more, so the rows rise beside the floated mini-map instead of waiting
-     below it (the tall empty gap). data-testids and ids are unchanged. -->
-<div class="map-controls">
+<!-- 2026-11-04, John: the controls under the map, regrouped (mockup reviewed first). Top to
+     bottom: Zoom to Extent + Print map right under the map (they act on the map itself), then two
+     bordered boxes side by side when there is room, "Show on map" and "Offline maps" (the same
+     notched-legend fieldset as Status/Source on the Entry page), then the MapLibre checkbox.
+     The earlier layouts are in git (2026-08-24, 2026-09-30). data-testids and ids are unchanged. -->
+<div class="map-controls map-print-hide">
   <!-- Maintainer ask, 2026-09-22: re-fits the camera to whatever is drawn right now (reports
-       honoring the All/selected switch, evidence markers, Location pins) - not the once-at-init
-       fit to the whole log. data-testid, not a class - tools/e2e.js needs a stable hook and
-       this repo has already been burned by e2e selectors hanging off styling classes. -->
+       honoring the Selected entries checkbox, evidence markers, Place pins) - not the
+       once-at-init fit to the whole log. data-testid, not a class - tools/e2e.js needs a stable
+       hook and this repo has already been burned by e2e selectors hanging off styling classes. -->
   <button matButton="outlined" type="button" (click)="onBtnZoomToExtent()"
     data-testid="zoomToExtent" title="Zoom out until every report, evidence marker and Place now shown fits on screen">
     <mat-icon>zoom_out_map</mat-icon>
     Zoom to Extent
-  </button>
-
-  <!-- 2026-09-30, John: E-138 - replaces the old "Saved offline tiles" layers-menu checkbox.
-       Shows the blue saved-area overlay and zooms to it; pressed again, hides it.
-       aria-pressed carries the on state (filled style in the scss); disabled, with the reason
-       as hover text, until something has been saved on this device. -->
-  <button matButton="outlined" type="button" (click)="onBtnZoomToOfflineTiles()"
-    data-testid="zoomToOfflineTiles" [attr.aria-pressed]="offlineTilesShown()"
-    [class.rt-toggled-on]="offlineTilesShown()" [disabled]="!hasOfflineTiles()"
-    [attr.title]="hasOfflineTiles() ? 'Show the areas saved for offline use and zoom out to fit them all' : 'No offline tiles saved on this device yet'">
-    <mat-icon>{{ offlineTilesShown() ? 'layers_clear' : 'offline_pin' }}</mat-icon>
-    Zoom to offline tiles
   </button>
 
   <!-- G: prints the map alone (rt-print-map body class, styles.scss) - same approach as
@@ -82,70 +70,95 @@
     <mat-icon>print</mat-icon>
     {{ printPreparing() ? 'Preparing the map…' : 'Print map' }}
   </button>
-
   <!-- Add place moved to the places panel under the map (places-io), 2026-11-04, John. -->
 </div>
 
-<!-- Maintainer, 2026-08-24: the offline-save control (Save this area / Remove saved tiles)
-     was floating over the map tiles as a Leaflet corner control - moved into normal page flow.
-     initMainMap() re-parents the control's own DOM node in here after building it.
-     2026-09-30: the two buttons sit side by side and their status text is a short note line
-     under them (wireOfflineAreaInfo() appends it), no longer text inside the buttons. Now its
-     own row rather than part of the action row above. -->
-<!-- F29-21 (2026-08-30): id is a fragment-scroll target for the header readiness dot's
-     "Offline map tiles saved" row - see mission-readiness.component.ts's own comment. -->
-<div #offlineControlsHost id="readiness-offline-tiles" class="offline-controls"></div>
-
-<!-- 2026-09-30, John: E-152 - .map-print-hide (styles.scss) keeps these interactive switches
-     off the printed sheet. The two switches are one "Display" group now. data-testid, not a
-     class - same reason mapEngineSwitch/zoomToExtent above carry one (tools/e2e.js#76 needs a
-     stable hook, and this repo has already been burned by e2e selectors hanging off styling
-     classes). The engine switch is projected from map-page via engineSwitchTemplate. -->
-<div class="map-display map-print-hide" role="group" aria-label="Display">
-  <div class="map-display__title">Display</div>
-  <div class="map-display__row">
-    Radio log entries to show: All ({{numAllRows()}})
-    <mat-slide-toggle data-testid="allSelectedSwitch" [checked]="selectedOnly()" (change)="onSwitchSelectedRadioLog()">
-      Just those ({{numSelectedRows()}}) selected on the Radio Log page
-    </mat-slide-toggle>
-  </div>
-  <!-- E-190: thins the entry markers (after the switch above). Paths always show the full trail.
-       2026-11-04, John: was one All / Latest per ranger / Needs attention choice. Now a list of
-       statuses to pick any mix from (Needs attention is a preset for it), and Latest per ranger and
-       Trails as their own checkboxes. Trails is the layers box's Ranger paths, same switch. -->
-  <div class="map-display__row map-show" role="group" aria-labelledby="map-show-label">
-    <span id="map-show-label">Show:</span>
-    <mat-form-field class="map-show__statuses" subscriptSizing="dynamic">
-      <mat-label>Statuses</mat-label>
-      <mat-select multiple [value]="show().statuses" (selectionChange)="onShowStatuses($event.value)"
-        placeholder="All" data-testid="map-show-statuses">
-        <mat-select-trigger>{{ statusesTrigger() }}</mat-select-trigger>
-        @for (s of statusChoices(); track s.status) {
-          <mat-option [value]="s.status">{{ s.status }}@if (s.flagged) {<span class="map-show__flag" title="Flag on map (Mission page)"> ⚑</span>}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <button mat-stroked-button type="button" (click)="onShowStatuses([])" [disabled]="!show().statuses.length"
-      data-testid="map-show-all-statuses">All statuses</button>
-    <button mat-stroked-button type="button" (click)="onShowNeedsAttention()"
-      title="The statuses ticked Flag on map on the Mission page (marked ⚑ in the list)"
-      data-testid="map-show-attention">Needs attention</button>
-    <mat-checkbox [checked]="show().latestOnly" (change)="onLatestOnly($event.checked)"
-      title="One marker per ranger: their newest report" data-testid="map-show-latest">Latest per ranger</mat-checkbox>
-    <mat-checkbox [checked]="pathsOn()" (change)="onTrails($event.checked)"
-      title="Each ranger's path (the same switch as Ranger paths in the layers box)" data-testid="map-show-trails">Trails</mat-checkbox>
-  </div>
-  <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
-  <!-- 2026-09-30, John: ring spacing, shown while the Range rings overlay is on. Far left is
-       Auto (fits the zoom); the other stops are fixed distances. Not saved. -->
-  @if (ringsOn()) {
-    <div class="map-display__row map-ring-spacing">
-      <label for="map-ring-spacing">Range ring spacing: <strong data-testid="ring-spacing-label">{{ ringSpacingLabel() }}</strong></label>
-      <mat-slider min="0" [max]="ringStepCount" step="1" discrete [displayWith]="ringStepShort">
-        <input matSliderThumb id="map-ring-spacing" data-testid="ring-spacing"
-          [value]="ringStepIndex()" (input)="onRingStepChange(+$any($event.target).value)"
-          [attr.aria-valuetext]="ringSpacingLabel()">
-      </mat-slider>
+<div class="map-boxes map-print-hide">
+  <!-- E-190 / 2026-11-04: what the map draws. The box title says "Show" once, so the rows carry
+       no "Show:" labels of their own. Trails is the layers box's Ranger paths (same switch);
+       turning it off adds no chip over the map. Selected entries is the old All / Just those
+       switch: greyed out while nothing is selected on the Radio Log page (it would draw an empty
+       map), but still clickable to turn off while it is on. -->
+  <fieldset class="map-box" data-testid="map-show-box">
+    <legend class="map-box__legend">Show on map</legend>
+    <div class="map-box__row">
+      <mat-checkbox [checked]="pathsOn()" (change)="onTrails($event.checked)"
+        title="Each ranger's path (the same switch as Ranger paths in the layers box)" data-testid="map-show-trails">Trails</mat-checkbox>
+      <mat-checkbox [checked]="show().latestOnly" (change)="onLatestOnly($event.checked)"
+        title="One marker per ranger: their newest report" data-testid="map-show-latest">Latest per ranger</mat-checkbox>
+      <mat-checkbox [checked]="selectedOnly()" (change)="onSwitchSelectedRadioLog()"
+        [disabled]="!selectedOnly() && numSelectedRows() === 0"
+        [title]="!selectedOnly() && numSelectedRows() === 0 ? 'Select entries on the Radio Log page first' : 'Only the entries you selected on the Radio Log page'"
+        data-testid="allSelectedSwitch">Selected entries ({{numSelectedRows()}} of {{numAllRows()}})</mat-checkbox>
     </div>
-  }
+    <div class="map-box__row" role="group" aria-label="Statuses">
+      <mat-form-field class="map-show__statuses" subscriptSizing="dynamic">
+        <mat-label>Statuses</mat-label>
+        <mat-select multiple [value]="show().statuses" (selectionChange)="onShowStatuses($event.value)"
+          placeholder="All" data-testid="map-show-statuses">
+          <mat-select-trigger>{{ statusesTrigger() }}</mat-select-trigger>
+          @for (s of statusChoices(); track s.status) {
+            <mat-option [value]="s.status">{{ s.status }}@if (s.flagged) {<span class="map-show__flag" title="Needs attention (Mission page)"> ⚑</span>}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button mat-stroked-button type="button" (click)="onShowStatuses([])" [disabled]="!show().statuses.length"
+        data-testid="map-show-all-statuses">All statuses</button>
+      <button mat-stroked-button type="button" (click)="onShowNeedsAttention()"
+        title="The statuses ticked Needs attention on the Mission page (marked ⚑ in the list)"
+        data-testid="map-show-attention">Needs attention</button>
+    </div>
+    <!-- 2026-09-30, John: ring spacing, shown while the Range rings overlay is on. Far left is
+         Auto (fits the zoom); the other stops are fixed distances. Not saved. -->
+    @if (ringsOn()) {
+      <div class="map-box__row map-ring-spacing">
+        <label for="map-ring-spacing">Range ring spacing: <strong data-testid="ring-spacing-label">{{ ringSpacingLabel() }}</strong></label>
+        <mat-slider min="0" [max]="ringStepCount" step="1" discrete [displayWith]="ringStepShort">
+          <input matSliderThumb id="map-ring-spacing" data-testid="ring-spacing"
+            [value]="ringStepIndex()" (input)="onRingStepChange(+$any($event.target).value)"
+            [attr.aria-valuetext]="ringSpacingLabel()">
+        </mat-slider>
+      </div>
+    }
+  </fieldset>
+
+  <!-- 2026-11-04, John: everything about saved tiles in one box. The legend icon and the status
+       line are green when tiles are saved on this device, amber when nothing is - the same test
+       as the header readiness dot's "Offline map tiles saved" row. -->
+  <fieldset class="map-box map-offline" [class.map-offline--none]="!hasOfflineTiles()" data-testid="map-offline-box">
+    <legend class="map-box__legend">
+      <mat-icon class="map-offline__icon" aria-hidden="true">{{ hasOfflineTiles() ? 'offline_pin' : 'warning' }}</mat-icon>
+      Offline maps
+    </legend>
+    <p class="map-offline__status" data-testid="map-offline-status">
+      <mat-icon aria-hidden="true">{{ hasOfflineTiles() ? 'check_circle' : 'warning' }}</mat-icon>
+      {{ hasOfflineTiles() ? 'Saved for offline use' : 'Nothing saved on this device yet' }}
+    </p>
+    <!-- Maintainer, 2026-08-24: the offline-save control (Save this area / Remove saved tiles)
+         was floating over the map tiles as a Leaflet corner control - moved into normal page flow.
+         initMainMap() re-parents the control's own DOM node in here after building it; its notes
+         are appended under the buttons (wireOfflineAreaInfo()).
+         F29-21 (2026-08-30): the id is a fragment-scroll target for the header readiness dot's
+         "Offline map tiles saved" row - see mission-readiness.component.ts's own comment. -->
+    <div #offlineControlsHost id="readiness-offline-tiles" class="offline-controls"></div>
+    <!-- 2026-09-30, John: E-138 - replaces the old "Saved offline tiles" layers-menu checkbox.
+         Shows the blue saved-area overlay and zooms to it; pressed again, hides it.
+         aria-pressed carries the on state (filled style in the scss); disabled, with the reason
+         as hover text, until something has been saved on this device. -->
+    <div class="map-box__row">
+      <button matButton="outlined" type="button" (click)="onBtnZoomToOfflineTiles()"
+        data-testid="zoomToOfflineTiles" [attr.aria-pressed]="offlineTilesShown()"
+        [class.rt-toggled-on]="offlineTilesShown()" [disabled]="!hasOfflineTiles()"
+        [attr.title]="hasOfflineTiles() ? 'Show the areas saved for offline use and zoom out to fit them all' : 'No offline tiles saved on this device yet'">
+        <mat-icon>{{ offlineTilesShown() ? 'layers_clear' : 'offline_pin' }}</mat-icon>
+        Zoom to offline tiles
+      </button>
+    </div>
+  </fieldset>
+</div>
+
+<!-- E-152: .map-print-hide (styles.scss) keeps this off the printed sheet. The engine checkbox
+     is projected from map-page via engineSwitchTemplate. -->
+<div class="map-engine map-print-hide">
+  <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
 </div>

@@ -713,7 +713,7 @@ async function checkMapEngineSwitch() {
   check('E-85 phase 2: at least one alternate base layer is offered alongside OSM', before.baseLayerCount >= 2, true)
 
   await evaluate(`(() => {
-    document.querySelector('[data-testid="mapEngineSwitch"] button').click()
+    document.querySelector('[data-testid="mapEngineSwitch"] input').click()
   })()`)
   await sleep(2500) // dynamic import() of the MapLibre chunk + map construction
 
@@ -724,7 +724,7 @@ async function checkMapEngineSwitch() {
   check('flipping the switch mounts MapLibre and unmounts Leaflet', !afterSwitch.leaflet && afterSwitch.maplibre, true)
 
   await evaluate(`(() => {
-    document.querySelector('[data-testid="mapEngineSwitch"] button').click()
+    document.querySelector('[data-testid="mapEngineSwitch"] input').click()
   })()`)
   await sleep(1500)
 
@@ -753,7 +753,7 @@ async function checkMapEngineSurvivesNavigation() {
   await goto('/map')
 
   await evaluate(`(() => {
-    document.querySelector('[data-testid="mapEngineSwitch"] button').click()
+    document.querySelector('[data-testid="mapEngineSwitch"] input').click()
   })()`)
   await sleep(2500)
 
@@ -763,7 +763,7 @@ async function checkMapEngineSurvivesNavigation() {
   await navigateInApp('Map', 2500)
 
   const state = await evaluate(`(() => ({
-    switchChecked: document.querySelector('[data-testid="mapEngineSwitch"] button')?.getAttribute('aria-checked') === 'true',
+    switchChecked: document.querySelector('[data-testid="mapEngineSwitch"] input')?.checked === true,
     maplibre: !!document.querySelector('.map-container'),
     leaflet: !!document.querySelector('.mapLeaflet-container'),
     canvasCount: document.querySelectorAll('canvas').length,
@@ -3263,13 +3263,13 @@ async function checkRadioLogSelectionFiltersMaps() {
   const leafletAll = await pollUntil(() => evaluate(readLeaflet), v => v === 5, 10, 300)
   check('Leaflet, "All": every seeded report is drawn', leafletAll, 5)
 
-  await evaluate(`document.querySelector('[data-testid="allSelectedSwitch"] button').click()`)
+  await evaluate(`document.querySelector('[data-testid="allSelectedSwitch"] input').click()`)
   const leafletSelected = await pollUntil(() => evaluate(readLeaflet), v => v === 2, 10, 300)
   check('Leaflet, "Selected": only the 2 rows selected on Radio Log are drawn', leafletSelected, 2)
 
   // Flip the engine switch to MapLibre - a fresh instance always starts back on "All"
   // (component state, not persisted - see AbstractMap.showingSelectedOnly's own comment).
-  await evaluate(`document.querySelector('[data-testid="mapEngineSwitch"] button').click()`)
+  await evaluate(`document.querySelector('[data-testid="mapEngineSwitch"] input').click()`)
   await sleep(2500) // dynamic import() of the MapLibre chunk + map construction
 
   const maplibreAll = await pollUntil(() => evaluate(readMaplibre), v => v === 5, 10, 300)
@@ -4836,31 +4836,35 @@ async function checkSampleMissionLoads() {
 }
 
 /**
- * E-190 (Map half): the filter chip strip. Absent when nothing is filtered; two chips once a
- * layer is switched off and Show is Needs attention; one x removes one; Show everything removes
- * the strip. Needs the sample mission (the --full run loads it first).
+ * E-190 (Map half): the filter chip strip. Absent when nothing is filtered. Ranger paths off adds
+ * no chip (2026-11-04: a map without trails is plain to see); Needs attention and Latest per ranger
+ * each add one; one x removes one; Show everything removes the strip and ticks Trails again.
+ * Needs the sample mission (the --full run loads it first).
  */
 async function checkMapFilterChips() {
   console.log('\nE-190: map filter chips appear only while something is filtered')
   await navigateInApp('Map', 3500)
   const chips = () => evaluate(`[...document.querySelectorAll('rangertrak-filter-chips mat-chip')].map(c => c.textContent.replace(/cancel/g, '').replace(/\\s+/g, ' ').trim())`)
   const strip = () => evaluate(`!!document.querySelector('rangertrak-filter-chips')`)
+  const trailsTicked = () => evaluate(`document.querySelector('[data-testid="map-show-trails"] input')?.checked`)
   check('no filters: the strip is not there', await strip(), false)
   await evaluate(`[...document.querySelectorAll('#mapLeaflet-main .leaflet-control-layers-overlays label')]
     .find(l => /Ranger paths/.test(l.textContent))?.querySelector('input')?.click()`)
+  check('Ranger paths off: Trails unticks', await pollUntil(trailsTicked, v => v === false, 10, 300), false)
+  check('Ranger paths off: still no strip', await strip(), false)
   // 2026-11-04: Needs attention is a button that picks the flagged statuses; the chip names them.
   await evaluate(`document.querySelector('[data-testid="map-show-attention"]')?.click()`)
+  await evaluate(`document.querySelector('[data-testid="map-show-latest"] input')?.click()`)
   const two = await pollUntil(chips, v => v.length === 2, 10, 300)
-  const statusChip = v => /^Showing: \S/.test(v[1] ?? '') && !/latest/.test(v[1])
-  check('Ranger paths off + Needs attention: two chips', `${two[0]} | ${statusChip(two)}`, 'Ranger paths hidden | true')
+  const statusChip = v => /^Showing: \S/.test(v ?? '') && !/latest/.test(v)
+  check('Needs attention + Latest per ranger: two chips', `${statusChip(two[0])} | ${two[1]}`, 'true | Showing: latest per ranger')
   await evaluate(`document.querySelector('rangertrak-filter-chips mat-chip button')?.click()`)
   const one = await pollUntil(chips, v => v.length === 1, 10, 300)
-  check('x on the first chip leaves only the statuses chip', statusChip([null, one[0]]), true)
-  check('Trails is ticked again with Ranger paths', await evaluate(
-    `document.querySelector('[data-testid="map-show-trails"] input')?.checked`), true)
+  check('x on the first chip leaves only the latest chip', one[0], 'Showing: latest per ranger')
   await evaluate(`[...document.querySelectorAll('rangertrak-filter-chips button')].find(b => /Show everything/.test(b.textContent))?.click()`)
   const gone = await pollUntil(strip, v => v === false, 10, 300)
   check('Show everything: the strip is gone', gone, false)
+  check('Show everything: Trails is ticked again', await pollUntil(trailsTicked, v => v === true, 10, 300), true)
 }
 
 /**

@@ -31,7 +31,6 @@ import { MatSelectModule } from '@angular/material/select'
 import { MatSliderModule } from '@angular/material/slider'
 import { MatDialog } from '@angular/material/dialog'
 import { MatIconModule } from '@angular/material/icon'
-import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 
 import {
   Utility, radioLogStatusColor, locationCategoryColor, resolveLocationIcon, formatReportTime, computeExtent,
@@ -74,7 +73,7 @@ const ringStepIndex = signal(0)
 @Component({
   selector: 'rangertrak-mapLeaflet',
   standalone: true,
-  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatSelectModule, MatSliderModule, MatIconModule,
+  imports: [NgTemplateOutlet, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatSelectModule, MatSliderModule, MatIconModule,
     FilterChipsComponent, MapPrintLegendComponent, MapPrintFurnitureComponent],
   templateUrl: './mapLeaflet.component.html',
   styleUrls: [
@@ -236,7 +235,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   /** Mirrors AbstractMap.showingSelectedOnly (a plain field) so the chips can react to it. */
   readonly selectedOnly = signal(false)
   readonly filterChips = computed(() => mapFilterChips({
-    locationsHidden: !this.locationsOn(), entriesHidden: !this.entriesOn(), pathsHidden: !this.pathsOn(),
+    locationsHidden: !this.locationsOn(), entriesHidden: !this.entriesOn(),
     show: this.show(), selectedOnly: this.selectedOnly(),
   }))
   /** The printed title block's "Filtered: ..." text; empty when nothing is filtered. */
@@ -1287,7 +1286,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     switch (key) {
       case 'locations': add(this.locationsLayer); break
       case 'entries': add(this.myMarkerCluster); break
-      case 'paths': this.onTrails(true); break
+      case 'paths': this.onTrails(true); break // no chip any more; Show everything still turns Trails on
       case 'statuses': this.onShowStatuses([]); break
       case 'latest': this.onLatestOnly(false); break
       case 'selected': if (this.showingSelectedOnly) this.onSwitchSelectedRadioLog(); break
