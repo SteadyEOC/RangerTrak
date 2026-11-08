@@ -5,10 +5,10 @@ const assert = require('node:assert');
 const https = require('node:https');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 const selfsigned = require('selfsigned');
 const { createServer, getOrCreateCert } = require('../command-post-server');
+const { makeTempRun } = require('../temp-run');
 const { createBoard } = require('./protocol');
 
 let cert;
@@ -363,7 +363,8 @@ test('neither the password nor the key is ever logged', async () => {
 });
 
 test('getOrCreateCert: names go in the SAN list, and a cert lacking today\'s name is replaced', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'board-cert-'));
+  const run = makeTempRun('board-cert-');
+  const dir = run.dir;
   try {
     const san = (c) => new crypto.X509Certificate(c.cert).subjectAltName;
     const first = await getOrCreateCert(['192.168.1.7'], ['rangertrak-board.local'], dir);
@@ -382,7 +383,7 @@ test('getOrCreateCert: names go in the SAN list, and a cert lacking today\'s nam
     const upgraded = await getOrCreateCert(['192.168.1.7'], ['rangertrak-board-2.local'], dir);
     assert.notStrictEqual(upgraded.cert, second.cert);
   } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
+    run.cleanup();
   }
 });
 
