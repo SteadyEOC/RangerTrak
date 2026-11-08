@@ -692,6 +692,19 @@ mat-slide-toggle {
   isolation: auto;
 }
 
+// 2026-11-07, John: Leaflet's fullscreen button (beta.2) enlarges this frame. The map fills it, in
+// both the browser's own fullscreen and Leaflet's window-filling fallback (iPhone).
+.mapLeaflet-frame:fullscreen,
+.mapLeaflet-frame.leaflet-pseudo-fullscreen {
+  border    : none;
+  background: var(--rt-surface);
+}
+
+.mapLeaflet-frame:fullscreen #mapLeaflet-main,
+.mapLeaflet-frame.leaflet-pseudo-fullscreen #mapLeaflet-main {
+  height: 100%;
+}
+
 .map-filter-chips {
   position     : absolute;
   top          : 8px;

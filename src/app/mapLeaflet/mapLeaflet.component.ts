@@ -203,6 +203,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   /** E-207: the layers box rows that are advanced, with the layers they switch. */
   private layerExtras: { label: string, layer: L.Layer }[] = []
   private layersBox: HTMLElement | null = null
+  private fullscreen?: L.FullscreenControl
 
   /**
    * E-207 / D-62: in Simple view the layers box shows its extras (USNG/MGRS grid, satellite,
@@ -299,8 +300,6 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
   //markerClusterGroup: L.MarkerClusterGroup // MarkerClusterGroup extends FeatureGroup, retaining it's methods, e.g., clearLayers() & removeLayers()
   //markerClusterData = []
-
-  //!TODO: Add fullscreen button: https://tomik23.github.io/leaflet-examples/#27.fullscreen
 
   constructor(
     missionService: MissionService,
@@ -500,22 +499,22 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 
 
     // TODO: Allow centering map on user's position (geolocation): https://leafletjs.com/reference.html#locate-options
-    // TODO: Provide fullscreen button: https://tomik23.github.io/leaflet-examples/#27.fullscreen
 
     // https://leafletjs.com/reference.html#map-locate
     this.lMap = new L.Map(this.mapContainer.nativeElement, {
       center: [this.settings ? this.settings.defLat : 0, this.settings ? this.settings.defLng : 0],
       zoom: this.settings ? this.settings.leaflet.defZoom : 15,
-      // https://github.com/Leaflet/Leaflet.fullscreen
-      // https://github.com/Runette/Leaflet.fullscreen
-      // https://brunob.github.io/leaflet.fullscreen/
-      // ! fullscreenControl: true
     }) // Default view set at map creation
 
     if (!this.lMap) {
       this.log.error(`initMainMap(): this.lMap not created!`, this.id)
       return
     }
+
+    // 2026-11-07, John: Leaflet 2.0.0-beta.2's built-in fullscreen button, under the zoom control.
+    // It enlarges the whole frame, not just the map, so the filter chips stay in view. Where the
+    // browser has no Fullscreen API (iPhone), Leaflet fills the window with CSS instead.
+    this.fullscreen = new L.FullscreenControl({ container: this.printFrame.nativeElement }).addTo(this.lMap)
 
     // tools/e2e.js (#76 - the All/selected switch): stashed for read-only e2e introspection
     // only. A wide-enough spread of reports to rule out Leaflet.markercluster merging two
@@ -651,7 +650,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'Hiking trails (Waymarked Trails)': trailsOverlay,
       'Roads and place names (for Satellite)': roadsLabelsOverlay,
     }
-    const layersControl = new L.LayersControl(baseLayers, overlayLayers, { position: 'topright' }).addTo(this.lMap)
+    const layersControl = new L.LayersControl(baseLayers, overlayLayers, { position: 'topright', title: 'Map layers' }).addTo(this.lMap)
     // E-207 / D-62: the layers box extras that Simple view hides while none is on (see syncLayerExtras()).
     this.layerExtras = [
       ['USNG / MGRS grid', this.usngGridLayer],
@@ -1206,9 +1205,13 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   }
 
   /** Print map button (template): see LeafletPrintController.onBtnPrintMap(). */
-  onBtnPrintMap(): Promise<void> {
+  async onBtnPrintMap(): Promise<void> {
     // E-222: recorded first, so the head printed in the sheet's footer includes this print.
     this.journal.record('print-map', 'Printed the map sheet.')
+    // The print sheet lays the frame out itself, so leave fullscreen first. A native exit is awaited;
+    // the window-filling fallback (iPhone) has no browser state and ends at once.
+    if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined)
+    else if (this.fullscreen?.isFullscreen()) this.fullscreen.setFullscreen(false)
     return this.print.onBtnPrintMap()
   }
 

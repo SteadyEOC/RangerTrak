@@ -5017,12 +5017,13 @@ async function checkRangeRingsAndCoordReadout() {
   note(`readout: ${ddm} / ${usng} / ${dd}`)
 
   // 2026-11-03, John: E-274 - the heat map is one checkbox: ticking it draws a canvas in the heat pane.
+  // (Leaflet names a 'heatPane' pane's div .leaflet-heat-pane: createPane() drops the word Pane.)
   const heatBox = (on) => evaluate(`(() => {
     const input = document.querySelector('[data-testid="map-show-heat"] input');
     if (input && input.checked !== ${on}) input.click();
     return !!input;
   })()`)
-  const heatCanvases = () => evaluate(`document.querySelectorAll('#mapLeaflet-main .leaflet-heatPane-pane canvas').length`)
+  const heatCanvases = () => evaluate(`document.querySelectorAll('#mapLeaflet-main .leaflet-heat-pane canvas').length`)
   check('the heat map starts off (no canvas)', await heatCanvases(), 0)
   check('the Show on map box offers Heat map', await heatBox(true), true)
   check('ticking Heat map draws a canvas in the heat pane', await pollUntil(heatCanvases, v => v > 0, 10, 300) > 0, true)
