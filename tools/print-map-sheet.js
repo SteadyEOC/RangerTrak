@@ -17,7 +17,7 @@
  * the map is measured once, at its printed size, when the print media change fires.
  */
 const fs = require('fs')
-const os = require('os')
+const { makeTempRun } = require('./temp-run')
 const path = require('path')
 const { spawn, execFileSync } = require('child_process')
 
@@ -70,9 +70,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 async function main() {
   fs.mkdirSync(outDir, { recursive: true })
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'rangertrak-print-'))
+  const run = makeTempRun('rangertrak-print-')
+  const profile = run.dir
   const chrome = spawn(findChrome(), ['--headless=new', `--remote-debugging-port=${PORT}`,
     `--user-data-dir=${profile}`, '--no-first-run', '--window-size=1400,1000', 'about:blank'], { stdio: 'ignore' })
+  run.track(chrome)
   let ws
   let id = 1
   const pending = new Map()
@@ -299,9 +301,8 @@ async function main() {
     } catch (e) { console.log(`PDF page count unavailable: ${e.message}`) }
   } finally {
     try { ws?.close() } catch { }
-    try { chrome.kill() } catch { }
+    run.cleanup()
     await sleep(500)
-    try { fs.rmSync(profile, { recursive: true, force: true }) } catch { }
   }
 }
 

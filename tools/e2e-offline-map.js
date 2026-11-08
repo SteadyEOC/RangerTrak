@@ -36,7 +36,7 @@
  * Kills only the server and Chrome it started itself. Exits non-zero on failure.
  */
 const fs = require('fs')
-const os = require('os')
+const { makeTempRun, stopProcess, removeDir } = require('./temp-run')
 const path = require('path')
 const { spawn } = require('child_process')
 
@@ -73,10 +73,11 @@ async function serverStatus() {
   try { return (await fetch(BASE + '/')).status } catch { return 'down' }
 }
 
-async function openChrome(profile) {
+async function openChrome(profile, run) {
   const chrome = spawn(findChrome(), ['--headless=new', `--remote-debugging-port=${DEBUG_PORT}`,
     `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check',
     '--window-size=1200,900', 'about:blank'], { stdio: 'ignore' })
+  run.track(chrome)
   let target
   for (let i = 0; i < 40 && !target; i++) {
     await sleep(250)
@@ -111,7 +112,7 @@ async function openChrome(profile) {
   // Alternative map switch this test flips.
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `try { if (!localStorage.getItem('rt-view')) {
     localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user') } } catch { }` })
-  const close = () => { try { ws.close() } catch { } try { chrome.kill() } catch { } }
+  const close = () => { try { ws.close() } catch { } stopProcess(chrome) }
   // A hard kill can beat Chrome's lazy localStorage flush to disk: 3 of 4 runs lost the whole
   // demo load (mission name AND demo marker) across the restart below, which no real browser
   // closed normally would. Browser.close shuts down cleanly first; the kill is the fallback.
@@ -213,7 +214,8 @@ async function drawnShare(b, shotPath) {
 }
 
 ;(async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rangertrak-offline-'))
+  const run = makeTempRun('rangertrak-offline-')
+  const tmp = run.dir
   const profile = path.join(tmp, 'profile')
   const shots = { online: path.join(tmp, 'online.png'), offline: path.join(tmp, 'offline.png') }
   let b
@@ -230,9 +232,9 @@ async function drawnShare(b, shotPath) {
     }
 
     // ── Online: prepare the device ──
-    startServer()
+    startServer(); run.track(server)
     for (let i = 0; i < 30 && (await serverStatus()) !== 200; i++) await sleep(500)
-    b = await openChrome(profile)
+    b = await openChrome(profile, run)
     await b.send('Page.navigate', { url: BASE + '/' })
     let swActive = false // ngsw registers when stable, or after 30 s
     for (let i = 0; i < 25 && !swActive; i++) {
@@ -277,7 +279,7 @@ async function drawnShare(b, shotPath) {
     await sleep(1000)
     check('server is really down', (await serverStatus()) === 'down')
 
-    b = await openChrome(profile)
+    b = await openChrome(profile, run)
     await openAlternativeMap(b)
     const offline = await drawnShare(b, shots.offline)
     check('Alternative map draws OFFLINE', offline >= MIN_DRAWN_SHARE, `${(offline * 100).toFixed(0)}% drawn`)
@@ -291,9 +293,10 @@ async function drawnShare(b, shotPath) {
     await sleep(1000)
     if (KEEP) {
       console.log(`  screenshots kept: ${shots.online} , ${shots.offline}`)
-      try { fs.rmSync(profile, { recursive: true, force: true }) } catch { }
+      if (!removeDir(profile)) console.error(`WARNING: could not delete temp folder ${profile}`)
+      run.keep()
     } else {
-      try { fs.rmSync(tmp, { recursive: true, force: true }) } catch { }
+      run.cleanup()
     }
   }
   console.log(failed ? '\nOFFLINE MAP CHECK FAILED' : '\nOffline map check passed')

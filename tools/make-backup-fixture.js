@@ -27,7 +27,7 @@
  * Kills only the server and Chrome it started itself. Exits non-zero on failure.
  */
 const fs = require('fs')
-const os = require('os')
+const { makeTempRun, stopProcess } = require('./temp-run')
 const path = require('path')
 const { spawn } = require('child_process')
 
@@ -60,10 +60,11 @@ function findChrome() { // same search as tools/e2e.js
   return hit
 }
 
-async function openChrome(profile, downloads) {
+async function openChrome(profile, downloads, run) {
   const chrome = spawn(findChrome(), ['--headless=new', `--remote-debugging-port=${DEBUG_PORT}`,
     `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check',
     '--window-size=1200,900', 'about:blank'], { stdio: 'ignore' })
+  run.track(chrome)
   let target
   for (let i = 0; i < 40 && !target; i++) {
     await sleep(250)
@@ -108,7 +109,7 @@ async function openChrome(profile, downloads) {
   const close = async () => {
     try { await Promise.race([send('Browser.close'), sleep(3000)]) } catch { }
     try { ws.close() } catch { }
-    try { chrome.kill() } catch { }
+    stopProcess(chrome)
   }
   return { send, evaluate, close, queue: (...answers) => dialogQueue.push(...answers), resetQueue: () => { dialogQueue.length = 0 } }
 }
@@ -148,7 +149,8 @@ async function waitForDownload(dir) {
 }
 
 ;(async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rangertrak-fixture-'))
+  const run = makeTempRun('rangertrak-fixture-')
+  const tmp = run.dir
   const downloads = path.join(tmp, 'downloads')
   fs.mkdirSync(downloads)
   let server, b
@@ -162,11 +164,12 @@ async function waitForDownload(dir) {
     server = spawn(process.execPath, [path.join(__dirname, 'serve-dist.js')], {
       env: { ...process.env, PORT: String(APP_PORT) }, stdio: 'ignore',
     })
+    run.track(server)
     for (let i = 0; i < 30; i++) {
       try { if ((await fetch(BASE + '/')).status === 200) break } catch { }
       await sleep(500)
     }
-    b = await openChrome(path.join(tmp, 'profile'), downloads)
+    b = await openChrome(path.join(tmp, 'profile'), downloads, run)
     await goto(b, '/')
 
     // 1. The Grand Canyon demo (the picker's default). Nothing queued: since E-168 (0.99.17) an
@@ -271,7 +274,7 @@ async function waitForDownload(dir) {
     if (b) await b.close()
     if (server) try { server.kill() } catch { }
     await sleep(1000)
-    try { fs.rmSync(tmp, { recursive: true, force: true }) } catch { }
+    run.cleanup()
   }
   process.exit(code)
 })()

@@ -45,7 +45,7 @@
  */
 
 const fs = require('fs')
-const os = require('os')
+const { makeTempRun } = require('./temp-run')
 const path = require('path')
 const { spawn, execSync } = require('child_process')
 
@@ -88,6 +88,7 @@ function showSection() {
 }
 const REAL_GEOCODING = args.includes('--real-geocoding')
 const PORT = 9444
+let runTempDir // this run's temp folder, set in main(); removed however the run ends
 
 /**
  * E-207 / D-62: a clean profile is a new install, and a new install starts in Simple view. Every group but
@@ -3617,7 +3618,7 @@ async function checkScribeHandover() {
       window.__rtBlobs.push(btoa(s)) }); return orig(b) }`)
   await evaluate(`document.querySelector('[data-testid="handover-build"]')?.click()`)
   const b64 = String(await pollUntil(() => evaluate(`window.__rtBlobs[0] || ''`), t => !!t))
-  const file = path.join(os.tmpdir(), `rangertrak-e2e-handover-${Date.now()}.zip`)
+  const file = path.join(runTempDir, `handover-${Date.now()}.zip`)
   fs.writeFileSync(file, Buffer.from(b64, 'base64'))
   check('a plain hand-over is a zip (the passphrase was blank)', b64.startsWith('UEs'), true)
   check('the card says what it wrote', /3 radio log entries/.test(await evaluate(`document.querySelector('[data-testid="handover-summary"]')?.textContent || ''`)), true)
@@ -5597,7 +5598,9 @@ async function checkSimpleView(fx) {
 }
 
 async function main() {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rangertrak-e2e-'))
+  const run = makeTempRun('rangertrak-e2e-')
+  const tmp = run.dir
+  runTempDir = tmp
   const profile = path.join(tmp, 'profile')
   const downloads = path.join(tmp, 'downloads')
   fs.mkdirSync(downloads, { recursive: true })
@@ -5617,9 +5620,11 @@ async function main() {
     'about:blank',
   ], { stdio: 'ignore' })
 
+  run.track(chrome)
+  if (KEEP_OPEN) run.keep() // Chrome stays running, so its profile has to stay too
   const cleanup = () => {
-    if (!KEEP_OPEN) { try { chrome.kill() } catch { } }
-    try { fs.rmSync(tmp, { recursive: true, force: true }) } catch { }
+    if (KEEP_OPEN) report(`--keep-open: Chrome is still running; its profile is in ${tmp}`)
+    run.cleanup()
   }
 
   try {
