@@ -1,3 +1,4 @@
+import { printVersionLine } from '../shared/build-stamp'
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { MatButtonModule } from '@angular/material/button'
@@ -152,7 +153,8 @@ export class Ics214ExportDialogComponent {
       if (!res.ok) throw new Error(`Fetching the ICS-214 template failed: ${res.status}`)
       const templateBytes = new Uint8Array(await res.arrayBuffer())
 
-      const filled = await fillIcs214Pdf(templateBytes, header, mission, rows, new Date(), mission.missionMode === 'exercise')
+      const filled = await fillIcs214Pdf(templateBytes, header, mission, rows, new Date(), mission.missionMode === 'exercise',
+        printVersionLine(mission.version))
       const label = (mission.event || mission.mission || 'mission').replace(/[^a-z0-9_-]+/gi, '_')
       const outcome = await printIcs213(filled, `ics-214-${label}-${localDateStamp()}.pdf`, 1, mission, 'ICS-214')
       this.journal.record('export-214', `Exported the ICS-214 (${lines.length} lines${fromJournal ? `, ${fromJournal} added from the journal` : ''}): ${outcome}`)

@@ -1011,6 +1011,7 @@ async function checkPrintCards(fx) {
   check('Print roster: the sheet and rt-print-roster are on the page during the print', /rt-print-roster/.test(roster?.cls || '') && roster?.rows > 0, true)
   check('...the sheet has a row per person (the fixture roster)', roster?.rows, fx.rangers.length)
   check('...the title is "<mission> - Roster - YYYY-MM-DD HHmm"', /^.+ - Roster - \d{4}-\d{2}-\d{2} \d{4}$/.test(roster?.title || ''), true)
+  check('...the sheet head says which RangerTrak printed it (E-280)', /RangerTrak \d+\.\d+\.\d+/.test(roster?.text || ''), true)
   check('...and the class and sheet are gone afterwards',
     await evaluate(`!document.body.classList.contains('rt-print-roster') && !document.querySelector('[data-testid=rosterSheet]')`), true)
   check('Print roster says how many it prints', /Prints \d+ of \d+/.test(await evaluate(`document.querySelector('[data-testid=rosterPrintCount]')?.textContent || ''`)), true)
@@ -3727,6 +3728,7 @@ async function checkMissionSummary() {
   check('the page title is SitRep (E-278)', await evaluate(`document.title`), 'SitRep - RangerTrak')
   check('the stamp names the mission', await evaluate(`document.querySelector('[data-testid="summary-mission"]')?.textContent.trim()`), 'E2E-SUMMARY')
   check('the stamp says when it was generated', await evaluate(`/\\d{4}/.test(document.querySelector('[data-testid="summary-generated"]')?.textContent || '')`), true)
+  check('the stamp says which RangerTrak made it (E-280)', /^RangerTrak \d+\.\d+\.\d+/.test(await evaluate(`document.querySelector('[data-testid="summary-version"]')?.textContent.trim() || ''`)), true)
   await clickToggle('Whole log')
 
   const stored = JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || []

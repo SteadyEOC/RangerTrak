@@ -14,6 +14,7 @@ import { printAttachments } from '../domain/attachments'
 import { formatMsgNoFull, formatMsgNoShort } from '../domain/msg-no'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
+import { printVersionLine } from '../shared/build-stamp'
 import { MatIconModule } from '@angular/material/icon'
 import { MatButtonModule } from '@angular/material/button'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
@@ -72,6 +73,8 @@ export class SummaryComponent implements OnDestroy {
   private entries = signal<readonly RadioLogEntryType[]>([...this.radioLogService.getCurrentRadioLog().logEntries])
   private rangers = signal<readonly RangerType[]>([...this.rangerService.rangers])
   readonly settings = signal<MissionType>(this.missionService.settings)
+  /** E-280: which RangerTrak made this SitRep, on screen and on paper. */
+  readonly versionLine = computed(() => printVersionLine(this.settings()?.version))
   private subs: Subscription[] = [
     this.radioLogService.getRadioLogObserver().subscribe(l => this.entries.set([...l.logEntries])),
     this.rangerService.getRangersObserver().subscribe(r => this.rangers.set([...r])),

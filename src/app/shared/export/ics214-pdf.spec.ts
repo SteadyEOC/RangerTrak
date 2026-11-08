@@ -128,6 +128,13 @@ describe('ICS-214 filler (E-04 / D-63)', () => {
     expect(await pageCount(stamped)).toBe(2)
   })
 
+  it('prints the RangerTrak version on every sheet only when given (E-280)', async () => {
+    const plain = await fillIcs214Pdf(templateBytes, header, mission, rows(30), preparedAt, false)
+    const versioned = await fillIcs214Pdf(templateBytes, header, mission, rows(30), preparedAt, false, 'RangerTrak 1.0.0-beta.2')
+    expect(versioned.length).toBeGreaterThan(plain.length)
+    expect(await pageCount(versioned)).toBe(2)
+  })
+
   it('wraps a long line so no row is wider than the real font allows in its cell', async () => {
     const pdf = await PDFDocument.create()
     const font = await pdf.embedFont(StandardFonts.Helvetica)

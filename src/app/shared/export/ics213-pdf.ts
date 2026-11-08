@@ -69,6 +69,8 @@ export async function fillIcs213Pdf(
   attachments: readonly Ics213Attachment[] = [],
   /** E-220 / D-68: the entry's message number, printed small in the top margin. FEMA's form has no box for it. */
   msgNo?: MsgNo,
+  /** E-280: "RangerTrak 1.0.0-beta.2 (build ...)", small in the top-right margin of every page. */
+  versionLine?: string,
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.load(templateBytes)
   const form = pdf.getForm()
@@ -116,8 +118,20 @@ export async function fillIcs213Pdf(
   }
 
   if (attachments.length) await appendAttachmentPages(pdf, attachments, exercise)
+  if (versionLine) await drawVersionLine(pdf, versionLine)
 
   return pdf.save()
+}
+
+/** E-280: the RangerTrak version, 7 pt in the top-right margin of every page (Msg no. sits top-left). */
+export async function drawVersionLine(pdf: PDFDocument, text: string): Promise<void> {
+  const font = await pdf.embedFont(StandardFonts.Helvetica)
+  const size = 7
+  const width = font.widthOfTextAtSize(text, size)
+  for (const page of pdf.getPages()) {
+    const { width: pageWidth, height: pageHeight } = page.getSize()
+    page.drawText(text, { x: pageWidth - 36 - width, y: pageHeight - 20, size, font, color: rgb(0.25, 0.25, 0.25) })
+  }
 }
 
 /** The attachments list: one line each (name and short fingerprint), a thumbnail under an image, new pages as needed. */

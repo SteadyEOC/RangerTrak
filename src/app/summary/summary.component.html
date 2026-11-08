@@ -71,6 +71,7 @@
         <div><dt>Scenario time</dt><dd data-testid="summary-scenario" [title]="scenarioHint()">{{ sc }}</dd></div>
         }
         <div><dt>Journal</dt><dd class="rt-summary__journal" data-testid="summary-journal">{{ journal.shortHead() }}</dd></div>
+        <div><dt>Made by</dt><dd class="rt-summary__journal" data-testid="summary-version">{{ versionLine() }}</dd></div>
       </dl>
     </mat-card>
 

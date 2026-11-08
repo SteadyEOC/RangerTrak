@@ -14,7 +14,7 @@ import { AdvancedDirective } from '../../shared/view/advanced.directive'
 import type { ViewContext } from '../../domain/view'
 import { MapEngineService } from '../map-engine.service'
 import { PlacesIoComponent } from '../places-io/places-io.component'
-import { buildSuffix } from '../../shared/build-stamp'
+import { printVersionLine } from '../../shared/build-stamp'
 import { MissionJournalService } from '../../shared/services/mission-journal.service'
 
 /**
@@ -68,8 +68,7 @@ export class MapPageComponent implements OnInit, OnDestroy {
   readonly journal = inject(MissionJournalService)
   /** E-280: "RangerTrak 1.0.0-beta.1 (build 2026-11-04 abc1234)" in the printed sheet's footer. */
   get printVersion(): string {
-    const version = this.missionService.settings?.version
-    return version ? `RangerTrak ${version}${buildSuffix()}` : 'RangerTrak'
+    return printVersionLine(this.missionService.settings?.version)
   }
   private readonly typedPreparedBy = signal<string | null>(null)
   readonly preparedBy = computed(() => this.typedPreparedBy() ?? this.operatorName.name())

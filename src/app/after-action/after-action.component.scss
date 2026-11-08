@@ -87,6 +87,12 @@
     display: block;
     color  : #000; // fixed black: paper has no dark mode, same as the ICS-309 print.
 
+    .rt-aar-print__version {
+      margin   : 0.5rem 0 0;
+      font-size: 0.65rem;
+      color    : #444;
+    }
+
     h1 {
       margin   : 0 0 0.5rem;
       font-size: 1.4rem;

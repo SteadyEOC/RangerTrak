@@ -1,3 +1,4 @@
+import { printVersionLine } from '../shared/build-stamp'
 import { Subscription } from 'rxjs'
 
 import { CommonModule } from '@angular/common'
@@ -248,7 +249,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     }
     const templateBytes = new Uint8Array(await res.arrayBuffer())
     return fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings), true, this.settings?.missionMode === 'exercise',
-      await ics213AttachmentsFor(report, this.attachmentStore), report.msgNo)
+      await ics213AttachmentsFor(report, this.attachmentStore), report.msgNo, printVersionLine(this.settings?.version))
   }
 
   /**

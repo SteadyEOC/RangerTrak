@@ -44,6 +44,16 @@ describe('fillIcs213Pdf', () => {
     expect((await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined)).length).toBe(plain.length)
   })
 
+  // E-280: which RangerTrak printed it, small in the top-right margin; nothing when not given.
+  it('prints the RangerTrak version in the margin only when given (E-280)', async () => {
+    const fields = { '4 Subject': 'Road collapse' }
+    const plain = await fillIcs213Pdf(templateBytes, fields, false)
+    const versioned = await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, 'RangerTrak 1.0.0-beta.2')
+    expect(versioned.length).toBeGreaterThan(plain.length)
+    expect((await PDFDocument.load(versioned)).getPageCount()).toBe(1)
+    expect((await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, '')).length).toBe(plain.length)
+  })
+
   // E-194: attachments are listed after the form; the form's own page is untouched.
   it('lists attachments on extra pages, running to more pages when the list is long (E-194)', async () => {
     const fields = { '4 Subject': 'Road collapse' }

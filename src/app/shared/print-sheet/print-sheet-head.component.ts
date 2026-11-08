@@ -3,6 +3,7 @@ import { formatDate } from '@angular/common'
 
 import { MissionService } from '../services'
 import { UsageStateService } from '../services/usage-state.service'
+import { printVersionLine } from '../build-stamp'
 
 /**
  * The heading of a list printed from the "Import, export & print" panel (E-187 Layers phase D,
@@ -22,7 +23,7 @@ import { UsageStateService } from '../services/usage-state.service'
         }
       </div>
       <p class="sheet-head__what"><strong>{{ title() }}</strong> &middot; {{ detail() }}</p>
-      <p class="sheet-head__when">Printed {{ printedLabel() }}</p>
+      <p class="sheet-head__when">Printed {{ printedLabel() }}<span data-testid="print-sheet-version"> &middot; {{ versionLine() }}</span></p>
       @if (scenarioLine(); as sc) {
         <p class="sheet-head__when" data-testid="print-sheet-scenario">{{ sc }}</p>
       }
@@ -58,5 +59,7 @@ export class PrintSheetHeadComponent {
   })
   /** E-196 (D-66): a second time line, only in Exercise mode with a scenario clock set. */
   readonly scenarioLine = computed(() => this.usage.scenarioLabelAt(this.printedAt()))
+  /** E-280: which RangerTrak printed the sheet. */
+  readonly versionLine = computed(() => printVersionLine(this.missionService.settings?.version))
   readonly printedLabel = computed(() => formatDate(this.printedAt(), 'MMM d, y, HH:mm', 'en-US'))
 }
