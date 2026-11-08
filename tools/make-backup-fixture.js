@@ -63,7 +63,7 @@ function findChrome() { // same search as tools/e2e.js
 async function openChrome(profile, downloads, run) {
   const chrome = spawn(findChrome(), ['--headless=new', `--remote-debugging-port=${DEBUG_PORT}`,
     `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check',
-    '--window-size=1200,900', 'about:blank'], { stdio: 'ignore' })
+    '--window-size=1200,900', 'about:blank'], { stdio: 'ignore', env: run.env })
   run.track(chrome)
   let target
   for (let i = 0; i < 40 && !target; i++) {

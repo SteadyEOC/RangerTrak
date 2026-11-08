@@ -73,7 +73,7 @@ async function main() {
   const run = makeTempRun('rangertrak-print-')
   const profile = run.dir
   const chrome = spawn(findChrome(), ['--headless=new', `--remote-debugging-port=${PORT}`,
-    `--user-data-dir=${profile}`, '--no-first-run', '--window-size=1400,1000', 'about:blank'], { stdio: 'ignore' })
+    `--user-data-dir=${profile}`, '--no-first-run', '--window-size=1400,1000', 'about:blank'], { stdio: 'ignore', env: run.env })
   run.track(chrome)
   let ws
   let id = 1

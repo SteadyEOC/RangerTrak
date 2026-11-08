@@ -96,3 +96,4 @@ src/app/shared/policies.json
 # A second net in case a region folder or crosswalk is ever copied in by hand.
 us/
 **/ranger-ids*.csv
+/.tmp/

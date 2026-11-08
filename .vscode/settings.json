@@ -1,6 +1,9 @@
 {
     "vscode-as-git-mergetool.settingsAssistantOnStartup": false,
     "debug.openExplorerOnEnd": true,
+    "files.watcherExclude": {
+        "**/.tmp/**": true
+    },
     "editor.tabSize": 2,
     "editor.rulers": [
         90

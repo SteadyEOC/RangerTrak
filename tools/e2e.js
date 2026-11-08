@@ -5618,7 +5618,7 @@ async function main() {
     // that stood from 10-20 to 10-26 and was put down to harness state.
     ...(want('board') ? ['--ignore-certificate-errors'] : []),
     'about:blank',
-  ], { stdio: 'ignore' })
+  ], { stdio: 'ignore', env: run.env })
 
   run.track(chrome)
   if (KEEP_OPEN) run.keep() // Chrome stays running, so its profile has to stay too

@@ -11,14 +11,15 @@
 const assert = require('assert/strict')
 const { execFileSync } = require('child_process')
 const fs = require('fs')
-const os = require('os')
 const path = require('path')
 const { makeDemoRegion } = require('./make-demo-region')
+const { makeTempRun } = require('../../temp-run')
 
 const TOOLS = path.resolve(__dirname, '..')
 const keep = process.argv.includes('--keep')
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rangertrak-demo-region-'))
+const tempRun = makeTempRun('rangertrak-demo-region-', { outsideRepo: true }) // the tools under test refuse a folder in the repo
+const tmp = tempRun.dir
 let failed = 0, passed = 0
 function check(name, fn) {
   try { fn(); passed++; console.log(`  ok    ${name}`) }
@@ -167,8 +168,8 @@ try {
   failed++
   console.error(`\nFAIL: ${e.stack || e.message}`)
 } finally {
-  if (keep) console.log(`\nKept: ${tmp}`)
-  else fs.rmSync(tmp, { recursive: true, force: true })
+  if (keep) { tempRun.keep(); console.log(`\nKept: ${tmp}`) }
+  else tempRun.cleanup()
 }
 
 console.log(`\n${passed} passed, ${failed} failed`)
