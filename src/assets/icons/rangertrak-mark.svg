@@ -4,7 +4,8 @@
   <!--
     RangerTrak's mark: a map pin that is also a handheld radio, with the signal
     leaving the antenna. Geometry is shared with rangertrak-mark-animated.svg
-    and favicon.svg; change one, check the others.
+    and favicon.svg, and with src/app/shared/print-brand/rangertrak-mark.ts
+    (the printouts' copy); change one, check the others.
 
     Colours are plain presentation attributes on purpose. A CSS var() here makes
     renderers that only half-understand CSS (librsvg, some PDF and email

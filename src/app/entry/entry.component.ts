@@ -1,4 +1,3 @@
-import { printVersionLine } from '../shared/build-stamp'
 import { OperatorNameService } from '../shared/services/operator-name.service'
 import { EntryDraftService, draftHasContent, type EntryDraft } from './entry-draft.service'
 import {
@@ -1149,7 +1148,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // lifted into ics213-pdf.ts's own ics213FieldsFromReport() so the two callers cannot
       // drift apart the way F29-47's blank Subject/Approved-by-Name once did.
       const filled = await fillIcs213Pdf(templateBytes, ics213FieldsFromReport(report, this.settings), true, this.settings?.missionMode === 'exercise',
-        await ics213AttachmentsFor(report, this.attachmentStore), report.msgNo, printVersionLine(this.settings?.version))
+        await ics213AttachmentsFor(report, this.attachmentStore), report.msgNo, this.settings?.version)
       const outcome = await printIcs213(filled, `ics-213-${report.callsign || 'message'}-${report.id}.pdf`, this.printCopies.totalCopies(), this.settings)
 
       // First print only - printedAt's own doc comment (radio-log-entry.interface.ts)

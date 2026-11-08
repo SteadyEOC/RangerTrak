@@ -14,7 +14,7 @@ import { printAttachments } from '../domain/attachments'
 import { formatMsgNoFull, formatMsgNoShort } from '../domain/msg-no'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
-import { printVersionLine } from '../shared/build-stamp'
+import { PrintBrandComponent } from '../shared/print-brand/print-brand.component'
 import { MatIconModule } from '@angular/material/icon'
 import { MatButtonModule } from '@angular/material/button'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
@@ -48,7 +48,7 @@ const CHART_MIN_WIDTH = 280
 @Component({
   selector: 'rangertrak-summary',
   standalone: true,
-  imports: [CommonModule, RouterLink, PageComponent, TimePickerComponent, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCardModule],
+  imports: [CommonModule, RouterLink, PageComponent, TimePickerComponent, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCardModule, PrintBrandComponent],
   templateUrl: './summary.component.html',
   styleUrls: ['./summary.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -73,8 +73,6 @@ export class SummaryComponent implements OnDestroy {
   private entries = signal<readonly RadioLogEntryType[]>([...this.radioLogService.getCurrentRadioLog().logEntries])
   private rangers = signal<readonly RangerType[]>([...this.rangerService.rangers])
   readonly settings = signal<MissionType>(this.missionService.settings)
-  /** E-280: which RangerTrak made this SitRep, on screen and on paper. */
-  readonly versionLine = computed(() => printVersionLine(this.settings()?.version))
   private subs: Subscription[] = [
     this.radioLogService.getRadioLogObserver().subscribe(l => this.entries.set([...l.logEntries])),
     this.rangerService.getRangersObserver().subscribe(r => this.rangers.set([...r])),

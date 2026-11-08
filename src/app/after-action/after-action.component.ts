@@ -7,7 +7,7 @@ import { MatDialog } from '@angular/material/dialog'
 
 import { PageComponent } from '../shared/page/page.component'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
-import { printVersionLine } from '../shared/build-stamp'
+import { PrintBrandComponent } from '../shared/print-brand/print-brand.component'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
 import { MatIconModule } from '@angular/material/icon'
@@ -44,7 +44,7 @@ type Filter = 'all' | AarNoteAbout
 @Component({
   selector: 'rangertrak-after-action',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageComponent, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatSelectModule, MasonryDirective],
+  imports: [CommonModule, FormsModule, RouterLink, PageComponent, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatSelectModule, MasonryDirective, PrintBrandComponent],
   templateUrl: './after-action.component.html',
   styleUrls: ['./after-action.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -96,11 +96,6 @@ export class AfterActionComponent {
 
   missionName(): string {
     return this.mission.settings?.mission || this.mission.settings?.event || ''
-  }
-
-  /** E-280: which RangerTrak printed the After Action page, under its table. */
-  printVersion(): string {
-    return printVersionLine(this.mission.settings?.version)
   }
 
   /** Saves one edited field. A cleared note text is refused by the service, which keeps the old one. */

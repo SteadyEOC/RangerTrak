@@ -1,5 +1,5 @@
 import { PDFDocument, PDFName, PDFPage, StandardFonts, rgb } from 'pdf-lib'
-import { drawVersionLine } from './ics213-pdf'
+import { drawPrintBrand } from './ics213-pdf'
 
 import {
   ICS214_MAX_RESOURCES, ActivityLogHeader, ActivityRow, chunkActivityRows, toWinAnsi,
@@ -128,8 +128,8 @@ export async function fillIcs214Pdf(
   rows: readonly ActivityRow[],
   preparedAt: Date,
   exercise = false,
-  /** E-280: "RangerTrak 1.0.0-beta.2 (build ...)", small in the top-right margin of every sheet. */
-  versionLine?: string,
+  /** E-280: the app version: the RangerTrak mark, version and RangerTrak.org go in the top-right margin of every sheet. */
+  version?: string,
 ): Promise<Uint8Array> {
   const sheets = chunkActivityRows(rows)
   const out = await PDFDocument.create()
@@ -156,7 +156,7 @@ export async function fillIcs214Pdf(
   }
 
   if (exercise) await stampExercise(out)
-  if (versionLine) await drawVersionLine(out, versionLine)
+  if (version) await drawPrintBrand(out, version)
 
   return out.save()
 }

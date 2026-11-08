@@ -39,7 +39,7 @@ import { isScenarioEntry, formatScenarioTime, scenarioTimeAt, sameScenarioClock 
 import { UsageStateService } from '../shared/services/usage-state.service'
 import { AarNoteService } from '../shared/services/aar-note.service'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
-import { printVersionLine } from '../shared/build-stamp'
+import { PrintBrandComponent } from '../shared/print-brand/print-brand.component'
 import { clearedPlain, noteMatcher } from '../domain/clear-choices'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
 import { ImportSafetyService } from '../shared/services/import-safety.service'
@@ -99,6 +99,7 @@ const SCENARIO_MARK_TITLE = 'Scenario traffic from the exercise controller, not 
   selector: 'rangertrak-radio-log',
   standalone: true,
   imports: [
+    PrintBrandComponent,
     CommonModule,
     MasonryDirective,
     AgGridAngular,
@@ -587,8 +588,6 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   protected usage = inject(UsageStateService)
   private aarNoteService = inject(AarNoteService)
   protected journal = inject(MissionJournalService)
-  /** E-280: which RangerTrak printed the ICS-309, beside the journal line. */
-  protected get printVersion(): string { return printVersionLine(this.missionService.settings?.version) }
   private snackBar = inject(MatSnackBar)
 
   constructor(

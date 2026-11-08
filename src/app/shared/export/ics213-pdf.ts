@@ -1,4 +1,8 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { LineCapStyle, PDFArray, PDFDocument, PDFName, PDFPage, PDFString, StandardFonts, rgb } from 'pdf-lib'
+import {
+  BRAND_URL, BRAND_URL_LABEL, MARK_ANTENNA, MARK_BODY, MARK_NAVY, MARK_PIN, MARK_SIGNAL, MARK_TIP, MARK_VIEWBOX, MARK_WAVES,
+} from '../print-brand/rangertrak-mark'
+import { buildSuffix } from '../build-stamp'
 import { formatStation } from '../../domain/station-label'
 // `import type` only - erased at compile time, so this doesn't pull radio-log-entry.interface.ts/
 // mission.interface.ts's own runtime code (there isn't any) into whichever chunk imports this
@@ -69,8 +73,8 @@ export async function fillIcs213Pdf(
   attachments: readonly Ics213Attachment[] = [],
   /** E-220 / D-68: the entry's message number, printed small in the top margin. FEMA's form has no box for it. */
   msgNo?: MsgNo,
-  /** E-280: "RangerTrak 1.0.0-beta.2 (build ...)", small in the top-right margin of every page. */
-  versionLine?: string,
+  /** E-280: the app version: the RangerTrak mark, version and RangerTrak.org go in the top-right margin of every page. */
+  version?: string,
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.load(templateBytes)
   const form = pdf.getForm()
@@ -118,20 +122,61 @@ export async function fillIcs213Pdf(
   }
 
   if (attachments.length) await appendAttachmentPages(pdf, attachments, exercise)
-  if (versionLine) await drawVersionLine(pdf, versionLine)
+  if (version) await drawPrintBrand(pdf, version)
 
   return pdf.save()
 }
 
-/** E-280: the RangerTrak version, 7 pt in the top-right margin of every page (Msg no. sits top-left). */
-export async function drawVersionLine(pdf: PDFDocument, text: string): Promise<void> {
+/**
+ * E-280 (John, 2026-11-07): the small RangerTrak mark, then "<version> (build ...) · RangerTrak.org", in
+ * the top-right margin of every page (Msg no. sits top-left, EXERCISE in the middle). The mark is
+ * drawn from path data (rangertrak-mark.ts), so nothing is fetched and it works offline; the
+ * site name is also a link in the PDF. The same brand as the HTML printouts' <rangertrak-print-brand>.
+ */
+export async function drawPrintBrand(pdf: PDFDocument, version: string): Promise<void> {
   const font = await pdf.embedFont(StandardFonts.Helvetica)
   const size = 7
-  const width = font.widthOfTextAtSize(text, size)
+  // No "RangerTrak" before the version: the mark and RangerTrak.org already say it, and the shorter
+  // line clears the EXERCISE box in the middle of the top margin.
+  const text = `${version}${buildSuffix()} · ${BRAND_URL_LABEL}`
+  const textWidth = font.widthOfTextAtSize(text, size)
+  const linkWidth = font.widthOfTextAtSize(BRAND_URL_LABEL, size)
+  const markHeight = 14
+  const s = markHeight / MARK_VIEWBOX.height
+  const markWidth = MARK_VIEWBOX.width * s
+  const navy = hexRgb(MARK_NAVY)
+  const signal = hexRgb(MARK_SIGNAL)
   for (const page of pdf.getPages()) {
     const { width: pageWidth, height: pageHeight } = page.getSize()
-    page.drawText(text, { x: pageWidth - 36 - width, y: pageHeight - 20, size, font, color: rgb(0.25, 0.25, 0.25) })
+    const right = pageWidth - 36
+    const top = pageHeight - 9 // the mark's top edge; the text's baseline is at pageHeight - 20, as Msg no.'s
+    const x = right - textWidth
+    const mx = x - 3 - markWidth
+    const at = { x: mx, y: top, scale: s }
+    page.drawSvgPath(MARK_PIN, { ...at, borderColor: navy, borderWidth: 12 })
+    page.drawSvgPath(MARK_ANTENNA, { ...at, borderColor: navy, borderWidth: 5, borderLineCap: LineCapStyle.Round })
+    page.drawSvgPath(MARK_BODY, { ...at, color: navy })
+    page.drawSvgPath(MARK_TIP, { ...at, color: navy })
+    for (const w of MARK_WAVES) page.drawSvgPath(w, { ...at, borderColor: signal, borderWidth: 9, borderLineCap: LineCapStyle.Round })
+    page.drawText(text, { x, y: pageHeight - 20, size, font, color: rgb(0.25, 0.25, 0.25) })
+    addLink(pdf, page, BRAND_URL, [right - linkWidth, pageHeight - 22, right, pageHeight - 13])
   }
+}
+
+function hexRgb(hex: string) {
+  const n = parseInt(hex.slice(1), 16)
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255)
+}
+
+/** A plain URI link annotation over `rect` ([x1, y1, x2, y2]), no border. */
+function addLink(pdf: PDFDocument, page: PDFPage, uri: string, rect: [number, number, number, number]): void {
+  const link = pdf.context.register(pdf.context.obj({
+    Type: 'Annot', Subtype: 'Link', Rect: rect, Border: [0, 0, 0],
+    A: { Type: 'Action', S: 'URI', URI: PDFString.of(uri) },
+  }))
+  const annots = page.node.lookup(PDFName.of('Annots'))
+  if (annots instanceof PDFArray) annots.push(link)
+  else page.node.set(PDFName.of('Annots'), pdf.context.obj([link]))
 }
 
 /** The attachments list: one line each (name and short fingerprint), a thumbnail under an image, new pages as needed. */

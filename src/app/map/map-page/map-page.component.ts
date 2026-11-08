@@ -14,7 +14,7 @@ import { AdvancedDirective } from '../../shared/view/advanced.directive'
 import type { ViewContext } from '../../domain/view'
 import { MapEngineService } from '../map-engine.service'
 import { PlacesIoComponent } from '../places-io/places-io.component'
-import { printVersionLine } from '../../shared/build-stamp'
+import { PrintBrandComponent } from '../../shared/print-brand/print-brand.component'
 import { MissionJournalService } from '../../shared/services/mission-journal.service'
 
 /**
@@ -33,7 +33,7 @@ import { MissionJournalService } from '../../shared/services/mission-journal.ser
 @Component({
   selector: 'rangertrak-map-page',
   standalone: true,
-  imports: [PageComponent, LmapComponent, NgComponentOutlet, NgTemplateOutlet, AsyncPipe, DatePipe, MatCheckboxModule, PlacesIoComponent, AdvancedDirective],
+  imports: [PageComponent, LmapComponent, NgComponentOutlet, NgTemplateOutlet, AsyncPipe, DatePipe, MatCheckboxModule, PlacesIoComponent, AdvancedDirective, PrintBrandComponent],
   templateUrl: './map-page.component.html',
   styleUrls: ['./map-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -66,10 +66,6 @@ export class MapPageComponent implements OnInit, OnDestroy {
   // never persisted). Once the user types here, their text wins and is never overwritten.
   private readonly operatorName = inject(OperatorNameService)
   readonly journal = inject(MissionJournalService)
-  /** E-280: "RangerTrak 1.0.0-beta.1 (build 2026-11-04 abc1234)" in the printed sheet's footer. */
-  get printVersion(): string {
-    return printVersionLine(this.missionService.settings?.version)
-  }
   private readonly typedPreparedBy = signal<string | null>(null)
   readonly preparedBy = computed(() => this.typedPreparedBy() ?? this.operatorName.name())
   onPreparedByInput(event: Event): void {
