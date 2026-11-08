@@ -19,6 +19,19 @@ export const HEAT_OPACITY = 0.85
 export const HEAT_OPTIONS = { radius: 25, blur: 15, maxZoom: 14, max: 2, minOpacity: 0.35 } as const
 
 /**
+ * Blob size for the current zoom (2026-11-07, John: "Heat map is not that obvious, at least at this
+ * scale"). leaflet.heat's radius is in screen pixels, so a fixed 25 px covers less and less ground
+ * as you zoom in: at field zoom 16-17 each blob was about the size of the ranger marker drawn on top
+ * of it, and the heat hid under the pins. Now 25 px at zoom 14 and wider, doubling every two zoom
+ * levels closer (35 at 15, 50 at 16, 71 at 17), capped at 80 px. Blur stays 0.6 of the radius, as in
+ * HEAT_OPTIONS.
+ */
+export function heatRadiusForZoom(zoom: number): { radius: number, blur: number } {
+  const radius = Math.round(Math.min(80, Math.max(25, 25 * 2 ** ((zoom - 14) / 2))))
+  return { radius, blur: Math.round(radius * 0.6) }
+}
+
+/**
  * The heat map's colours, cold to hot: leaflet.heat's own default, written out so the printed
  * legend's swatch is drawn from the same stops (2026-11-04, John: the swatch was flat salmon while
  * the map showed a rainbow). Passed to the layer as its gradient option too.

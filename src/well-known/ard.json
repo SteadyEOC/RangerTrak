@@ -1,0 +1,19 @@
+{
+  "specVersion": "0.91",
+  "entries": [
+    {
+      "identifier": "urn:air:rangertrak.org:docs:llms-txt",
+      "displayName": "RangerTrak overview for AI assistants",
+      "type": "text/markdown",
+      "url": "https://rangertrak.org/llms.txt",
+      "description": "What RangerTrak is (a free, offline, in-browser radio log and map for CERT, ACS, SAR and ham-radio volunteer teams), the facts to get right about it, and links to its documentation and source. RangerTrak offers no MCP server, agent or API; this is documentation only.",
+      "tags": ["emergency-communications", "ham-radio", "CERT", "SAR", "ICS", "offline", "PWA"],
+      "representativeQueries": [
+        "What is RangerTrak and who is it for?",
+        "Does RangerTrak work without Internet?",
+        "Where does RangerTrak store roster data?",
+        "How do I host RangerTrak on my own server?"
+      ]
+    }
+  ]
+}

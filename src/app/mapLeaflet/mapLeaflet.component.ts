@@ -12,7 +12,7 @@ import { FilterChipsComponent } from '../shared/filter-chips/filter-chips.compon
 import {
   MapShowState, SHOW_EVERYTHING, flaggedStatuses, isStatusFlagged, mapFilterChips, selectMapEntries
 } from '../domain/map-entry-filter'
-import { HEAT_GRADIENT, HEAT_OPACITY, HEAT_OPTIONS, heatPoints } from './heat-points'
+import { HEAT_GRADIENT, HEAT_OPACITY, HEAT_OPTIONS, heatPoints, heatRadiusForZoom } from './heat-points'
 import { LeafletOverlays, RING_STEPS_MILES, formatRingMiles } from './leaflet-overlays'
 import { LeafletOfflineController } from './leaflet-offline-controller'
 import { LeafletPrintController } from './leaflet-print-controller'
@@ -155,7 +155,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       const { HeatLayer } = await import('leaflet.heat')
       if (!this.heatLayer) {
         this.heatLayer = new HeatLayer(heatPoints(this.shownEntries()),
-          { pane: 'heatPane', ...HEAT_OPTIONS, gradient: { ...HEAT_GRADIENT } })
+          { pane: 'heatPane', ...HEAT_OPTIONS, ...heatRadiusForZoom(this.lMap.getZoom()), gradient: { ...HEAT_GRADIENT } })
         this.heatGroup.addLayer(this.heatLayer)
       }
     } finally { this.heatLoading = false }
@@ -775,6 +775,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.lMap.on('zoomend', () => {
       if (this.lMap) {
         this.zoom.set(this.lMap.getZoom() ?? this.settings.leaflet.defZoom)
+        // Heat blobs grow as you zoom in, so they show around the markers (heatRadiusForZoom).
+        if (this.heatLayer && this.heatOn()) this.heatLayer.setOptions(heatRadiusForZoom(this.lMap.getZoom()))
       }
     })
 

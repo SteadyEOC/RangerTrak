@@ -869,15 +869,38 @@ mat-slide-toggle {
   }
 }
 
+// 2026-11-07, John: "The range ring slider jumps, but should do some easing and needs margin left".
+// The label holds the longest text it shows ("Auto, now 0.25 mi (0.40 km)"), so changing the value
+// no longer slides the slider sideways. The slider keeps clear of the label: its thumb's 40 px
+// focus halo used to cover the label's last word. And the thumb glides between stops instead of
+// snapping (Material turns the transition off for discrete sliders).
 .map-ring-spacing {
   display    : flex;
   flex-wrap  : wrap;
   align-items: center;
   gap        : 0 12px;
 
+  label {
+    flex     : 0 0 44ch;
+    max-width: 100%;
+  }
+
   mat-slider {
-    flex     : 1 1 220px;
-    min-width: 180px;
+    flex       : 1 1 220px;
+    min-width  : 180px;
+    margin-left: 20px;
+  }
+}
+
+:host ::ng-deep .map-ring-spacing .mat-mdc-slider .mdc-slider__thumb,
+:host ::ng-deep .map-ring-spacing .mat-mdc-slider .mdc-slider__track--active_fill {
+  transition: transform 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host ::ng-deep .map-ring-spacing .mat-mdc-slider .mdc-slider__thumb,
+  :host ::ng-deep .map-ring-spacing .mat-mdc-slider .mdc-slider__track--active_fill {
+    transition: none;
   }
 }
 

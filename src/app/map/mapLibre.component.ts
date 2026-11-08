@@ -1,6 +1,6 @@
 import { MasonryDirective } from '../shared/layout/masonry.directive'
 import { GeoJSONSource, Map as MaplibreMap, MapLayerMouseEvent, MapMouseEvent, Marker, Popup, ScaleControl } from 'maplibre-gl'
-import type { FeatureCollection, Point } from 'geojson'
+import type { Feature, FeatureCollection, Point, Polygon } from 'geojson'
 // P1-5 (offline map coverage scoping, 2026-09-14): validating a scribe-picked .pmtiles file
 // needs the SAME 'pmtiles' package map-style.ts already imports for the bundled/custom
 // sources - no new dependency, and this file is already the lazy MapLibre-only chunk (E-64/
@@ -68,6 +68,8 @@ import { MapPrintLegendComponent } from './map-print/map-print-legend.component'
 import { printMapSheet } from './map-print/map-print-sheet'
 
 const REPORTS_SOURCE_ID = 'field-reports'
+/** The overview thumbnail's box showing where the main map is (syncOverview()). */
+const OVERVIEW_EXTENT_SOURCE_ID = 'main-map-extent'
 
 /** Highest zoom the bundled world base carries - past it, only a demo's detail file or the
  *  scribe's own map file adds anything (E-124). */
@@ -454,18 +456,52 @@ export class MapLibreComponent implements OnInit, AfterViewInit, OnDestroy {
     // 'moveend' fires once, after the camera settles, which is what this decorative,
     // non-interactive thumbnail actually needs: it does not have to track the main map
     // frame-by-frame, only end up showing the same place once panning/zooming stops.
-    this.map.on('moveend', () => {
-      if (!this.overviewMap) {
-        return
-      }
-      const center = this.map.getCenter()
-      const targetZoom = this.clamp(
-        this.map.getZoom() - this.settings.maplibre.overviewDifference,
-        this.settings.maplibre.overviewMinZoom,
-        this.settings.maplibre.overviewMaxZoom
-      )
-      this.overviewMap.jumpTo({ center, zoom: targetZoom })
+    this.map.on('moveend', () => this.syncOverview())
+
+    // 2026-11-07, John: "Mini map for MapLibre doesn't have the rectangle that locates where the
+    // larger map is displaying". The Leaflet overview always had one (mapLeaflet.component.ts, an
+    // L.Rectangle, blue, weight 1, fill 0.07); this is the same box as a GeoJSON polygon, kept in
+    // step by syncOverview(). Added on the overview's own 'load' (a source needs a loaded style),
+    // which also syncs once so the thumbnail starts on the main map's place, not the default.
+    this.overviewMap.on('load', () => {
+      const overview = this.overviewMap
+      if (!overview) return
+      overview.addSource(OVERVIEW_EXTENT_SOURCE_ID, { type: 'geojson', data: this.mainExtentPolygon() })
+      overview.addLayer({
+        id: `${OVERVIEW_EXTENT_SOURCE_ID}-fill`, type: 'fill', source: OVERVIEW_EXTENT_SOURCE_ID,
+        paint: { 'fill-color': '#0000ff', 'fill-opacity': 0.07 },
+      })
+      overview.addLayer({
+        id: `${OVERVIEW_EXTENT_SOURCE_ID}-line`, type: 'line', source: OVERVIEW_EXTENT_SOURCE_ID,
+        paint: { 'line-color': '#0000ff', 'line-width': 1 },
+      })
+      this.syncOverview()
     })
+  }
+
+  /** Move the overview to the main map's place (zoomed out) and redraw the main map's box on it. */
+  private syncOverview(): void {
+    if (!this.overviewMap) {
+      return
+    }
+    const center = this.map.getCenter()
+    const targetZoom = this.clamp(
+      this.map.getZoom() - this.settings.maplibre.overviewDifference,
+      this.settings.maplibre.overviewMinZoom,
+      this.settings.maplibre.overviewMaxZoom
+    )
+    this.overviewMap.jumpTo({ center, zoom: targetZoom })
+    this.overviewMap.getSource<GeoJSONSource>(OVERVIEW_EXTENT_SOURCE_ID)?.setData(this.mainExtentPolygon())
+  }
+
+  /** The main map's visible area as a closed GeoJSON polygon, for the overview's box. */
+  private mainExtentPolygon(): Feature<Polygon> {
+    const b = this.map.getBounds()
+    const [w, s, e, n] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+    return {
+      type: 'Feature', properties: {},
+      geometry: { type: 'Polygon', coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] },
+    }
   }
 
   private clamp(num: number, min: number, max: number): number {

@@ -597,16 +597,16 @@
     <div class="enter__operator">
       @if (operatorEditing()) {
       <mat-form-field class="enter__operator-field" floatLabel="always">
-        <mat-label>Operator (your name)</mat-label>
+        <mat-label>Prepared by (your name or call sign)</mat-label>
         <input matInput type="text" [formField]="operatorForm.operator"
           [attr.tabindex]="operatorTabIndex"
-          title="Whoever is filing this report. Carries forward to your next entry this session; blank is fine." />
+          title="Whoever is filing this report; the map sheet's Prepared by starts with it too. Carries forward to your next entry this session; blank is fine." />
       </mat-form-field>
       } @else {
       <span class="enter__operator-summary">
-        Operator: <strong>{{ operatorForm.operator().value() }}</strong>
+        Prepared by: <strong>{{ operatorForm.operator().value() }}</strong>
         <button matButton="outlined" type="button" (click)="onBtnEditOperator()"
-          [tabIndex]="operatorTabIndex" title="Change the operator name">
+          [tabIndex]="operatorTabIndex" title="Change who is preparing these reports">
           Edit
         </button>
       </span>

@@ -1,0 +1,38 @@
+# RangerTrak
+
+> RangerTrak is a free, open-source (AGPL-3.0-or-later) Progressive Web App that tracks and maps CERT, ACS, SAR, wildland-fire and other volunteer teams who are reachable only by ham radio. Field teams radio in their locations; a scribe at the command post types them in; RangerTrak builds one mapped log of who was where, when, and in what condition. It runs entirely in the browser: no server, no account, no API key, and no Internet once loaded.
+
+Facts an assistant should get right:
+
+- Everything a user enters (roster, radio log, photos) stays in that one browser on that one device. Nothing syncs between devices; logs move only as files people send and merge by hand.
+- The roster holds names, addresses, phone numbers and call signs, unencrypted on the device unless the user turns on device encryption (Mission → Data safety). Mission backups can be passphrase-encrypted.
+- Positions can be entered as latitude/longitude (three notations), MGRS, UTM, Maidenhead or Plus Codes, all converted on the device. Street-address lookup needs Internet (OpenStreetMap Nominatim by default; Google only with the user's own key).
+- It prints an ICS-309 communications log and builds ICS-213 messages from radio log entries (field reports).
+- It is in beta (1.0.0-beta.N, tagged about weekly). It does not alert, beep or geo-fence.
+- The in-app Help (https://rangertrak.org/help) is the full user reference and always matches the running version.
+
+## Start here
+
+- [What RangerTrak is (rangertrak.com)](https://rangertrak.com): the plain-language introduction, the Field Notes blog, and how to try it
+- [The app (rangertrak.org)](https://rangertrak.org): runs in any modern browser; its Help tab is the full reference
+- [Beta tester tour](https://rangertrak.org/tour/index.html): a guided walk through the app with demo data
+- [Hosting it yourself](https://rangertrak.org/self-hosting/): serving the ready-built release zip from your own server or an offline hub
+
+## Documentation
+
+- [README](https://github.com/SteadyEOC/RangerTrak/blob/main/README.md): what it does, known gaps, licence
+- [Field Guide](https://github.com/SteadyEOC/RangerTrak/blob/main/FIELD-GUIDE.md): preparing a device before a mission so it still works when the network doesn't
+- [Loading your roster](https://github.com/SteadyEOC/RangerTrak/blob/main/LOADING-YOUR-ROSTER.md): importing team members from a spreadsheet
+- [Loading places](https://github.com/SteadyEOC/RangerTrak/blob/main/LOADING-PLACES.md): importing map points such as staging areas and shelters
+- [Changelog](https://github.com/SteadyEOC/RangerTrak/blob/main/CHANGELOG.md): release history
+
+## Developers
+
+- [Source code](https://github.com/SteadyEOC/RangerTrak): Angular, Leaflet, MapLibre; issues and releases
+- [Architecture](https://github.com/SteadyEOC/RangerTrak/blob/main/ARCHITECTURE.md): map engines, geocoding, storage, bundle and loading strategy
+- [Developing](https://github.com/SteadyEOC/RangerTrak/blob/main/DEVELOPING.md): running, testing, releasing, deploying
+
+## Optional
+
+- [Releases](https://github.com/SteadyEOC/RangerTrak/releases): tagged builds and the self-hosting zip
+- [Issues](https://github.com/SteadyEOC/RangerTrak/issues): bug reports and feature suggestions

@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
+* **site:** `rangertrak.org/llms.txt` (what RangerTrak is, the facts to get right, links to the docs) and an Agentic Resource Discovery manifest at `/.well-known/ard.json` pointing to it. Both used to fall through to the app page (PSI 11-07, Agentic Browsing 1/4)
+* **map:** the heat map shows at field zoom: each report's blob grows as you zoom in (25 px at zoom 14, 50 at 16, up to 80), so it is no longer hidden under the markers (John 11-07)
+* **map:** the MapLibre overview map shows a box for the main map's view, as Leaflet's does; the MapLibre checkbox sits under the cards, as on the Leaflet map (John 11-07)
+* **map:** the Range rings slider no longer jumps sideways as its label changes, keeps clear of the label, and its thumb glides between stops (John 11-07)
+* **entry:** "Operator (your name)" is now **Prepared by (your name or call sign)**, the same words as the map sheet's Prepared by, which it pre-fills (John 11-07)
 * **entry:** E-268 an optional clue heading (degrees true north, 0-359: which way the tracks, drag marks or subject were going). It draws as an arrow at the clue on both map engines, and shows in the clue popup, the Radio Log, the ICS-309 message text, the CSV export and the print-map legend. A bad heading in an imported file or backup is dropped, never a reason to reject the entry
 * **map:** Print map is now shown in Simple view too, not only Full view (John 10-31)
 * **map:** the controls under the Leaflet map regrouped (John 11-04): Zoom to Extent and Print map right under the map; a **Show on map** box (Trails, Latest per ranger, Selected entries, Statuses) and an **Offline maps** box (green when tiles are saved, amber when not; Save, Remove and Zoom to offline tiles) side by side when there is room; the MapLibre switch is a checkbox. Selected entries is greyed out while nothing is selected on the Radio Log page. Trails off no longer adds a chip over the map

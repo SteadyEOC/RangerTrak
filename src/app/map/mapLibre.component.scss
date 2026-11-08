@@ -203,3 +203,8 @@ mat-slide-toggle {
     background: rgba(255, 255, 255, .9);
   }
 }
+
+// Same spacing as mapLeaflet.component.scss's .map-engine (the engine checkbox under the cards).
+.map-engine {
+  margin: 0.25rem 0 1rem;
+}

@@ -1,4 +1,4 @@
-import { HEAT_GRADIENT, heatGradientCss, heatPoints } from './heat-points'
+import { HEAT_GRADIENT, heatGradientCss, heatPoints, heatRadiusForZoom } from './heat-points'
 
 describe('heatPoints (E-274)', () => {
   it('turns entries with a location into [lat, lng] points, one each', () => {
@@ -28,5 +28,18 @@ describe('heatGradientCss', () => {
 
   it('is the gradient the layer is given (one source for map and legend)', () => {
     expect(Object.keys(HEAT_GRADIENT).length).toBe(5)
+  })
+})
+
+describe('heatRadiusForZoom', () => {
+  it('keeps the 25 px default at zoom 14 and wider', () => {
+    expect(heatRadiusForZoom(14)).toEqual({ radius: 25, blur: 15 })
+    expect(heatRadiusForZoom(10)).toEqual({ radius: 25, blur: 15 })
+  })
+
+  it('grows closer in so the heat shows around the markers, capped at 80 px', () => {
+    expect(heatRadiusForZoom(16).radius).toBe(50)
+    expect(heatRadiusForZoom(17).radius).toBe(71)
+    expect(heatRadiusForZoom(19).radius).toBe(80)
   })
 })

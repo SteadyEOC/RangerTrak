@@ -55,6 +55,16 @@
                 "output": "./"
               },
               {
+                "glob": "llms.txt",
+                "input": "./src",
+                "output": "./"
+              },
+              {
+                "glob": "ard.json",
+                "input": "./src/well-known",
+                "output": "./.well-known"
+              },
+              {
                 "glob": "{console.*,room.*,lib/*.js,samples/**/*}",
                 "input": "./tools/exercise",
                 "output": "./exercise"

@@ -55,8 +55,6 @@
           Show terrain relief (hillshade)
         </mat-slide-toggle>
       </div>
-
-      <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
     </mat-card-content>
   </mat-card>
 
@@ -153,3 +151,8 @@
   </mat-card>
 </div>
 
+<!-- 2026-11-07, John: "The use maplibre line should be below the Show on map text area, as it is
+     on the leaflet map" - out of the Show on map card, under the cards, same wrapper as Leaflet's. -->
+<div class="map-engine map-print-hide">
+  <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
+</div>
