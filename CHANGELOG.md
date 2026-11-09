@@ -2,37 +2,62 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [1.0.0-beta.2](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-11-09)
 
 
 ### Features
 
-* **site:** `rangertrak.org/llms.txt` (what RangerTrak is, the facts to get right, links to the docs) and an Agentic Resource Discovery manifest at `/.well-known/ard.json` pointing to it. Both used to fall through to the app page (PSI 11-07, Agentic Browsing 1/4)
-* **map:** the heat map shows at field zoom: each report's blob grows as you zoom in (25 px at zoom 14, 50 at 16, up to 80), so it is no longer hidden under the markers (John 11-07)
-* **map:** the MapLibre overview map shows a box for the main map's view, as Leaflet's does; the MapLibre checkbox sits under the cards, as on the Leaflet map (John 11-07)
-* **map:** the Range rings slider no longer jumps sideways as its label changes, keeps clear of the label, and its thumb glides between stops (John 11-07)
-* **entry:** "Operator (your name)" is now **Prepared by (your name or call sign)**, the same words as the map sheet's Prepared by, which it pre-fills (John 11-07)
-* **entry:** E-268 an optional clue heading (degrees true north, 0-359: which way the tracks, drag marks or subject were going). It draws as an arrow at the clue on both map engines, and shows in the clue popup, the Radio Log, the ICS-309 message text, the CSV export and the print-map legend. A bad heading in an imported file or backup is dropped, never a reason to reject the entry
-* **map:** Print map is now shown in Simple view too, not only Full view (John 10-31)
-* **map:** the controls under the Leaflet map regrouped (John 11-04): Zoom to Extent and Print map right under the map; a **Show on map** box (Trails, Latest per ranger, Selected entries, Statuses) and an **Offline maps** box (green when tiles are saved, amber when not; Save, Remove and Zoom to offline tiles) side by side when there is room; the MapLibre switch is a checkbox. Selected entries is greyed out while nothing is selected on the Radio Log page. Trails off no longer adds a chip over the map
-* **mission:** the status column "Flag on map" is now **Needs attention**, the same name as the map's button and the Summary section it drives
-* **map:** E-265 maps run on Leaflet 2 (`2.0.0-beta.1`, ESM), with markercluster from Kristjan Esperanto's v2 fork; both plugins carry small local patches (`patches/`)
+* **404:** E-256 smart 404: guesses the page, searches Help with the address's words ([628f35c](https://github.com/SteadyEOC/RangerTrak/commit/628f35c53894e46f353bb35a23219b9b2e4a7aae))
+* **board:** E-255 ready-to-run Board kit; Mission card says how to run the Board here ([6bc7112](https://github.com/SteadyEOC/RangerTrak/commit/6bc7112c3154486a953c428d17ab5873831fb2a8))
+* **diagnostics:** E-258 Report-it prompt capped at 3 per session, with Don't show again ([8d445ee](https://github.com/SteadyEOC/RangerTrak/commit/8d445ee1592457fbffe48fd604701310bed1b2a3))
+* **diagnostics:** E-258 retire Debug mode; Report-it on errors; opt-in diagnostic report in feedback ([922d3a1](https://github.com/SteadyEOC/RangerTrak/commit/922d3a153e39eddfe0c5f0a8382484849506b67e))
+* **entry:** E-261 Entry keeps the report you were typing when you visit another page ([27364db](https://github.com/SteadyEOC/RangerTrak/commit/27364db2bb29820e8ac3b8280432b4cbc5774ba3))
+* **entry:** E-268 clue heading (true north) on Entry, maps, 309, export ([d1492c8](https://github.com/SteadyEOC/RangerTrak/commit/d1492c82d79689b47e4e9fd67d0364e49469dfb9))
+* **field-phone:** header shows clock, Online/Offline and unsent count; packets carry no mission; merge checks report times ([677e879](https://github.com/SteadyEOC/RangerTrak/commit/677e879a52e37fe69d83eb398c4946d0023d79b4))
+* **field-phone:** Leave field mode in the field phone's menu ([6e31523](https://github.com/SteadyEOC/RangerTrak/commit/6e31523bc023aa0cb0d93eb4f5700eb434f3d9a1))
+* **field-phone:** leaving field mode warns when reports have not been sent ([c3edefa](https://github.com/SteadyEOC/RangerTrak/commit/c3edefac3c1988b435cc24e272633c3aa6b65d01))
+* **help:** About moves near the end of the Help tabs, before Contact us ([891841b](https://github.com/SteadyEOC/RangerTrak/commit/891841b217668b6e6ed614286733c04bfd041ab6))
+* **help:** After mission tab moves ahead of Your data ([4eb50ae](https://github.com/SteadyEOC/RangerTrak/commit/4eb50aed04b99a01588392cf91453eaeb9a204fb))
+* **help:** E-264 search Help and every screen's Guide, offline ([45e19ce](https://github.com/SteadyEOC/RangerTrak/commit/45e19ce71d13ee6e96942e8dcf19f4fed87215a5))
+* **map,sitrep:** range rings slider with Off, Ctrl+P prints the map, version on map sheet, RangerTrak SitRep ([477ce7c](https://github.com/SteadyEOC/RangerTrak/commit/477ce7c59ec51accea0cb0efb7d5c571e1ef7740))
+* **map:** Add place moves into the places panel; panel wording ([772f7c6](https://github.com/SteadyEOC/RangerTrak/commit/772f7c6197dba7bffce16f5323207e0acefdf5e9))
+* **map:** controls under the map regrouped into Show on map / Offline maps ([d774ddf](https://github.com/SteadyEOC/RangerTrak/commit/d774ddf25bb8c0348e2e4066f30c5b293073ba5e))
+* **map:** E-265 Leaflet 2.0.0-beta.1 ([ac239b4](https://github.com/SteadyEOC/RangerTrak/commit/ac239b4a3150166681701309338b54e31cd75850))
+* **map:** E-274 heat map overlay (leaflet.heat 1.0.0) ([a08d939](https://github.com/SteadyEOC/RangerTrak/commit/a08d939a246ed309dc92947c05b8598217e95ae9))
+* **map:** E-277 Ranger paths, Heat map, Range rings move to Show on map ([a9a5bdf](https://github.com/SteadyEOC/RangerTrak/commit/a9a5bdf067094130199e775ee183ac812c2c8963))
+* **map:** Leaflet 2.0.0-beta.2 with its fullscreen button; fix heat-pane e2e selector ([429fe85](https://github.com/SteadyEOC/RangerTrak/commit/429fe8562a8c2213a0f2c5990a641c4a385cf732))
+* **map:** Print map in Simple view too (John 10-31) ([5438855](https://github.com/SteadyEOC/RangerTrak/commit/54388559cd26c25e0c0a88f4aa0b7372230d8c88))
+* **map:** Show row reworked; heat map stronger ([8acaa4e](https://github.com/SteadyEOC/RangerTrak/commit/8acaa4e9af7eaff1cc16c5076dcb1403940d7140))
+* **print:** E-280 RangerTrak mark and RangerTrak.org beside the version on every printout ([645026b](https://github.com/SteadyEOC/RangerTrak/commit/645026bade260f92f7087a3c4de9eb3c2691426f))
+* **print:** E-280 RangerTrak version on every printout ([4bf233a](https://github.com/SteadyEOC/RangerTrak/commit/4bf233a7e48f1e5abf4dcb5b1b64ae0d2f005c14))
+* **radio-log:** E-234 current op period marked and filterable ([4d64448](https://github.com/SteadyEOC/RangerTrak/commit/4d644481b1969e6055ec9ead6f56a049110f1c8a))
+* **rangers:** E-262 delete the selected rangers; E-263 mark shared IDs and call signs ([41142c3](https://github.com/SteadyEOC/RangerTrak/commit/41142c30f25a2462bbd69b62f7d3517d28c4cc84))
+* **release:** E-254 attach a ready-built web zip to each release; self-hosting page ([353c9d5](https://github.com/SteadyEOC/RangerTrak/commit/353c9d5b95c59fa290ab5c1825da54cc295f1ec3))
+* **site,map,entry:** llms.txt and ard.json; heat map grows with zoom; MapLibre overview box; ring slider steady; Prepared by on Entry ([554c407](https://github.com/SteadyEOC/RangerTrak/commit/554c407d8b5b7bdfb2c39e0ea4c41cc70b4d2bc4))
+* **tour:** E-244 one module per page, side nav, app bar and tick boxes ([481960e](https://github.com/SteadyEOC/RangerTrak/commit/481960eeed78735434ff23c889caeaf73fdbb243)), closes [#m3](https://github.com/SteadyEOC/RangerTrak/issues/m3) [#T3](https://github.com/SteadyEOC/RangerTrak/issues/T3)
+* **tour:** search the Tour Guide, offline ([0ad2c41](https://github.com/SteadyEOC/RangerTrak/commit/0ad2c4183f1df7fb318e42b08f96b409c481c9d4))
+* **version:** footer and Help show which deploy this is between weekly releases ([62ad862](https://github.com/SteadyEOC/RangerTrak/commit/62ad8624ca3a85935dc3c882ba1b60ed0bbe0832))
 
-### Performance
-
-* **map:** Leaflet left the eager bundle: the `shared` barrels no longer re-export the Leaflet-importing helpers, so `main.js` is ~146 kB smaller (initial 1.88 MB / 412 kB transfer → 1.73 MB / 376 kB). A new CI check (`npm run check:eager-bundle`) fails the deploy if Leaflet or MapLibre comes back
-* **map:** plain markers use Leaflet 2's built-in SVG pin; the three marker PNGs and their asset copy are gone
 
 ### Bug Fixes
 
-* **map:** E-267 Print map no longer ends with blank pages (Montecito: 4 pages for 2). Whether the legend gets a page of its own is decided before the print starts, from its size, because Chrome counts the pages then; a legend that stays on the map can no longer add pages, and with no clear spot it sits over the fewest markers
-* **map:** the printed range-ring label that the map's edge would cut ("km)") is left off; the rings inside still carry their distance
-* **map:** the print legend's heat map swatch shows the map's own blue-to-red colours, not a flat orange
-
-### Accessibility
-
-* **map:** marker SVGs are hidden from screen readers so each marker is named by its title (an unassigned ranger read as "?", some places as a single letter); the "You are here" marker has a title
-
+* **board:** Board kit and self-hosting links go to the releases list, not /releases/latest ([4c30413](https://github.com/SteadyEOC/RangerTrak/commit/4c304139fd55f2e025e7fd4a4c4aae5305886c8b))
+* **diagnostics:** E-258 follow-ups: worker state, local times, no repeated error, Info+ activity ([1527b2c](https://github.com/SteadyEOC/RangerTrak/commit/1527b2c0f59666f5f34415bf79f68a4c4493380b))
+* **diagnostics:** E-258 Report-it prompt stays until dismissed, amber, "Notice 1 of 3" ([b9e0719](https://github.com/SteadyEOC/RangerTrak/commit/b9e0719b635df9fa102937088ed81d7b741114b3))
+* **diagnostics:** E-258's Report-it mute key is in the storage inventory, so the deploy's check passes ([28f177b](https://github.com/SteadyEOC/RangerTrak/commit/28f177b8d239e53b1f7cbc5c8c350b1f2f5d40b9))
+* **entry:** E-249 hide the Ctrl+Enter hint on a touch screen with no fine pointer ([ffa7198](https://github.com/SteadyEOC/RangerTrak/commit/ffa71980d4d9b2479aff88acee8aece2dfe59cc0))
+* **footer:** E-250 keep the footer link clear of the back-to-top button ([d618428](https://github.com/SteadyEOC/RangerTrak/commit/d618428b92785fe61d3e2b4d21bcdaf1628e7481))
+* **help:** anchor links land below the sticky header; a fragment-only change scrolls too ([968c2df](https://github.com/SteadyEOC/RangerTrak/commit/968c2df29c71bb70ae8b33ab1ba4001cb204cf32))
+* **journal:** "1 entry", not "1 entries", on the Log page's journal check ([7aa214a](https://github.com/SteadyEOC/RangerTrak/commit/7aa214ab7e22fae7c93a0d808c9806db58ce1d2f))
+* **layout:** Attach no longer touches Notes; footer row gets bottom room for the Install pill ([5e24ecf](https://github.com/SteadyEOC/RangerTrak/commit/5e24ecf146485e549824db73b6cf8c004731bf8b))
+* **map:** E-266 offline save keeps going past failed tiles, shows progress and result ([b6745f4](https://github.com/SteadyEOC/RangerTrak/commit/b6745f49cfc6d9d7b71964c9960f753dc53017f7))
+* **map:** layers menu covers the edge-tick labels again ([ac97b8b](https://github.com/SteadyEOC/RangerTrak/commit/ac97b8b6adcfedbf9a65fde0a51aada867376009))
+* **map:** Print map blank trailing pages, cut ring label, heat swatch ([0ca5178](https://github.com/SteadyEOC/RangerTrak/commit/0ca517818d6f83d257aa33f427c4bd68e0a6f4c4))
+* **shell:** E-272 footer waits for the first routed page (PSI CLS 0.119 on lazy routes) ([1bb1fc5](https://github.com/SteadyEOC/RangerTrak/commit/1bb1fc59bcd2725f9556a6320539d9c1e31b24ff))
+* **tools:** Chrome test runs delete their temp profiles however they end ([54962b1](https://github.com/SteadyEOC/RangerTrak/commit/54962b1c2a0f1b73288e6556d93979600fe268a6))
+* **tools:** run folders move to .tmp; Chrome's own temp files go with them ([c8ffc46](https://github.com/SteadyEOC/RangerTrak/commit/c8ffc462866313494cce1e92938eb8d6cb86d466))
+* **update:** E-236 while live, the header shows the quiet update chip instead of nothing ([035fcc5](https://github.com/SteadyEOC/RangerTrak/commit/035fcc51dc7f0ca4e3f57b9953dd347964e53fe8))
+* **worker:** E-254 /self-hosting/ runs the Worker first, like /tour/ ([032eca4](https://github.com/SteadyEOC/RangerTrak/commit/032eca4d7265b068c3fba922dc61c1f30a703ea2))
 
 ## [1.0.0-beta.1](https://github.com/SteadyEOC/RangerTrak/compare/v0.99.97-alpha...v1.0.0-beta.1) (2026-10-28)
 
