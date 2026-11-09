@@ -94,6 +94,11 @@ jobs:
           test -f "dist/board-kit/$NAME/rangertrak-board.js"
           test -f "dist/board-kit/$NAME/app/index.html"
           test -x "dist/board-kit/$NAME/Start RangerTrak Board.command"
-          (cd dist/board-kit && zip -qr9 "$RUNNER_TEMP/$NAME.zip" "$NAME")
+          # Same pattern as the web zip above, which works: stage under RUNNER_TEMP, zip by relative name.
+          # The first real run (v1.0.0-beta.2) zipped from dist/board-kit to an absolute path, exited 0
+          # and left no file; without -q the log now shows what zip did.
+          cp -r "dist/board-kit/$NAME" "$RUNNER_TEMP/$NAME"
+          (cd "$RUNNER_TEMP" && zip -r9 "$NAME.zip" "$NAME" | tail -5)
+          test -s "$RUNNER_TEMP/$NAME.zip"
           ls -l "$RUNNER_TEMP/$NAME.zip"
           gh release upload "$TAG" "$RUNNER_TEMP/$NAME.zip" --clobber
