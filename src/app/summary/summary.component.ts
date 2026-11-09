@@ -14,6 +14,7 @@ import { printAttachments } from '../domain/attachments'
 import { formatMsgNoFull, formatMsgNoShort } from '../domain/msg-no'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
+import { AAR_CAPABILITY_LABELS } from '../shared/services/aar-note.interface'
 import { PrintBrandComponent } from '../shared/print-brand/print-brand.component'
 import { MatIconModule } from '@angular/material/icon'
 import { MatButtonModule } from '@angular/material/button'
@@ -54,6 +55,8 @@ const CHART_MIN_WIDTH = 280
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class SummaryComponent implements OnDestroy {
+  /** HSEEP's capability element (POETE) names, for the AAR notes section. */
+  readonly capabilityLabels = AAR_CAPABILITY_LABELS
   title = 'RangerTrak SitRep'
   pageDescr = 'Where the mission stands: traffic, teams and notes for a period you choose, from this radio log (not an ICS-209). '
     + 'It only reads the radio log, so logging carries on as normal.'

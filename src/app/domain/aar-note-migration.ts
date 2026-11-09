@@ -1,11 +1,13 @@
-import type { AarNoteAbout, AarNoteKind, AarNoteType } from '../shared/services/aar-note.interface'
+import type { AarCapability, AarNoteAbout, AarNoteKind, AarNoteType } from '../shared/services/aar-note.interface'
 import { newLocationUid } from './mission-location-migration'
 
 /**
  * E-116: the stored shape of After Action notes, versioned from the start like Locations
  * (mission-location-migration.ts), so a later field change has somewhere to migrate from.
  */
-export const AAR_NOTE_SCHEMA_VERSION = 2 // E-04 / D-63: 1 -> 2 adds `kind` and `at`; schema 1 reads as all 'aar'
+// E-04 / D-63: 1 -> 2 adds `kind` and `at`; schema 1 reads as all 'aar'.
+// 2 -> 3 adds the optional HSEEP `capability` (POETE); schema 2 notes simply have none.
+export const AAR_NOTE_SCHEMA_VERSION = 3
 
 export type StoredAarNotes = {
   schemaVersion: number,
@@ -14,6 +16,8 @@ export type StoredAarNotes = {
 
 const ABOUT_VALUES: readonly AarNoteAbout[] = ['incident', 'app']
 const KIND_VALUES: readonly AarNoteKind[] = ['aar', 'activity']
+// HSEEP's POETE list. Kept here, not imported, because domain/ takes *.interface files as types only (ADR D-57).
+const CAPABILITY_VALUES: readonly AarCapability[] = ['planning', 'organization', 'equipment', 'training', 'exercise']
 
 /** E-04 / D-63: the time a note counts as happening - the edited time if there is one, else capture. */
 export function noteTime(n: Pick<AarNoteType, 'createdAt' | 'at'>): string {
@@ -57,6 +61,8 @@ function normalizeNote(raw: unknown, usedUids: Set<string>): AarNoteType | null 
       const v = n[field]
       if (typeof v === 'string' && v.trim()) note[field] = v
     }
+    // An unknown or blank capability is left off, the same as a blank review field.
+    if (CAPABILITY_VALUES.includes(n.capability as AarCapability)) note.capability = n.capability
   }
   return note
 }

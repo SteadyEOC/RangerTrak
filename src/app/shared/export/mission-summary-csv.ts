@@ -2,6 +2,7 @@ import type { MissionSummary } from '../../domain/mission-summary'
 import { formatStation } from '../../domain/station-label'
 import { printAttachments } from '../../domain/attachments'
 import { csvRow } from './csv'
+import { AAR_CAPABILITY_LABELS } from '../services/aar-note.interface'
 
 /**
  * E-189: the Mission summary as one CSV file - the snapshot to keep, stamped with when it was
@@ -81,9 +82,9 @@ export function buildSummaryCsv(summary: MissionSummary, stamp: SummaryStamp): s
       // E-194: name and short fingerprint of each live attachment.
       printAttachments(e).map(a => `${a.name}${a.smallerCopy ? ' (smaller copy)' : ''} (${a.fingerprint})`).join('; '),
     ]))
-  section('AAR notes', ['Area', 'Noted at', 'Observation', 'Recommendation', 'Owner'],
+  section('AAR notes', ['Area', 'Noted at', 'Observation', 'Capability element', 'Recommendation', 'Owner'],
     summary.aar.groups.flatMap(g => g.notes.map(n => [
-      g.area, n.createdAt, n.text, n.recommendation ?? '', n.owner ?? '',
+      g.area, n.createdAt, n.text, n.capability ? AAR_CAPABILITY_LABELS[n.capability] : '', n.recommendation ?? '', n.owner ?? '',
     ])))
   if (summary.aar.appCount) {
     lines.push('')

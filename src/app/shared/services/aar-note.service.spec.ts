@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 
 import { AarNoteService } from './aar-note.service';
 import { recordStore } from '../storage/record-store';
+import { AAR_NOTE_SCHEMA_VERSION, normalizeAarNotes } from '../../domain/aar-note-migration';
+import { AAR_CAPABILITIES } from './aar-note.interface';
 
 describe('AarNoteService (E-116)', () => {
   beforeEach(async () => {
@@ -30,12 +32,18 @@ describe('AarNoteService (E-116)', () => {
     expect(service.notes().length).toBe(1);
   });
 
+  // The migration keeps its own copy of the POETE list (ADR D-57); this keeps the two in step.
+  it('keeps every capability element the page offers', () => {
+    const notes = normalizeAarNotes(AAR_CAPABILITIES.map((c, i) => ({ uid: 'c' + i, text: c, capability: c })));
+    expect(notes.map(n => n.capability)).toEqual(AAR_CAPABILITIES);
+  });
+
   it('persists through RecordStore under a versioned wrapper', () => {
     const service = TestBed.inject(AarNoteService);
     service.addNote('MGRS field slow to type', 'app', 'Entry');
 
     const stored = JSON.parse(recordStore.getItem('aarNotes')!);
-    expect(stored.schemaVersion).toBe(2);
+    expect(stored.schemaVersion).toBe(AAR_NOTE_SCHEMA_VERSION);
     expect(stored.notes[0].kind).toBe('aar');
     expect(stored.notes[0].text).toBe('MGRS field slow to type');
   });

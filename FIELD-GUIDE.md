@@ -549,8 +549,10 @@ on. At the top of the box, choose what the line is:
 
 Each save makes one line of one kind. After the mission, the **AAR notes** page lists them:
 
-- Give each note an area, a recommendation and an owner, then print the mission notes as an
-  improvement-plan table, or export them all as a spreadsheet.
+- Give each note an area, a recommendation and an owner, and if you like a **capability element**
+  (Planning, Organization, Equipment, Training or Exercise, as FEMA's HSEEP uses). Then print the
+  mission notes as an improvement-plan table modelled on HSEEP's, or export them all as a
+  spreadsheet.
 - The ICS-214 section lists the 214 lines, and **Export ICS-214** fills in FEMA's own form to
   print and sign.
 - Notes are in the mission backup, and device encryption covers them.

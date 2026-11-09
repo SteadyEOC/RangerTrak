@@ -66,6 +66,17 @@
                 placeholder="e.g. Communications" />
             </mat-form-field>
             <mat-form-field appearance="outline">
+              <mat-label>Capability element</mat-label>
+              <mat-select [value]="n.capability ?? ''" (selectionChange)="onFieldChange(n, 'capability', $event.value)"
+                data-testid="aar-item-capability"
+                title="HSEEP's capability elements (POETE): what kind of fix this is. Optional">
+                <mat-option value="">Not set</mat-option>
+                @for (c of capabilities; track c) {
+                <mat-option [value]="c">{{ capabilityLabels[c] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
               <mat-label>Owner</mat-label>
               <input matInput [ngModel]="n.owner" (change)="onFieldChange(n, 'owner', $any($event.target).value)" />
             </mat-form-field>
@@ -172,14 +183,22 @@
   <!-- Print only: an improvement-plan table of the incident notes, oldest first. -->
   <section class="rt-aar-print" aria-hidden="true">
     <h1>After-action notes{{ missionName() ? ': ' + missionName() : '' }}</h1>
-    <table>
+    <p class="rt-aar-print__basis">Improvement plan modelled on FEMA's HSEEP AAR/IP. HSEEP's column names are in small type.</p>
+    <table data-testid="aar-print-table">
       <thead>
-        <tr><th>Observation</th><th>Area</th><th>Recommendation</th><th>Owner</th><th>Noted at</th></tr>
+        <tr>
+          <th>Observation<small>Issue / area for improvement</small></th>
+          <th>Area</th>
+          <th>Capability element<small>POETE</small></th>
+          <th>Recommendation<small>Corrective action</small></th>
+          <th>Owner<small>Primary responsible organization / POC</small></th>
+          <th>Noted at</th>
+        </tr>
       </thead>
       <tbody>
         @for (n of incidentNotes(); track n.uid) {
-        <tr><td>{{ n.text }}</td><td>{{ n.area }}</td><td>{{ n.recommendation }}</td><td>{{ n.owner }}</td>
-          <td>{{ formatTime(n.createdAt) }}</td></tr>
+        <tr><td>{{ n.text }}</td><td>{{ n.area }}</td><td>{{ n.capability ? capabilityLabels[n.capability] : '' }}</td>
+          <td>{{ n.recommendation }}</td><td>{{ n.owner }}</td><td>{{ formatTime(n.createdAt) }}</td></tr>
         }
       </tbody>
     </table>

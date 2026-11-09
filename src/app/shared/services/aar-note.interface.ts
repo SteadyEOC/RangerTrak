@@ -5,7 +5,8 @@
  *
  * Captured with one field (`text`) from the header's "AAR note" button on any page; the review
  * fields (`area`, `recommendation`, `owner`) are filled in on the After Action page at the
- * hotwash. All free text - capability, not policy (D-46): no fixed list of areas.
+ * hotwash. All free text - capability, not policy (D-46): no fixed list of areas. The one pick-list,
+ * `capability`, is HSEEP's own fixed POETE list, and it is optional.
  */
 export interface AarNoteType {
   uid: string
@@ -19,6 +20,11 @@ export interface AarNoteType {
   area?: string
   recommendation?: string
   owner?: string
+  /**
+   * HSEEP's Capability Element (POETE), as in the Improvement Plan of FEMA's AAR/IP template: which
+   * kind of fix the recommendation is. Optional; blank means not chosen. Schema 3.
+   */
+  capability?: AarCapability
   /**
    * E-04 / D-63: `aar` (default) is a note for the debrief; `activity` is a line for the ICS-214
    * activity log. A 214 line is a time and a line of text: it keeps `about: 'incident'`
@@ -37,6 +43,19 @@ export interface AarNoteType {
 export type AarNoteKind = 'aar' | 'activity'
 
 export type AarNoteAbout = 'incident' | 'app'
+
+/** HSEEP's five Capability Elements (POETE), in HSEEP's order. */
+export type AarCapability = 'planning' | 'organization' | 'equipment' | 'training' | 'exercise'
+
+export const AAR_CAPABILITY_LABELS: Record<AarCapability, string> = {
+  planning: 'Planning',
+  organization: 'Organization',
+  equipment: 'Equipment',
+  training: 'Training',
+  exercise: 'Exercise',
+}
+
+export const AAR_CAPABILITIES = Object.keys(AAR_CAPABILITY_LABELS) as AarCapability[]
 
 export const AAR_NOTE_ABOUT_LABELS: Record<AarNoteAbout, string> = {
   incident: 'This incident',

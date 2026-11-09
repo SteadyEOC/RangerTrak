@@ -41,6 +41,26 @@ describe('aar-note-migration (E-116)', () => {
     expect(normalizeAarNotes(once)).toEqual(once);
   });
 
+  // HSEEP capability element (POETE), schema 3
+  it('keeps a valid capability element and drops a blank or unknown one', () => {
+    const notes = normalizeAarNotes([
+      { uid: 'a', text: 'Repeater batteries flat', capability: 'equipment' },
+      { uid: 'b', text: 'No net control relief', capability: 'staffing' },
+      { uid: 'c', text: 'Unclear check-in times', capability: '' },
+      { uid: 'd', text: 'Log the shift change', kind: 'activity', capability: 'training' },
+    ]);
+    expect(notes[0].capability).toBe('equipment');
+    expect('capability' in notes[1]).withContext('not one of the five POETE elements').toBeFalse();
+    expect('capability' in notes[2]).withContext('blank').toBeFalse();
+    expect('capability' in notes[3]).withContext('an ICS-214 line never carries review fields').toBeFalse();
+  });
+
+  it('reads schema 2 notes (no capability) unchanged, as schema 3', () => {
+    const note: AarNoteType = { uid: 'a', createdAt: '2026-11-01T10:00:00.000Z', text: 'Relay out of range', page: 'Map', about: 'incident', kind: 'aar', area: 'Comms' };
+    expect(migrateAarNotes({ schemaVersion: 2, notes: [note] })).toEqual({ schemaVersion: 3, notes: [note] });
+    expect(AAR_NOTE_SCHEMA_VERSION).toBe(3);
+  });
+
   it('passes a newer schema through untouched', () => {
     const raw = { schemaVersion: AAR_NOTE_SCHEMA_VERSION + 1, notes: [{ future: true }] };
     expect(migrateAarNotes(raw)).toEqual(raw as any);
@@ -50,7 +70,7 @@ describe('aar-note-migration (E-116)', () => {
   it('reads schema 1 notes (no kind) as AAR notes', () => {
     const v1 = { schemaVersion: 1, notes: [{ uid: 'a', createdAt: '2026-09-27T10:00:00.000Z', text: 'old', page: 'Map', about: 'app', area: 'Comms' }] };
     const out = migrateAarNotes(v1);
-    expect(out.schemaVersion).toBe(2);
+    expect(out.schemaVersion).toBe(AAR_NOTE_SCHEMA_VERSION);
     expect(out.notes[0].kind).toBe('aar');
     expect(out.notes[0].about).toBe('app');
     expect(out.notes[0].area).toBe('Comms');

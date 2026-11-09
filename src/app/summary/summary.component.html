@@ -290,6 +290,7 @@
         <li>
           <p class="rt-summary__note-text">{{ n.text }}</p>
           @if (n.recommendation) {<p class="rt-summary__note-line"><strong>Recommendation:</strong> {{ n.recommendation }}</p>}
+          @if (n.capability) {<p class="rt-summary__note-line"><strong>Capability element:</strong> {{ capabilityLabels[n.capability] }}</p>}
           @if (n.owner) {<p class="rt-summary__note-line"><strong>Owner:</strong> {{ n.owner }}</p>}
           <p class="rt-summary__note-meta">Noted {{ fmt(n.createdAt) }}</p>
         </li>

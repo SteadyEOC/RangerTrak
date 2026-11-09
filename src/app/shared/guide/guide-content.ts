@@ -316,11 +316,11 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'At the debrief',
-            text: 'Give each note an area (for example Communications or Logistics), a recommendation and an owner. Changes save as soon as you leave a field. Filter to see only the notes about the incident, or only the ones about RangerTrak.'
+            text: 'Give each note an area (for example Communications or Logistics), a recommendation and an owner. If your agency follows FEMA\'s HSEEP, you can also pick a capability element: Planning, Organization, Equipment, Training or Exercise. Changes save as soon as you leave a field. Filter to see only the notes about the incident, or only the ones about RangerTrak.'
           },
           {
             heading: 'Printing and exporting',
-            text: 'Print gives an improvement-plan table of the incident notes: observation, area, recommendation, owner and time. Export downloads every note as a spreadsheet (CSV).'
+            text: 'Print gives an improvement-plan table of the incident notes, modelled on FEMA\'s HSEEP: observation, area, capability element, recommendation, owner and time. Export downloads every note as a spreadsheet (CSV).'
           },
           {
             heading: 'SitRep',

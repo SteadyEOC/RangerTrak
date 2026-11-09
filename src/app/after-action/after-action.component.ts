@@ -20,6 +20,7 @@ import { noteTime } from '../domain/aar-note-migration'
 import {
   AAR_NOTE_ABOUT_LABELS, AarNoteAbout, AarNoteService, AarNoteType, FieldModeService, LogService, MissionService
 } from '../shared/services'
+import { AAR_CAPABILITIES, AAR_CAPABILITY_LABELS } from '../shared/services/aar-note.interface'
 import { showFirstPrintTip } from '../shared/export/print-tip'
 import { armPrintTitle } from '../shared/export/print-title'
 import { csvCell, downloadCsv } from '../shared/export/csv'
@@ -59,6 +60,9 @@ export class AfterActionComponent {
   pageDescr = 'Notes to fix or improve later, gathered during the mission for the after-action review.'
 
   readonly aboutLabels = AAR_NOTE_ABOUT_LABELS
+  /** HSEEP's Capability Elements (POETE) for the optional pick-list on each note. */
+  readonly capabilities = AAR_CAPABILITIES
+  readonly capabilityLabels = AAR_CAPABILITY_LABELS
   filter = signal<Filter>('all')
 
   /** E-04 / D-63: debrief notes only, in capture order. The ICS-214 lines are `lines()` below. */
@@ -99,7 +103,7 @@ export class AfterActionComponent {
   }
 
   /** Saves one edited field. A cleared note text is refused by the service, which keeps the old one. */
-  onFieldChange(note: AarNoteType, field: 'text' | 'area' | 'recommendation' | 'owner' | 'about', value: string): void {
+  onFieldChange(note: AarNoteType, field: 'text' | 'area' | 'recommendation' | 'owner' | 'about' | 'capability', value: string): void {
     this.notes.updateNote({ ...note, [field]: value })
   }
 
@@ -173,9 +177,10 @@ export class AfterActionComponent {
   }
 
   onExportCsv(): void {
-    const header = ['Noted at', 'About', 'Page', 'Observation', 'Area', 'Recommendation', 'Owner']
+    const header = ['Noted at', 'About', 'Page', 'Observation', 'Area', 'Capability element', 'Recommendation', 'Owner']
     const rows = this.aarNotes().map(n => [
-      n.createdAt, this.aboutLabels[n.about], n.page, n.text, n.area, n.recommendation, n.owner,
+      n.createdAt, this.aboutLabels[n.about], n.page, n.text, n.area,
+      n.capability ? this.capabilityLabels[n.capability] : '', n.recommendation, n.owner,
     ].map(csvCell).join(','))
     const csv = [header.map(csvCell).join(','), ...rows].join('\r\n')
 
