@@ -75,10 +75,10 @@ jobs:
           test ! -e "$STAGE/rangertrak/assets/maps"
           (cd "$RUNNER_TEMP" && zip -qr9 "$NAME.zip" "$NAME")
           ls -l "$RUNNER_TEMP/$NAME.zip"
-          echo "ZIP=$RUNNER_TEMP/$NAME.zip" >> "$GITHUB_ENV"
+          echo "WEB_ZIP=$RUNNER_TEMP/$NAME.zip" >> "$GITHUB_ENV"
 
       - name: Attach to the release
-        run: gh release upload "$TAG" "$ZIP" --clobber
+        run: gh release upload "$TAG" "$WEB_ZIP" --clobber
 
       # E-255: the ready-to-run Board kit, rangertrak-board-<version>.zip, from the same build. Its
       # layout is in tools/board-kit/build.js. Tags from before the kit existed have no build.js.
@@ -94,9 +94,8 @@ jobs:
           test -f "dist/board-kit/$NAME/rangertrak-board.js"
           test -f "dist/board-kit/$NAME/app/index.html"
           test -x "dist/board-kit/$NAME/Start RangerTrak Board.command"
-          # Same pattern as the web zip above, which works: stage under RUNNER_TEMP, zip by relative name.
-          # The first real run (v1.0.0-beta.2) zipped from dist/board-kit to an absolute path, exited 0
-          # and left no file; without -q the log now shows what zip did.
+          # Never name an env var ZIP (or ZIPOPT): Info-ZIP reads it as default options. On v1.0.0-beta.2 the
+          # web zip's path sat in $ZIP, so this zip added the kit to the web zip, exited 0 and left no kit zip.
           cp -r "dist/board-kit/$NAME" "$RUNNER_TEMP/$NAME"
           (cd "$RUNNER_TEMP" && zip -r9 "$NAME.zip" "$NAME" | tail -5)
           test -s "$RUNNER_TEMP/$NAME.zip"
