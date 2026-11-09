@@ -593,14 +593,17 @@ async function checkRoutesRender() {
   console.log('\nEvery route renders, with no console errors')
   for (const route of ROUTES) {
     await goto(route)
-    const shell = await evaluate(`(() => {
+    // 2026-11-08: polled for up to 6 s more rather than read once. On a busy machine the fixed 3.5 s
+    // settle in goto() was not always enough for a cold route, and the check failed on 2-4 routes per
+    // run at a commit whose earlier runs had passed (HEAD b48f4282, unchanged build).
+    const shell = await pollUntil(() => evaluate(`(() => {
       const page = document.querySelector('rangertrak-page');
       return {
         shell: !!page,
         main: !!document.querySelector('rangertrak-page .main'),
         strip: !!document.querySelector('.header'),
       };
-    })()`)
+    })()`), s => s.shell && s.main)
     check(`${route} renders the page shell`, shell.shell && shell.main, true)
     check(`${route} has no console errors`, consoleErrors.slice(0, 2), [])
   }
@@ -3882,6 +3885,18 @@ async function checkAarNotes() {
   await goto('/after-action')
   const rec = await evaluate(`document.querySelectorAll('[data-testid="aar-item-recommendation"]')[1]?.value`)
   check('an edited recommendation survives a reload', rec, 'Add a relay on the ridge')
+
+  // HSEEP capability element (POETE): an optional pick-list; it is stored, and printed in the improvement plan.
+  await evaluate(`document.querySelectorAll('[data-testid="aar-item-capability"]')[1]?.click()`)
+  await sleep(600)
+  await evaluate(`[...document.querySelectorAll('mat-option')].find(o => o.textContent.trim() === 'Equipment')?.click()`)
+  await sleep(800)
+  await goto('/after-action')
+  check('a picked capability element survives a reload',
+    await evaluate(`document.querySelectorAll('[data-testid="aar-item-capability"]')[1]?.textContent.trim()`), 'Equipment')
+  check('the printed improvement plan shows it beside the note',
+    await evaluate(`[...document.querySelectorAll('[data-testid="aar-print-table"] tbody tr')].map(r => r.children[2]?.textContent.trim())`),
+    ['Equipment'])
 
   await evaluate(`(async () => {
     const del = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Delete all after-action notes');
