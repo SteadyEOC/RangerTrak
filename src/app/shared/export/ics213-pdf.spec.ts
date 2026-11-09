@@ -8,6 +8,15 @@ import { fillIcs213Pdf, ICS213_FIELDS } from './ics213-pdf'
  * template swap that silently changed the form's own AcroForm names shows up here, not only
  * once someone opens a printed 213 and finds it blank.
  */
+/**
+ * Same size give or take a few bytes. pdf-lib writes the save time into each file (ModDate), so two
+ * otherwise identical PDFs can differ by a byte; on CI they did (11-09, 28696 vs 28695). Anything
+ * actually drawn (a stamp, a number, a version line) adds far more than this.
+ */
+function expectSameSize(actual: Uint8Array, expected: Uint8Array): void {
+  expect(Math.abs(actual.length - expected.length)).withContext(`${actual.length} vs ${expected.length} bytes`).toBeLessThanOrEqual(8)
+}
+
 describe('fillIcs213Pdf', () => {
   let templateBytes: Uint8Array
 
@@ -16,14 +25,14 @@ describe('fillIcs213Pdf', () => {
     templateBytes = new Uint8Array(await res.arrayBuffer())
   })
 
-  // E-168: an exercise's 213 is stamped EXERCISE; an ordinary one must stay byte-for-byte as before.
+  // E-168: an exercise's 213 is stamped EXERCISE; an ordinary one must stay as before.
   it('stamps EXERCISE only when asked (E-168)', async () => {
     const fields = { '4 Subject': 'Road collapse' }
     const plain = await fillIcs213Pdf(templateBytes, fields)
     const stampedOff = await fillIcs213Pdf(templateBytes, fields, true, false)
     const stamped = await fillIcs213Pdf(templateBytes, fields, true, true)
 
-    expect(stampedOff.length).toBe(plain.length)
+    expectSameSize(stampedOff, plain)
     // Helvetica-Bold is embedded and a box + text are drawn, so the stamped file is larger.
     expect(stamped.length).toBeGreaterThan(plain.length)
     expect((await PDFDocument.load(stamped)).getPageCount()).toBe(1)
@@ -41,7 +50,7 @@ describe('fillIcs213Pdf', () => {
     // The form's own fields are exactly as without the number.
     expect((await PDFDocument.load(numbered)).getForm().getTextField('4 Subject').getText()).toBe('Road collapse')
     // An entry with no number draws nothing.
-    expect((await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined)).length).toBe(plain.length)
+    expectSameSize(await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined), plain)
   })
 
   // E-280: which RangerTrak printed it, small in the top-right margin; nothing when not given.
@@ -51,7 +60,7 @@ describe('fillIcs213Pdf', () => {
     const versioned = await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, 'RangerTrak 1.0.0-beta.2')
     expect(versioned.length).toBeGreaterThan(plain.length)
     expect((await PDFDocument.load(versioned)).getPageCount()).toBe(1)
-    expect((await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, '')).length).toBe(plain.length)
+    expectSameSize(await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, ''), plain)
   })
 
   // E-194: attachments are listed after the form; the form's own page is untouched.
