@@ -34,7 +34,7 @@ All notable changes to this project will be documented in this file. See [standa
 * **rangers:** E-262 delete the selected rangers; E-263 mark shared IDs and call signs ([41142c3](https://github.com/SteadyEOC/RangerTrak/commit/41142c30f25a2462bbd69b62f7d3517d28c4cc84))
 * **release:** E-254 attach a ready-built web zip to each release; self-hosting page ([353c9d5](https://github.com/SteadyEOC/RangerTrak/commit/353c9d5b95c59fa290ab5c1825da54cc295f1ec3))
 * **site,map,entry:** llms.txt and ard.json; heat map grows with zoom; MapLibre overview box; ring slider steady; Prepared by on Entry ([554c407](https://github.com/SteadyEOC/RangerTrak/commit/554c407d8b5b7bdfb2c39e0ea4c41cc70b4d2bc4))
-* **tour:** E-244 one module per page, side nav, app bar and tick boxes ([481960e](https://github.com/SteadyEOC/RangerTrak/commit/481960eeed78735434ff23c889caeaf73fdbb243)), closes [#m3](https://github.com/SteadyEOC/RangerTrak/issues/m3) [#T3](https://github.com/SteadyEOC/RangerTrak/issues/T3)
+* **tour:** E-244 one module per page, side nav, app bar and tick boxes ([481960e](https://github.com/SteadyEOC/RangerTrak/commit/481960eeed78735434ff23c889caeaf73fdbb243))
 * **tour:** search the Tour Guide, offline ([0ad2c41](https://github.com/SteadyEOC/RangerTrak/commit/0ad2c4183f1df7fb318e42b08f96b409c481c9d4))
 * **version:** footer and Help show which deploy this is between weekly releases ([62ad862](https://github.com/SteadyEOC/RangerTrak/commit/62ad8624ca3a85935dc3c882ba1b60ed0bbe0832))
 
