@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
+* **aar:** E-133 optional HSEEP capability element (POETE) on AAR notes; the printed improvement plan is modelled on HSEEP's AAR/IP ([6e3751e](https://github.com/SteadyEOC/RangerTrak/commit/6e3751ef))
 * **404:** E-256 smart 404: guesses the page, searches Help with the address's words ([628f35c](https://github.com/SteadyEOC/RangerTrak/commit/628f35c53894e46f353bb35a23219b9b2e4a7aae))
 * **board:** E-255 ready-to-run Board kit; Mission card says how to run the Board here ([6bc7112](https://github.com/SteadyEOC/RangerTrak/commit/6bc7112c3154486a953c428d17ab5873831fb2a8))
 * **diagnostics:** E-258 Report-it prompt capped at 3 per session, with Don't show again ([8d445ee](https://github.com/SteadyEOC/RangerTrak/commit/8d445ee1592457fbffe48fd604701310bed1b2a3))
