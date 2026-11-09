@@ -55,7 +55,7 @@
     "@angular/platform-browser-dynamic": "^22.2.3",
     "@angular/platform-server": "^22.2.3",
     "@angular/router": "^22.2.3",
-    "@angular/service-worker": "^22.2.3",
+    "@angular/service-worker": "^22.2.5",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@material/banner": "^14.0.0",
     "@material/icon-button": "^14.0.0",
