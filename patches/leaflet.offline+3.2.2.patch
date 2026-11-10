@@ -1,5 +1,5 @@
 diff --git a/node_modules/leaflet.offline/dist/bundle.js b/node_modules/leaflet.offline/dist/bundle.js
-index d758473..2005c57 100644
+index bbaa257..0ef6f4b 100644
 --- a/node_modules/leaflet.offline/dist/bundle.js
 +++ b/node_modules/leaflet.offline/dist/bundle.js
 @@ -116,7 +116,7 @@
@@ -33,7 +33,7 @@ index d758473..2005c57 100644
              if (this.options.crossOrigin || this.options.crossOrigin === '') {
                  tile.crossOrigin =
                      this.options.crossOrigin === true ? '' : this.options.crossOrigin;
-@@ -340,10 +340,10 @@
+@@ -342,10 +342,9 @@
              link.innerHTML = html;
              link.href = '#';
              link.ariaRoleDescription = 'button';
@@ -44,11 +44,10 @@ index d758473..2005c57 100644
 +            leaflet.DomEvent.on(link, 'pointerdown dblclick', leaflet.DomEvent.stopPropagation);
 +            leaflet.DomEvent.on(link, 'click', leaflet.DomEvent.stop);
 +            leaflet.DomEvent.on(link, 'click', fn, this);
-+            leaflet.DomEvent.on(link, 'click', this._refocusOnMap, this);
              return link;
          }
          _saveTiles() {
-@@ -395,7 +395,7 @@
+@@ -403,7 +402,7 @@
              }
              const latlngBounds = this.options.bounds || this._map.getBounds();
              for (let i = 0; i < zoomlevels.length; i += 1) {

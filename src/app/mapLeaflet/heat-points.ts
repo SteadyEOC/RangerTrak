@@ -1,6 +1,8 @@
 // 2026-11-03, John: E-274 - the pure part of the heat map overlay, kept apart from the map
 // component (and from the lazy-loaded leaflet.heat plugin) so it can be unit tested.
 
+import { mapPoint } from '../shared/mapping/map-point'
+
 /**
  * Opacity of the whole heat pane (0..1): the single place to tune how strongly the heat shows over
  * the map. 2026-11-04, John ("too transparent"): 0.5 -> 0.85, with HEAT_OPTIONS below.
@@ -47,12 +49,13 @@ export function heatGradientCss(gradient: Readonly<Record<number, string>> = HEA
 
 /**
  * One [lat, lng] point per radio log entry that has a location. Every entry weighs the same.
- * Same test as the markers use (`location.lat && location.lng`), so what is hot is what is pinned.
+ * Same test as the markers use (mapPoint()), so what is hot is what is pinned.
  */
 export function heatPoints(entries: readonly { location?: { lat: number, lng: number } }[]): [number, number][] {
   const points: [number, number][] = []
   for (const e of entries) {
-    if (e.location?.lat && e.location?.lng) points.push([e.location.lat, e.location.lng])
+    const at = mapPoint(e.location)
+    if (at) points.push(at)
   }
   return points
 }

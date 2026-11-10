@@ -19,6 +19,7 @@ import {
 // helpers, so importing through it here pulled MapLibre (~800KB) into the eager bundle
 // alongside Leaflet, even though this Leaflet mini-map never touches MapLibre.
 import { AbstractMap } from '../shared/mapping/map'
+import { mapPoint } from '../shared/mapping/map-point'
 import { evidenceIconFor, rangerIconFor } from '../shared/mapping/ranger-icon'
 import { sanitizeHeading } from '../domain/heading'
 import { formatReportTime } from '../shared/mapping/report-time'
@@ -106,17 +107,20 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
       // the map exists, so nothing is lost by returning here.
       return
     }
-    if (!newLocation) {
+    // A half-typed evidence coordinate (blank field) is treated as "none yet": Leaflet
+    // 2.0.0-beta.3 throws on it instead of drawing at 0,0.
+    const at = mapPoint(newLocation)
+    if (!at) {
       this.evidenceMarker?.remove()
       this.evidenceMarker = undefined
       return
     }
     if (this.evidenceMarker) {
-      this.evidenceMarker.setLatLng([newLocation.lat, newLocation.lng])
+      this.evidenceMarker.setLatLng(at)
     } else {
       // See evidenceIconFor()'s own doc comment (shared/mapping/ranger-icon.ts) for why this
       // is a distinct shared icon rather than something drawn inline here.
-      this.evidenceMarker = new L.Marker([newLocation.lat, newLocation.lng], {
+      this.evidenceMarker = new L.Marker(at, {
         icon: evidenceIconFor(this.evidenceHeading), title: 'Evidence/clue location'
       })
       this.evidenceMarker.addTo(this.lMap)
@@ -550,7 +554,8 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     }
     const toAdd: L.Marker[] = []   // one bulk addLayers() call, faster than addLayer() per marker
     this.displayedRadioLogEntries.forEach(i => {
-      if (i.location.lat && i.location.lng) {  // TODO: Do this in the FieldReports Service - or also the GMap; thewse only happened when location was broken???
+      const at = mapPoint(i.location)  // Leaflet 2.0.0-beta.3 throws on a junk coordinate
+      if (at) {
         let title = `${i.callsign} at ${formatReportTime(i.date)} with ${i.status}`
 
         // E-86 (narrowed): a distinct shape+color per ranger callsign, team ignored for now.
@@ -559,7 +564,7 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
         // CURRENT report, not a mission overview), reverted same day once that was raised.
         // D-42 phase 5: rangerUid (unique per ranger, set even with a blank callsign) takes
         // priority over callsign - see ranger-icon.ts's header comment for why.
-        let marker = new L.Marker(new L.LatLng(i.location.lat, i.location.lng), { title: title, icon: rangerIconFor(i.rangerUid || i.callsign) })
+        let marker = new L.Marker(at, { title: title, icon: rangerIconFor(i.rangerUid || i.callsign) })
         marker.bindPopup(title)
         toAdd.push(marker)
       } else {
@@ -593,7 +598,8 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
    * @returns
    */
   override addMarker(lat: number, lng: number, title: string = '') {
-    if (!lat || !lng || !this.lMap) {
+    const at = mapPoint({ lat, lng })
+    if (!at || !this.lMap) {
       this.log.error(`addMarker(): bad lat: ${lat} or lng: ${lng} or mapLeaflet: ${this.lMap}`, this.id)
       return
     }
@@ -605,12 +611,12 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     // the map while it holds it unclustered and in view, so earlier pins could stay (three
     // at once on a phone, map taps plus GPS updates). Now one tracked pin, on the map only,
     // like evidenceMarker above.
-    this.positionMarker = new L.Marker(new L.LatLng(lat, lng), { title: title })
+    this.positionMarker = new L.Marker(at, { title: title })
     this.positionMarker.bindPopup(title)
     this.positionMarker.addTo(this.lMap)
 
     // Refit map
-    this.lMap.setView([lat, lng])
+    this.lMap.setView(at)
     //marker.addEventListener('click', this._markerOnClick);
 
   }

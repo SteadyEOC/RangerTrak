@@ -526,12 +526,9 @@ mat-slide-toggle {
     display: none;
   }
 
-  // Fixed dark ink on white for the two map credits, whatever scheme was on screen.
-  :host ::ng-deep .leaflet-control-scale-line,
-  :host ::ng-deep .leaflet-control-attribution {
-    background: rgba(255, 255, 255, .9);
-    color     : #000;
-  }
+  // The two map credits (scale, attribution) need dark ink on white on paper. Leaflet
+  // 2.0.0-beta.3 made that its own default (black on 90% white, WCAG AA), so the override
+  // that used to be here is gone.
 }
 
 // Roadmap "Offline map area" item: saved/estimated size text, appended by

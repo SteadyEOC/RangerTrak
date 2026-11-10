@@ -40,6 +40,7 @@ import {
 } from '../shared'
 // Leaflet-importing helpers come from their own files, never the barrels (E-265 follow-up)
 import { AbstractMap } from '../shared/mapping/map'
+import { mapPoint } from '../shared/mapping/map-point'
 import { rangerIconFor, evidenceIconFor } from '../shared/mapping/ranger-icon'
 import { locationIconFor } from '../shared/mapping/location-icon'
 import {
@@ -1061,7 +1062,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // One addLayers() call instead of addLayer() per marker: markercluster 2.0 bulk-adds about 2x faster.
     const toAdd: L.Marker[] = []
     shown.forEach(i => {
-      if (i.location.lat && i.location.lng) {  // TODO: Do this in the FieldReports Service - or also the GMap; thewse only happened when location was broken???
+      // mapPoint(): Leaflet 2.0.0-beta.3 throws on a non-numeric coordinate, so one bad
+      // imported row would otherwise stop this loop and hide every report after it.
+      const at = mapPoint(i.location)
+      if (at) {
         let title = `${i.callsign} at ${formatReportTime(i.date)}${i.msgNo ? ` (${formatMsgNoShort(i.msgNo)})` : ''} with ${i.status}`
 
         // E-86 (narrowed): a distinct shape+color per ranger callsign, team ignored for now.
@@ -1070,7 +1074,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         const statusColor = radioLogStatusColor(i.status, this.settings.radioLogStatuses)
         // D-42 phase 5: rangerUid (unique per ranger, set even with a blank callsign) takes
         // priority over callsign - see ranger-icon.ts's header comment for why.
-        let marker = new L.Marker(new L.LatLng(i.location.lat, i.location.lng), {
+        let marker = new L.Marker(at, {
           title: title, icon: rangerIconFor(i.rangerUid || i.callsign, statusColor)
         })
         marker.bindPopup(layer => this.entryPopup(i, title, layer))
@@ -1081,10 +1085,11 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
         // own mini-map - never here, so it was effectively orphaned the moment a report was
         // submitted. Same icon Entry's mini-map draws (evidenceIconFor(), shared/mapping/
         // ranger-icon.ts) so a scribe recognizes it instantly on the mission overview too.
-        if (i.evidenceLocation) {
+        const evidenceAt = mapPoint(i.evidenceLocation)
+        if (evidenceAt) {
           let evidenceTitle = `Evidence/clue from ${i.callsign} at ${formatReportTime(i.date)}`
           let evidenceMarker = new L.Marker(
-            new L.LatLng(i.evidenceLocation.lat, i.evidenceLocation.lng),
+            evidenceAt,
             { title: evidenceTitle, icon: evidenceIconFor(sanitizeHeading(i.evidenceDirection)) }
           )
           // E-268: "Heading 45° T (NE)" under the title; the arrow is in the icon itself.
@@ -1132,9 +1137,11 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     }
 
     this.locations.forEach(loc => {
+      const at = mapPoint(loc)
+      if (!at) return  // a Place with a blank or junk coordinate (bad import): skip it rather than throw
       const color = locationCategoryColor(loc.type, this.settings.locationTypes)
       const icon = resolveLocationIcon(loc.type, this.settings.locationTypes)
-      const marker = new L.Marker([loc.lat, loc.lng], { title: loc.name, icon: locationIconFor(icon, color) })
+      const marker = new L.Marker(at, { title: loc.name, icon: locationIconFor(icon, color) })
       // Leaflet's default bubblingMouseEvents means a marker click ALSO reaches the map's
       // own click handler (onMouseClick, bound on the container div in the template) unless
       // stopped here - without this, clicking a location would also copy its coordinates to
@@ -1169,18 +1176,17 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    */
   onBtnZoomToExtent(): void {
     const points: ExtentPoint[] = []
-    // Same `i.location.lat && i.location.lng` guard displayMarkers() (above) uses before
-    // drawing a marker - a falsy 0 is indistinguishable from "no coordinate" there, so this
-    // stays consistent with what's actually on screen rather than being stricter.
+    // Same mapPoint() guard displayMarkers() and refreshLocationMarkers() use before drawing,
+    // so this fits exactly what is on screen (Places included now, junk ones skipped).
+    const push = (p?: { lat?: unknown, lng?: unknown } | null) => {
+      const at = mapPoint(p)
+      if (at) points.push({ lat: at[0], lng: at[1] })
+    }
     this.shownEntries().forEach(i => {
-      if (i.location.lat && i.location.lng) {
-        points.push(i.location)
-      }
-      if (i.evidenceLocation?.lat && i.evidenceLocation?.lng) {
-        points.push(i.evidenceLocation)
-      }
+      push(i.location)
+      push(i.evidenceLocation)
     })
-    this.locations.forEach(loc => points.push(loc))
+    this.locations.forEach(loc => push(loc))
 
     const b = computeExtent(points)
     if (!b) {

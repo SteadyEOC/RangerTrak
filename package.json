@@ -70,7 +70,7 @@
     "crypto-js": "^4.2.0",
     "fflate": "^0.8.3",
     "idb": "^8.0.4",
-    "leaflet": "2.0.0-beta.2",
+    "leaflet": "^2.0.0-beta.3",
     "leaflet.heat": "1.0.0",
     "leaflet.markercluster": "2.0.0-beta.1",
     "leaflet.offline": "^3.2.0",
