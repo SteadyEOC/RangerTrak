@@ -23,7 +23,7 @@ const asWarnings = (configs) =>
   )
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', '.angular/**', 'src/test.ts', 'src/polyfills.ts'] },
+  { ignores: ['dist/**', 'node_modules/**', '.angular/**'] },
   {
     files: ['src/**/*.ts'],
     extends: asWarnings([...tseslint.configs.recommended, ...angular.configs.tsRecommended]),

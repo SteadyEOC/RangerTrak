@@ -7,8 +7,7 @@
   "files": [
     /* Breaks: per https://stackoverflow.com/questions/57729518/how-to-get-rid-of-the-warning-ts-file-is-part-of-the-typescript-compilation-but
     better: https://angular.io/guide/typescript-configuration#installable-typings-files */
-    "src/main.ts",
-    "src/polyfills.ts"
+    "src/main.ts"
   ],
   "include": [
     "src/**/*.d.ts" /* ,

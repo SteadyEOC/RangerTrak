@@ -25,7 +25,6 @@
             "outputPath": "dist/rangertrak",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -200,9 +199,6 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
-            },
-            "unit-test": {
-              "polyfills": []
             }
           },
           "defaultConfiguration": "production"
@@ -228,7 +224,6 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "buildTarget": "rangertrak:build:development,unit-test",
             "tsConfig": "tsconfig.spec.json",
             "runnerConfig": "vitest.config.ts",
             "browsers": ["chromiumHeadless"],
