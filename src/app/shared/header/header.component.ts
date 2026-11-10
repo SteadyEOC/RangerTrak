@@ -15,7 +15,8 @@ import {
 import { Utility } from '../utility'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
 import { GuideService } from '../guide/guide.service'
-import { AarNoteDialogComponent, AarNoteDialogData } from '../aar-note/aar-note-dialog.component'
+// E-269: the dialog itself is imported on first use (onAarNote), keeping it out of start-up JS.
+import type { AarNoteDialogData } from '../aar-note/aar-note-dialog.component'
 import { ViewSwitchComponent } from '../view/view-switch.component'
 
 /**
@@ -381,8 +382,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   /** E-116: opens the capture dialog; after a save, a snackbar offers the After Action page. */
-  onAarNote(): void {
+  async onAarNote(): Promise<void> {
     const data: AarNoteDialogData = { page: (this.parentTitle ?? '').trim() }
+    const { AarNoteDialogComponent } = await import('../aar-note/aar-note-dialog.component')
     this.dialog.open(AarNoteDialogComponent, { data, autoFocus: 'first-tabbable' })
       .afterClosed().subscribe(saved => {
         if (!saved) return

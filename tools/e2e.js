@@ -605,6 +605,16 @@ async function checkRoutesRender() {
       };
     })()`), s => s.shell && s.main)
     check(`${route} renders the page shell`, shell.shell && shell.main, true)
+    if (!(shell.shell && shell.main)) {
+      // 2026-11-10: /map failed here in 3 of 5 runs while it drew in ~270 ms in a fresh profile.
+      // Say what IS on screen, so the next failure explains itself.
+      console.log('    page state:', JSON.stringify(await evaluate(`({
+        path: location.pathname, ready: document.readyState,
+        outlet: document.querySelector('router-outlet')?.nextElementSibling?.tagName ?? null,
+        dialogs: [...document.querySelectorAll('mat-dialog-container, .cdk-overlay-pane')].map(d => d.textContent.trim().slice(0, 80)),
+        text: document.body.innerText.trim().slice(0, 200),
+      })`)))
+    }
     check(`${route} has no console errors`, consoleErrors.slice(0, 2), [])
   }
 }

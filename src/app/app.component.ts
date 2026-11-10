@@ -11,6 +11,7 @@ import { AlertsComponent } from './shared/alerts/alerts.component'
 import { BackToTopComponent } from './shared/back-to-top/back-to-top.component'
 import { StaleOriginNoticeComponent } from './shared/stale-origin-notice/stale-origin-notice.component'
 import { GuideDrawerComponent } from './shared/guide/guide-drawer.component'
+import { GuideService } from './shared/guide/guide.service'
 import { AttachmentHoverPreviewService } from './shared/attachments/attachment-hover-preview.service'
 import { InstallUpdateComponent } from './shared/install-update/install-update.component'
 
@@ -43,6 +44,8 @@ export class AppComponent implements OnInit {
 
   private id = "AppComponent"
   private readonly appRef = inject(ApplicationRef)
+  /** Read by the template's @defer trigger for the Guide drawer (E-269). */
+  protected readonly guide = inject(GuideService)
 
   /**
    * E-272, 2026-11-02 (PageSpeed mobile CLS 0.119 on /map and /rangers, all of it on

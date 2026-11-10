@@ -47,5 +47,10 @@
      rather than per page so there is exactly one instance, and so it can overlay the whole
      viewport (including the navbar) rather than being clipped to a page's own content box.
      Self-hiding: it renders nothing unless opened, and the button that opens it hides
-     itself on routes with no guide content. See shared/guide/guide-content.ts. -->
+     itself on routes with no guide content. See shared/guide/guide-content.ts.
+     E-269 (2026-11-10): deferred until first opened, so the drawer and Material tabs stay out
+     of the start-up JS. Once loaded it stays; its own @if hides it when closed. Offline is
+     unaffected: the service worker precaches every chunk. -->
+@defer (when guide.isOpen()) {
 <rangertrak-guide-drawer></rangertrak-guide-drawer>
+}

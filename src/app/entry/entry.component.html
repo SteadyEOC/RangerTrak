@@ -126,9 +126,13 @@
       <!-- Deferred so Leaflet (plus leaflet.offline and the tile requests) stays out of the
            initial download and the Entry form itself paints immediately. The placeholder
            reserves the same space the map will occupy, so the fields below don't jump when
-           it swaps in. `on viewport` would be wrong here - the map sits at the top of the
-           form and is visible right away - so this loads as soon as the app is idle. -->
-      @defer (on idle) {
+           it swaps in.
+           E-271 (2026-11-10): was `on idle`. Leaflet's start-up was the longest task after first
+           paint (~260 ms at 4x CPU throttle, the PageSpeed "long task"). On a desktop the map is
+           in view, so `on viewport` still loads it at once; on a phone in Simple view it sits
+           below the fold (top ~1230 px on an 823 px screen) and now loads when scrolled near,
+           or after 8 s, whichever comes first, so it is ready in the usual case. -->
+      @defer (on viewport; on timer(8s)) {
       <mini-mapLeaflet [locationUpdated]="locationParent" (locationChange)="onNewLocationEvent($event)"
         [evidenceLocationUpdated]="showEvidenceLocation() ? evidenceLocation : null"
         [evidenceHeadingUpdated]="showEvidenceLocation() ? evidenceDirection() : null"
