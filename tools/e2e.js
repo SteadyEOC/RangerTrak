@@ -1253,7 +1253,10 @@ async function checkMiniMapFillsItsBox() {
 async function checkEntryTabOrder() {
   console.log('\nEntry form: tab order is a strictly increasing sequence (Sprint D keyboard-first)')
   await goto('/')
-  const r = await evaluate(`(() => {
+  // 2026-11-10: polled, not read once. E-246 draws the lower form on idle, so a busy machine
+  // read the form before it existed ("no .enter__form") or half drawn (38 of 50 stops), on
+  // Leaflet beta.2 and beta.3 alike. Same fix as the route-shell check (fcfdfdcd).
+  const r = await pollUntil(() => evaluate(`(() => {
     const form = document.querySelector('.enter__form');
     if (!form) return { error: 'no .enter__form' };
     // Only positive, explicitly-assigned tabindexes participate in the keyboard-first
@@ -1266,7 +1269,7 @@ async function checkEntryTabOrder() {
     for (let i = 1; i < idx.length; i++) if (idx[i] <= idx[i - 1]) ascending = false;
     const contiguous = idx.length > 0 && idx.every((n, i) => n === i + 1);
     return { count: idx.length, first: idx[0], last: idx[idx.length - 1], dupes, ascending, contiguous };
-  })()`)
+  })()`), v => !v.error && v.count >= ENTRY_TAB_STOPS, 20, 300)
   if (r.error) { check('Entry form present for tab-order check', r.error, null); return }
   check('every Entry tabindex is unique', r.dupes, [])
   check('Entry tabindexes ascend in DOM order', r.ascending, true)
@@ -1325,8 +1328,18 @@ async function checkEntryTabOrder() {
   // pushing Location and everything after it down by one.
   // 49, not 48: E-194 (2026-10-16) added the Attach button as one stop right after Notes.
   // 50, not 49: E-268 (2026-11-02) added the clue Heading input after the Bearing in the evidence block.
-  check('Entry exposes the expected number of keyboard stops', r.count, 50)
+  check('Entry exposes the expected number of keyboard stops', r.count, ENTRY_TAB_STOPS)
+  // A short count with errors usually means a deferred block threw while drawing: say which.
+  if (r.count !== ENTRY_TAB_STOPS) {
+    consoleErrors.slice(0, 5).forEach(e => note(`console error on Entry: ${String(e).slice(0, 300)}`))
+    const d = await evaluate(`JSON.stringify({ placeholder: !!document.querySelector('.enter__lower-placeholder'),
+      sw: navigator.serviceWorker && navigator.serviceWorker.controller ? 'controlled' : 'none',
+      badChunks: performance.getEntriesByType('resource').filter(e => /\\.js$/.test(e.name) && (e.responseStatus >= 400 || e.responseEnd === 0)).map(e => e.name.split('/').pop() + ' ' + e.responseStatus),
+      jsLoaded: performance.getEntriesByType('resource').filter(e => /\\.js$/.test(e.name)).length })`)
+    console.log(`  ....  Entry lower form missing: ${d}`)
+  }
 }
+const ENTRY_TAB_STOPS = 50
 
 async function checkEntryAutofocusAndReset() {
   console.log('\nEntry form: callsign holds focus on load and again after submit (no mouse needed)')
