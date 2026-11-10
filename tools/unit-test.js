@@ -9,7 +9,7 @@
  * Why a wrapper and not plain `ng test`:
  * - Playwright drives the Chrome already installed (CHROME_BIN, found the same way as tools/e2e.js),
  *   so nobody has to download Playwright's own browser.
- * - Chrome's profile and its scoped_dir* files go in one run folder under .tmp\ that is deleted when
+ * - On Windows, Chrome's profile and its scoped_dir* files go in one run folder under .tmp\, deleted when
  *   the run ends, however it ends (tools/temp-run.js; leftover profiles once slowed Windows sign-in).
  * - On Windows the builder compares paths case-sensitively, and a lowercase d:\ working directory
  *   made every file "not found in TypeScript compilation". The drive letter is forced to upper case.
@@ -33,16 +33,22 @@ function findChrome() { // same search as tools/e2e.js
 }
 
 const root = path.resolve(__dirname, '..').replace(/^[a-z]:/, d => d.toUpperCase())
-const run = makeTempRun('rangertrak-unit-')
 const ng = path.join(root, 'node_modules', '@angular', 'cli', 'bin', 'ng.js')
 
-const child = run.track(spawn(process.execPath, [ng, 'test', ...process.argv.slice(2)], {
+// The run folder is for Windows, where leftovers in %TEMP% slow sign-in. Elsewhere it would break
+// Chrome: its SingletonSocket lives under TMPDIR, and a Unix socket path is capped at ~104-108
+// characters, which .tmp/rangertrak-unit-*/_temp/... inside a CI checkout exceeds (CI, 2026-11-10).
+// Playwright deletes its own profile there.
+const run = process.platform === 'win32' ? makeTempRun('rangertrak-unit-') : null
+
+const child = spawn(process.execPath, [ng, 'test', ...process.argv.slice(2)], {
   cwd: root,
   stdio: 'inherit',
-  env: { ...run.env, CHROME_BIN: findChrome() },
-}))
+  env: { ...(run ? run.env : process.env), CHROME_BIN: findChrome() },
+})
+if (run) run.track(child)
 
 child.on('exit', (code, signal) => {
-  run.cleanup()
+  if (run) run.cleanup()
   process.exit(code ?? (signal ? 1 : 0))
 })

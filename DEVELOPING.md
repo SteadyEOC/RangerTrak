@@ -65,7 +65,7 @@ have, driven by Playwright; no browser download. Specs use Vitest's globals (`de
 - `toContain` compares with `===`; use `toContainEqual` for an array or object inside a list;
 - no Zone.js: use `vi.useFakeTimers()`, not `fakeAsync`.
 
-Chrome's profile goes in a run folder under `.tmp/` that `tools/unit-test.js` deletes afterwards.
+On Windows, Chrome's profile goes in a run folder under `.tmp/` that `tools/unit-test.js` deletes afterwards.
 
 > `ng build` passing does **not** mean the code compiles — Angular only compiles
 > *reachable* files, so an unreferenced file can carry syntax errors indefinitely while
