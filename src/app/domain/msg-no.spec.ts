@@ -1,6 +1,19 @@
 import {
-  bumpHighWater, findMsgNoClashes, formatMsgNoContextLine, formatMsgNoFull, formatMsgNoShort, MsgNo,
-  msgNoClashSentence, numberEntries, nextFreeStation, stationsByUse, msgNoCsvFields, MSG_NO_CSV_COLUMNS, msgNoHighWaterKey, nextHandledMark, nextMsgNo,
+  bumpHighWater,
+  findMsgNoClashes,
+  formatMsgNoContextLine,
+  formatMsgNoFull,
+  formatMsgNoShort,
+  MSG_NO_CSV_COLUMNS,
+  MsgNo,
+  msgNoClashSentence,
+  msgNoCsvFields,
+  msgNoHighWaterKey,
+  nextFreeStation,
+  nextHandledMark,
+  nextMsgNo,
+  numberEntries,
+  stationsByUse,
 } from './msg-no'
 
 const ctx = { mission: '26-0142', opPeriod: 'OP 1', station: 'A' }
@@ -8,7 +21,9 @@ const no = (seq: number, over: Partial<MsgNo> = {}): MsgNo => ({ ...ctx, seq, ..
 
 describe('nextMsgNo', () => {
   it('counts 1, 2, 3 within an op period', () => {
-    const entries: { msgNo?: MsgNo }[] = []
+    const entries: {
+      msgNo?: MsgNo
+    }[] = []
     let hw: Record<string, number> = {}
     for (const want of [1, 2, 3]) {
       const n = nextMsgNo(entries, hw, ctx)
@@ -29,13 +44,19 @@ describe('nextMsgNo', () => {
   })
 
   it('counts two stations separately', () => {
-    const entries = [{ msgNo: no(1) }, { msgNo: no(2) }, { msgNo: no(1, { station: 'B' }) }]
+    const entries = [
+      { msgNo: no(1) },
+      { msgNo: no(2) },
+      { msgNo: no(1, { station: 'B' }) },
+    ]
     expect(nextMsgNo(entries, {}, ctx).seq).toBe(3)
     expect(nextMsgNo(entries, {}, { ...ctx, station: 'B' }).seq).toBe(2)
   })
 
   it('uses the entries when they are ahead of the high-water mark', () => {
-    expect(nextMsgNo([{ msgNo: no(9) }], { [msgNoHighWaterKey('OP 1', 'A')]: 2 }, ctx).seq).toBe(10)
+    expect(
+      nextMsgNo([{ msgNo: no(9) }], { [msgNoHighWaterKey('OP 1', 'A')]: 2 }, ctx).seq
+    ).toBe(10)
   })
 
   it('never lowers a high-water mark', () => {
@@ -62,7 +83,9 @@ describe('formatting', () => {
   })
 
   it('writes the context line without blank parts', () => {
-    expect(formatMsgNoContextLine('26-0142', 'OP 2')).toBe('Mission 26-0142 · Op period OP 2')
+    expect(formatMsgNoContextLine('26-0142', 'OP 2')).toBe(
+      'Mission 26-0142 · Op period OP 2'
+    )
     expect(formatMsgNoContextLine('', 'OP 2')).toBe('Op period OP 2')
     expect(formatMsgNoContextLine('', '')).toBe('')
   })
@@ -71,12 +94,19 @@ describe('formatting', () => {
 describe('findMsgNoClashes', () => {
   it('reports the same number on a different uid', () => {
     const local = [{ uid: 'u1', msgNo: no(7) }]
-    const incoming = [{ uid: 'u2', msgNo: no(7) }, { uid: 'u3', msgNo: no(8) }]
-    expect(findMsgNoClashes(local, incoming)).toEqual([{ msgNo: '26-0142 / OP 1 / A007', uids: ['u1', 'u2'] }])
+    const incoming = [
+      { uid: 'u2', msgNo: no(7) },
+      { uid: 'u3', msgNo: no(8) },
+    ]
+    expect(findMsgNoClashes(local, incoming)).toEqual([
+      { msgNo: '26-0142 / OP 1 / A007', uids: ['u1', 'u2'] },
+    ])
   })
 
   it('does not report the same entry', () => {
-    expect(findMsgNoClashes([{ uid: 'u1', msgNo: no(7) }], [{ uid: 'u1', msgNo: no(7) }])).toEqual([])
+    expect(
+      findMsgNoClashes([{ uid: 'u1', msgNo: no(7) }], [{ uid: 'u1', msgNo: no(7) }])
+    ).toEqual([])
   })
 })
 
@@ -91,13 +121,24 @@ describe('nextHandledMark', () => {
 
 describe('msgNoCsvFields', () => {
   it('has the six columns the export adds', () => {
-    expect([...MSG_NO_CSV_COLUMNS]).toEqual(['msg_mission', 'msg_op_period', 'msg_station', 'msg_seq', 'msg_no', 'handled'])
+    expect([...MSG_NO_CSV_COLUMNS]).toEqual([
+      'msg_mission',
+      'msg_op_period',
+      'msg_station',
+      'msg_seq',
+      'msg_no',
+      'handled',
+    ])
   })
 
   it('fills them from the number and the mark', () => {
     expect(msgNoCsvFields({ msgNo: no(7), handled: { mark: 'passed' } })).toEqual({
-      msg_mission: '26-0142', msg_op_period: 'OP 1', msg_station: 'A', msg_seq: 7,
-      msg_no: '26-0142 / OP 1 / A007', handled: 'Passed on',
+      msg_mission: '26-0142',
+      msg_op_period: 'OP 1',
+      msg_station: 'A',
+      msg_seq: 7,
+      msg_no: '26-0142 / OP 1 / A007',
+      handled: 'Passed on',
     })
   })
 
@@ -108,13 +149,15 @@ describe('msgNoCsvFields', () => {
 
 describe('msgNoClashSentence', () => {
   it('names one clash in plain words', () => {
-    expect(msgNoClashSentence([{ msgNo: '26-0142 / OP 1 / A007' }]))
-      .toBe('Two messages are both numbered A007. Check that each device logs as its own station letter.')
+    expect(msgNoClashSentence([{ msgNo: '26-0142 / OP 1 / A007' }])).toBe(
+      'Two messages are both numbered A007. Check that each device logs as its own station letter.'
+    )
   })
 
   it('names several, and says nothing for none', () => {
-    expect(msgNoClashSentence([{ msgNo: 'A007' }, { msgNo: 'OP 1 / A008' }]))
-      .toBe('Some messages share a number (A007, A008). Check that each device logs as its own station letter.')
+    expect(msgNoClashSentence([{ msgNo: 'A007' }, { msgNo: 'OP 1 / A008' }])).toBe(
+      'Some messages share a number (A007, A008). Check that each device logs as its own station letter.'
+    )
     expect(msgNoClashSentence([])).toBe('')
   })
 })
@@ -143,9 +186,18 @@ describe('numberEntries', () => {
       { id: 2, date: at(11), msgNo: no(5) },
       { id: 3, date: at(10) },
     ]
-    const r = numberEntries(entries, { mission: '26-0142', station: 'A', opPeriodOf: e => (e.date < at(10) ? 'OP 0' : 'OP 1') })
-    expect(r.entries.map(e => e.id)).toEqual([0, 1, 2, 3])
-    expect(r.entries.map(e => formatMsgNoShort(e.msgNo))).toEqual(['A007', 'A001', 'A005', 'A006'])
+    const r = numberEntries(entries, {
+      mission: '26-0142',
+      station: 'A',
+      opPeriodOf: (e) => (e.date < at(10) ? 'OP 0' : 'OP 1'),
+    })
+    expect(r.entries.map((e) => e.id)).toEqual([0, 1, 2, 3])
+    expect(r.entries.map((e) => formatMsgNoShort(e.msgNo))).toEqual([
+      'A007',
+      'A001',
+      'A005',
+      'A006',
+    ])
     expect(r.highWater[msgNoHighWaterKey('OP 1', 'A')]).toBe(7)
     expect(r.highWater[msgNoHighWaterKey('OP 0', 'A')]).toBe(1)
   })

@@ -1,5 +1,5 @@
 // Plain node:test - no framework, no build step. `npm run test:worker` (node --test
-// worker/) runs this directly; nothing here touches Angular's Karma suite. worker/
+// worker/) runs this directly; nothing here touches Angular's unit-test suite. worker/
 // carries its own package.json ({"type":"module"}) since the repo root package.json has
 // no "type" field (defaults CommonJS) but this file needs `import`/`export default`, the
 // same syntax worker/index.js itself uses and Wrangler expects.

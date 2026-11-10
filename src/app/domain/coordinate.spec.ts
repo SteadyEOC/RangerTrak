@@ -1,5 +1,11 @@
 import {
-  COORDINATE_FORMATS, MGRSToDD, defaultCoordinateFormat, edgeTickStep, formatEdgeTick, formatLatLng, normalizeCoordinateFormat
+  COORDINATE_FORMATS,
+  MGRSToDD,
+  defaultCoordinateFormat,
+  edgeTickStep,
+  formatEdgeTick,
+  formatLatLng,
+  normalizeCoordinateFormat,
 } from './coordinate'
 
 describe('printed map edge ticks', () => {
@@ -10,7 +16,7 @@ describe('printed map edge ticks', () => {
 
   it('picks a round minutes step for DDM', () => {
     expect(edgeTickStep(0.012, 'DDM') * 60).toBeCloseTo(0.2, 9) // 0.72′ span
-    expect(edgeTickStep(0.5, 'DDM') * 60).toBeCloseTo(5, 9)     // 30′ span
+    expect(edgeTickStep(0.5, 'DDM') * 60).toBeCloseTo(5, 9) // 30′ span
     expect(edgeTickStep(20, 'DDM')).toBe(5)
   })
 
@@ -45,7 +51,7 @@ describe('formatLatLng (map coordinate readout)', () => {
   it('writes USNG with spaces, and it reads back to the same place', () => {
     const usng = formatLatLng(lat, lng, 'MGRS')
     const m = usng.match(/^(\d{1,2}[C-X]) ([A-Z]{2}) (\d{5}) (\d{5})$/)
-    expect(m).withContext(usng).not.toBeNull()
+    expect(m, usng).not.toBeNull()
     const back = MGRSToDD(m![1] + m![2], Number(m![3]), Number(m![4]))!
     expect(back.lat).toBeCloseTo(lat, 4)
     expect(back.lng).toBeCloseTo(lng, 4)
@@ -72,11 +78,25 @@ describe('formatLatLng (map coordinate readout)', () => {
   })
 
   it('offers the five formats in one order, USNG/MGRS as a single choice', () => {
-    expect(COORDINATE_FORMATS.map(f => f.label)).toEqual(['DD', 'DDM', 'DMS', 'USNG/MGRS', 'UTM'])
+    expect(COORDINATE_FORMATS.map((f) => f.label)).toEqual([
+      'DD',
+      'DDM',
+      'DMS',
+      'USNG/MGRS',
+      'UTM',
+    ])
   })
 
   it('takes the mission default from the show flags', () => {
-    expect(defaultCoordinateFormat({ showDD: false, showDDM: false, showDMS: false, showMGRS: true, showUTM: false })).toBe('MGRS')
+    expect(
+      defaultCoordinateFormat({
+        showDD: false,
+        showDDM: false,
+        showDMS: false,
+        showMGRS: true,
+        showUTM: false,
+      })
+    ).toBe('MGRS')
     expect(defaultCoordinateFormat({ showUTM: true })).toBe('UTM')
     expect(defaultCoordinateFormat(undefined)).toBe('DD')
   })

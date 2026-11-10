@@ -23,7 +23,7 @@ import type { MissionType } from '../services/mission.interface'
  * D-42-style split deliberately kept: this module is PURE (no HTTP, no DOM, no Angular DI) -
  * it takes template bytes and fills them, and never decides where the bytes come from. A
  * caller `fetch()`s `assets/forms/ics-213.pdf` and hands the result here; that keeps this
- * testable with the real template with no Karma/HttpClient machinery inside the function
+ * testable with the real template with no TestBed/HttpClient machinery inside the function
  * itself, same reasoning as `ranger-migration.ts`'s own "pure, no injection" split.
  *
  * The 213's REPLY block (fields 9/10, plus both signature fields) is deliberately never

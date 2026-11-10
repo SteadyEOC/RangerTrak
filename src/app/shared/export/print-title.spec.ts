@@ -9,13 +9,21 @@ describe('print-title (E-172)', () => {
   })
 
   it('leads with the event name, else the incident number, else RangerTrak', () => {
-    expect(printTitle('Map', { event: 'Missing Person Exercise', mission: 'X-1' }, when)).toBe('Missing Person Exercise - Map - 2026-10-02 1109')
-    expect(printTitle('ICS-309', { event: ' ', mission: 'X-1' }, when)).toBe('X-1 - ICS-309 - 2026-10-02 1109')
-    expect(printTitle('Roster', undefined, when)).toBe('RangerTrak - Roster - 2026-10-02 1109')
+    expect(
+      printTitle('Map', { event: 'Missing Person Exercise', mission: 'X-1' }, when)
+    ).toBe('Missing Person Exercise - Map - 2026-10-02 1109')
+    expect(printTitle('ICS-309', { event: ' ', mission: 'X-1' }, when)).toBe(
+      'X-1 - ICS-309 - 2026-10-02 1109'
+    )
+    expect(printTitle('Roster', undefined, when)).toBe(
+      'RangerTrak - Roster - 2026-10-02 1109'
+    )
   })
 
   it('removes characters a Windows file name cannot hold', () => {
-    expect(printTitle('Map', { event: 'Drill: A/B "C"' }, when)).not.toMatch(/[\/:*?"<>|]/)
+    expect(printTitle('Map', { event: 'Drill: A/B "C"' }, when)).not.toMatch(
+      /[\/:*?"<>|]/
+    )
   })
 
   it('sets the title on beforeprint and restores it on afterprint', () => {

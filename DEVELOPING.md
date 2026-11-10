@@ -47,11 +47,25 @@ index is stale. The screens' Guide text (`guide-content.ts`) is searched directl
 ## Testing
 
 ```bash
-npx ng test --watch=false --browsers=ChromeHeadless   # unit tests via Karma (plain `npm test` is watch mode)
+npm test           # unit tests: Vitest in headless Chrome, runs once (about 30 s)
+npm test -- --include=src/app/domain/heading.spec.ts   # one spec file (or a folder)
+npm test -- --filter="Board retry"                     # tests whose name matches
+npm run test:watch # re-runs on save; Ctrl+C stops it
 npm run lint       # ESLint + typecheck
 npm run lint:ts    # ESLint only (eslint.config.mjs)
 npm run lint:tsc   # typecheck only (app and spec projects separately)
 ```
+
+Unit tests run on Angular's Vitest runner (`@angular/build:unit-test`) in the Chrome you already
+have, driven by Playwright; no browser download. Specs use Vitest's globals (`describe`, `it`,
+`expect`, `vi`). Settings that keep the old Karma behaviour, so specs written for it still hold:
+
+- every spec file shares one page (no isolation), at an 800×600 viewport (not phone width);
+- `vi.spyOn()` spies are put back after each test (`restoreMocks` in `vitest.config.ts`);
+- `toContain` compares with `===`; use `toContainEqual` for an array or object inside a list;
+- no Zone.js: use `vi.useFakeTimers()`, not `fakeAsync`.
+
+Chrome's profile goes in a run folder under `.tmp/` that `tools/unit-test.js` deletes afterwards.
 
 > `ng build` passing does **not** mean the code compiles — Angular only compiles
 > *reachable* files, so an unreferenced file can carry syntax errors indefinitely while

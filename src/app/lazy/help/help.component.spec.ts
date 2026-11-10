@@ -1,13 +1,13 @@
-import { of } from 'rxjs';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { NoopAnimationsModule } from '@angular/platform-browser/animations'
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router'
+import { of } from 'rxjs'
 
-import { HelpComponent } from './help.component';
+import { HelpComponent } from './help.component'
 
 describe('HelpComponent', () => {
-  let component: HelpComponent;
-  let fixture: ComponentFixture<HelpComponent>;
+  let component: HelpComponent
+  let fixture: ComponentFixture<HelpComponent>
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -16,20 +16,19 @@ describe('HelpComponent', () => {
       imports: [HelpComponent, NoopAnimationsModule],
       // For the routerLink="/log" help link (E-57(1): Log moved off the main menu,
       // reachable from here instead).
-      providers: [provideRouter([])]
-    })
-      .compileComponents();
-  });
+      providers: [provideRouter([])],
+    }).compileComponents()
+  })
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(HelpComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    fixture = TestBed.createComponent(HelpComponent)
+    component = fixture.componentInstance
+    fixture.detectChanges()
+  })
 
   it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+    expect(component).toBeTruthy()
+  })
 
   // E-84: the page is tabs, not one long scroll. The previous test here asserted an
   // <h2>Help</h2> that the tab shell no longer has - the labels are the structure now.
@@ -42,15 +41,21 @@ describe('HelpComponent', () => {
   // leaving six.
   it('renders the six documentation tabs, in the planned order', () => {
     const labels: string[] = Array.from(
-      fixture.nativeElement.querySelectorAll('.help-nav button.help-tab') as NodeListOf<HTMLElement>
-    ).map(el => el.textContent!.trim());
+      fixture.nativeElement.querySelectorAll(
+        '.help-nav button.help-tab'
+      ) as NodeListOf<HTMLElement>
+    ).map((el) => el.textContent!.trim())
 
     expect(labels).toEqual([
-      'Start here', 'FAQ', 'After mission', 'Your data', 'About', 'Contact us'
-    ]);
-  });
-
-});
+      'Start here',
+      'FAQ',
+      'After mission',
+      'Your data',
+      'About',
+      'Contact us',
+    ])
+  })
+})
 
 // 2026-10-18: rangertrak.com links to help?tab=faq#rangertrak-board and help?tab=start#field-phones.
 // Both targets are collapsed sections, so landing there has to open them.
@@ -58,16 +63,23 @@ describe('HelpComponent fragments', () => {
   const open = async (tab: string, fragment: string): Promise<HTMLElement> => {
     await TestBed.configureTestingModule({
       imports: [HelpComponent, NoopAnimationsModule],
-      providers: [provideRouter([]), {
-        provide: ActivatedRoute,
-        useValue: { queryParamMap: of(convertToParamMap({ tab })), snapshot: { fragment }, fragment: of(fragment) },
-      }],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of(convertToParamMap({ tab })),
+            snapshot: { fragment },
+            fragment: of(fragment),
+          },
+        },
+      ],
     }).compileComponents()
     const fixture = TestBed.createComponent(HelpComponent)
     document.body.appendChild(fixture.nativeElement)
     fixture.detectChanges()
     await fixture.whenStable()
-    await new Promise(r => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 100))
     fixture.detectChanges()
     return fixture.nativeElement as HTMLElement
   }

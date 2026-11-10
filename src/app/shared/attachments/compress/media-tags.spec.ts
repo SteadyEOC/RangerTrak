@@ -2,14 +2,24 @@ import { LOCATION_KEY, smallerCopyTags } from './media-tags'
 
 /** John 2026-10-27: a video or recording's smaller copy keeps its own location and device tags. */
 describe('smallerCopyTags', () => {
-
   it('turns an Android ©xyz location into the keyed location', () => {
-    const out = smallerCopyTags({ raw: { '©xyz': '+47.4400-122.4600/', '©mak': 'Pixel', mdat: new Uint8Array([1]) } })
-    expect(out.raw).toEqual({ [LOCATION_KEY]: '+47.4400-122.4600/', 'com.apple.quicktime.make': 'Pixel' })
+    const out = smallerCopyTags({
+      raw: { '©xyz': '+47.4400-122.4600/', '©mak': 'Pixel', mdat: new Uint8Array([1]) },
+    })
+    expect(out.raw).toEqual({
+      [LOCATION_KEY]: '+47.4400-122.4600/',
+      'com.apple.quicktime.make': 'Pixel',
+    })
   })
 
-  it('keeps an iPhone\'s keyed tags, which win over a user-data atom', () => {
-    const out = smallerCopyTags({ raw: { [LOCATION_KEY]: '+47.1-122.1+010.000/', '©xyz': '+0+0/', 'com.apple.quicktime.model': 'iPhone' } })
+  it("keeps an iPhone's keyed tags, which win over a user-data atom", () => {
+    const out = smallerCopyTags({
+      raw: {
+        [LOCATION_KEY]: '+47.1-122.1+010.000/',
+        '©xyz': '+0+0/',
+        'com.apple.quicktime.model': 'iPhone',
+      },
+    })
     expect(out.raw![LOCATION_KEY]).toBe('+47.1-122.1+010.000/')
     expect(out.raw!['com.apple.quicktime.model']).toBe('iPhone')
   })

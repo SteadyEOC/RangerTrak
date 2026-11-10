@@ -1,10 +1,20 @@
 import { MissionType } from '../services/mission.interface'
 import { RangerType, UnknownRanger } from '../services/ranger.interface'
 
-import { buildMissionZipBytes, extractMissionZip, layerFor, layerName, MISSION_ZIP_SCHEMA_VERSION, MissionZipManifest } from './mission-zip'
+import {
+  buildMissionZipBytes,
+  extractMissionZip,
+  layerFor,
+  layerName,
+  MISSION_ZIP_SCHEMA_VERSION,
+  MissionZipManifest,
+} from './mission-zip'
 
 describe('mission-zip', () => {
-  const ranger = (over: Partial<RangerType>): RangerType => ({ ...UnknownRanger, ...over })
+  const ranger = (over: Partial<RangerType>): RangerType => ({
+    ...UnknownRanger,
+    ...over,
+  })
 
   const manifest = (over: Partial<MissionZipManifest> = {}): MissionZipManifest => ({
     schemaVersion: MISSION_ZIP_SCHEMA_VERSION,
@@ -17,8 +27,14 @@ describe('mission-zip', () => {
 
   describe('round trip', () => {
     it('reproduces the manifest and photos exactly', async () => {
-      const built = manifest({ locations: [{ name: 'Command Post', type: 'Command Post', lat: 47.4, lng: -122.4 }] })
-      const photos = [{ stem: 'REW-1', blob: new Blob(['fake-jpeg-bytes'], { type: 'image/jpeg' }) }]
+      const built = manifest({
+        locations: [
+          { name: 'Command Post', type: 'Command Post', lat: 47.4, lng: -122.4 },
+        ],
+      })
+      const photos = [
+        { stem: 'REW-1', blob: new Blob(['fake-jpeg-bytes'], { type: 'image/jpeg' }) },
+      ]
 
       const bytes = await buildMissionZipBytes(built, photos)
       const { manifest: read, photos: readPhotos } = extractMissionZip(bytes)
@@ -55,7 +71,9 @@ describe('mission-zip', () => {
 
     it('round-trips a locations-only manifest (no settings, no rangers)', async () => {
       const { settings, rangers, ...locationsOnly } = manifest({
-        locations: [{ name: 'Staging Area', type: 'Staging Area', lat: 47.5, lng: -122.5 }],
+        locations: [
+          { name: 'Staging Area', type: 'Staging Area', lat: 47.5, lng: -122.5 },
+        ],
       })
       const built = locationsOnly as MissionZipManifest
 
@@ -73,7 +91,9 @@ describe('mission-zip', () => {
     it('finds the manifest by basename when wrapped in a folder, forward slashes', async () => {
       const { zipSync } = await import('fflate')
       const bytes = zipSync({
-        'Vashon-2026/mission-zip.json': new TextEncoder().encode(JSON.stringify(manifest())),
+        'Vashon-2026/mission-zip.json': new TextEncoder().encode(
+          JSON.stringify(manifest())
+        ),
         'Vashon-2026/photos/REW-1.jpg': new TextEncoder().encode('img'),
       })
       const { manifest: read, photos } = extractMissionZip(bytes)
@@ -83,7 +103,11 @@ describe('mission-zip', () => {
 
     it('finds the manifest by basename with backslash separators (PowerShell Compress-Archive)', async () => {
       const { zipSync } = await import('fflate')
-      const bytes = zipSync({ 'Vashon-2026\\mission-zip.json': new TextEncoder().encode(JSON.stringify(manifest())) })
+      const bytes = zipSync({
+        'Vashon-2026\\mission-zip.json': new TextEncoder().encode(
+          JSON.stringify(manifest())
+        ),
+      })
       const { manifest: read } = extractMissionZip(bytes)
       expect(read.settings?.mission).toBe('Zip Test Mission')
     })
@@ -91,7 +115,9 @@ describe('mission-zip', () => {
 
   describe('rejections', () => {
     it('rejects bytes that are not a zip at all', () => {
-      expect(() => extractMissionZip(new TextEncoder().encode('not a zip'))).toThrowError(/read this file as a zip/)
+      expect(() => extractMissionZip(new TextEncoder().encode('not a zip'))).toThrowError(
+        /read this file as a zip/
+      )
     })
 
     it('rejects a zip with no mission-zip.json', async () => {
@@ -110,9 +136,17 @@ describe('mission-zip', () => {
     // moved to the round-trip describe block above instead of staying a rejection case.
     it('rejects a manifest with no categories at all', async () => {
       const { zipSync } = await import('fflate')
-      const bad = { schemaVersion: MISSION_ZIP_SCHEMA_VERSION, exportedAt: '2026-08-31T00:00:00.000Z', appVersion: '0.90.0' }
-      const bytes = zipSync({ 'mission-zip.json': new TextEncoder().encode(JSON.stringify(bad)) })
-      expect(() => extractMissionZip(bytes)).toThrowError(/not a valid Setup file manifest/)
+      const bad = {
+        schemaVersion: MISSION_ZIP_SCHEMA_VERSION,
+        exportedAt: '2026-08-31T00:00:00.000Z',
+        appVersion: '0.90.0',
+      }
+      const bytes = zipSync({
+        'mission-zip.json': new TextEncoder().encode(JSON.stringify(bad)),
+      })
+      expect(() => extractMissionZip(bytes)).toThrowError(
+        /not a valid Setup file manifest/
+      )
     })
 
     it('does not mistake a MissionExport JSON for a Setup file manifest shape', async () => {
@@ -125,10 +159,16 @@ describe('mission-zip', () => {
       // asserting a rejection that would be wrong to add.
       const { zipSync } = await import('fflate')
       const missionExportShaped = {
-        schemaVersion: 1, exportedAt: '2026-08-31T00:00:00.000Z', appVersion: '0.90.0',
-        settings: { mission: 'Not A Zip' }, rangers: [], radioLog: { logEntries: [] },
+        schemaVersion: 1,
+        exportedAt: '2026-08-31T00:00:00.000Z',
+        appVersion: '0.90.0',
+        settings: { mission: 'Not A Zip' },
+        rangers: [],
+        radioLog: { logEntries: [] },
       }
-      const bytes = zipSync({ 'mission-zip.json': new TextEncoder().encode(JSON.stringify(missionExportShaped)) })
+      const bytes = zipSync({
+        'mission-zip.json': new TextEncoder().encode(JSON.stringify(missionExportShaped)),
+      })
       const { manifest: read } = extractMissionZip(bytes)
       expect(read.settings?.mission).toBe('Not A Zip')
     })
@@ -155,35 +195,53 @@ describe('mission-zip', () => {
 
   // v3 (2026-10-15, E-187 / ADR D-58): an optional `layer` block names the file.
   describe('v3 layer name', () => {
-    const places = [{ name: 'Fernhollow Library', type: 'Shelters', lat: 47.41, lng: -122.46 }]
+    const places = [
+      { name: 'Fernhollow Library', type: 'Shelters', lat: 47.41, lng: -122.46 },
+    ]
 
     it('is written as version 3 and round-trips the layer block', async () => {
       expect(MISSION_ZIP_SCHEMA_VERSION).toBe(3)
       const contents = { locations: places }
       const built: MissionZipManifest = {
-        schemaVersion: MISSION_ZIP_SCHEMA_VERSION, exportedAt: '2026-10-15T00:00:00.000Z', appVersion: '0.99.36',
-        ...contents, layer: layerFor(contents, 'Fernhollow shelters, Oct 2026', '2026-10-15'),
+        schemaVersion: MISSION_ZIP_SCHEMA_VERSION,
+        exportedAt: '2026-10-15T00:00:00.000Z',
+        appVersion: '0.99.36',
+        ...contents,
+        layer: layerFor(contents, 'Fernhollow shelters, Oct 2026', '2026-10-15'),
       }
       const { manifest: read } = extractMissionZip(await buildMissionZipBytes(built, []))
       expect(read).toEqual(built)
       expect(layerName(read)).toBe('Fernhollow shelters, Oct 2026')
       expect(read.layer).toEqual({
-        name: 'Fernhollow shelters, Oct 2026', asOf: '2026-10-15', contains: ['places'], sensitivity: 'none',
+        name: 'Fernhollow shelters, Oct 2026',
+        asOf: '2026-10-15',
+        contains: ['places'],
+        sensitivity: 'none',
       })
     })
 
     it('marks a file that carries rangers as personal information', () => {
-      const layer = layerFor({ rangers: [ranger({ callsign: 'Z1' })], locations: places }, 'Everything', '2026-10-15')
+      const layer = layerFor(
+        { rangers: [ranger({ callsign: 'Z1' })], locations: places },
+        'Everything',
+        '2026-10-15'
+      )
       expect(layer.contains).toEqual(['people', 'places'])
       expect(layer.sensitivity).toBe('pii')
     })
 
     it('prints the layer name in the README, and says a places-only file holds no personal information', async () => {
       const contents = { locations: places }
-      const bytes = await buildMissionZipBytes({
-        schemaVersion: MISSION_ZIP_SCHEMA_VERSION, exportedAt: '2026-10-15T00:00:00.000Z', appVersion: '0.99.36',
-        ...contents, layer: layerFor(contents, 'Fernhollow shelters, Oct 2026', '2026-10-15'),
-      }, [])
+      const bytes = await buildMissionZipBytes(
+        {
+          schemaVersion: MISSION_ZIP_SCHEMA_VERSION,
+          exportedAt: '2026-10-15T00:00:00.000Z',
+          appVersion: '0.99.36',
+          ...contents,
+          layer: layerFor(contents, 'Fernhollow shelters, Oct 2026', '2026-10-15'),
+        },
+        []
+      )
       const { unzipSync } = await import('fflate')
       const readme = new TextDecoder().decode(unzipSync(bytes)['README.txt'])
       expect(readme).toContain('Layer: Fernhollow shelters, Oct 2026 (as of 2026-10-15)')
@@ -193,19 +251,36 @@ describe('mission-zip', () => {
 
     it('keeps the confidentiality notice when rangers are in the file', async () => {
       const contents = { rangers: [ranger({ callsign: 'Z1' })] }
-      const bytes = await buildMissionZipBytes({
-        schemaVersion: MISSION_ZIP_SCHEMA_VERSION, exportedAt: '2026-10-15T00:00:00.000Z', appVersion: '0.99.36',
-        ...contents, layer: layerFor(contents, 'Team roster', '2026-10-15'),
-      }, [])
+      const bytes = await buildMissionZipBytes(
+        {
+          schemaVersion: MISSION_ZIP_SCHEMA_VERSION,
+          exportedAt: '2026-10-15T00:00:00.000Z',
+          appVersion: '0.99.36',
+          ...contents,
+          layer: layerFor(contents, 'Team roster', '2026-10-15'),
+        },
+        []
+      )
       const { unzipSync } = await import('fflate')
-      expect(new TextDecoder().decode(unzipSync(bytes)['README.txt'])).toContain('CONFIDENTIAL')
+      expect(new TextDecoder().decode(unzipSync(bytes)['README.txt'])).toContain(
+        'CONFIDENTIAL'
+      )
     })
 
     it('still reads v1 and v2 files, which have no layer', async () => {
       const { zipSync } = await import('fflate')
       for (const schemaVersion of [1, 2]) {
-        const old = { schemaVersion, exportedAt: '2026-08-31T00:00:00.000Z', appVersion: '0.90.0', settings: { mission: 'Old' }, rangers: [], locations: places }
-        const { manifest: read } = extractMissionZip(zipSync({ 'mission-zip.json': new TextEncoder().encode(JSON.stringify(old)) }))
+        const old = {
+          schemaVersion,
+          exportedAt: '2026-08-31T00:00:00.000Z',
+          appVersion: '0.90.0',
+          settings: { mission: 'Old' },
+          rangers: [],
+          locations: places,
+        }
+        const { manifest: read } = extractMissionZip(
+          zipSync({ 'mission-zip.json': new TextEncoder().encode(JSON.stringify(old)) })
+        )
         expect(read.layer).toBeUndefined()
         expect(layerName(read)).toBe('')
         expect(read.locations?.length).toBe(1)

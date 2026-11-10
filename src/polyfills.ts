@@ -44,8 +44,7 @@
 
 /***************************************************************************************************
  * The app is zoneless (provideZonelessChangeDetection() in app.config.ts) - zone.js is
- * intentionally NOT imported here. The Karma test harness still loads zone.js/testing
- * independently via src/test.ts, so this does not affect `ng test`.
+ * not installed at all. Unit tests (Vitest, E-226) run zoneless too.
  */
 
 

@@ -248,8 +248,8 @@ function injectStyles(): void {
 
 /**
  * Test-only. Production code never voluntarily releases the lock (see `holdLockForever()`'s
- * own comment) - a real tab's hold ends only when its JS context is torn down. Karma, in
- * contrast, runs every spec `it()` in this file against the SAME browsing context (no reload
+ * own comment) - a real tab's hold ends only when its JS context is torn down. The unit tests, in
+ * contrast, run every spec `it()` in this file against the SAME browsing context (no reload
  * between them), so a lock acquired in one test would otherwise stay held forever and starve
  * every test after it. Releases whatever hold this context has (a no-op if it has none),
  * resets the "already shown" guard on the stopped-writing notice, and removes any notice left

@@ -1,5 +1,5 @@
-import { DB_NAME, MIGRATED_KEYS, recordStore, STORE } from './record-store';
-import { ENCRYPTION_MARKER_KEY } from './record-encryption';
+import { ENCRYPTION_MARKER_KEY } from './record-encryption'
+import { DB_NAME, MIGRATED_KEYS, recordStore, STORE } from './record-store'
 
 /**
  * E-122 Phase 2a. `recordStore` is a module-level singleton (see its own doc comment for why),
@@ -9,33 +9,43 @@ import { ENCRYPTION_MARKER_KEY } from './record-encryption';
  * in-memory Map, drops the underlying IndexedDB database, and re-arms IndexedDB detection.
  */
 describe('RecordStore', () => {
-  const KEY = 'record-store-spec-test-key';
+  const KEY = 'record-store-spec-test-key'
 
   /** Reads a key straight out of IndexedDB, independent of RecordStore's own internals - so
    *  a bug in getItem()/setItem() can't also fool the test that checks what got persisted. */
   function readRawFromIdb(key: string): Promise<string | null> {
     return new Promise((resolve, reject) => {
-      const openReq = indexedDB.open(DB_NAME);
+      const openReq = indexedDB.open(DB_NAME)
       // Never CREATE the database from a test read: an empty database with no store would
       // stop RecordStore's own open from running its upgrade. Aborting leaves nothing behind.
-      openReq.onupgradeneeded = () => openReq.transaction!.abort();
-      openReq.onerror = () => resolve(null);
+      openReq.onupgradeneeded = () => openReq.transaction!.abort()
+      openReq.onerror = () => resolve(null)
       openReq.onsuccess = () => {
-        const db = openReq.result;
+        const db = openReq.result
         try {
           // No object store yet (RecordStore's own ensureDb() never ran in this test) means
           // "nothing persisted" - the same as a miss, not a hang or a thrown error.
-          if (!db.objectStoreNames.contains(STORE)) { db.close(); resolve(null); return; }
-          const tx = db.transaction(STORE, 'readonly');
-          const getReq = tx.objectStore(STORE).get(key);
-          getReq.onsuccess = () => { db.close(); resolve(getReq.result ?? null); };
-          getReq.onerror = () => { db.close(); reject(getReq.error); };
+          if (!db.objectStoreNames.contains(STORE)) {
+            db.close()
+            resolve(null)
+            return
+          }
+          const tx = db.transaction(STORE, 'readonly')
+          const getReq = tx.objectStore(STORE).get(key)
+          getReq.onsuccess = () => {
+            db.close()
+            resolve(getReq.result ?? null)
+          }
+          getReq.onerror = () => {
+            db.close()
+            reject(getReq.error)
+          }
         } catch (e) {
-          db.close();
-          reject(e);
+          db.close()
+          reject(e)
         }
-      };
-    });
+      }
+    })
   }
 
   /** Writes a key straight into IndexedDB, independent of RecordStore's own internals - the
@@ -44,64 +54,70 @@ describe('RecordStore', () => {
    *  behind, without going through RecordStore's own encrypt/decrypt path to get there. */
   function writeRawToIdb(key: string, value: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME);
+      const req = indexedDB.open(DB_NAME)
       // Same rule as readRawFromIdb(): never create the database from a test writer - the
       // store must already exist (an earlier enableEncryption()/flush() in the same test).
-      req.onupgradeneeded = () => req.transaction!.abort();
+      req.onupgradeneeded = () => req.transaction!.abort()
       req.onsuccess = () => {
-        const db = req.result;
-        const tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put(value, key);
-        tx.oncomplete = () => { db.close(); resolve(); };
-        tx.onerror = () => { db.close(); reject(tx.error); };
-      };
-      req.onerror = () => reject(req.error);
-    });
+        const db = req.result
+        const tx = db.transaction(STORE, 'readwrite')
+        tx.objectStore(STORE).put(value, key)
+        tx.oncomplete = () => {
+          db.close()
+          resolve()
+        }
+        tx.onerror = () => {
+          db.close()
+          reject(tx.error)
+        }
+      }
+      req.onerror = () => reject(req.error)
+    })
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    await recordStore.resetForTests();
-  });
+    localStorage.clear()
+    await recordStore.resetForTests()
+  })
 
   afterEach(async () => {
-    localStorage.clear();
-    await recordStore.resetForTests();
-  });
+    localStorage.clear()
+    await recordStore.resetForTests()
+  })
 
   describe('synchronous get/set/remove', () => {
     it('returns null for a key that was never set', () => {
-      expect(recordStore.getItem(KEY)).toBeNull();
-    });
+      expect(recordStore.getItem(KEY)).toBeNull()
+    })
 
     it('is readable immediately after setItem(), with no await', () => {
-      recordStore.setItem(KEY, 'hello');
-      expect(recordStore.getItem(KEY)).toBe('hello');
-    });
+      recordStore.setItem(KEY, 'hello')
+      expect(recordStore.getItem(KEY)).toBe('hello')
+    })
 
     it('returns null immediately after removeItem(), with no await', () => {
-      recordStore.setItem(KEY, 'hello');
-      recordStore.removeItem(KEY);
-      expect(recordStore.getItem(KEY)).toBeNull();
-    });
+      recordStore.setItem(KEY, 'hello')
+      recordStore.removeItem(KEY)
+      expect(recordStore.getItem(KEY)).toBeNull()
+    })
 
     it('persists the written value to IndexedDB once flushed', async () => {
-      recordStore.setItem(KEY, 'persisted-value');
-      await recordStore.flush();
+      recordStore.setItem(KEY, 'persisted-value')
+      await recordStore.flush()
 
-      expect(await readRawFromIdb(KEY)).toBe('persisted-value');
-    });
+      expect(await readRawFromIdb(KEY)).toBe('persisted-value')
+    })
 
     it('removes the value from IndexedDB once a removeItem() is flushed', async () => {
-      recordStore.setItem(KEY, 'to-be-removed');
-      await recordStore.flush();
-      expect(await readRawFromIdb(KEY)).toBe('to-be-removed');
+      recordStore.setItem(KEY, 'to-be-removed')
+      await recordStore.flush()
+      expect(await readRawFromIdb(KEY)).toBe('to-be-removed')
 
-      recordStore.removeItem(KEY);
-      await recordStore.flush();
-      expect(await readRawFromIdb(KEY)).toBeNull();
-    });
-  });
+      recordStore.removeItem(KEY)
+      await recordStore.flush()
+      expect(await readRawFromIdb(KEY)).toBeNull()
+    })
+  })
 
   /**
    * Item 9 (2026-09-28, John): tab-lock.ts's own single-active-tab gate calls
@@ -111,114 +127,122 @@ describe('RecordStore', () => {
    */
   describe('disableWrites() (item 9: one active tab per browser)', () => {
     it('setItem() becomes a no-op - the in-memory value does not change', () => {
-      recordStore.setItem(KEY, 'before-disable');
-      recordStore.disableWrites();
-      recordStore.setItem(KEY, 'after-disable');
+      recordStore.setItem(KEY, 'before-disable')
+      recordStore.disableWrites()
+      recordStore.setItem(KEY, 'after-disable')
 
-      expect(recordStore.getItem(KEY)).toBe('before-disable');
-    });
+      expect(recordStore.getItem(KEY)).toBe('before-disable')
+    })
 
     it('setItem() on a key with no prior value stays unset', () => {
-      recordStore.disableWrites();
-      recordStore.setItem(KEY, 'should never land');
+      recordStore.disableWrites()
+      recordStore.setItem(KEY, 'should never land')
 
-      expect(recordStore.getItem(KEY)).toBeNull();
-    });
+      expect(recordStore.getItem(KEY)).toBeNull()
+    })
 
     it('removeItem() also becomes a no-op', () => {
-      recordStore.setItem(KEY, 'stays');
-      recordStore.disableWrites();
-      recordStore.removeItem(KEY);
+      recordStore.setItem(KEY, 'stays')
+      recordStore.disableWrites()
+      recordStore.removeItem(KEY)
 
-      expect(recordStore.getItem(KEY)).toBe('stays');
-    });
+      expect(recordStore.getItem(KEY)).toBe('stays')
+    })
 
     it('disableWrites() blocks every setItem()/removeItem() from that point on, but does not retroactively cancel a write already queued beforehand', async () => {
       // Queued (a microtask, not yet flushed) BEFORE disableWrites() - this data was valid
       // when it was written, so letting it complete is correct; it is everything AFTER
       // disableWrites() that must never reach storage - see the tests above.
-      recordStore.setItem(KEY, 'queued-before-disable');
-      recordStore.disableWrites();
-      recordStore.setItem(KEY, 'attempted-after-disable'); // must be a no-op
-      await recordStore.flush();
+      recordStore.setItem(KEY, 'queued-before-disable')
+      recordStore.disableWrites()
+      recordStore.setItem(KEY, 'attempted-after-disable') // must be a no-op
+      await recordStore.flush()
 
-      expect(await readRawFromIdb(KEY)).toBe('queued-before-disable');
-    });
-  });
+      expect(await readRawFromIdb(KEY)).toBe('queued-before-disable')
+    })
+  })
 
   describe('coalesced writes', () => {
     it('collapses several synchronous setItem() calls on the same key into one IndexedDB put', async () => {
-      const putSpy = spyOn(IDBObjectStore.prototype as any, 'put').and.callThrough();
+      const putSpy = vi.spyOn(IDBObjectStore.prototype as any, 'put')
 
-      recordStore.setItem(KEY, 'v1');
-      recordStore.setItem(KEY, 'v2');
-      recordStore.setItem(KEY, 'v3');
+      recordStore.setItem(KEY, 'v1')
+      recordStore.setItem(KEY, 'v2')
+      recordStore.setItem(KEY, 'v3')
       // Synchronous readers see the latest value immediately, before anything IndexedDB-side
       // has happened at all - the whole point of the in-memory Map being the source of truth.
-      expect(recordStore.getItem(KEY)).toBe('v3');
+      expect(recordStore.getItem(KEY)).toBe('v3')
 
-      await recordStore.flush();
+      await recordStore.flush()
 
-      expect(putSpy).toHaveBeenCalledTimes(1);
-      expect(putSpy.calls.argsFor(0)[0]).toBe('v3');
-      expect(putSpy.calls.argsFor(0)[1]).toBe(KEY);
-      expect(await readRawFromIdb(KEY)).toBe('v3');
-    });
+      expect(putSpy).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(putSpy).mock.calls[0][0]).toBe('v3')
+      expect(vi.mocked(putSpy).mock.calls[0][1]).toBe(KEY)
+      expect(await readRawFromIdb(KEY)).toBe('v3')
+    })
 
     it('coalesces a set immediately followed by a remove down to just the remove', async () => {
-      const putSpy = spyOn(IDBObjectStore.prototype as any, 'put').and.callThrough();
+      const putSpy = vi.spyOn(IDBObjectStore.prototype as any, 'put')
 
-      recordStore.setItem(KEY, 'v1');
-      recordStore.removeItem(KEY);
-      expect(recordStore.getItem(KEY)).toBeNull();
+      recordStore.setItem(KEY, 'v1')
+      recordStore.removeItem(KEY)
+      expect(recordStore.getItem(KEY)).toBeNull()
 
-      await recordStore.flush();
+      await recordStore.flush()
 
-      expect(putSpy).not.toHaveBeenCalled();
-      expect(await readRawFromIdb(KEY)).toBeNull();
-    });
-  });
+      expect(putSpy).not.toHaveBeenCalled()
+      expect(await readRawFromIdb(KEY)).toBeNull()
+    })
+  })
 
   describe('load() migration from localStorage (E-122 Phase 2a item 4)', () => {
     it('migration happy path: moves a value from localStorage into IndexedDB and clears localStorage', async () => {
-      const legacyValue = JSON.stringify({ schemaVersion: 1, rangers: [{ callsign: 'ZZZ1' }] });
-      localStorage.setItem('rangers', legacyValue);
+      const legacyValue = JSON.stringify({
+        schemaVersion: 1,
+        rangers: [{ callsign: 'ZZZ1' }],
+      })
+      localStorage.setItem('rangers', legacyValue)
 
-      await recordStore.load();
+      await recordStore.load()
 
-      expect(recordStore.getItem('rangers')).toBe(legacyValue);
-      expect(await readRawFromIdb('rangers')).toBe(legacyValue);
+      expect(recordStore.getItem('rangers')).toBe(legacyValue)
+      expect(await readRawFromIdb('rangers')).toBe(legacyValue)
       // Only removed after the write was read back and confirmed to match - see below for
       // the case where that verification fails.
-      expect(localStorage.getItem('rangers')).toBeNull();
-    });
+      expect(localStorage.getItem('rangers')).toBeNull()
+    })
 
     it('does nothing for a key IndexedDB already has (no re-migration, localStorage already empty)', async () => {
-      recordStore.setItem('rangers', 'already-in-idb');
-      await recordStore.flush();
+      recordStore.setItem('rangers', 'already-in-idb')
+      await recordStore.flush()
 
-      await recordStore.load();
+      await recordStore.load()
 
-      expect(recordStore.getItem('rangers')).toBe('already-in-idb');
-    });
+      expect(recordStore.getItem('rangers')).toBe('already-in-idb')
+    })
 
     it('migration failure leaves localStorage untouched: a failed write is never removed from localStorage', async () => {
-      const legacyValue = JSON.stringify({ schemaVersion: 1, rangers: [{ callsign: 'ZZZ1' }] });
-      localStorage.setItem('rangers', legacyValue);
-      spyOn(IDBObjectStore.prototype as any, 'put').and.throwError('simulated IndexedDB write failure');
+      const legacyValue = JSON.stringify({
+        schemaVersion: 1,
+        rangers: [{ callsign: 'ZZZ1' }],
+      })
+      localStorage.setItem('rangers', legacyValue)
+      vi.spyOn(IDBObjectStore.prototype as any, 'put').mockImplementation(() => {
+        throw new Error('simulated IndexedDB write failure')
+      })
 
-      await recordStore.load();
+      await recordStore.load()
 
       // The session still has the data to work with (never fails to boot)...
-      expect(recordStore.getItem('rangers')).toBe(legacyValue);
+      expect(recordStore.getItem('rangers')).toBe(legacyValue)
       // ...but localStorage was never touched, so nothing is lost and the next load() will
       // simply try the migration again.
-      expect(localStorage.getItem('rangers')).toBe(legacyValue);
-    });
+      expect(localStorage.getItem('rangers')).toBe(legacyValue)
+    })
 
     it('migration failure on read-back mismatch also leaves localStorage untouched', async () => {
-      const legacyValue = JSON.stringify({ rangers: [] });
-      localStorage.setItem('rangers', legacyValue);
+      const legacyValue = JSON.stringify({ rangers: [] })
+      localStorage.setItem('rangers', legacyValue)
 
       // The put() genuinely succeeds, but the READ-BACK is corrupted: call #1 is load()'s own
       // "does IndexedDB already have this key" check (must behave for real, on an empty
@@ -227,101 +251,151 @@ describe('RecordStore', () => {
       // faking the whole IDBRequest/transaction - keeps every event (onsuccess, the owning
       // transaction's oncomplete) firing for real, so only the CONTENT is wrong, not the
       // timing.
-      let getCalls = 0;
-      const realGet = IDBObjectStore.prototype.get;
-      spyOn(IDBObjectStore.prototype as any, 'get').and.callFake(function (this: IDBObjectStore, key: IDBValidKey) {
-        getCalls++;
-        const req = realGet.call(this, key);
+      let getCalls = 0
+      const realGet = IDBObjectStore.prototype.get
+      vi.spyOn(IDBObjectStore.prototype as any, 'get').mockImplementation(function (
+        this: IDBObjectStore,
+        key: unknown
+      ) {
+        getCalls++
+        const req = realGet.call(this, key as IDBValidKey)
         if (getCalls > 1) {
-          Object.defineProperty(req, 'result', { configurable: true, get: () => 'mismatched-content' });
+          Object.defineProperty(req, 'result', {
+            configurable: true,
+            get: () => 'mismatched-content',
+          })
         }
-        return req;
-      });
+        return req
+      })
 
-      await recordStore.load();
+      await recordStore.load()
 
-      expect(localStorage.getItem('rangers')).toBe(legacyValue);
-      expect(recordStore.getItem('rangers')).toBe(legacyValue);
-    });
-  });
+      expect(localStorage.getItem('rangers')).toBe(legacyValue)
+      expect(recordStore.getItem('rangers')).toBe(legacyValue)
+    })
+  })
 
   describe('recovering from leftover state', () => {
     it('repairs a database that exists without its object store, and still persists writes', async () => {
-      await new Promise<void>(resolve => {
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onsuccess = () => { req.result.close(); resolve(); };
-      });
+      await new Promise<void>((resolve) => {
+        const req = indexedDB.open(DB_NAME, 1)
+        req.onsuccess = () => {
+          req.result.close()
+          resolve()
+        }
+      })
 
-      await recordStore.load();
-      recordStore.setItem(KEY, 'after-repair');
-      await recordStore.flush();
+      await recordStore.load()
+      recordStore.setItem(KEY, 'after-repair')
+      await recordStore.flush()
 
-      expect(await readRawFromIdb(KEY)).toBe('after-repair');
-    });
+      expect(await readRawFromIdb(KEY)).toBe('after-repair')
+    })
 
     it('removes a stale localStorage copy once IndexedDB already holds the key', async () => {
-      recordStore.setItem('rangers', 'live-copy');
-      await recordStore.flush();
-      localStorage.setItem('rangers', 'stale-plaintext-copy');
+      recordStore.setItem('rangers', 'live-copy')
+      await recordStore.flush()
+      localStorage.setItem('rangers', 'stale-plaintext-copy')
 
-      await recordStore.load();
+      await recordStore.load()
 
-      expect(recordStore.getItem('rangers')).toBe('live-copy');
-      expect(localStorage.getItem('rangers')).toBeNull();
-    });
-  });
+      expect(recordStore.getItem('rangers')).toBe('live-copy')
+      expect(localStorage.getItem('rangers')).toBeNull()
+    })
+  })
 
   describe('IndexedDB unavailable (E-122 Phase 2a item 5)', () => {
     it('falls back to localStorage for the session, synchronously, and never fails to boot', async () => {
       // `window.indexedDB` is a getter-only accessor (a plain `= undefined` assignment throws
       // in strict mode), so it takes a real property redefinition to simulate a browser/mode
       // where it genuinely does not exist.
-      const original = Object.getOwnPropertyDescriptor(window, 'indexedDB');
-      Object.defineProperty(window, 'indexedDB', { configurable: true, value: undefined });
+      const original = Object.getOwnPropertyDescriptor(window, 'indexedDB')
+      Object.defineProperty(window, 'indexedDB', { configurable: true, value: undefined })
       try {
-        localStorage.setItem('rangers', 'legacy-in-fallback-mode');
+        localStorage.setItem('rangers', 'legacy-in-fallback-mode')
 
-        await expectAsync(recordStore.load()).toBeResolved();
-        expect(recordStore.getItem('rangers')).toBe('legacy-in-fallback-mode');
+        await expect(recordStore.load()).resolves.not.toThrow()
+        expect(recordStore.getItem('rangers')).toBe('legacy-in-fallback-mode')
 
-        recordStore.setItem('rangers', 'written-in-fallback-mode');
+        recordStore.setItem('rangers', 'written-in-fallback-mode')
         // No flush() needed - the fallback path writes synchronously.
-        expect(localStorage.getItem('rangers')).toBe('written-in-fallback-mode');
+        expect(localStorage.getItem('rangers')).toBe('written-in-fallback-mode')
 
-        recordStore.removeItem('rangers');
-        expect(localStorage.getItem('rangers')).toBeNull();
+        recordStore.removeItem('rangers')
+        expect(localStorage.getItem('rangers')).toBeNull()
       } finally {
-        if (original) Object.defineProperty(window, 'indexedDB', original);
+        if (original) Object.defineProperty(window, 'indexedDB', original)
       }
-    });
-  });
+    })
+  })
 
   describe('returning user (E-122 Phase 2a item 7)', () => {
     it('old-format localStorage data for all managed keys survives load() and moves to IndexedDB', async () => {
       const values: Record<string, string> = {
-        rangers: JSON.stringify({ schemaVersion: 1, rangers: [{ callsign: 'RETURNING1' }] }),
-        radioLog: JSON.stringify({ version: '1', logEntries: [{ id: 0, callsign: 'RETURNING1' }] }),
+        rangers: JSON.stringify({
+          schemaVersion: 1,
+          rangers: [{ callsign: 'RETURNING1' }],
+        }),
+        radioLog: JSON.stringify({
+          version: '1',
+          logEntries: [{ id: 0, callsign: 'RETURNING1' }],
+        }),
         'radioLog-BAD': '{"garbage": true}',
-        locations: JSON.stringify({ schemaVersion: 1, locations: [{ name: 'Command Post' }] }),
-        aarNotes: JSON.stringify({ schemaVersion: 1, notes: [{ uid: 'n1', text: 'Relay out of range' }] }),
+        locations: JSON.stringify({
+          schemaVersion: 1,
+          locations: [{ name: 'Command Post' }],
+        }),
+        aarNotes: JSON.stringify({
+          schemaVersion: 1,
+          notes: [{ uid: 'n1', text: 'Relay out of range' }],
+        }),
         secrets: JSON.stringify({ googleGeocodingApiKey: 'k' }),
-        rangersImported: JSON.stringify({ importedAt: 1, source: 'roster.json', rows: { u1: 'abc' } }),
-        layers: JSON.stringify({ schemaVersion: 1, layers: [{ name: 'Fernhollow CERT', kind: 'people', asOf: '2026-10-15', fileName: 'f.xlsx', importedAt: '2026-10-15T10:00:00Z', uids: ['u1'] }] }),
-        activityLogHeader: JSON.stringify({ name: 'Pat Doe', icsPosition: 'Radio Operator', homeAgency: '', resources: [] }),
-        importSafetyCopy: JSON.stringify({ meta: { takenAt: '2026-10-18T14:02:00Z', reason: 'restore', fileName: 'f.json', appVersion: '0.99.56-alpha' }, payload: { schemaVersion: 1 } }),
+        rangersImported: JSON.stringify({
+          importedAt: 1,
+          source: 'roster.json',
+          rows: { u1: 'abc' },
+        }),
+        layers: JSON.stringify({
+          schemaVersion: 1,
+          layers: [
+            {
+              name: 'Fernhollow CERT',
+              kind: 'people',
+              asOf: '2026-10-15',
+              fileName: 'f.xlsx',
+              importedAt: '2026-10-15T10:00:00Z',
+              uids: ['u1'],
+            },
+          ],
+        }),
+        activityLogHeader: JSON.stringify({
+          name: 'Pat Doe',
+          icsPosition: 'Radio Operator',
+          homeAgency: '',
+          resources: [],
+        }),
+        importSafetyCopy: JSON.stringify({
+          meta: {
+            takenAt: '2026-10-18T14:02:00Z',
+            reason: 'restore',
+            fileName: 'f.json',
+            appVersion: '0.99.56-alpha',
+          },
+          payload: { schemaVersion: 1 },
+        }),
         missionJournal: JSON.stringify({ schemaVersion: 1, entries: [] }),
-      };
-      for (const key of MIGRATED_KEYS) localStorage.setItem(key, values[key]);
+      }
+      for (const key of MIGRATED_KEYS) localStorage.setItem(key, values[key])
 
-      await recordStore.load();
+      await recordStore.load()
 
       for (const key of MIGRATED_KEYS) {
-        expect(recordStore.getItem(key)).withContext(`in-memory "${key}"`).toBe(values[key]);
-        expect(localStorage.getItem(key)).withContext(`localStorage "${key}"`).toBeNull();
-        expect(await readRawFromIdb(key)).withContext(`IndexedDB "${key}"`).toBe(values[key]);
+        expect(recordStore.getItem(key), `in-memory "${key}"`).toBe(values[key])
+        expect(localStorage.getItem(key), `localStorage "${key}"`).toBeNull()
+        expect(await readRawFromIdb(key), `IndexedDB "${key}"`).toBe(values[key])
       }
-    });
-  });
+    })
+  })
 
   /**
    * E-122 Phase 2b. Unlike the sections above, these exercise enableEncryption()/
@@ -330,159 +404,171 @@ describe('RecordStore', () => {
    * itself re-tested here.
    */
   describe('encryption at rest (E-122 Phase 2b)', () => {
-    const PASS = 'correct horse battery staple';
-    const ROSTER = JSON.stringify({ schemaVersion: 1, rangers: [{ callsign: 'ENC1' }] });
-    const RADIO_LOG = JSON.stringify({ version: '1', logEntries: [{ id: 0, callsign: 'ENC1' }] });
-    const LOCATIONS = JSON.stringify({ schemaVersion: 1, locations: [{ name: 'Command Post' }] });
+    const PASS = 'correct horse battery staple'
+    const ROSTER = JSON.stringify({ schemaVersion: 1, rangers: [{ callsign: 'ENC1' }] })
+    const RADIO_LOG = JSON.stringify({
+      version: '1',
+      logEntries: [{ id: 0, callsign: 'ENC1' }],
+    })
+    const LOCATIONS = JSON.stringify({
+      schemaVersion: 1,
+      locations: [{ name: 'Command Post' }],
+    })
 
     it('reports no encryption on a fresh device', async () => {
-      expect(await recordStore.checkEncryption()).toBe(false);
-      expect(recordStore.isEncryptionEnabled()).toBe(false);
-      expect(recordStore.getEncryptionKey()).toBeUndefined();
-    });
+      expect(await recordStore.checkEncryption()).toBe(false)
+      expect(recordStore.isEncryptionEnabled()).toBe(false)
+      expect(recordStore.getEncryptionKey()).toBeUndefined()
+    })
 
     it('enableEncryption() arms a key and marks the device encrypted', async () => {
-      expect(recordStore.isEncryptionEnabled()).toBe(false);
-      await recordStore.enableEncryption(PASS);
-      expect(recordStore.isEncryptionEnabled()).toBe(true);
-      expect(recordStore.getEncryptionKey()).toBeDefined();
-    });
+      expect(recordStore.isEncryptionEnabled()).toBe(false)
+      await recordStore.enableEncryption(PASS)
+      expect(recordStore.isEncryptionEnabled()).toBe(true)
+      expect(recordStore.getEncryptionKey()).toBeDefined()
+    })
 
     it('drain() writes a value that is NOT the plaintext once encryption is enabled', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      await recordStore.flush();
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      await recordStore.flush()
 
-      const raw = await readRawFromIdb('rangers');
-      expect(raw).not.toBeNull();
-      expect(raw).not.toBe(ROSTER);
-      expect(raw as string).not.toContain('ENC1');
+      const raw = await readRawFromIdb('rangers')
+      expect(raw).not.toBeNull()
+      expect(raw).not.toBe(ROSTER)
+      expect(raw as string).not.toContain('ENC1')
       // In memory - what every service actually reads - is still plaintext.
-      expect(recordStore.getItem('rangers')).toBe(ROSTER);
-    });
+      expect(recordStore.getItem('rangers')).toBe(ROSTER)
+    })
 
     it('locations stay plaintext even while roster/radioLog are encrypted', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      recordStore.setItem('locations', LOCATIONS);
-      await recordStore.flush();
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      recordStore.setItem('locations', LOCATIONS)
+      await recordStore.flush()
 
-      expect(await readRawFromIdb('locations')).toBe(LOCATIONS);
-      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
-    });
+      expect(await readRawFromIdb('locations')).toBe(LOCATIONS)
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER)
+    })
 
     it('verifyPassphrase() rejects the wrong passphrase without touching session state', async () => {
-      await recordStore.enableEncryption(PASS);
-      const keyBefore = recordStore.getEncryptionKey();
+      await recordStore.enableEncryption(PASS)
+      const keyBefore = recordStore.getEncryptionKey()
 
-      expect(await recordStore.verifyPassphrase('wrong passphrase')).toBeNull();
-      expect(recordStore.getEncryptionKey()).toBe(keyBefore);
-      expect(recordStore.isEncryptionEnabled()).toBe(true);
-    });
+      expect(await recordStore.verifyPassphrase('wrong passphrase')).toBeNull()
+      expect(recordStore.getEncryptionKey()).toBe(keyBefore)
+      expect(recordStore.isEncryptionEnabled()).toBe(true)
+    })
 
     it('unlock() arms the key on the right passphrase and refuses the wrong one', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      await recordStore.flush();
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      await recordStore.flush()
 
       // Simulate "next session": drop the in-memory key/marker, but keep IndexedDB, the way
       // a page reload would (nothing here is persisted - see the key field's own comment).
-      (recordStore as any).key = undefined;
-      (recordStore as any).marker = undefined;
+      ;(recordStore as any).key = undefined
+      ;(recordStore as any).marker = undefined
 
-      expect(await recordStore.checkEncryption()).toBe(true);
-      expect(await recordStore.unlock('wrong passphrase')).toBe(false);
-      expect(recordStore.getEncryptionKey()).toBeUndefined();
+      expect(await recordStore.checkEncryption()).toBe(true)
+      expect(await recordStore.unlock('wrong passphrase')).toBe(false)
+      expect(recordStore.getEncryptionKey()).toBeUndefined()
 
-      expect(await recordStore.unlock(PASS)).toBe(true);
-      expect(recordStore.getEncryptionKey()).toBeDefined();
+      expect(await recordStore.unlock(PASS)).toBe(true)
+      expect(recordStore.getEncryptionKey()).toBeDefined()
 
       // And now load() can actually decrypt what an earlier "session" encrypted.
-      await recordStore.load();
-      expect(recordStore.getItem('rangers')).toBe(ROSTER);
-    });
+      await recordStore.load()
+      expect(recordStore.getItem('rangers')).toBe(ROSTER)
+    })
 
     it('enable -> disable round trip leaves the data intact and unencrypted again', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      recordStore.setItem('radioLog', RADIO_LOG);
-      await recordStore.flush();
-      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      recordStore.setItem('radioLog', RADIO_LOG)
+      await recordStore.flush()
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER)
 
-      const key = await recordStore.verifyPassphrase(PASS);
-      expect(key).not.toBeNull();
-      await recordStore.disableEncryption();
-      await recordStore.flush();
+      const key = await recordStore.verifyPassphrase(PASS)
+      expect(key).not.toBeNull()
+      await recordStore.disableEncryption()
+      await recordStore.flush()
 
-      expect(recordStore.isEncryptionEnabled()).toBe(false);
-      expect(recordStore.getEncryptionKey()).toBeUndefined();
-      expect(await readRawFromIdb('rangers')).toBe(ROSTER);
-      expect(await readRawFromIdb('radioLog')).toBe(RADIO_LOG);
-      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull();
+      expect(recordStore.isEncryptionEnabled()).toBe(false)
+      expect(recordStore.getEncryptionKey()).toBeUndefined()
+      expect(await readRawFromIdb('rangers')).toBe(ROSTER)
+      expect(await readRawFromIdb('radioLog')).toBe(RADIO_LOG)
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull()
       // In-memory reads never changed - the Map was always plaintext.
-      expect(recordStore.getItem('rangers')).toBe(ROSTER);
-    });
+      expect(recordStore.getItem('rangers')).toBe(ROSTER)
+    })
 
     it('one corrupt encrypted record is treated as missing, not a load() failure', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      recordStore.setItem('radioLog', RADIO_LOG);
-      await recordStore.flush();
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      recordStore.setItem('radioLog', RADIO_LOG)
+      await recordStore.flush()
 
       // Corrupt just the roster's stored ciphertext directly in IndexedDB.
-      const raw = JSON.parse((await readRawFromIdb('rangers'))!);
-      raw.ciphertext = btoa('not the real ciphertext at all');
+      const raw = JSON.parse((await readRawFromIdb('rangers'))!)
+      raw.ciphertext = btoa('not the real ciphertext at all')
       await new Promise<void>((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME);
+        const req = indexedDB.open(DB_NAME)
         // Same rule as readRawFromIdb() above: never create the database from a test writer
         // either - the store already exists here (enableEncryption()/flush() created it), so
         // this should never actually fire, but aborting rather than creating keeps this
         // reader/writer safe regardless of ordering.
-        req.onupgradeneeded = () => req.transaction!.abort();
+        req.onupgradeneeded = () => req.transaction!.abort()
         req.onsuccess = () => {
-          const db = req.result;
-          const tx = db.transaction(STORE, 'readwrite');
-          tx.objectStore(STORE).put(JSON.stringify(raw), 'rangers');
-          tx.oncomplete = () => { db.close(); resolve(); };
-          tx.onerror = () => { db.close(); reject(tx.error); };
-        };
-        req.onerror = () => reject(req.error);
-      });
+          const db = req.result
+          const tx = db.transaction(STORE, 'readwrite')
+          tx.objectStore(STORE).put(JSON.stringify(raw), 'rangers')
+          tx.oncomplete = () => {
+            db.close()
+            resolve()
+          }
+          tx.onerror = () => {
+            db.close()
+            reject(tx.error)
+          }
+        }
+        req.onerror = () => reject(req.error)
+      })
 
-      (recordStore as any).key = undefined;
-      (recordStore as any).marker = undefined;
-      await recordStore.checkEncryption();
-      await recordStore.unlock(PASS);
+      ;(recordStore as any).key = undefined
+      ;(recordStore as any).marker = undefined
+      await recordStore.checkEncryption()
+      await recordStore.unlock(PASS)
 
-      await expectAsync(recordStore.load()).toBeResolved();
+      await expect(recordStore.load()).resolves.not.toThrow()
       // The corrupt key is simply absent, not a thrown error - and the sibling key survives.
-      expect(recordStore.getItem('rangers')).toBeNull();
-      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG);
-    });
+      expect(recordStore.getItem('rangers')).toBeNull()
+      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG)
+    })
 
     it('eraseEncryptedRecords() deletes the encrypted keys and the marker, leaving locations alone', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      recordStore.setItem('locations', LOCATIONS);
-      await recordStore.flush();
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      recordStore.setItem('locations', LOCATIONS)
+      await recordStore.flush()
 
-      await recordStore.eraseEncryptedRecords();
+      await recordStore.eraseEncryptedRecords()
 
-      expect(recordStore.isEncryptionEnabled()).toBe(false);
-      expect(recordStore.getItem('rangers')).toBeNull();
-      expect(await readRawFromIdb('rangers')).toBeNull();
-      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull();
-      expect(await readRawFromIdb('locations')).toBe(LOCATIONS);
-    });
+      expect(recordStore.isEncryptionEnabled()).toBe(false)
+      expect(recordStore.getItem('rangers')).toBeNull()
+      expect(await readRawFromIdb('rangers')).toBeNull()
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull()
+      expect(await readRawFromIdb('locations')).toBe(LOCATIONS)
+    })
 
     it('enableEncryption() throws if already enabled, rather than silently rotating the key', async () => {
-      await recordStore.enableEncryption(PASS);
-      await expectAsync(recordStore.enableEncryption('a second passphrase')).toBeRejected();
-    });
+      await recordStore.enableEncryption(PASS)
+      await expect(recordStore.enableEncryption('a second passphrase')).rejects.toThrow()
+    })
 
     it('disableEncryption() throws if encryption is not enabled', async () => {
-      await expectAsync(recordStore.disableEncryption()).toBeRejected();
-    });
+      await expect(recordStore.disableEncryption()).rejects.toThrow()
+    })
 
     /**
      * A crash partway through enableEncryption()/disableEncryption() leaves the `kv` store in
@@ -494,50 +580,52 @@ describe('RecordStore', () => {
      * RecordStore's own write path, and confirm load() already relies on that per-record check.
      */
     it('load() returns both an encrypted record and a still-plaintext one intact under the same marker', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      await recordStore.flush();
-      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER); // genuinely encrypted on disk
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      await recordStore.flush()
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER) // genuinely encrypted on disk
 
       // Simulate a crash mid-disableEncryption(): radioLog already rewritten plaintext (the
       // records-first half of that ordering), but the marker delete never ran.
-      await writeRawToIdb('radioLog', RADIO_LOG);
+      await writeRawToIdb('radioLog', RADIO_LOG)
 
       // Next "session": drop the in-memory key/marker, the way a reload would.
-      (recordStore as any).key = undefined;
-      (recordStore as any).marker = undefined;
+      ;(recordStore as any).key = undefined
+      ;(recordStore as any).marker = undefined
 
-      expect(await recordStore.checkEncryption()).toBe(true);
-      expect(await recordStore.unlock(PASS)).toBe(true);
-      await recordStore.load();
+      expect(await recordStore.checkEncryption()).toBe(true)
+      expect(await recordStore.unlock(PASS)).toBe(true)
+      await recordStore.load()
 
-      expect(recordStore.getItem('rangers')).toBe(ROSTER);
-      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG);
-    });
+      expect(recordStore.getItem('rangers')).toBe(ROSTER)
+      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG)
+    })
 
     it('crash-safe order: if the marker delete fails, records already sit in the clear but the marker delete is still reported as a failure', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      await recordStore.flush();
-      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      await recordStore.flush()
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER)
 
       // Simulates the process dying right as disableEncryption() reaches the marker's own
       // delete - by then every ENCRYPTED_KEYS record ahead of it (see disableEncryption()'s
       // own comment on ordering) has already been written in the clear. E-122 Phase 2b
       // follow-up: this specific failure is harmless (the data is already safe) but is now
       // THROWN rather than swallowed, so the caller is never told this finished silently.
-      spyOn(IDBObjectStore.prototype as any, 'delete').and.throwError('simulated crash deleting the marker');
+      vi.spyOn(IDBObjectStore.prototype as any, 'delete').mockImplementation(() => {
+        throw new Error('simulated crash deleting the marker')
+      })
 
-      await expectAsync(recordStore.disableEncryption()).toBeRejected();
+      await expect(recordStore.disableEncryption()).rejects.toThrow()
 
-      expect(await readRawFromIdb('rangers')).toBe(ROSTER);
-      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).not.toBeNull();
+      expect(await readRawFromIdb('rangers')).toBe(ROSTER)
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).not.toBeNull()
       // The data is genuinely unencrypted now (every record committed before the marker
       // delete failed), so this session correctly stops reporting encryption as on - the next
       // real boot will still find the stale marker and ask for a passphrase once more, but
       // load() finds every record already plaintext and returns it as-is.
-      expect(recordStore.isEncryptionEnabled()).toBe(false);
-    });
+      expect(recordStore.isEncryptionEnabled()).toBe(false)
+    })
 
     /**
      * E-122 Phase 2b follow-up: before this fix, drain() only console.error()'d a failed
@@ -547,58 +635,66 @@ describe('RecordStore', () => {
      * fail for one specific key.
      */
     it('enableEncryption() rejects if the marker write itself fails, and leaves the device unencrypted', async () => {
-      const realPut = IDBObjectStore.prototype.put;
-      spyOn(IDBObjectStore.prototype as any, 'put').and.callFake(function (this: IDBObjectStore, value: any, key: any) {
-        if (key === ENCRYPTION_MARKER_KEY) throw new Error('simulated marker put failure');
-        return realPut.call(this, value, key);
-      });
-      recordStore.setItem('rangers', ROSTER);
-      await recordStore.flush();
+      const realPut = IDBObjectStore.prototype.put
+      vi.spyOn(IDBObjectStore.prototype as any, 'put').mockImplementation(function (
+        this: IDBObjectStore,
+        value: any,
+        key: any
+      ) {
+        if (key === ENCRYPTION_MARKER_KEY) throw new Error('simulated marker put failure')
+        return realPut.call(this, value, key)
+      })
+      recordStore.setItem('rangers', ROSTER)
+      await recordStore.flush()
 
-      await expectAsync(recordStore.enableEncryption(PASS)).toBeRejected();
+      await expect(recordStore.enableEncryption(PASS)).rejects.toThrow()
 
-      expect(recordStore.isEncryptionEnabled()).toBe(false);
-      expect(recordStore.getEncryptionKey()).toBeUndefined();
-      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull();
+      expect(recordStore.isEncryptionEnabled()).toBe(false)
+      expect(recordStore.getEncryptionKey()).toBeUndefined()
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).toBeNull()
       // Nothing was encrypted - the roster is exactly the plaintext it was before the attempt.
-      expect(await readRawFromIdb('rangers')).toBe(ROSTER);
-      expect(recordStore.getItem('rangers')).toBe(ROSTER);
-    });
+      expect(await readRawFromIdb('rangers')).toBe(ROSTER)
+      expect(recordStore.getItem('rangers')).toBe(ROSTER)
+    })
 
     it('disableEncryption() rejects if a record rewrite fails, leaving the marker and that record encrypted', async () => {
-      await recordStore.enableEncryption(PASS);
-      recordStore.setItem('rangers', ROSTER);
-      recordStore.setItem('radioLog', RADIO_LOG);
-      await recordStore.flush();
-      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
+      await recordStore.enableEncryption(PASS)
+      recordStore.setItem('rangers', ROSTER)
+      recordStore.setItem('radioLog', RADIO_LOG)
+      await recordStore.flush()
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER)
 
-      const realPut = IDBObjectStore.prototype.put;
-      spyOn(IDBObjectStore.prototype as any, 'put').and.callFake(function (this: IDBObjectStore, value: any, key: any) {
-        if (key === 'rangers') throw new Error('simulated rangers put failure');
-        return realPut.call(this, value, key);
-      });
+      const realPut = IDBObjectStore.prototype.put
+      vi.spyOn(IDBObjectStore.prototype as any, 'put').mockImplementation(function (
+        this: IDBObjectStore,
+        value: any,
+        key: any
+      ) {
+        if (key === 'rangers') throw new Error('simulated rangers put failure')
+        return realPut.call(this, value, key)
+      })
 
-      await expectAsync(recordStore.disableEncryption()).toBeRejected();
+      await expect(recordStore.disableEncryption()).rejects.toThrow()
 
       // Still reports as encrypted - the caller must not be told this succeeded.
-      expect(recordStore.isEncryptionEnabled()).toBe(true);
-      expect(recordStore.getEncryptionKey()).toBeDefined();
-      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).not.toBeNull();
+      expect(recordStore.isEncryptionEnabled()).toBe(true)
+      expect(recordStore.getEncryptionKey()).toBeDefined()
+      expect(await readRawFromIdb(ENCRYPTION_MARKER_KEY)).not.toBeNull()
       // rangers' rewrite failed, so it is still encrypted on disk; radioLog's own put
       // succeeded, so it already committed plaintext - the exact mixed state
       // disableEncryption()'s own header comment describes load() as already handling.
-      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER);
-      expect(await readRawFromIdb('radioLog')).toBe(RADIO_LOG);
+      expect(await readRawFromIdb('rangers')).not.toBe(ROSTER)
+      expect(await readRawFromIdb('radioLog')).toBe(RADIO_LOG)
 
       // Simulate the next session (a reload): drop the in-memory key/marker, then unlock and
       // load normally - nothing was lost, and everything reads back intact.
-      (recordStore as any).key = undefined;
-      (recordStore as any).marker = undefined;
-      expect(await recordStore.checkEncryption()).toBe(true);
-      expect(await recordStore.unlock(PASS)).toBe(true);
-      await recordStore.load();
-      expect(recordStore.getItem('rangers')).toBe(ROSTER);
-      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG);
-    });
-  });
-});
+      ;(recordStore as any).key = undefined
+      ;(recordStore as any).marker = undefined
+      expect(await recordStore.checkEncryption()).toBe(true)
+      expect(await recordStore.unlock(PASS)).toBe(true)
+      await recordStore.load()
+      expect(recordStore.getItem('rangers')).toBe(ROSTER)
+      expect(recordStore.getItem('radioLog')).toBe(RADIO_LOG)
+    })
+  })
+})

@@ -1,10 +1,17 @@
 import {
-  DecryptionFailedError, ENCRYPTED_FILE_FORMAT, PBKDF2_ITERATIONS,
-  decryptJson, encryptJson, isEncryptedFile,
+  DecryptionFailedError,
+  ENCRYPTED_FILE_FORMAT,
+  PBKDF2_ITERATIONS,
+  decryptJson,
+  encryptJson,
+  isEncryptedFile,
 } from './encrypted-file'
 
 describe('encrypted export files', () => {
-  const payload = { mission: 'Vashon SAR', rangers: [{ callsign: 'CERT1', phone: '555-0100' }] }
+  const payload = {
+    mission: 'Vashon SAR',
+    rangers: [{ callsign: 'CERT1', phone: '555-0100' }],
+  }
   const PASS = 'correct horse battery staple'
 
   it('round-trips a payload', async () => {
@@ -22,11 +29,11 @@ describe('encrypted export files', () => {
 
   it('rejects the wrong passphrase', async () => {
     const file = await encryptJson(payload, PASS)
-    await expectAsync(decryptJson(file, 'wrong')).toBeRejectedWithError(DecryptionFailedError)
+    await expect(decryptJson(file, 'wrong')).rejects.toThrowError(DecryptionFailedError)
   })
 
   it('rejects an empty passphrase rather than encrypting with nothing', async () => {
-    await expectAsync(encryptJson(payload, '')).toBeRejected()
+    await expect(encryptJson(payload, '')).rejects.toThrow()
   })
 
   // AES-GCM is authenticated: a tampered file must fail, not decrypt to garbage the
@@ -36,7 +43,7 @@ describe('encrypted export files', () => {
     const bytes = atob(file.ciphertext).split('')
     bytes[0] = String.fromCharCode(bytes[0].charCodeAt(0) ^ 0xff)
     file.ciphertext = btoa(bytes.join(''))
-    await expectAsync(decryptJson(file, PASS)).toBeRejectedWithError(DecryptionFailedError)
+    await expect(decryptJson(file, PASS)).rejects.toThrowError(DecryptionFailedError)
   })
 
   it('uses a fresh salt and IV every time, so two exports never match', async () => {
@@ -56,16 +63,19 @@ describe('encrypted export files', () => {
     expect(await decryptJson(file, PASS)).toEqual(payload)
 
     const bumped = { ...file, kdf: { ...file.kdf, iterations: PBKDF2_ITERATIONS + 1 } }
-    await expectAsync(decryptJson(bumped, PASS)).toBeRejectedWithError(DecryptionFailedError)
+    await expect(decryptJson(bumped, PASS)).rejects.toThrowError(DecryptionFailedError)
   })
 
   it('survives a payload larger than the base64 chunk size', async () => {
-    const big = { notes: 'x'.repeat(200_000) }
+    const big = { notes: 'x'.repeat(200000) }
     expect(await decryptJson(await encryptJson(big, PASS), PASS)).toEqual(big)
   })
 
   it('carries an optional plaintext hint so a file is identifiable while locked', async () => {
-    const file = await encryptJson(payload, PASS, { exportedAt: '2026-09-22', appVersion: '0.93.0' })
+    const file = await encryptJson(payload, PASS, {
+      exportedAt: '2026-09-22',
+      appVersion: '0.93.0',
+    })
     expect(file.hint?.exportedAt).toBe('2026-09-22')
   })
 

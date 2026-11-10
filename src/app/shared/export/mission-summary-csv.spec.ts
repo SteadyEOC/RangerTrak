@@ -1,26 +1,69 @@
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
 import { summarizeMission } from '../../domain/mission-summary'
-import { buildSummaryCsv, summaryCsvFilename, localStamp } from './mission-summary-csv'
+import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import { buildSummaryCsv, localStamp, summaryCsvFilename } from './mission-summary-csv'
 
 const e = (id: number, when: Date, over: Partial<RadioLogEntryType> = {}) =>
-  ({ id, callsign: 'K7AAA', date: when, status: 'Urgent', notes: 'say "hi"', location: { lat: 1, lng: 1 }, ...over }) as unknown as RadioLogEntryType
+  ({
+    id,
+    callsign: 'K7AAA',
+    date: when,
+    status: 'Urgent',
+    notes: 'say "hi"',
+    location: { lat: 1, lng: 1 },
+    ...over,
+  }) as unknown as RadioLogEntryType
 
 describe('mission summary CSV', () => {
   const now = new Date(2026, 9, 15, 14, 30)
   const summary = summarizeMission({
-    entries: [e(1, new Date(2026, 9, 15, 9)), e(2, new Date(2026, 9, 15, 10), { status: 'Normal' })],
-    rangers: [], notes: [{ uid: 'n', createdAt: new Date(2026, 9, 15, 11).toISOString(), text: 'Radios', page: 'Entry', about: 'incident', kind: 'aar', area: 'Comms' }],
-    statuses: [{ status: 'Normal', color: 'normal', icon: '' }, { status: 'Urgent', color: 'urgent', icon: '' }],
-    window: null, now,
+    entries: [
+      e(1, new Date(2026, 9, 15, 9)),
+      e(2, new Date(2026, 9, 15, 10), { status: 'Normal' }),
+    ],
+    rangers: [],
+    notes: [
+      {
+        uid: 'n',
+        createdAt: new Date(2026, 9, 15, 11).toISOString(),
+        text: 'Radios',
+        page: 'Entry',
+        about: 'incident',
+        kind: 'aar',
+        area: 'Comms',
+      },
+    ],
+    statuses: [
+      { status: 'Normal', color: 'normal', icon: '' },
+      { status: 'Urgent', color: 'urgent', icon: '' },
+    ],
+    window: null,
+    now,
   })
-  const csv = buildSummaryCsv(summary, { mission: 'Test', opPeriod: 'OP 1', windowLabel: 'all', generatedBy: 'Pat', exercise: true })
+  const csv = buildSummaryCsv(summary, {
+    mission: 'Test',
+    opPeriod: 'OP 1',
+    windowLabel: 'all',
+    generatedBy: 'Pat',
+    exercise: true,
+  })
 
   it('has every section heading, in order', () => {
-    const headings = ['Stamp', 'Totals', 'Per bucket', 'By team', 'By station', 'By operator', 'By status', 'By source', 'Needs attention', 'AAR notes']
+    const headings = [
+      'Stamp',
+      'Totals',
+      'Per bucket',
+      'By team',
+      'By station',
+      'By operator',
+      'By status',
+      'By source',
+      'Needs attention',
+      'AAR notes',
+    ]
     let at = -1
     for (const h of headings) {
       const i = csv.indexOf(`"${h}`)
-      expect(i).withContext(h).toBeGreaterThan(at)
+      expect(i, h).toBeGreaterThan(at)
       at = i
     }
   })
@@ -33,6 +76,8 @@ describe('mission summary CSV', () => {
     expect(csv).toContain('"say ""hi"""')
   })
   it('names the file with the mission and the minute', () => {
-    expect(summaryCsvFilename('My Mission/1', now)).toBe('rangertrak-summary-My_Mission_1-2026-10-15-1430.csv')
+    expect(summaryCsvFilename('My Mission/1', now)).toBe(
+      'rangertrak-summary-My_Mission_1-2026-10-15-1430.csv'
+    )
   })
 })

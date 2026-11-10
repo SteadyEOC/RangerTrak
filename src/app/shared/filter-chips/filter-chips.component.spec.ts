@@ -7,7 +7,10 @@ describe('FilterChipsComponent', () => {
   const el = () => fixture.nativeElement as HTMLElement
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [FilterChipsComponent], providers: [provideNoopAnimations()] }).compileComponents()
+    await TestBed.configureTestingModule({
+      imports: [FilterChipsComponent],
+      providers: [provideNoopAnimations()],
+    }).compileComponents()
     fixture = TestBed.createComponent(FilterChipsComponent)
   })
 
@@ -19,12 +22,17 @@ describe('FilterChipsComponent', () => {
   })
 
   it('shows a chip per filter and emits clear with its key', () => {
-    fixture.componentRef.setInput('chips', [{ key: 'team', label: 'Team: CERT' }, { key: 'status', label: 'Status: Urgent' }])
+    fixture.componentRef.setInput('chips', [
+      { key: 'team', label: 'Team: CERT' },
+      { key: 'status', label: 'Status: Urgent' },
+    ])
     fixture.detectChanges()
     expect(el().querySelectorAll('mat-chip').length).toBe(2)
     let cleared = ''
-    fixture.componentInstance.clear.subscribe(k => cleared = k)
-    const x = el().querySelector('button[aria-label="Remove filter: Status: Urgent"]') as HTMLButtonElement
+    fixture.componentInstance.clear.subscribe((k) => (cleared = k))
+    const x = el().querySelector(
+      'button[aria-label="Remove filter: Status: Urgent"]'
+    ) as HTMLButtonElement
     expect(x).not.toBeNull()
     x.click()
     expect(cleared).toBe('status')

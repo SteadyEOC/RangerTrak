@@ -1,6 +1,12 @@
 import {
-  createEncryptionMarker, decryptPhoto, decryptRecordValue, encryptPhoto, encryptRecordValue,
-  isEncryptedEnvelope, isEncryptionMarker, unlockWithPassphrase,
+  createEncryptionMarker,
+  decryptPhoto,
+  decryptRecordValue,
+  encryptPhoto,
+  encryptRecordValue,
+  isEncryptedEnvelope,
+  isEncryptionMarker,
+  unlockWithPassphrase,
 } from './record-encryption'
 
 /**
@@ -64,8 +70,13 @@ describe('record-encryption', () => {
   describe('encryptRecordValue / decryptRecordValue', () => {
     it('round-trips a plaintext string', async () => {
       const { key } = await createEncryptionMarker(PASS)
-      const envelope = await encryptRecordValue(key, JSON.stringify({ rangers: [{ callsign: 'ZZZ1' }] }))
-      expect(await decryptRecordValue(key, envelope)).toBe(JSON.stringify({ rangers: [{ callsign: 'ZZZ1' }] }))
+      const envelope = await encryptRecordValue(
+        key,
+        JSON.stringify({ rangers: [{ callsign: 'ZZZ1' }] })
+      )
+      expect(await decryptRecordValue(key, envelope)).toBe(
+        JSON.stringify({ rangers: [{ callsign: 'ZZZ1' }] })
+      )
     })
 
     it('leaves no plaintext in the envelope', async () => {
@@ -79,7 +90,7 @@ describe('record-encryption', () => {
       const a = await createEncryptionMarker(PASS)
       const b = await createEncryptionMarker('a different passphrase entirely')
       const envelope = await encryptRecordValue(a.key, 'hello')
-      await expectAsync(decryptRecordValue(b.key, envelope)).toBeRejected()
+      await expect(decryptRecordValue(b.key, envelope)).rejects.toThrow()
     })
 
     it('uses a fresh IV on every single write, even for the same plaintext and key', async () => {

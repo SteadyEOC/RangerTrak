@@ -1,18 +1,23 @@
-import { provideHttpClient } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http'
+import { TestBed } from '@angular/core/testing'
 
-import { DEFAULT_SAMPLE_SCENARIO, SampleDataService, SampleScenarioId, SAMPLE_SCENARIOS } from './sample-data.service';
-import { MissionService } from './mission.service';
-import { RangerService } from './ranger.service';
-import { RadioLogService } from './radio-log.service';
-import { MissionLocationService } from './mission-location.service';
-import { AarNoteService } from './aar-note.service';
-import { ActivityLogHeaderService } from './activity-log-header.service';
-import { RangerPhotoService } from './ranger-photo.service';
+import { AarNoteService } from './aar-note.service'
+import { ActivityLogHeaderService } from './activity-log-header.service'
+import { MissionLocationService } from './mission-location.service'
+import { MissionService } from './mission.service'
+import { RadioLogService } from './radio-log.service'
+import { RangerPhotoService } from './ranger-photo.service'
+import { RangerService } from './ranger.service'
+import {
+  DEFAULT_SAMPLE_SCENARIO,
+  SAMPLE_SCENARIOS,
+  SampleDataService,
+  SampleScenarioId,
+} from './sample-data.service'
 // E-122 Phase 2a: rangers/radioLog/locations now live behind RecordStore, not localStorage
 // directly - see that module's own doc comment.
-import { recordStore } from '../storage/record-store';
-import { activeDemoScenario, clearActiveDemoScenario } from '../mapping/demo-map';
+import { activeDemoScenario, clearActiveDemoScenario } from '../mapping/demo-map'
+import { recordStore } from '../storage/record-store'
 
 /**
  * F-scenarios (2026-09-14): SampleDataService went from one fixed "Vashon Island" mission to
@@ -36,20 +41,30 @@ import { activeDemoScenario, clearActiveDemoScenario } from '../mapping/demo-map
  */
 describe('SampleDataService', () => {
   const ALL_STATUSES = [
-    'Normal', 'Location Report', 'Evidence Report', 'Need Rest/Food',
-    'Incident Check-in', 'Incident Check-out', 'Urgent',
-  ];
+    'Normal',
+    'Location Report',
+    'Evidence Report',
+    'Need Rest/Food',
+    'Incident Check-in',
+    'Incident Check-out',
+    'Urgent',
+  ]
 
-  const SCENARIOS: SampleScenarioId[] = ['vashon', 'grand-canyon', 'state-fair', 'near-me'];
+  const SCENARIOS: SampleScenarioId[] = [
+    'vashon',
+    'grand-canyon',
+    'state-fair',
+    'near-me',
+  ]
 
   function configure() {
-    TestBed.configureTestingModule({ providers: [provideHttpClient()] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient()] })
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    await recordStore.resetForTests();
-    configure();
+    localStorage.clear()
+    await recordStore.resetForTests()
+    configure()
 
     // Deterministic, offline stand-in for navigator.geolocation so the shared invariant
     // tests below (which run for every scenario, including near-me) never depend on a real
@@ -58,219 +73,260 @@ describe('SampleDataService', () => {
     Object.defineProperty(navigator, 'geolocation', {
       configurable: true,
       value: {
-        getCurrentPosition: (_success: PositionCallback, error?: PositionErrorCallback) => {
-          error?.({ code: 1, message: 'denied' } as GeolocationPositionError);
+        getCurrentPosition: (
+          _success: PositionCallback,
+          error?: PositionErrorCallback
+        ) => {
+          error?.({ code: 1, message: 'denied' } as GeolocationPositionError)
         },
       },
-    });
-  });
+    })
+  })
 
   afterEach(async () => {
-    localStorage.clear();
-    await recordStore.resetForTests();
-  });
+    localStorage.clear()
+    await recordStore.resetForTests()
+  })
 
   it('SAMPLE_SCENARIOS defaults to Vashon first and lists exactly the six scenarios', () => {
-    expect(SAMPLE_SCENARIOS.map(s => s.id)).toEqual(['grand-canyon', 'vashon', 'state-fair', 'montecito', 'oso', 'near-me']);
-    expect(SAMPLE_SCENARIOS[0].id).toBe(DEFAULT_SAMPLE_SCENARIO);
-  });
+    expect(SAMPLE_SCENARIOS.map((s) => s.id)).toEqual([
+      'grand-canyon',
+      'vashon',
+      'state-fair',
+      'montecito',
+      'oso',
+      'near-me',
+    ])
+    expect(SAMPLE_SCENARIOS[0].id).toBe(DEFAULT_SAMPLE_SCENARIO)
+  })
 
   it('E-213: only demos modeled on a real event link their name to an overview', () => {
-    const withDetails = SAMPLE_SCENARIOS.filter(s => s.detailsUrl).map(s => s.id);
-    expect(withDetails).toEqual(['montecito', 'oso']);
-    expect(SAMPLE_SCENARIOS.find(s => s.id === 'montecito')!.detailsUrl)
-      .toMatch(/^https:\/\/en\.wikipedia\.org\/wiki\/2018_Southern_California_mudflows$/);
-    expect(SAMPLE_SCENARIOS.find(s => s.id === 'oso')!.detailsUrl)
-      .toMatch(/^https:\/\/en\.wikipedia\.org\/wiki\/2014_Oso_landslide$/);
-  });
+    const withDetails = SAMPLE_SCENARIOS.filter((s) => s.detailsUrl).map((s) => s.id)
+    expect(withDetails).toEqual(['montecito', 'oso'])
+    expect(SAMPLE_SCENARIOS.find((s) => s.id === 'montecito')!.detailsUrl).toMatch(
+      /^https:\/\/en\.wikipedia\.org\/wiki\/2018_Southern_California_mudflows$/
+    )
+    expect(SAMPLE_SCENARIOS.find((s) => s.id === 'oso')!.detailsUrl).toMatch(
+      /^https:\/\/en\.wikipedia\.org\/wiki\/2014_Oso_landslide$/
+    )
+  })
 
-  SCENARIOS.forEach(scenario => {
+  SCENARIOS.forEach((scenario) => {
     describe(`scenario: ${scenario}`, () => {
-      it('produces 12 rangers, 4 field teams with >=3 reports each, 2 locations, '
-        + '2 ICS-213 messages, every status, and no unknown callsigns', async () => {
-        const sampleData = TestBed.inject(SampleDataService);
-        const rangerService = TestBed.inject(RangerService);
-        const radioLogService = TestBed.inject(RadioLogService);
-        const locationService = TestBed.inject(MissionLocationService);
+      it(
+        'produces 12 rangers, 4 field teams with >=3 reports each, 2 locations, ' +
+          '2 ICS-213 messages, every status, and no unknown callsigns',
+        async () => {
+          const sampleData = TestBed.inject(SampleDataService)
+          const rangerService = TestBed.inject(RangerService)
+          const radioLogService = TestBed.inject(RadioLogService)
+          const locationService = TestBed.inject(MissionLocationService)
 
-        await sampleData.loadSampleMission(scenario);
+          await sampleData.loadSampleMission(scenario)
 
-        const rangers = rangerService.rangers;
-        const entries = radioLogService.getCurrentRadioLog().logEntries;
-        const locations = locationService.getCurrentLocations();
+          const rangers = rangerService.rangers
+          const entries = radioLogService.getCurrentRadioLog().logEntries
+          const locations = locationService.getCurrentLocations()
 
-        // 12 rangers total.
-        expect(rangers.length).toBe(12);
+          // 12 rangers total.
+          expect(rangers.length).toBe(12)
 
-        // No report references a callsign missing from the roster.
-        const knownCallsigns = new Set(rangers.map(r => r.callsign));
-        entries.forEach(entry => expect(knownCallsigns.has(entry.callsign)).withContext(entry.callsign).toBeTrue());
+          // No report references a callsign missing from the roster.
+          const knownCallsigns = new Set(rangers.map((r) => r.callsign))
+          entries.forEach((entry) =>
+            expect(knownCallsigns.has(entry.callsign), entry.callsign).toBe(true)
+          )
 
-        // 4 command staff at a fixed post, plus exactly 4 field teams of 2.
-        const commandRangers = rangers.filter(r => r.team === 'Command');
-        expect(commandRangers.length).toBe(4);
+          // 4 command staff at a fixed post, plus exactly 4 field teams of 2.
+          const commandRangers = rangers.filter((r) => r.team === 'Command')
+          expect(commandRangers.length).toBe(4)
 
-        const fieldRangers = rangers.filter(r => r.team !== 'Command');
-        expect(fieldRangers.length).toBe(8);
+          const fieldRangers = rangers.filter((r) => r.team !== 'Command')
+          expect(fieldRangers.length).toBe(8)
 
-        const fieldTeamNames = [...new Set(fieldRangers.map(r => r.team))];
-        expect(fieldTeamNames.length).withContext('distinct field teams').toBe(4);
+          const fieldTeamNames = [...new Set(fieldRangers.map((r) => r.team))]
+          expect(fieldTeamNames.length, 'distinct field teams').toBe(4)
 
-        fieldTeamNames.forEach(team => {
-          const teamCallsigns = new Set(fieldRangers.filter(r => r.team === team).map(r => r.callsign));
-          expect(teamCallsigns.size).withContext(`${team} roster size`).toBe(2);
+          fieldTeamNames.forEach((team) => {
+            const teamCallsigns = new Set(
+              fieldRangers.filter((r) => r.team === team).map((r) => r.callsign)
+            )
+            expect(teamCallsigns.size, `${team} roster size`).toBe(2)
 
-          const teamReports = entries.filter(e => teamCallsigns.has(e.callsign));
-          expect(teamReports.length).withContext(`${team} report count`).toBeGreaterThanOrEqual(3);
-        });
+            const teamReports = entries.filter((e) => teamCallsigns.has(e.callsign))
+            expect(teamReports.length, `${team} report count`).toBeGreaterThanOrEqual(3)
+          })
 
-        // Exactly 2 mission Locations - the "objectives".
-        expect(locations.length).toBe(2);
+          // Exactly 2 mission Locations - the "objectives".
+          expect(locations.length).toBe(2)
 
-        // Exactly 2 ICS-213 messages.
-        const messages = entries.filter(e => e.generates213);
-        expect(messages.length).toBe(2);
-        messages.forEach(m => {
-          expect(m.message213).withContext('message213').toBeTruthy();
-          expect(m.subject213).withContext('subject213').toBeTruthy();
-          expect(m.recipients213?.length).withContext('recipients213').toBeGreaterThan(0);
-        });
+          // Exactly 2 ICS-213 messages.
+          const messages = entries.filter((e) => e.generates213)
+          expect(messages.length).toBe(2)
+          messages.forEach((m) => {
+            expect(m.message213, 'message213').toBeTruthy()
+            expect(m.subject213, 'subject213').toBeTruthy()
+            expect(m.recipients213?.length, 'recipients213').toBeGreaterThan(0)
+          })
 
-        // Every configured status appears on at least one report.
-        const statusesPresent = new Set(entries.map(e => e.status));
-        ALL_STATUSES.forEach(status => expect(statusesPresent.has(status)).withContext(status).toBeTrue());
-      });
-    });
-  });
+          // Every configured status appears on at least one report.
+          const statusesPresent = new Set(entries.map((e) => e.status))
+          ALL_STATUSES.forEach((status) =>
+            expect(statusesPresent.has(status), status).toBe(true)
+          )
+        }
+      )
+    })
+  })
 
   describe('loadSampleMission (general)', () => {
     it('E-124: marks the loaded scenario as the active demo, so its map detail may load', async () => {
-      clearActiveDemoScenario();
-      await TestBed.inject(SampleDataService).loadSampleMission('vashon');
-      expect(activeDemoScenario()).toBe('vashon');
-      clearActiveDemoScenario();
-    });
+      clearActiveDemoScenario()
+      await TestBed.inject(SampleDataService).loadSampleMission('vashon')
+      expect(activeDemoScenario()).toBe('vashon')
+      clearActiveDemoScenario()
+    })
 
     it('defaults to the Grand Canyon scenario when called with no argument', async () => {
-      const sampleData = TestBed.inject(SampleDataService);
-      const missionService = TestBed.inject(MissionService);
-      const radioLogService = TestBed.inject(RadioLogService);
+      const sampleData = TestBed.inject(SampleDataService)
+      const missionService = TestBed.inject(MissionService)
+      const radioLogService = TestBed.inject(RadioLogService)
 
-      await sampleData.loadSampleMission();
+      await sampleData.loadSampleMission()
 
-      expect(missionService.settings.mission).toMatch(/^\d{4}-\d{2}-Search$/);
-      expect(missionService.settings.event).toBe(SampleDataService.SAMPLE_EVENT_NAME);
+      expect(missionService.settings.mission).toMatch(/^\d{4}-\d{2}-Search$/)
+      expect(missionService.settings.event).toBe(SampleDataService.SAMPLE_EVENT_NAME)
       // Every scenario shares the event name above, so that alone can't tell them apart -
       // check the reports actually landed at the South Rim (~36.06 N, -112.14 W).
-      const first = radioLogService.getCurrentRadioLog().logEntries[0].location;
-      expect(first.lat).toBeCloseTo(36.06, 0);
-      expect(first.lng).toBeCloseTo(-112.14, 0);
+      const first = radioLogService.getCurrentRadioLog().logEntries[0].location
+      expect(first.lat).toBeCloseTo(36.06, 0)
+      expect(first.lng).toBeCloseTo(-112.14, 0)
       // ...and the mission's default location follows the demo, so Entry opens there too.
-      expect(missionService.settings.defLat).toBeCloseTo(36.06, 1);
-      expect(missionService.settings.defLng).toBeCloseTo(-112.15, 1);
-    });
+      expect(missionService.settings.defLat).toBeCloseTo(36.06, 1)
+      expect(missionService.settings.defLng).toBeCloseTo(-112.15, 1)
+    })
 
     it('names the op period and starts it before the first report', async () => {
-      const missionService = TestBed.inject(MissionService);
-      const radioLogService = TestBed.inject(RadioLogService);
-      await TestBed.inject(SampleDataService).loadSampleMission();
+      const missionService = TestBed.inject(MissionService)
+      const radioLogService = TestBed.inject(RadioLogService)
+      await TestBed.inject(SampleDataService).loadSampleMission()
 
-      const settings = missionService.settings;
-      const first = Math.min(...radioLogService.getCurrentRadioLog().logEntries.map(r => new Date(r.date).getTime()));
-      expect(settings.opPeriod).toBe('Op 1');
-      expect(new Date(settings.opPeriodStart).getTime()).toBeLessThan(first);
-      expect(new Date(settings.opPeriodEnd).getTime()).toBeGreaterThan(Date.now());
-    });
+      const settings = missionService.settings
+      const first = Math.min(
+        ...radioLogService
+          .getCurrentRadioLog()
+          .logEntries.map((r) => new Date(r.date).getTime())
+      )
+      expect(settings.opPeriod).toBe('Op 1')
+      expect(new Date(settings.opPeriodStart).getTime()).toBeLessThan(first)
+      expect(new Date(settings.opPeriodEnd).getTime()).toBeGreaterThan(Date.now())
+    })
 
     it('stamps a computed, current-month mission ID rather than a fixed string', async () => {
-      const sampleData = TestBed.inject(SampleDataService);
-      const missionService = TestBed.inject(MissionService);
+      const sampleData = TestBed.inject(SampleDataService)
+      const missionService = TestBed.inject(MissionService)
 
-      await sampleData.loadSampleMission('vashon');
+      await sampleData.loadSampleMission('vashon')
 
-      const now = new Date();
-      const expected = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-Search`;
-      expect(missionService.settings.mission).toBe(expected);
-    });
+      const now = new Date()
+      const expected = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-Search`
+      expect(missionService.settings.mission).toBe(expected)
+    })
 
     it('leaves no report with an empty callsign match failure (roster and reports stay in sync)', async () => {
-      const sampleData = TestBed.inject(SampleDataService);
-      const radioLogService = TestBed.inject(RadioLogService);
+      const sampleData = TestBed.inject(SampleDataService)
+      const radioLogService = TestBed.inject(RadioLogService)
 
-      await sampleData.loadSampleMission('grand-canyon');
+      await sampleData.loadSampleMission('grand-canyon')
 
       expect(radioLogService.getCurrentRadioLog().numReport).toBe(
-        radioLogService.getCurrentRadioLog().logEntries.length);
-    });
-  });
+        radioLogService.getCurrentRadioLog().logEntries.length
+      )
+    })
+  })
 
   describe('near-me scenario location handling', () => {
     it('falls back to the mission default location when geolocation is denied/unavailable', async () => {
       Object.defineProperty(navigator, 'geolocation', {
         configurable: true,
         value: {
-          getCurrentPosition: (_success: PositionCallback, error?: PositionErrorCallback) => {
-            error?.({ code: 1, message: 'denied' } as GeolocationPositionError);
+          getCurrentPosition: (
+            _success: PositionCallback,
+            error?: PositionErrorCallback
+          ) => {
+            error?.({ code: 1, message: 'denied' } as GeolocationPositionError)
           },
         },
-      });
+      })
 
-      const sampleData = TestBed.inject(SampleDataService);
-      const missionService = TestBed.inject(MissionService);
-      const radioLogService = TestBed.inject(RadioLogService);
+      const sampleData = TestBed.inject(SampleDataService)
+      const missionService = TestBed.inject(MissionService)
+      const radioLogService = TestBed.inject(RadioLogService)
 
-      await sampleData.loadSampleMission('near-me');
+      await sampleData.loadSampleMission('near-me')
 
-      const commandPost = radioLogService.getCurrentRadioLog().logEntries.find(e => e.callsign === '!CmdPost');
-      expect(commandPost).toBeDefined();
-      expect(commandPost!.location.lat).toBeCloseTo(missionService.settings.defLat, 6);
-      expect(commandPost!.location.lng).toBeCloseTo(missionService.settings.defLng, 6);
-    });
+      const commandPost = radioLogService
+        .getCurrentRadioLog()
+        .logEntries.find((e) => e.callsign === '!CmdPost')
+      expect(commandPost).toBeDefined()
+      expect(commandPost!.location.lat).toBeCloseTo(missionService.settings.defLat, 6)
+      expect(commandPost!.location.lng).toBeCloseTo(missionService.settings.defLng, 6)
+    })
 
     it('centers the scenario on a successful GPS fix instead of the mission default', async () => {
       Object.defineProperty(navigator, 'geolocation', {
         configurable: true,
         value: {
           getCurrentPosition: (success: PositionCallback) => {
-            success({ coords: { latitude: 10, longitude: 20 } } as GeolocationPosition);
+            success({ coords: { latitude: 10, longitude: 20 } } as GeolocationPosition)
           },
         },
-      });
+      })
 
-      const sampleData = TestBed.inject(SampleDataService);
-      const radioLogService = TestBed.inject(RadioLogService);
+      const sampleData = TestBed.inject(SampleDataService)
+      const radioLogService = TestBed.inject(RadioLogService)
 
-      await sampleData.loadSampleMission('near-me');
+      await sampleData.loadSampleMission('near-me')
 
-      const commandPost = radioLogService.getCurrentRadioLog().logEntries.find(e => e.callsign === '!CmdPost');
-      expect(commandPost).toBeDefined();
-      expect(commandPost!.location.lat).toBeCloseTo(10, 6);
-      expect(commandPost!.location.lng).toBeCloseTo(20, 6);
-    });
+      const commandPost = radioLogService
+        .getCurrentRadioLog()
+        .logEntries.find((e) => e.callsign === '!CmdPost')
+      expect(commandPost).toBeDefined()
+      expect(commandPost!.location.lat).toBeCloseTo(10, 6)
+      expect(commandPost!.location.lng).toBeCloseTo(20, 6)
+    })
 
     it('E-221: clears ranger photos always, and the notes, 214 lines and header it is told to', async () => {
-      const notes = TestBed.inject(AarNoteService);
-      const header = TestBed.inject(ActivityLogHeaderService);
-      const photos = TestBed.inject(RangerPhotoService);
-      const clearPhotos = spyOn(photos, 'clear').and.resolveTo();
-      notes.addNote('incident note', 'incident', 'Map');
-      notes.addNote('app note', 'app', 'Map');
-      notes.addNote('a 214 line', 'incident', 'Map', 'activity');
-      header.save({ name: 'Pat', icsPosition: 'Scribe', homeAgency: 'CERT', resources: [] });
+      const notes = TestBed.inject(AarNoteService)
+      const header = TestBed.inject(ActivityLogHeaderService)
+      const photos = TestBed.inject(RangerPhotoService)
+      const clearPhotos = vi.spyOn(photos, 'clear').mockResolvedValue()
+      notes.addNote('incident note', 'incident', 'Map')
+      notes.addNote('app note', 'app', 'Map')
+      notes.addNote('a 214 line', 'incident', 'Map', 'activity')
+      header.save({
+        name: 'Pat',
+        icsPosition: 'Scribe',
+        homeAgency: 'CERT',
+        resources: [],
+      })
 
-      await TestBed.inject(SampleDataService).loadSampleMission('vashon');
+      await TestBed.inject(SampleDataService).loadSampleMission('vashon')
 
       // Defaults: the incident notes, lines and header go; the RangerTrak note stays.
-      expect(notes.notes().map(n => n.text)).toEqual(['app note']);
-      expect(header.getCurrentHeader().name).toBe('');
-      expect(clearPhotos).toHaveBeenCalledTimes(1);
+      expect(notes.notes().map((n) => n.text)).toEqual(['app note'])
+      expect(header.getCurrentHeader().name).toBe('')
+      expect(clearPhotos).toHaveBeenCalledTimes(1)
 
       // Told to clear nothing optional: the note stays; photos are cleared regardless.
-      notes.addNote('another incident note', 'incident', 'Map');
-      await TestBed.inject(SampleDataService).loadSampleMission('vashon', new Set());
-      expect(notes.notes().map(n => n.text)).toEqual(['app note', 'another incident note']);
-      expect(clearPhotos).toHaveBeenCalledTimes(2);
-    });
+      notes.addNote('another incident note', 'incident', 'Map')
+      await TestBed.inject(SampleDataService).loadSampleMission('vashon', new Set())
+      expect(notes.notes().map((n) => n.text)).toEqual([
+        'app note',
+        'another incident note',
+      ])
+      expect(clearPhotos).toHaveBeenCalledTimes(2)
+    })
 
     it('does not call any geocoding/network address lookup - offline by construction', async () => {
       // No HttpClient spy needed to prove this: the scenario builder never touches
@@ -281,20 +337,22 @@ describe('SampleDataService', () => {
         configurable: true,
         value: {
           getCurrentPosition: (success: PositionCallback) => {
-            success({ coords: { latitude: 36.5, longitude: -121.9 } } as GeolocationPosition);
+            success({
+              coords: { latitude: 36.5, longitude: -121.9 },
+            } as GeolocationPosition)
           },
         },
-      });
+      })
 
-      const sampleData = TestBed.inject(SampleDataService);
-      const radioLogService = TestBed.inject(RadioLogService);
+      const sampleData = TestBed.inject(SampleDataService)
+      const radioLogService = TestBed.inject(RadioLogService)
 
-      await sampleData.loadSampleMission('near-me');
+      await sampleData.loadSampleMission('near-me')
 
-      const entries = radioLogService.getCurrentRadioLog().logEntries;
-      entries.forEach(e => {
-        expect(e.location.derivedFromAddress).toBeFalse();
-      });
-    });
-  });
-});
+      const entries = radioLogService.getCurrentRadioLog().logEntries
+      entries.forEach((e) => {
+        expect(e.location.derivedFromAddress).toBe(false)
+      })
+    })
+  })
+})

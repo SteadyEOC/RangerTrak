@@ -1,9 +1,23 @@
-import { EntryDraftService, draftHasContent, type EntryDraft } from './entry-draft.service'
+import {
+  EntryDraftService,
+  draftHasContent,
+  type EntryDraft,
+} from './entry-draft.service'
 
 const blank = (): EntryDraft => ({
-  callsign: '', to: '', status: 'Normal', notes: '', date: new Date(), source: 'Voice',
-  generates213: false, replyRequested213: false, message213: '', recipients213: '', subject213: '',
-  selectedRecipients213: [], pendingFiles: [],
+  callsign: '',
+  to: '',
+  status: 'Normal',
+  notes: '',
+  date: new Date(),
+  source: 'Voice',
+  generates213: false,
+  replyRequested213: false,
+  message213: '',
+  recipients213: '',
+  subject213: '',
+  selectedRecipients213: [],
+  pendingFiles: [],
 })
 
 describe('EntryDraftService (E-261)', () => {
@@ -23,15 +37,17 @@ describe('EntryDraftService (E-261)', () => {
   })
 
   it('a form with only defaults has nothing worth keeping', () => {
-    expect(draftHasContent(blank())).toBeFalse()
-    expect(draftHasContent({ ...blank(), notes: '   ' })).toBeFalse()
+    expect(draftHasContent(blank())).toBe(false)
+    expect(draftHasContent({ ...blank(), notes: '   ' })).toBe(false)
   })
 
   it('who, what, a 213 field or an attachment is worth keeping', () => {
-    expect(draftHasContent({ ...blank(), callsign: 'K7ABC' })).toBeTrue()
-    expect(draftHasContent({ ...blank(), notes: 'Need water' })).toBeTrue()
-    expect(draftHasContent({ ...blank(), subject213: 'Supplies' })).toBeTrue()
-    expect(draftHasContent({ ...blank(), selectedRecipients213: ['Logistics'] })).toBeTrue()
-    expect(draftHasContent({ ...blank(), pendingFiles: [{} as never] })).toBeTrue()
+    expect(draftHasContent({ ...blank(), callsign: 'K7ABC' })).toBe(true)
+    expect(draftHasContent({ ...blank(), notes: 'Need water' })).toBe(true)
+    expect(draftHasContent({ ...blank(), subject213: 'Supplies' })).toBe(true)
+    expect(draftHasContent({ ...blank(), selectedRecipients213: ['Logistics'] })).toBe(
+      true
+    )
+    expect(draftHasContent({ ...blank(), pendingFiles: [{} as never] })).toBe(true)
   })
 })

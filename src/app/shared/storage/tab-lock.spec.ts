@@ -1,5 +1,10 @@
-import { acquireTabLock, resetTabLockForTests, showBlockedGate, stealTabLock } from './tab-lock';
-import { recordStore } from './record-store';
+import { recordStore } from './record-store'
+import {
+  acquireTabLock,
+  resetTabLockForTests,
+  showBlockedGate,
+  stealTabLock,
+} from './tab-lock'
 
 /**
  * Item 9 (2026-09-28, John): one active RangerTrak tab per browser - the pure/DOM-level parts
@@ -15,44 +20,44 @@ import { recordStore } from './record-store';
  */
 describe('tab-lock (item 9: one active tab per browser)', () => {
   afterEach(async () => {
-    resetTabLockForTests();
+    resetTabLockForTests()
     // Web Locks releases asynchronously inside the browser; a tick lets it actually clear
     // before the next test's own acquireTabLock() call checks availability.
-    await new Promise(resolve => setTimeout(resolve, 0));
-  });
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
 
   it('resolves "active" when nothing else holds the lock', async () => {
-    expect(await acquireTabLock()).toBe('active');
-  });
+    expect(await acquireTabLock()).toBe('active')
+  })
 
   it('resolves "blocked" for a second acquisition attempt while the first is still held', async () => {
-    expect(await acquireTabLock()).toBe('active');
-    expect(await acquireTabLock()).toBe('blocked');
-  });
+    expect(await acquireTabLock()).toBe('active')
+    expect(await acquireTabLock()).toBe('blocked')
+  })
 
   it('stealTabLock() takes the lock from the current holder and disables its RecordStore writes', async () => {
-    const disableSpy = spyOn(recordStore, 'disableWrites');
-    expect(await acquireTabLock()).toBe('active');
+    const disableSpy = vi.spyOn(recordStore, 'disableWrites').mockReturnValue(undefined)
+    expect(await acquireTabLock()).toBe('active')
 
-    await stealTabLock();
+    await stealTabLock()
     // onLockLost() runs from the ORIGINAL holder's rejected request() promise, which settles
     // asynchronously relative to stealTabLock()'s own resolution - poll briefly rather than
     // assert immediately, same reasoning as this suite's other async-storage checks.
-    for (let i = 0; i < 20 && !disableSpy.calls.any(); i++) {
-      await new Promise(resolve => setTimeout(resolve, 25));
+    for (let i = 0; i < 20 && !(vi.mocked(disableSpy).mock.calls.length > 0); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 25))
     }
 
-    expect(disableSpy).toHaveBeenCalled();
-  });
+    expect(disableSpy).toHaveBeenCalled()
+  })
 
   it('a lock this context never held is never reported lost - only an actual steal triggers disableWrites()', async () => {
-    const disableSpy = spyOn(recordStore, 'disableWrites');
-    const outcome = await acquireTabLock();
-    expect(outcome).toBe('active');
+    const disableSpy = vi.spyOn(recordStore, 'disableWrites').mockReturnValue(undefined)
+    const outcome = await acquireTabLock()
+    expect(outcome).toBe('active')
 
-    await new Promise(resolve => setTimeout(resolve, 100));
-    expect(disableSpy).not.toHaveBeenCalled();
-  });
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(disableSpy).not.toHaveBeenCalled()
+  })
 
   it('showBlockedGate() renders the notice with a working "Use this tab instead" button, and resolves once it is clicked', async () => {
     // Deliberately does NOT pre-acquire the lock in this same context first: in production,
@@ -63,16 +68,16 @@ describe('tab-lock (item 9: one active tab per browser)', () => {
     // writing notice right back up - a self-inflicted false failure that has nothing to do
     // with what this test is actually checking (the gate renders and its button works).
     // That "a steal notifies the previous holder" behaviour has its own dedicated test above.
-    const gatePromise = showBlockedGate();
-    const root = document.querySelector('.rt-tablock');
-    expect(root).not.toBeNull();
-    expect(root?.textContent).toContain('already open');
+    const gatePromise = showBlockedGate()
+    const root = document.querySelector('.rt-tablock')
+    expect(root).not.toBeNull()
+    expect(root?.textContent).toContain('already open')
 
-    const button = document.querySelector<HTMLButtonElement>('#rt-tablock-use-here');
-    expect(button).not.toBeNull();
-    button!.click();
+    const button = document.querySelector<HTMLButtonElement>('#rt-tablock-use-here')
+    expect(button).not.toBeNull()
+    button!.click()
 
-    await gatePromise; // resolves once the click's own stealTabLock() call is granted
-    expect(document.querySelector('.rt-tablock')).toBeNull(); // removes itself
-  });
-});
+    await gatePromise // resolves once the click's own stealTabLock() call is granted
+    expect(document.querySelector('.rt-tablock')).toBeNull() // removes itself
+  })
+})

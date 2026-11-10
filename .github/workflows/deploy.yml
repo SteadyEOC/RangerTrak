@@ -61,13 +61,14 @@ jobs:
       - name: Help search index matches the Help tabs
         run: npm run check:help-index
 
-      # The suite is expected to be all green (80 specs). Deploying past a red
-      # suite to an emergency-response tool is not a trade worth making.
+      # The suite is expected to be all green. Deploying past a red suite to an
+      # emergency-response tool is not a trade worth making. Vitest in headless Chrome
+      # (E-226); tools/unit-test.js finds the runner's preinstalled Chrome.
       - name: Unit tests
-        run: npm test -- --watch=false --browsers=ChromeHeadlessCI
+        run: npm test
 
       # worker/index.js (the feedback endpoint, the PMTiles Range shim) isn't Angular and
-      # isn't reachable by Karma - plain node:test, run separately.
+      # isn't reachable by the unit tests - plain node:test, run separately.
       - name: Worker unit tests
         run: npm run test:worker
 

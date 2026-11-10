@@ -1,34 +1,58 @@
-import { ADVANCED_FEATURES, ViewContext, applySuggestedView, initialView, isAdvanced, isShown } from './view'
+import {
+  ADVANCED_FEATURES,
+  ViewContext,
+  applySuggestedView,
+  initialView,
+  isAdvanced,
+  isShown,
+} from './view'
 
 describe('Simple view and Full view (E-207, D-62)', () => {
   /** A blank mission: nothing in use. */
   const blank: ViewContext = {
-    statusesCustomised: false, locationCategoriesCustomised: false, locationCount: 0,
-    mapSettingsCustomised: false, recipientsCustomised: false, tacticalCallCount: 0, boardInUse: false,
-    attachmentCount: 0, encryptionOn: false, fieldMode: false,
-    nonDefaultSourceCount: 0, toStationCount: 0, evidenceLocationCount: 0, layerCount: 0,
-    mapEngineIsAlternative: false, mapExtraLayersOn: false,
-    setupFileAsked: false, activityLineCount: 0,
+    statusesCustomised: false,
+    locationCategoriesCustomised: false,
+    locationCount: 0,
+    mapSettingsCustomised: false,
+    recipientsCustomised: false,
+    tacticalCallCount: 0,
+    boardInUse: false,
+    attachmentCount: 0,
+    encryptionOn: false,
+    fieldMode: false,
+    nonDefaultSourceCount: 0,
+    toStationCount: 0,
+    evidenceLocationCount: 0,
+    layerCount: 0,
+    mapEngineIsAlternative: false,
+    mapExtraLayersOn: false,
+    setupFileAsked: false,
+    activityLineCount: 0,
   }
 
   describe('ADVANCED_FEATURES', () => {
     it('has unique kebab-case ids', () => {
-      const ids = ADVANCED_FEATURES.map(f => f.id)
+      const ids = ADVANCED_FEATURES.map((f) => f.id)
       expect(new Set(ids).size).toBe(ids.length)
       for (const id of ids) expect(id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
     })
 
     it('hides every feature in Simple on a blank mission', () => {
-      for (const f of ADVANCED_FEATURES) expect(isShown(f.id, 'simple', blank)).withContext(f.id).toBeFalse()
+      for (const f of ADVANCED_FEATURES)
+        expect(isShown(f.id, 'simple', blank), f.id).toBe(false)
     })
 
     it('shows every feature in Full, whatever the mission holds', () => {
-      for (const f of ADVANCED_FEATURES) expect(isShown(f.id, 'full', blank)).withContext(f.id).toBeTrue()
+      for (const f of ADVANCED_FEATURES)
+        expect(isShown(f.id, 'full', blank), f.id).toBe(true)
     })
   })
 
   describe('isShown in Simple view: shown while the mission uses it', () => {
-    const cases: { id: string, ctx: Partial<ViewContext> }[] = [
+    const cases: {
+      id: string
+      ctx: Partial<ViewContext>
+    }[] = [
       { id: 'statuses', ctx: { statusesCustomised: true } },
       { id: 'location-categories', ctx: { locationCategoriesCustomised: true } },
       { id: 'locations-list', ctx: { locationCount: 1 } },
@@ -53,43 +77,57 @@ describe('Simple view and Full view (E-207, D-62)', () => {
     ]
     for (const c of cases) {
       it(`${c.id} shows when ${JSON.stringify(c.ctx)}`, () => {
-        expect(isShown(c.id, 'simple', { ...blank, ...c.ctx })).toBeTrue()
+        expect(isShown(c.id, 'simple', { ...blank, ...c.ctx })).toBe(true)
       })
     }
 
     it('a single loaded layer does not open the layers panel', () => {
-      expect(isShown('layers-panel', 'simple', { ...blank, layerCount: 1 })).toBeFalse()
+      expect(isShown('layers-panel', 'simple', { ...blank, layerCount: 1 })).toBe(false)
     })
 
     it('the Setup file shows only when asked for by link', () => {
-      expect(isShown('setup-file', 'simple', { ...blank, attachmentCount: 9, locationCount: 9 })).toBeFalse()
-      expect(isShown('setup-file', 'simple', { ...blank, setupFileAsked: true })).toBeTrue()
+      expect(
+        isShown('setup-file', 'simple', {
+          ...blank,
+          attachmentCount: 9,
+          locationCount: 9,
+        })
+      ).toBe(false)
+      expect(isShown('setup-file', 'simple', { ...blank, setupFileAsked: true })).toBe(
+        true
+      )
     })
   })
 
   it('shows an unknown id in either view', () => {
-    expect(isShown('no-such-feature', 'simple', blank)).toBeTrue()
-    expect(isShown('no-such-feature', 'full', blank)).toBeTrue()
+    expect(isShown('no-such-feature', 'simple', blank)).toBe(true)
+    expect(isShown('no-such-feature', 'full', blank)).toBe(true)
   })
 
   describe('isAdvanced (the marker)', () => {
     it('marks an advanced feature in Full view only', () => {
-      expect(isAdvanced('tactical-calls', 'full')).toBeTrue()
-      expect(isAdvanced('tactical-calls', 'simple')).toBeFalse()
+      expect(isAdvanced('tactical-calls', 'full')).toBe(true)
+      expect(isAdvanced('tactical-calls', 'simple')).toBe(false)
     })
 
     it('never marks an unknown id', () => {
-      expect(isAdvanced('no-such-feature', 'full')).toBeFalse()
+      expect(isAdvanced('no-such-feature', 'full')).toBe(false)
     })
   })
 
   describe('initialView (the upgrade rule)', () => {
     it('a new install starts in Simple', () => {
-      expect(initialView({ stored: null, hasMissionData: false })).toEqual({ view: 'simple', source: 'default' })
+      expect(initialView({ stored: null, hasMissionData: false })).toEqual({
+        view: 'simple',
+        source: 'default',
+      })
     })
 
     it('a device that already holds mission data starts in Full', () => {
-      expect(initialView({ stored: null, hasMissionData: true })).toEqual({ view: 'full', source: 'upgrade' })
+      expect(initialView({ stored: null, hasMissionData: true })).toEqual({
+        view: 'full',
+        source: 'upgrade',
+      })
     })
 
     it('a stored choice is never replaced', () => {
@@ -100,18 +138,24 @@ describe('Simple view and Full view (E-207, D-62)', () => {
 
   describe('applySuggestedView (the Setup file rule)', () => {
     it('applies to a device on its default view and records setup', () => {
-      expect(applySuggestedView({ suggested: 'full', source: 'default' })).toEqual({ view: 'full', source: 'setup' })
+      expect(applySuggestedView({ suggested: 'full', source: 'default' })).toEqual({
+        view: 'full',
+        source: 'setup',
+      })
     })
 
     it('applies to an upgraded device that has not chosen yet', () => {
-      expect(applySuggestedView({ suggested: 'simple', source: 'upgrade' })).toEqual({ view: 'simple', source: 'setup' })
+      expect(applySuggestedView({ suggested: 'simple', source: 'upgrade' })).toEqual({
+        view: 'simple',
+        source: 'setup',
+      })
     })
 
     it('is applied once: never over an earlier suggestion', () => {
       expect(applySuggestedView({ suggested: 'full', source: 'setup' })).toBeNull()
     })
 
-    it('never overrides the person\'s own choice', () => {
+    it("never overrides the person's own choice", () => {
       expect(applySuggestedView({ suggested: 'simple', source: 'user' })).toBeNull()
     })
 

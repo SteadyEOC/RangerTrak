@@ -14,7 +14,10 @@ import { fillIcs213Pdf, ICS213_FIELDS } from './ics213-pdf'
  * actually drawn (a stamp, a number, a version line) adds far more than this.
  */
 function expectSameSize(actual: Uint8Array, expected: Uint8Array): void {
-  expect(Math.abs(actual.length - expected.length)).withContext(`${actual.length} vs ${expected.length} bytes`).toBeLessThanOrEqual(8)
+  expect(
+    Math.abs(actual.length - expected.length),
+    `${actual.length} vs ${expected.length} bytes`
+  ).toBeLessThanOrEqual(8)
 }
 
 describe('fillIcs213Pdf', () => {
@@ -48,34 +51,62 @@ describe('fillIcs213Pdf', () => {
     expect(numbered.length).toBeGreaterThan(plain.length)
     expect((await PDFDocument.load(numbered)).getPageCount()).toBe(1)
     // The form's own fields are exactly as without the number.
-    expect((await PDFDocument.load(numbered)).getForm().getTextField('4 Subject').getText()).toBe('Road collapse')
+    expect(
+      (await PDFDocument.load(numbered)).getForm().getTextField('4 Subject').getText()
+    ).toBe('Road collapse')
     // An entry with no number draws nothing.
-    expectSameSize(await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined), plain)
+    expectSameSize(
+      await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined),
+      plain
+    )
   })
 
   // E-280: which RangerTrak printed it, small in the top-right margin; nothing when not given.
   it('prints the RangerTrak version in the margin only when given (E-280)', async () => {
     const fields = { '4 Subject': 'Road collapse' }
     const plain = await fillIcs213Pdf(templateBytes, fields, false)
-    const versioned = await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, 'RangerTrak 1.0.0-beta.2')
+    const versioned = await fillIcs213Pdf(
+      templateBytes,
+      fields,
+      false,
+      false,
+      [],
+      undefined,
+      'RangerTrak 1.0.0-beta.2'
+    )
     expect(versioned.length).toBeGreaterThan(plain.length)
     expect((await PDFDocument.load(versioned)).getPageCount()).toBe(1)
-    expectSameSize(await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, ''), plain)
+    expectSameSize(
+      await fillIcs213Pdf(templateBytes, fields, false, false, [], undefined, ''),
+      plain
+    )
   })
 
   // E-194: attachments are listed after the form; the form's own page is untouched.
   it('lists attachments on extra pages, running to more pages when the list is long (E-194)', async () => {
     const fields = { '4 Subject': 'Road collapse' }
-    const some = Array.from({ length: 3 }, (_, i) => ({ name: `clue-${i}.jpg`, fingerprint: '3f9a12c0…b71e' }))
-    const many = Array.from({ length: 80 }, (_, i) => ({ name: `clue-${i}.jpg`, fingerprint: '3f9a12c0…b71e' }))
+    const some = Array.from({ length: 3 }, (_, i) => ({
+      name: `clue-${i}.jpg`,
+      fingerprint: '3f9a12c0…b71e',
+    }))
+    const many = Array.from({ length: 80 }, (_, i) => ({
+      name: `clue-${i}.jpg`,
+      fingerprint: '3f9a12c0…b71e',
+    }))
 
-    const none = await PDFDocument.load(await fillIcs213Pdf(templateBytes, fields, true, false, []))
-    const one = await PDFDocument.load(await fillIcs213Pdf(templateBytes, fields, true, false, some))
-    const long = await PDFDocument.load(await fillIcs213Pdf(templateBytes, fields, true, false, many))
+    const none = await PDFDocument.load(
+      await fillIcs213Pdf(templateBytes, fields, true, false, [])
+    )
+    const one = await PDFDocument.load(
+      await fillIcs213Pdf(templateBytes, fields, true, false, some)
+    )
+    const long = await PDFDocument.load(
+      await fillIcs213Pdf(templateBytes, fields, true, false, many)
+    )
 
-    expect(none.getPageCount()).toBe(1);
-    expect(one.getPageCount()).toBe(2);
-    expect(long.getPageCount()).toBeGreaterThan(2);
+    expect(none.getPageCount()).toBe(1)
+    expect(one.getPageCount()).toBe(2)
+    expect(long.getPageCount()).toBeGreaterThan(2)
   })
 
   it('fetched the real template, not an empty/missing response', () => {
@@ -83,21 +114,30 @@ describe('fillIcs213Pdf', () => {
   })
 
   it('writes every value to its named field and leaves the rest blank', async () => {
-    const filled = await fillIcs213Pdf(templateBytes, {
-      '2 To Name and Position': 'K7VMI, Net Control',
-      '3 From Name and Position': 'ACS1, Radio Team Alpha',
-      '4 Subject': 'Road collapse, SW 116th St',
-      '7 Message': 'Partial road collapse, one lane only. Advise reroute.',
-    }, /* flatten */ false)
+    const filled = await fillIcs213Pdf(
+      templateBytes,
+      {
+        '2 To Name and Position': 'K7VMI, Net Control',
+        '3 From Name and Position': 'ACS1, Radio Team Alpha',
+        '4 Subject': 'Road collapse, SW 116th St',
+        '7 Message': 'Partial road collapse, one lane only. Advise reroute.',
+      },
+      /* flatten */ false
+    )
 
     const reloaded = await PDFDocument.load(filled)
     const form = reloaded.getForm()
 
-    expect(form.getTextField('2 To Name and Position').getText()).toBe('K7VMI, Net Control')
-    expect(form.getTextField('3 From Name and Position').getText()).toBe('ACS1, Radio Team Alpha')
+    expect(form.getTextField('2 To Name and Position').getText()).toBe(
+      'K7VMI, Net Control'
+    )
+    expect(form.getTextField('3 From Name and Position').getText()).toBe(
+      'ACS1, Radio Team Alpha'
+    )
     expect(form.getTextField('4 Subject').getText()).toBe('Road collapse, SW 116th St')
-    expect(form.getTextField('7 Message').getText())
-      .toBe('Partial road collapse, one lane only. Advise reroute.')
+    expect(form.getTextField('7 Message').getText()).toBe(
+      'Partial road collapse, one lane only. Advise reroute.'
+    )
 
     // Not passed in - must stay untouched, not filled with '' vs left genuinely unset either
     // way is fine, but it must not have picked up a stray value from another field.
@@ -105,20 +145,21 @@ describe('fillIcs213Pdf', () => {
     expect(form.getTextField('5 Date').getText() || '').toBe('')
   })
 
-  it('never writes the reply/signature block - that is the recipient\'s to fill by hand', () => {
+  it("never writes the reply/signature block - that is the recipient's to fill by hand", () => {
     // Deliberately not in the exported field list at all, so passing one is a compile error,
     // not a silent no-op - this asserts the type-level guard actually matches the real form.
     const guarded = ['9 Reply', '10 Replied by Name', 'Signature_19', 'Signature_20']
-    expect(ICS213_FIELDS.some(f => guarded.includes(f))).toBeFalse()
+    expect(ICS213_FIELDS.some((f) => guarded.includes(f))).toBe(false)
   })
 
   it('flattening burns the values in and removes the form - result still a valid, loadable PDF', async () => {
     const filled = await fillIcs213Pdf(templateBytes, { '4 Subject': 'Flatten check' })
 
     const reloaded = await PDFDocument.load(filled)
-    expect(reloaded.getForm().getFields().length)
-      .withContext('flatten() should leave no live form fields behind')
-      .toBe(0)
+    expect(
+      reloaded.getForm().getFields().length,
+      'flatten() should leave no live form fields behind'
+    ).toBe(0)
   })
 
   it('round-trips text containing newlines, matching a multi-line radio-dictated message', async () => {
@@ -129,10 +170,11 @@ describe('fillIcs213Pdf', () => {
     expect(reloaded.getForm().getTextField('7 Message').getText()).toBe(message)
   })
 
-  it('drops the template\'s sample/instructions page - only the filled form is printed', async () => {
-    expect((await PDFDocument.load(templateBytes)).getPageCount())
-      .withContext('the bundled template is expected to be 2 pages; this test is meaningless otherwise')
-      .toBe(2)
+  it("drops the template's sample/instructions page - only the filled form is printed", async () => {
+    expect(
+      (await PDFDocument.load(templateBytes)).getPageCount(),
+      'the bundled template is expected to be 2 pages; this test is meaningless otherwise'
+    ).toBe(2)
 
     const filled = await fillIcs213Pdf(templateBytes, { '4 Subject': 'Page trim check' })
 

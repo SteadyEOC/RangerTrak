@@ -6,7 +6,7 @@ describe('help-search (E-264)', () => {
   const search = (q: string) => searchHelp(q, HELP_INDEX, GUIDE_CONTENT)
 
   it('finds a Help tab section and links to its tab and anchor', () => {
-    const hit = search('hand over scribe').find(h => h.helpTab)!
+    const hit = search('hand over scribe').find((h) => h.helpTab)!
     expect(hit.heading).toBe('Handing a mission to another scribe')
     expect(hit.helpTab).toBe('data')
     expect(hit.anchor).toBe('hand-over')
@@ -14,7 +14,7 @@ describe('help-search (E-264)', () => {
   })
 
   it('finds a screen Guide section and names the screen and drawer tab', () => {
-    const hit = search('range rings').find(h => h.route === '/map')
+    const hit = search('range rings').find((h) => h.route === '/map')
     expect(hit).toBeDefined()
     expect(hit!.where).toBe('Map screen')
     expect(hit!.guideTab).toBe('This page')
@@ -39,8 +39,11 @@ describe('help-search (E-264)', () => {
 
   it('marks the matched words in the snippet', () => {
     const parts = snippetFor('Back up mission on the Mission page.', ['mission'])
-    expect(parts.filter(p => p.match).map(p => p.text)).toEqual(['mission', 'Mission'])
-    expect(parts.map(p => p.text).join('')).toBe('Back up mission on the Mission page.')
+    expect(parts.filter((p) => p.match).map((p) => p.text)).toEqual([
+      'mission',
+      'Mission',
+    ])
+    expect(parts.map((p) => p.text).join('')).toBe('Back up mission on the Mission page.')
   })
 
   it('every generated anchor without an id is the slug the Help page looks for', () => {

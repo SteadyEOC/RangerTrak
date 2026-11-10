@@ -1,4 +1,9 @@
-import { compassPoint, formatHeading, sanitizeHeading, withSanitizedHeading } from './heading'
+import {
+  compassPoint,
+  formatHeading,
+  sanitizeHeading,
+  withSanitizedHeading,
+} from './heading'
 
 describe('heading (E-268)', () => {
   it('names the 16 compass points', () => {
@@ -44,7 +49,9 @@ describe('heading (E-268)', () => {
     expect(withSanitizedHeading(good)).toBe(good)
     const none = {}
     expect(withSanitizedHeading(none)).toBe(none)
-    expect(withSanitizedHeading({ evidenceDirection: 'sideways' }).evidenceDirection).toBeNull()
+    expect(
+      withSanitizedHeading({ evidenceDirection: 'sideways' }).evidenceDirection
+    ).toBeNull()
     expect(withSanitizedHeading({ evidenceDirection: 360 }).evidenceDirection).toBe(0)
   })
 })

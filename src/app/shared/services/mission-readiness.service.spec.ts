@@ -1,15 +1,15 @@
-import { provideHttpClient } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http'
+import { TestBed } from '@angular/core/testing'
 
-import { MissionReadinessService } from './mission-readiness.service';
-import { ViewService } from './view.service';
-import { MapEngineService } from '../../map/map-engine.service';
+import { MapEngineService } from '../../map/map-engine.service'
+import { MissionReadinessService } from './mission-readiness.service'
+import { ViewService } from './view.service'
 // E-122 Phase 2a: this service's constructor transitively constructs RangerService et al.,
 // whose keys now live behind RecordStore rather than localStorage - reset for isolation, same
 // as those services' own specs. This suite overrides every signal directly, so the roster
 // content itself never matters, but the FRESH construction (a stray roster from a previous
 // spec's own resetForTests()-less run) shouldn't leak in either.
-import { recordStore } from '../storage/record-store';
+import { recordStore } from '../storage/record-store'
 
 /**
  * The six underlying signals are exercised by their own services (MissionService,
@@ -19,92 +19,92 @@ import { recordStore } from '../storage/record-store';
  * directly, independent of whatever the real subscriptions happened to populate them with.
  */
 describe('MissionReadinessService', () => {
-  let service: MissionReadinessService;
+  let service: MissionReadinessService
 
   beforeEach(async () => {
-    localStorage.clear();
-    await recordStore.resetForTests();
-    TestBed.configureTestingModule({ providers: [provideHttpClient()] });
-    service = TestBed.inject(MissionReadinessService);
-  });
+    localStorage.clear()
+    await recordStore.resetForTests()
+    TestBed.configureTestingModule({ providers: [provideHttpClient()] })
+    service = TestBed.inject(MissionReadinessService)
+  })
 
   afterEach(async () => {
-    localStorage.clear();
-    await recordStore.resetForTests();
-  });
+    localStorage.clear()
+    await recordStore.resetForTests()
+  })
 
   function setAll(ready: boolean) {
-    service.missionNamed.set(ready);
-    service.rosterLoaded.set(ready);
-    service.opPeriodCurrent.set(ready);
-    service.offlineTilesSaved.set(ready);
-    service.bundledMapWarmed.set(ready);
-    service.storagePersisted.set(ready);
+    service.missionNamed.set(ready)
+    service.rosterLoaded.set(ready)
+    service.opPeriodCurrent.set(ready)
+    service.offlineTilesSaved.set(ready)
+    service.bundledMapWarmed.set(ready)
+    service.storagePersisted.set(ready)
   }
 
   it('is green only when all six signals pass', () => {
-    setAll(true);
-    expect(service.level()).toBe('green');
-  });
+    setAll(true)
+    expect(service.level()).toBe('green')
+  })
 
   it('is red when the mission is not named, even if everything else is ready', () => {
-    setAll(true);
-    service.missionNamed.set(false);
-    expect(service.level()).toBe('red');
-  });
+    setAll(true)
+    service.missionNamed.set(false)
+    expect(service.level()).toBe('red')
+  })
 
   it('is red when the roster is not loaded, even if everything else is ready', () => {
-    setAll(true);
-    service.rosterLoaded.set(false);
-    expect(service.level()).toBe('red');
-  });
+    setAll(true)
+    service.rosterLoaded.set(false)
+    expect(service.level()).toBe('red')
+  })
 
   it('is amber when basic setup is done but the operating period has expired', () => {
-    setAll(true);
-    service.opPeriodCurrent.set(false);
-    expect(service.level()).toBe('amber');
-  });
+    setAll(true)
+    service.opPeriodCurrent.set(false)
+    expect(service.level()).toBe('amber')
+  })
 
   it('is amber when basic setup is done but offline tiles were never saved', () => {
-    setAll(true);
-    service.offlineTilesSaved.set(false);
-    expect(service.level()).toBe('amber');
-  });
+    setAll(true)
+    service.offlineTilesSaved.set(false)
+    expect(service.level()).toBe('amber')
+  })
 
   it('is amber when basic setup is done but the bundled map was never warmed', () => {
-    TestBed.inject(ViewService).setView('full');
-    setAll(true);
-    service.bundledMapWarmed.set(false);
-    expect(service.level()).toBe('amber');
-  });
+    TestBed.inject(ViewService).setView('full')
+    setAll(true)
+    service.bundledMapWarmed.set(false)
+    expect(service.level()).toBe('amber')
+  })
 
   it('leaves the bundled map out in Simple view, where the alternative map is hidden', () => {
-    TestBed.inject(ViewService).setView('simple');
-    setAll(true);
-    service.bundledMapWarmed.set(false);
-    expect(service.mapWarmedCounts()).toBeFalse();
-    expect(service.level()).toBe('green');
-  });
+    TestBed.inject(ViewService).setView('simple')
+    setAll(true)
+    service.bundledMapWarmed.set(false)
+    expect(service.mapWarmedCounts()).toBe(false)
+    expect(service.level()).toBe('green')
+  })
 
   it('counts the bundled map in Simple view once MapLibre is the engine in use', () => {
-    TestBed.inject(ViewService).setView('simple');
-    TestBed.inject(MapEngineService).setEngine('maplibre');
-    setAll(true);
-    service.bundledMapWarmed.set(false);
-    expect(service.mapWarmedCounts()).toBeTrue();
-    expect(service.level()).toBe('amber');
-  });
+    TestBed.inject(ViewService).setView('simple')
+    TestBed.inject(MapEngineService).setEngine('maplibre')
+    setAll(true)
+    service.bundledMapWarmed.set(false)
+    expect(service.mapWarmedCounts()).toBe(true)
+    expect(service.level()).toBe('amber')
+  })
 
   it('is amber when basic setup is done but storage is not protected from eviction', () => {
-    setAll(true);
-    service.storagePersisted.set(false);
-    expect(service.level()).toBe('amber');
-  });
+    setAll(true)
+    service.storagePersisted.set(false)
+    expect(service.level()).toBe('amber')
+  })
 
   it('is red, not amber, when mission/roster are missing even alongside other gaps', () => {
-    setAll(false);
-    expect(service.level()).toBe('red');
-  });
+    setAll(false)
+    expect(service.level()).toBe('red')
+  })
 
   // Found live on rangertrak.org: this originally called leaflet.offline's own
   // getStorageLength() via a dynamic import(), which broke silently in production -
@@ -131,25 +131,39 @@ describe('MissionReadinessService', () => {
   describe('countOfflineTiles (via refresh())', () => {
     it('is true once tiles exist, using the exact schema leaflet.offline itself writes', async () => {
       await new Promise<void>((resolve, reject) => {
-        const req = indexedDB.open('leaflet.offline', 2);
+        const req = indexedDB.open('leaflet.offline', 2)
         req.onupgradeneeded = () => {
-          const db = req.result;
-          const store = db.createObjectStore('tileStore', { keyPath: 'key' });
-          store.createIndex('urlTemplate', 'urlTemplate');
-          store.createIndex('z', 'z');
-        };
+          const db = req.result
+          const store = db.createObjectStore('tileStore', { keyPath: 'key' })
+          store.createIndex('urlTemplate', 'urlTemplate')
+          store.createIndex('z', 'z')
+        }
         req.onsuccess = () => {
-          const db = req.result;
-          const tx = db.transaction('tileStore', 'readwrite');
-          tx.objectStore('tileStore').put({ key: 'a', url: 'x', urlTemplate: 'x', x: 1, y: 1, z: 15, createdAt: Date.now() });
-          tx.oncomplete = () => { db.close(); resolve(); };
-          tx.onerror = () => { db.close(); reject(tx.error); };
-        };
-        req.onerror = () => reject(req.error);
-      });
+          const db = req.result
+          const tx = db.transaction('tileStore', 'readwrite')
+          tx.objectStore('tileStore').put({
+            key: 'a',
+            url: 'x',
+            urlTemplate: 'x',
+            x: 1,
+            y: 1,
+            z: 15,
+            createdAt: Date.now(),
+          })
+          tx.oncomplete = () => {
+            db.close()
+            resolve()
+          }
+          tx.onerror = () => {
+            db.close()
+            reject(tx.error)
+          }
+        }
+        req.onerror = () => reject(req.error)
+      })
 
-      await service.refresh();
-      expect(service.offlineTilesSaved()).toBe(true);
-    });
-  });
-});
+      await service.refresh()
+      expect(service.offlineTilesSaved()).toBe(true)
+    })
+  })
+})

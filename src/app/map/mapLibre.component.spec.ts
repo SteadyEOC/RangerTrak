@@ -1,37 +1,36 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing'
 
-import { MapLibreComponent } from './mapLibre.component';
+import { MapLibreComponent } from './mapLibre.component'
 
 describe('MapLibreComponent', () => {
-  let component: MapLibreComponent;
-  let fixture: ComponentFixture<MapLibreComponent>;
+  let component: MapLibreComponent
+  let fixture: ComponentFixture<MapLibreComponent>
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MapLibreComponent]
-    })
-      .compileComponents();
-  });
+      imports: [MapLibreComponent],
+    }).compileComponents()
+  })
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MapLibreComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    fixture = TestBed.createComponent(MapLibreComponent)
+    component = fixture.componentInstance
+    fixture.detectChanges()
+  })
 
   afterEach(() => {
-    fixture.destroy();
-  });
+    fixture.destroy()
+  })
 
   it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+    expect(component).toBeTruthy()
+  })
 
   it('reads the current radio log entry count on init', () => {
-    expect(component.numAllRows()).toBeGreaterThanOrEqual(0);
-  });
+    expect(component.numAllRows()).toBeGreaterThanOrEqual(0)
+  })
 
   it('toggles selected-reports display without throwing', () => {
-    expect(() => component.onSwitchSelectedRadioLog()).not.toThrow();
-  });
-});
+    expect(() => component.onSwitchSelectedRadioLog()).not.toThrow()
+  })
+})

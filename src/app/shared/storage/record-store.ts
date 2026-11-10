@@ -644,7 +644,7 @@ class RecordStoreImpl {
     // Item 9 (2026-09-28, John): disableWrites() is deliberately one-way in production (see
     // its own comment), but this is the shared, reused-across-specs singleton (this file's
     // own header comment) - a spec that exercises disableWrites() must not permanently break
-    // persistence for every test that runs after it in the same Karma run.
+    // persistence for every test that runs after it in the same unit-test run.
     this.writesEnabled = true
     // close() lets any transaction already in flight finish; it does not abort one.
     this.db?.close()

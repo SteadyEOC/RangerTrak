@@ -7,7 +7,7 @@ describe('GlobalErrorHandler (E-258)', () => {
   beforeEach(() => {
     // No Report-it snackbar during these tests.
     sessionStorage.setItem(REPORT_IT_MUTE_KEY, '1')
-    spyOn(console, 'error')
+    vi.spyOn(console, 'error').mockReturnValue(undefined)
   })
   afterEach(() => sessionStorage.removeItem(REPORT_IT_MUTE_KEY))
 
@@ -15,12 +15,15 @@ describe('GlobalErrorHandler (E-258)', () => {
 
   it('does not repeat "Name: message" when the stack opens with it (Chrome)', () => {
     const err = new TypeError('x is undefined')
-    err.stack = 'TypeError: x is undefined\n    at foo (main.js:1:1)\n    at bar (main.js:2:2)'
+    err.stack =
+      'TypeError: x is undefined\n    at foo (main.js:1:1)\n    at bar (main.js:2:2)'
 
     TestBed.inject(GlobalErrorHandler).handleError(err)
 
     const msg = logged()
-    expect(msg).toContain('TypeError: x is undefined — at foo (main.js:1:1) | at bar (main.js:2:2)')
+    expect(msg).toContain(
+      'TypeError: x is undefined — at foo (main.js:1:1) | at bar (main.js:2:2)'
+    )
     expect(msg.split('x is undefined').length - 1).toBe(1)
   })
 

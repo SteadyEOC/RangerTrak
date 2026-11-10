@@ -1,6 +1,9 @@
 import {
-  DEFAULT_CHECK_IN_INTERVAL_MIN, OVERDUE_BAND_COUNT, OVERDUE_RED_MULTIPLE,
-  elapsedMinutes, overdueBand,
+  DEFAULT_CHECK_IN_INTERVAL_MIN,
+  OVERDUE_BAND_COUNT,
+  OVERDUE_RED_MULTIPLE,
+  elapsedMinutes,
+  overdueBand,
 } from './overdue'
 
 describe('overdueBand', () => {
@@ -26,7 +29,8 @@ describe('overdueBand', () => {
   it('steps through every band in order, skipping none', () => {
     const seen = new Set<number>()
     for (let m = 0; m <= I * OVERDUE_RED_MULTIPLE; m++) seen.add(overdueBand(m, I))
-    for (let b = 0; b <= OVERDUE_BAND_COUNT; b++) expect(seen.has(b)).withContext(`band ${b}`).toBe(true)
+    for (let b = 0; b <= OVERDUE_BAND_COUNT; b++)
+      expect(seen.has(b), `band ${b}`).toBe(true)
   })
 
   it('never returns a band outside 0..OVERDUE_BAND_COUNT', () => {
@@ -41,18 +45,20 @@ describe('overdueBand', () => {
   // hard-coded version used, so a mission that keeps the default sees no change in feel -
   // except that red now arrives at 90 rather than the 80 the old arithmetic produced.
   it('puts the default mission on 30/40/50/60/70/80/90', () => {
-    expect([30, 40, 50, 60, 70, 80, 90].map(m => overdueBand(m, I))).toEqual([1, 2, 3, 4, 5, 6, 7])
+    expect([30, 40, 50, 60, 70, 80, 90].map((m) => overdueBand(m, I))).toEqual([
+      1, 2, 3, 4, 5, 6, 7,
+    ])
   })
 
   it('is relative: a shorter cycle goes red sooner, a longer one later', () => {
-    expect(overdueBand(45, 15)).toBe(OVERDUE_BAND_COUNT)   // 15-min cycle: red at 45
-    expect(overdueBand(45, 120)).toBe(0)                    // 2-hour cycle: not even due
-    expect(overdueBand(360, 120)).toBe(OVERDUE_BAND_COUNT)  // ... red at 6h
+    expect(overdueBand(45, 15)).toBe(OVERDUE_BAND_COUNT) // 15-min cycle: red at 45
+    expect(overdueBand(45, 120)).toBe(0) // 2-hour cycle: not even due
+    expect(overdueBand(360, 120)).toBe(OVERDUE_BAND_COUNT) // ... red at 6h
   })
 
   it('treats a non-positive interval as "no cycle set" and disables escalation', () => {
-    expect(overdueBand(10_000, 0)).toBe(0)
-    expect(overdueBand(10_000, -5)).toBe(0)
+    expect(overdueBand(10000, 0)).toBe(0)
+    expect(overdueBand(10000, -5)).toBe(0)
   })
 })
 
@@ -65,7 +71,7 @@ describe('elapsedMinutes', () => {
 
   it('accepts the string and number forms the stored log actually holds', () => {
     expect(elapsedMinutes('2026-09-22T11:00:00Z', now)).toBe(60)
-    expect(elapsedMinutes(now - 90 * 60_000, now)).toBe(90)
+    expect(elapsedMinutes(now - 90 * 60000, now)).toBe(90)
   })
 
   it('clamps a future-dated report to 0 rather than reporting negative time', () => {

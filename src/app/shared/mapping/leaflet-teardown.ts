@@ -21,7 +21,7 @@ import * as L from 'leaflet'
  * a bare timer callback, with no stack pointing at any of our code.
  *
  * In the app this is uncaught console noise when someone navigates away from a map while it
- * is still zooming. Under Karma it is worse: an uncaught async error fails whichever spec
+ * is still zooming. Under the unit tests it is worse: an uncaught async error fails whichever spec
  * happens to be running when the timer lands, so it surfaces as a *different, innocent*
  * test failing, intermittently, only on slower machines. It is why
  * map-page.component.spec.ts used to sleep 300ms (> Leaflet's 250) after every mount.

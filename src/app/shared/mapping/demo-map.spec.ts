@@ -1,107 +1,146 @@
 import {
-  DEMO_SCENARIO_STORAGE_KEY, activeDemoDetailMap, activeDemoScenario, clearActiveDemoScenario, demoRecord,
-  isInsideBbox, pruneWarmCache, setActiveDemoScenario, wantedPmtilesUrls
-} from './demo-map';
-import { buildPmtilesStyle } from './map-style';
-import { DEFAULT_PMTILES_URL, DEMO_DETAIL_MAPS, PMTILES_WARM_CACHE_NAME } from './pmtiles-config';
+  DEMO_SCENARIO_STORAGE_KEY,
+  activeDemoDetailMap,
+  activeDemoScenario,
+  clearActiveDemoScenario,
+  demoRecord,
+  isInsideBbox,
+  pruneWarmCache,
+  setActiveDemoScenario,
+  wantedPmtilesUrls,
+} from './demo-map'
+import { buildPmtilesStyle } from './map-style'
+import {
+  DEFAULT_PMTILES_URL,
+  DEMO_DETAIL_MAPS,
+  PMTILES_WARM_CACHE_NAME,
+} from './pmtiles-config'
 
 describe('demo-map (E-124)', () => {
-  beforeEach(() => localStorage.removeItem(DEMO_SCENARIO_STORAGE_KEY));
+  beforeEach(() => localStorage.removeItem(DEMO_SCENARIO_STORAGE_KEY))
   afterEach(async () => {
-    localStorage.removeItem(DEMO_SCENARIO_STORAGE_KEY);
-    await caches.delete(PMTILES_WARM_CACHE_NAME);
-  });
+    localStorage.removeItem(DEMO_SCENARIO_STORAGE_KEY)
+    await caches.delete(PMTILES_WARM_CACHE_NAME)
+  })
 
   it('wants only the world base when no demo is loaded (a real mission)', () => {
-    expect(activeDemoScenario()).toBeNull();
-    expect(wantedPmtilesUrls()).toEqual([DEFAULT_PMTILES_URL]);
-  });
+    expect(activeDemoScenario()).toBeNull()
+    expect(wantedPmtilesUrls()).toEqual([DEFAULT_PMTILES_URL])
+  })
 
-  it('wants the loaded demo\'s detail file too', () => {
-    setActiveDemoScenario('grand-canyon');
-    expect(wantedPmtilesUrls()).toEqual([DEFAULT_PMTILES_URL, DEMO_DETAIL_MAPS['grand-canyon']!.url]);
-  });
+  it("wants the loaded demo's detail file too", () => {
+    setActiveDemoScenario('grand-canyon')
+    expect(wantedPmtilesUrls()).toEqual([
+      DEFAULT_PMTILES_URL,
+      DEMO_DETAIL_MAPS['grand-canyon']!.url,
+    ])
+  })
 
   it('wants no detail for near-me, and none while a custom map file is in use', () => {
-    setActiveDemoScenario('near-me');
-    expect(wantedPmtilesUrls()).toEqual([DEFAULT_PMTILES_URL]);
-    setActiveDemoScenario('vashon');
-    expect(activeDemoDetailMap({ customActive: true })).toBeUndefined();
-    expect(wantedPmtilesUrls({ customActive: true })).toEqual([DEFAULT_PMTILES_URL]);
-  });
+    setActiveDemoScenario('near-me')
+    expect(wantedPmtilesUrls()).toEqual([DEFAULT_PMTILES_URL])
+    setActiveDemoScenario('vashon')
+    expect(activeDemoDetailMap({ customActive: true })).toBeUndefined()
+    expect(wantedPmtilesUrls({ customActive: true })).toEqual([DEFAULT_PMTILES_URL])
+  })
 
   it('ignores an unknown stored value rather than trusting it', () => {
-    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, 'not-a-scenario');
-    expect(activeDemoScenario()).toBeNull();
-  });
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, 'not-a-scenario')
+    expect(activeDemoScenario()).toBeNull()
+  })
 
   it('records what the loader created (E-168a)', () => {
-    setActiveDemoScenario('vashon', { rangerUids: ['u1', 'u2'], reportIds: ['0', '1', '2'] });
-    const rec = demoRecord()!;
-    expect(rec.scenario).toBe('vashon');
-    expect(rec.rangerUids).toEqual(['u1', 'u2']);
-    expect(rec.reportIds).toEqual(['0', '1', '2']);
-    expect(Number.isNaN(Date.parse(rec.loadedAt))).toBe(false);
-    expect(activeDemoScenario()).toBe('vashon');
-  });
+    setActiveDemoScenario('vashon', {
+      rangerUids: ['u1', 'u2'],
+      reportIds: ['0', '1', '2'],
+    })
+    const rec = demoRecord()!
+    expect(rec.scenario).toBe('vashon')
+    expect(rec.rangerUids).toEqual(['u1', 'u2'])
+    expect(rec.reportIds).toEqual(['0', '1', '2'])
+    expect(Number.isNaN(Date.parse(rec.loadedAt))).toBe(false)
+    expect(activeDemoScenario()).toBe('vashon')
+  })
 
   it('still reads the old plain-string marker, with empty lists (E-168a)', () => {
-    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, 'grand-canyon');
-    expect(activeDemoScenario()).toBe('grand-canyon');
-    expect(demoRecord()).toEqual({ scenario: 'grand-canyon', loadedAt: '', rangerUids: [], reportIds: [] });
-  });
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, 'grand-canyon')
+    expect(activeDemoScenario()).toBe('grand-canyon')
+    expect(demoRecord()).toEqual({
+      scenario: 'grand-canyon',
+      loadedAt: '',
+      rangerUids: [],
+      reportIds: [],
+    })
+  })
 
   it('demoRecord is null for nothing stored, garbage, or an unknown scenario (E-168a)', () => {
-    expect(demoRecord()).toBeNull();
-    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, '{not json');
-    expect(demoRecord()).toBeNull();
-    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, JSON.stringify({ scenario: 'nope' }));
-    expect(demoRecord()).toBeNull();
-  });
+    expect(demoRecord()).toBeNull()
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, '{not json')
+    expect(demoRecord()).toBeNull()
+    localStorage.setItem(DEMO_SCENARIO_STORAGE_KEY, JSON.stringify({ scenario: 'nope' }))
+    expect(demoRecord()).toBeNull()
+  })
 
   it('clearing the marker forgets the demo', () => {
-    setActiveDemoScenario('state-fair');
-    clearActiveDemoScenario();
-    expect(activeDemoScenario()).toBeNull();
-  });
+    setActiveDemoScenario('state-fair')
+    clearActiveDemoScenario()
+    expect(activeDemoScenario()).toBeNull()
+  })
 
   it('prune keeps wanted files and evicts everything else, including the pre-split archive', async () => {
-    const cache = await caches.open(PMTILES_WARM_CACHE_NAME);
-    const gc = DEMO_DETAIL_MAPS['grand-canyon']!.url;
-    const vashon = DEMO_DETAIL_MAPS['vashon']!.url;
-    for (const url of [DEFAULT_PMTILES_URL, gc, vashon, '/assets/maps/world-vashon.pmtiles']) {
-      await cache.put(url, new Response('x'));
+    const cache = await caches.open(PMTILES_WARM_CACHE_NAME)
+    const gc = DEMO_DETAIL_MAPS['grand-canyon']!.url
+    const vashon = DEMO_DETAIL_MAPS['vashon']!.url
+    for (const url of [
+      DEFAULT_PMTILES_URL,
+      gc,
+      vashon,
+      '/assets/maps/world-vashon.pmtiles',
+    ]) {
+      await cache.put(url, new Response('x'))
     }
 
-    const deleted = await pruneWarmCache([DEFAULT_PMTILES_URL, gc]);
+    const deleted = await pruneWarmCache([DEFAULT_PMTILES_URL, gc])
 
-    expect(deleted).toBe(2);
-    expect(await cache.match(DEFAULT_PMTILES_URL)).toBeTruthy();
-    expect(await cache.match(gc)).toBeTruthy();
-    expect(await cache.match(vashon)).toBeUndefined();
-    expect(await cache.match('/assets/maps/world-vashon.pmtiles')).toBeUndefined();
-  });
+    expect(deleted).toBe(2)
+    expect(await cache.match(DEFAULT_PMTILES_URL)).toBeTruthy()
+    expect(await cache.match(gc)).toBeTruthy()
+    expect(await cache.match(vashon)).toBeUndefined()
+    expect(await cache.match('/assets/maps/world-vashon.pmtiles')).toBeUndefined()
+  })
 
   it('isInsideBbox', () => {
-    const bbox = DEMO_DETAIL_MAPS['grand-canyon']!.bbox;
-    expect(isInsideBbox(-112.1, 36.06, bbox)).toBeTrue();
-    expect(isInsideBbox(-122.46, 47.4, bbox)).toBeFalse();
-  });
-});
+    const bbox = DEMO_DETAIL_MAPS['grand-canyon']!.bbox
+    expect(isInsideBbox(-112.1, 36.06, bbox)).toBe(true)
+    expect(isInsideBbox(-122.46, 47.4, bbox)).toBe(false)
+  })
+})
 
 describe('buildPmtilesStyle (E-124)', () => {
   it('has only the basemap source without a detail file', () => {
-    const style = buildPmtilesStyle(DEFAULT_PMTILES_URL);
-    expect(Object.keys(style.sources)).toEqual(['basemap']);
-    expect(style.layers.length).toBe(6);
-  });
+    const style = buildPmtilesStyle(DEFAULT_PMTILES_URL)
+    expect(Object.keys(style.sources)).toEqual(['basemap'])
+    expect(style.layers.length).toBe(6)
+  })
 
   it('adds a detail source, with its five data layers drawn after the base', () => {
-    const detail = DEMO_DETAIL_MAPS['grand-canyon']!.url;
-    const style = buildPmtilesStyle(DEFAULT_PMTILES_URL, detail);
-    expect((style.sources['detail'] as { url: string }).url).toBe('pmtiles://' + detail);
-    const ids = style.layers.map(l => l.id);
-    expect(ids.slice(6)).toEqual(['detail-earth', 'detail-water', 'detail-landuse', 'detail-roads', 'detail-buildings']);
-    expect(ids.indexOf('detail-earth')).toBeGreaterThan(ids.indexOf('buildings'));
-  });
-});
+    const detail = DEMO_DETAIL_MAPS['grand-canyon']!.url
+    const style = buildPmtilesStyle(DEFAULT_PMTILES_URL, detail)
+    expect(
+      (
+        style.sources['detail'] as {
+          url: string
+        }
+      ).url
+    ).toBe('pmtiles://' + detail)
+    const ids = style.layers.map((l) => l.id)
+    expect(ids.slice(6)).toEqual([
+      'detail-earth',
+      'detail-water',
+      'detail-landuse',
+      'detail-roads',
+      'detail-buildings',
+    ])
+    expect(ids.indexOf('detail-earth')).toBeGreaterThan(ids.indexOf('buildings'))
+  })
+})

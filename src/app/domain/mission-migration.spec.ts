@@ -1,6 +1,8 @@
 import { MissionType } from '../shared/services/mission.interface'
 import {
-  DEFAULT_RADIO_LOG_STATUSES, MISSION_SCHEMA_VERSION, migrateMission
+  DEFAULT_RADIO_LOG_STATUSES,
+  MISSION_SCHEMA_VERSION,
+  migrateMission,
 } from './mission-migration'
 import { statusColorMeetsAA, statusColorValue, statusInkValue } from './status-color'
 
@@ -11,19 +13,40 @@ import { statusColorMeetsAA, statusColorValue, statusInkValue } from './status-c
  * matter are the awkward ones: absent version, custom colors, reordered/renamed statuses.
  */
 describe('migrateMission', () => {
-
   /** A v0 (pre-Sprint-E) settings object, with the CSS named colors as originally shipped. */
   function v0Settings(): MissionType {
     return {
-      settingsName: '', settingsDate: new Date(0),
-      mission: 'M1', event: '', eventNotes: '', opPeriod: '',
-      opPeriodStart: new Date(0), opPeriodEnd: new Date(0),
-      application: 'RangerTrak', version: '0.15.8', debugMode: false,
-      defLat: 47.4472, defLng: -122.4627,
-      allowManualPinDrops: false, googleGeocodingApiKey: '',
-      google: { defZoom: 17, markerScheme: '', overviewDifference: 5, overviewMinZoom: 5, overviewMaxZoom: 16 },
-      leaflet: { defZoom: 17, markerScheme: '', overviewDifference: 5, overviewMinZoom: 5, overviewMaxZoom: 16 },
-      imageDirectory: './assets/imgs/', defRadioLogStatus: 0,
+      settingsName: '',
+      settingsDate: new Date(0),
+      mission: 'M1',
+      event: '',
+      eventNotes: '',
+      opPeriod: '',
+      opPeriodStart: new Date(0),
+      opPeriodEnd: new Date(0),
+      application: 'RangerTrak',
+      version: '0.15.8',
+      debugMode: false,
+      defLat: 47.4472,
+      defLng: -122.4627,
+      allowManualPinDrops: false,
+      googleGeocodingApiKey: '',
+      google: {
+        defZoom: 17,
+        markerScheme: '',
+        overviewDifference: 5,
+        overviewMinZoom: 5,
+        overviewMaxZoom: 16,
+      },
+      leaflet: {
+        defZoom: 17,
+        markerScheme: '',
+        overviewDifference: 5,
+        overviewMinZoom: 5,
+        overviewMaxZoom: 16,
+      },
+      imageDirectory: './assets/imgs/',
+      defRadioLogStatus: 0,
       radioLogStatuses: [
         { status: 'Normal', color: 'LightYellow', icon: 'a.png' },
         { status: 'Location Report', color: 'Aquamarine', icon: 'b.png' },
@@ -45,7 +68,7 @@ describe('migrateMission', () => {
   describe('checkInIntervalMin backfill (E-118)', () => {
     it('hands the default to settings saved before the field existed', () => {
       const stored = v0Settings()
-      expect('checkInIntervalMin' in stored).withContext('precondition: field absent').toBe(false)
+      expect('checkInIntervalMin' in stored, 'precondition: field absent').toBe(false)
 
       const out = migrateMission(stored, defaultsWithInterval(30))
       expect(out.checkInIntervalMin).toBe(30)
@@ -75,16 +98,22 @@ describe('migrateMission', () => {
   describe('tacticalCalls backfill (E-165)', () => {
     it('hands [] to settings saved before the field existed', () => {
       const stored = v0Settings()
-      expect('tacticalCalls' in stored).withContext('precondition: field absent').toBe(false)
+      expect('tacticalCalls' in stored, 'precondition: field absent').toBe(false)
 
-      const out = migrateMission(stored, { ...v0Settings(), tacticalCalls: [] } as unknown as MissionType)
+      const out = migrateMission(stored, {
+        ...v0Settings(),
+        tacticalCalls: [],
+      } as unknown as MissionType)
       expect(out.tacticalCalls).toEqual([])
     })
 
     it('does not overwrite a list the user has already built', () => {
       const calls = [{ name: 'CERT Team 1', rangerUid: 'uid-1' }, { name: 'Vashon EOC' }]
       const stored = { ...v0Settings(), tacticalCalls: calls } as unknown as MissionType
-      const out = migrateMission(stored, { ...v0Settings(), tacticalCalls: [] } as unknown as MissionType)
+      const out = migrateMission(stored, {
+        ...v0Settings(),
+        tacticalCalls: [],
+      } as unknown as MissionType)
       expect(out.tacticalCalls).toEqual(calls)
     })
   })
@@ -101,7 +130,10 @@ describe('migrateMission', () => {
     })
 
     it('keeps a mode that was chosen', () => {
-      const stored = { ...v0Settings(), missionMode: 'exercise' } as unknown as MissionType
+      const stored = {
+        ...v0Settings(),
+        missionMode: 'exercise',
+      } as unknown as MissionType
       expect(migrateMission(stored, defaults).missionMode).toBe('exercise')
     })
   })
@@ -117,7 +149,10 @@ describe('migrateMission', () => {
     })
 
     it('keeps a clock that was set', () => {
-      const clock = { realAt: '2026-10-21T09:12:00.000Z', scenarioAt: '2018-01-14T14:12:00.000Z' }
+      const clock = {
+        realAt: '2026-10-21T09:12:00.000Z',
+        scenarioAt: '2018-01-14T14:12:00.000Z',
+      }
       const stored = { ...v0Settings(), scenarioClock: clock } as unknown as MissionType
       expect(migrateMission(stored, defaults).scenarioClock).toEqual(clock)
     })
@@ -126,24 +161,42 @@ describe('migrateMission', () => {
   describe('attachmentBudgetMB backfill (E-194)', () => {
     it('hands 512 to settings or older backups saved before the field existed', () => {
       const stored = v0Settings()
-      expect('attachmentBudgetMB' in stored).withContext('precondition: field absent').toBe(false)
-      const out = migrateMission(stored, { ...v0Settings(), attachmentBudgetMB: 512 } as unknown as MissionType)
+      expect('attachmentBudgetMB' in stored, 'precondition: field absent').toBe(false)
+      const out = migrateMission(stored, {
+        ...v0Settings(),
+        attachmentBudgetMB: 512,
+      } as unknown as MissionType)
       expect(out.attachmentBudgetMB).toBe(512)
     })
 
     it('does not overwrite a saved value', () => {
-      const stored = { ...v0Settings(), attachmentBudgetMB: 2048 } as unknown as MissionType
-      const out = migrateMission(stored, { ...v0Settings(), attachmentBudgetMB: 512 } as unknown as MissionType)
+      const stored = {
+        ...v0Settings(),
+        attachmentBudgetMB: 2048,
+      } as unknown as MissionType
+      const out = migrateMission(stored, {
+        ...v0Settings(),
+        attachmentBudgetMB: 512,
+      } as unknown as MissionType)
       expect(out.attachmentBudgetMB).toBe(2048)
     })
   })
 
   describe('Board settings backfill (D-61 / D-60)', () => {
-    const defaults = { ...v0Settings(), boardPassword: '', boardShowAttachments: false } as unknown as MissionType
+    const defaults = {
+      ...v0Settings(),
+      boardPassword: '',
+      boardShowAttachments: false,
+    } as unknown as MissionType
 
     it('gives a returning user no password and attachments off, keeping everything else', () => {
-      const stored = { ...v0Settings(), mission: 'Kept', commandPostEnabled: true, commandPostServerUrl: 'https://x:8080' } as unknown as MissionType
-      expect('boardPassword' in stored).withContext('precondition: field absent').toBe(false)
+      const stored = {
+        ...v0Settings(),
+        mission: 'Kept',
+        commandPostEnabled: true,
+        commandPostServerUrl: 'https://x:8080',
+      } as unknown as MissionType
+      expect('boardPassword' in stored, 'precondition: field absent').toBe(false)
       const out = migrateMission(stored, defaults)
       expect(out.boardPassword).toBe('')
       expect(out.boardShowAttachments).toBe(false)
@@ -153,7 +206,10 @@ describe('migrateMission', () => {
     })
 
     it('does not overwrite saved values', () => {
-      const stored = { ...v0Settings(), boardShowAttachments: true } as unknown as MissionType
+      const stored = {
+        ...v0Settings(),
+        boardShowAttachments: true,
+      } as unknown as MissionType
       expect(migrateMission(stored, defaults).boardShowAttachments).toBe(true)
     })
   })
@@ -161,15 +217,21 @@ describe('migrateMission', () => {
   describe('extraCopies213 backfill (E-150)', () => {
     it('hands 1 to settings or older backups saved before the field existed', () => {
       const stored = v0Settings()
-      expect('extraCopies213' in stored).withContext('precondition: field absent').toBe(false)
-      const out = migrateMission(stored, { ...v0Settings(), extraCopies213: 1 } as unknown as MissionType)
+      expect('extraCopies213' in stored, 'precondition: field absent').toBe(false)
+      const out = migrateMission(stored, {
+        ...v0Settings(),
+        extraCopies213: 1,
+      } as unknown as MissionType)
       expect(out.extraCopies213).toBe(1)
     })
 
     it('does not overwrite a saved value, including 0', () => {
       for (const n of [0, 5]) {
         const stored = { ...v0Settings(), extraCopies213: n } as unknown as MissionType
-        const out = migrateMission(stored, { ...v0Settings(), extraCopies213: 1 } as unknown as MissionType)
+        const out = migrateMission(stored, {
+          ...v0Settings(),
+          extraCopies213: 1,
+        } as unknown as MissionType)
         expect(out.extraCopies213).toBe(n)
       }
     })
@@ -182,17 +244,23 @@ describe('migrateMission', () => {
 
   it('converts every legacy default color to its semantic key', () => {
     const out = migrateMission(v0Settings())
-    expect(out.radioLogStatuses.map(s => s.color)).toEqual([
-      'normal', 'location-report', 'evidence-report', 'need-rest-food',
-      'incident-check-in', 'incident-check-out', 'urgent',
+    expect(out.radioLogStatuses.map((s) => s.color)).toEqual([
+      'normal',
+      'location-report',
+      'evidence-report',
+      'need-rest-food',
+      'incident-check-in',
+      'incident-check-out',
+      'urgent',
     ])
   })
 
   it('preserves status order, because defRadioLogStatus is an index into it', () => {
     const before = v0Settings()
     const out = migrateMission(before)
-    expect(out.radioLogStatuses.map(s => s.status))
-      .toEqual(before.radioLogStatuses.map(s => s.status))
+    expect(out.radioLogStatuses.map((s) => s.status)).toEqual(
+      before.radioLogStatuses.map((s) => s.status)
+    )
     // The default status must still be the one it was before the migration ran.
     expect(out.radioLogStatuses[out.defRadioLogStatus].status).toBe('Normal')
   })
@@ -206,7 +274,7 @@ describe('migrateMission', () => {
     expect(out.radioLogStatuses[5].color).toBe('incident-check-out')
   })
 
-  it('does not rewrite a status wearing another status\'s old default color', () => {
+  it("does not rewrite a status wearing another status's old default color", () => {
     // Matching on color alone would turn this into 'normal' and silently change its meaning.
     const input = v0Settings()
     input.radioLogStatuses[6].color = 'LightYellow' // Urgent, but yellow, on purpose
@@ -224,7 +292,13 @@ describe('migrateMission', () => {
     const input = v0Settings()
     migrateMission(input)
     expect(input.radioLogStatuses[0].color).toBe('LightYellow')
-    expect((input as { schemaVersion?: number }).schemaVersion).toBeUndefined()
+    expect(
+      (
+        input as {
+          schemaVersion?: number
+        }
+      ).schemaVersion
+    ).toBeUndefined()
   })
 
   it('leaves settings from a NEWER build alone rather than downgrading them', () => {
@@ -235,7 +309,10 @@ describe('migrateMission', () => {
   })
 
   it('falls back to the shipped defaults when statuses are missing entirely', () => {
-    const broken = { ...v0Settings(), radioLogStatuses: undefined } as unknown as MissionType
+    const broken = {
+      ...v0Settings(),
+      radioLogStatuses: undefined,
+    } as unknown as MissionType
     const out = migrateMission(broken)
     expect(out.radioLogStatuses).toEqual([...DEFAULT_RADIO_LOG_STATUSES])
   })
@@ -245,7 +322,11 @@ describe('migrateMission', () => {
   // that is absent - it threw on every change-detection pass. This backfill is the fix.
   describe('backfilling fields added after a settings object was saved (BUG-3)', () => {
     function defaults(): MissionType {
-      return { ...v0Settings(), googleGeocodingApiKey: 'DEFAULT-KEY', event: 'Default Event' }
+      return {
+        ...v0Settings(),
+        googleGeocodingApiKey: 'DEFAULT-KEY',
+        event: 'Default Event',
+      }
     }
 
     it('adds a top-level key the stored object never had, from the supplied defaults', () => {
@@ -269,8 +350,10 @@ describe('migrateMission', () => {
       const stored = v0Settings() as unknown as Record<string, unknown>
       delete (stored['leaflet'] as Record<string, unknown>)['markerScheme']
       const withDefaults = defaults()
-      ;(withDefaults as unknown as Record<string, unknown>)['leaflet'] =
-        { ...withDefaults.leaflet, markerScheme: 'default-scheme' }
+      ;(withDefaults as unknown as Record<string, unknown>)['leaflet'] = {
+        ...withDefaults.leaflet,
+        markerScheme: 'default-scheme',
+      }
 
       const out = migrateMission(stored as unknown as MissionType, withDefaults)
       expect(out.leaflet.markerScheme).toBe('default-scheme')
@@ -293,7 +376,10 @@ describe('migrateMission', () => {
     // anyone already "current". This is the exact scenario: an object already at the
     // CURRENT schema version, still missing a field the live MissionType now declares.
     it('backfills a field even when the stored object is already at the current schema version', () => {
-      const alreadyCurrent = { ...v0Settings(), schemaVersion: MISSION_SCHEMA_VERSION } as unknown as Record<string, unknown>
+      const alreadyCurrent = {
+        ...v0Settings(),
+        schemaVersion: MISSION_SCHEMA_VERSION,
+      } as unknown as Record<string, unknown>
       delete alreadyCurrent['event'] // stands in for a field added after this user's last save
       const out = migrateMission(alreadyCurrent as unknown as MissionType, defaults())
       expect(out.event).toBe('Default Event')
@@ -303,26 +389,39 @@ describe('migrateMission', () => {
 
   describe('drop allowManualPinDrops (schemaVersion 4 -> 5, 2026-09-26)', () => {
     it('removes the field and leaves every other field exactly as it was', () => {
-      const stored = { ...v0Settings(), schemaVersion: 4, allowManualPinDrops: true } as unknown as Record<string, unknown>
+      const stored = {
+        ...v0Settings(),
+        schemaVersion: 4,
+        allowManualPinDrops: true,
+      } as unknown as Record<string, unknown>
 
-      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<string, unknown>
+      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<
+        string,
+        unknown
+      >
 
       expect('allowManualPinDrops' in out).toBe(false)
       expect(out['schemaVersion']).toBe(5)
       for (const key of Object.keys(stored)) {
         if (key === 'allowManualPinDrops' || key === 'schemaVersion') continue
-        expect(out[key]).withContext(key).toEqual(stored[key])
+        expect(out[key], key).toEqual(stored[key])
       }
     })
   })
 
   describe('drop dead w3wLocale/defPlusCode fields (E-89/E-90, schemaVersion 3 -> 4)', () => {
-    it('removes both dead fields from a returning user\'s stored object', () => {
+    it("removes both dead fields from a returning user's stored object", () => {
       const stored = {
-        ...v0Settings(), schemaVersion: 3, w3wLocale: 'Vashon, WA', defPlusCode: '84VVCGWP+VW',
+        ...v0Settings(),
+        schemaVersion: 3,
+        w3wLocale: 'Vashon, WA',
+        defPlusCode: '84VVCGWP+VW',
       } as unknown as Record<string, unknown>
 
-      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<string, unknown>
+      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<
+        string,
+        unknown
+      >
 
       expect('w3wLocale' in out).toBe(false)
       expect('defPlusCode' in out).toBe(false)
@@ -331,13 +430,19 @@ describe('migrateMission', () => {
 
     it('leaves an object with neither key alone rather than erroring', () => {
       const stored = v0Settings() as unknown as Record<string, unknown>
-      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<string, unknown>
+      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<
+        string,
+        unknown
+      >
       expect('w3wLocale' in out).toBe(false)
       expect('defPlusCode' in out).toBe(false)
     })
 
     it('is idempotent - an already-migrated object is untouched by a second pass', () => {
-      const alreadyCurrent = { ...v0Settings(), schemaVersion: MISSION_SCHEMA_VERSION } as unknown as Record<string, unknown>
+      const alreadyCurrent = {
+        ...v0Settings(),
+        schemaVersion: MISSION_SCHEMA_VERSION,
+      } as unknown as Record<string, unknown>
       const once = migrateMission(alreadyCurrent as unknown as MissionType)
       const twice = migrateMission(once)
       expect(twice).toEqual(once)
@@ -345,10 +450,17 @@ describe('migrateMission', () => {
   })
 
   describe('google -> maplibre rename (E-70, schemaVersion 2 -> 3)', () => {
-    it('renames a returning user\'s stored `google` block to `maplibre`, preserving every value', () => {
+    it("renames a returning user's stored `google` block to `maplibre`, preserving every value", () => {
       const stored = {
-        ...v0Settings(), schemaVersion: 2,
-        google: { defZoom: 12, markerScheme: 'custom', overviewDifference: 4, overviewMinZoom: 3, overviewMaxZoom: 20 },
+        ...v0Settings(),
+        schemaVersion: 2,
+        google: {
+          defZoom: 12,
+          markerScheme: 'custom',
+          overviewDifference: 4,
+          overviewMinZoom: 3,
+          overviewMaxZoom: 20,
+        },
       } as unknown as Record<string, unknown>
       delete stored['leaflet'] // irrelevant to this migration - present in a real object
 
@@ -356,7 +468,11 @@ describe('migrateMission', () => {
       const outAsRecord = out as unknown as Record<string, unknown>
 
       expect(outAsRecord['maplibre']).toEqual({
-        defZoom: 12, markerScheme: 'custom', overviewDifference: 4, overviewMinZoom: 3, overviewMaxZoom: 20
+        defZoom: 12,
+        markerScheme: 'custom',
+        overviewDifference: 4,
+        overviewMinZoom: 3,
+        overviewMaxZoom: 20,
       })
       expect('google' in outAsRecord).toBe(false)
       expect(out.schemaVersion).toBe(MISSION_SCHEMA_VERSION)
@@ -365,20 +481,38 @@ describe('migrateMission', () => {
     it('leaves an object with no `google` key alone rather than inventing one', () => {
       const stored = v0Settings() as unknown as Record<string, unknown>
       delete stored['google']
-      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<string, unknown>
+      const out = migrateMission(stored as unknown as MissionType) as unknown as Record<
+        string,
+        unknown
+      >
       expect('google' in out).toBe(false)
       expect('maplibre' in out).toBe(false) // no defaults supplied, so nothing backfills it either
     })
 
     it('is idempotent - an already-renamed object is untouched by a second pass', () => {
       const alreadyRenamed = {
-        ...v0Settings(), schemaVersion: MISSION_SCHEMA_VERSION,
-        maplibre: { defZoom: 12, markerScheme: '', overviewDifference: 5, overviewMinZoom: 5, overviewMaxZoom: 16 },
+        ...v0Settings(),
+        schemaVersion: MISSION_SCHEMA_VERSION,
+        maplibre: {
+          defZoom: 12,
+          markerScheme: '',
+          overviewDifference: 5,
+          overviewMinZoom: 5,
+          overviewMaxZoom: 16,
+        },
       } as unknown as Record<string, unknown>
       delete alreadyRenamed['google']
 
-      const out = migrateMission(alreadyRenamed as unknown as MissionType) as unknown as Record<string, unknown>
-      expect(out['maplibre']).toEqual({ defZoom: 12, markerScheme: '', overviewDifference: 5, overviewMinZoom: 5, overviewMaxZoom: 16 })
+      const out = migrateMission(
+        alreadyRenamed as unknown as MissionType
+      ) as unknown as Record<string, unknown>
+      expect(out['maplibre']).toEqual({
+        defZoom: 12,
+        markerScheme: '',
+        overviewDifference: 5,
+        overviewMinZoom: 5,
+        overviewMaxZoom: 16,
+      })
     })
   })
 })
@@ -428,12 +562,15 @@ describe('status colors', () => {
  * hand-writing string literals, so they exercise the actual round-trip that causes it.
  */
 describe('migrateMission date rehydration', () => {
-
   function roundTripped(overrides: Partial<MissionType> = {}): MissionType {
     const live: MissionType = {
       ...JSON.parse(JSON.stringify({})),
-      settingsName: '', settingsDate: new Date('2026-08-31T12:00:00.000Z'),
-      mission: 'M1', event: '', eventNotes: '', opPeriod: '',
+      settingsName: '',
+      settingsDate: new Date('2026-08-31T12:00:00.000Z'),
+      mission: 'M1',
+      event: '',
+      eventNotes: '',
+      opPeriod: '',
       opPeriodStart: new Date('2026-09-01T20:00:00.000Z'),
       opPeriodEnd: new Date('2026-09-02T08:00:00.000Z'),
       schemaVersion: MISSION_SCHEMA_VERSION,
@@ -471,7 +608,9 @@ describe('migrateMission date rehydration', () => {
 
   it('leaves an already-Date value untouched', () => {
     const live = roundTripped()
-    ;(live as unknown as Record<string, unknown>)['opPeriodStart'] = new Date('2026-09-01T20:00:00.000Z')
+    ;(live as unknown as Record<string, unknown>)['opPeriodStart'] = new Date(
+      '2026-09-01T20:00:00.000Z'
+    )
     const migrated = migrateMission(live)
     expect(migrated.opPeriodStart.toISOString()).toBe('2026-09-01T20:00:00.000Z')
   })

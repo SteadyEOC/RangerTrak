@@ -19,19 +19,22 @@ describe('DiagnosticsService (E-258)', () => {
     expect(report.length).toBeLessThanOrEqual(2500)
   })
 
-  it('says a service worker is registered when it is not controlling this load (hard refresh)', async () => {
+  it('says a service worker is registered when it is not controlling this load (hard refresh)', async (ctx: { skip: (note?: string) => void }) => {
     if (!navigator.serviceWorker) {
-      pending('no serviceWorker in this browser')
+      ctx.skip('no serviceWorker in this browser')
       return
     }
     expect(navigator.serviceWorker.controller).toBeNull()
-    const spy = spyOn(navigator.serviceWorker, 'getRegistration')
-    spy.and.resolveTo({} as ServiceWorkerRegistration)
-    expect(await TestBed.inject(DiagnosticsService).report())
-      .toContain('Service worker active: registered, not controlling this load')
+    const spy = vi.spyOn(navigator.serviceWorker, 'getRegistration')
+    spy.mockResolvedValue({} as ServiceWorkerRegistration)
+    expect(await TestBed.inject(DiagnosticsService).report()).toContain(
+      'Service worker active: registered, not controlling this load'
+    )
 
-    spy.and.resolveTo(undefined)
-    expect(await TestBed.inject(DiagnosticsService).report()).toContain('Service worker active: no\n')
+    spy.mockResolvedValue(undefined)
+    expect(await TestBed.inject(DiagnosticsService).report()).toContain(
+      'Service worker active: no\n'
+    )
   })
 
   it('stamps entries in local time and states the UTC offset once', async () => {

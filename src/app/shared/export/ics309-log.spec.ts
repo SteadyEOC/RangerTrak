@@ -28,11 +28,18 @@ describe('buildIcs309Log', () => {
 
     const log = buildIcs309Log([late, early, mid], mission)
 
-    expect(log.rows.map(r => r.message)).toEqual(['[Normal] early', '[Normal] mid', '[Normal] late'])
+    expect(log.rows.map((r) => r.message)).toEqual([
+      '[Normal] early',
+      '[Normal] mid',
+      '[Normal] late',
+    ])
   })
 
   it('does not mutate the array passed in', () => {
-    const rows = [report({ date: new Date('2026-08-26T16:00:00') }), report({ date: new Date('2026-08-26T12:00:00') })]
+    const rows = [
+      report({ date: new Date('2026-08-26T16:00:00') }),
+      report({ date: new Date('2026-08-26T12:00:00') }),
+    ]
     const snapshot = [...rows]
 
     buildIcs309Log(rows, mission)
@@ -43,20 +50,32 @@ describe('buildIcs309Log', () => {
   it('brackets whatever status string is configured, not a hardcoded "Normal"', () => {
     // A renamed default status must still show, per this module's own doc comment on why
     // it never special-cases a literal 'Normal'.
-    const log = buildIcs309Log([report({ status: 'All Clear', notes: 'checked in' })], mission)
+    const log = buildIcs309Log(
+      [report({ status: 'All Clear', notes: 'checked in' })],
+      mission
+    )
 
-    expect(log.rows[0].message).toBe('[All Clear] checked in');
+    expect(log.rows[0].message).toBe('[All Clear] checked in')
   })
 
   // E-268: a clue's heading is added to the message text, in degrees true with the compass point.
   it('adds a clue heading to the message when set, and not when absent', () => {
-    const withHeading = buildIcs309Log([report({ notes: 'boot print', evidenceDirection: 45 })], mission)
-    const without = buildIcs309Log([report({ notes: 'boot print', evidenceDirection: null })], mission)
-    const headingOnly = buildIcs309Log([report({ notes: '', evidenceDirection: 0 })], mission)
+    const withHeading = buildIcs309Log(
+      [report({ notes: 'boot print', evidenceDirection: 45 })],
+      mission
+    )
+    const without = buildIcs309Log(
+      [report({ notes: 'boot print', evidenceDirection: null })],
+      mission
+    )
+    const headingOnly = buildIcs309Log(
+      [report({ notes: '', evidenceDirection: 0 })],
+      mission
+    )
 
-    expect(withHeading.rows[0].message).toBe('[Normal] boot print - Heading 45° T (NE)');
-    expect(without.rows[0].message).toBe('[Normal] boot print');
-    expect(headingOnly.rows[0].message).toBe('[Normal] Heading 0° T (N)');
+    expect(withHeading.rows[0].message).toBe('[Normal] boot print - Heading 45° T (NE)')
+    expect(without.rows[0].message).toBe('[Normal] boot print')
+    expect(headingOnly.rows[0].message).toBe('[Normal] Heading 0° T (N)')
   })
 
   it('falls back to "(not given)" for a callsignless report - D-42, this is expected data', () => {
@@ -67,24 +86,58 @@ describe('buildIcs309Log', () => {
 
   // E-165 (2026-09-30): tactical calls and a To station.
   it('formats From as "tactical (FCC)", tactical only, or FCC only', () => {
-    const log = buildIcs309Log([
-      report({ id: 1, date: new Date('2026-08-26T14:01:00'), tacticalCall: 'CERT Team 1', callsign: 'K7ABC' }),
-      report({ id: 2, date: new Date('2026-08-26T14:02:00'), tacticalCall: 'Vashon EOC', callsign: '' }),
-      report({ id: 3, date: new Date('2026-08-26T14:03:00'), callsign: 'K7XYZ' }),
-    ], mission)
+    const log = buildIcs309Log(
+      [
+        report({
+          id: 1,
+          date: new Date('2026-08-26T14:01:00'),
+          tacticalCall: 'CERT Team 1',
+          callsign: 'K7ABC',
+        }),
+        report({
+          id: 2,
+          date: new Date('2026-08-26T14:02:00'),
+          tacticalCall: 'Vashon EOC',
+          callsign: '',
+        }),
+        report({ id: 3, date: new Date('2026-08-26T14:03:00'), callsign: 'K7XYZ' }),
+      ],
+      mission
+    )
 
-    expect(log.rows.map(r => r.from)).toEqual(['CERT Team 1 (K7ABC)', 'Vashon EOC', 'K7XYZ'])
+    expect(log.rows.map((r) => r.from)).toEqual([
+      'CERT Team 1 (K7ABC)',
+      'Vashon EOC',
+      'K7XYZ',
+    ])
   })
 
   it('formats To the same way, and leaves it blank - never "(not given)" - when none was recorded', () => {
-    const log = buildIcs309Log([
-      report({ id: 1, date: new Date('2026-08-26T14:01:00'), toTactical: 'Vashon EOC', toCallsign: 'W7EOC' }),
-      report({ id: 2, date: new Date('2026-08-26T14:02:00'), toTactical: 'Vashon EOC' }),
-      report({ id: 3, date: new Date('2026-08-26T14:03:00'), toCallsign: 'K7ABC' }),
-      report({ id: 4, date: new Date('2026-08-26T14:04:00') }),
-    ], mission)
+    const log = buildIcs309Log(
+      [
+        report({
+          id: 1,
+          date: new Date('2026-08-26T14:01:00'),
+          toTactical: 'Vashon EOC',
+          toCallsign: 'W7EOC',
+        }),
+        report({
+          id: 2,
+          date: new Date('2026-08-26T14:02:00'),
+          toTactical: 'Vashon EOC',
+        }),
+        report({ id: 3, date: new Date('2026-08-26T14:03:00'), toCallsign: 'K7ABC' }),
+        report({ id: 4, date: new Date('2026-08-26T14:04:00') }),
+      ],
+      mission
+    )
 
-    expect(log.rows.map(r => r.to)).toEqual(['Vashon EOC (W7EOC)', 'Vashon EOC', 'K7ABC', ''])
+    expect(log.rows.map((r) => r.to)).toEqual([
+      'Vashon EOC (W7EOC)',
+      'Vashon EOC',
+      'K7ABC',
+      '',
+    ])
   })
 
   it('carries the mission name and a real operational-period string through the header', () => {
@@ -98,9 +151,13 @@ describe('buildIcs309Log', () => {
   })
 
   it('names the incident by event name first, as the ICS-213 does, falling back to the incident number', () => {
-    expect(buildIcs309Log([], { ...mission, event: 'Missing Person Exercise' }).header.incidentName)
-      .toBe('Missing Person Exercise')
-    expect(buildIcs309Log([], { ...mission, event: '  ' }).header.incidentName).toBe(mission.mission)
+    expect(
+      buildIcs309Log([], { ...mission, event: 'Missing Person Exercise' }).header
+        .incidentName
+    ).toBe('Missing Person Exercise')
+    expect(buildIcs309Log([], { ...mission, event: '  ' }).header.incidentName).toBe(
+      mission.mission
+    )
   })
 
   it('handles zero reports without throwing', () => {
@@ -141,14 +198,19 @@ describe('buildIcs309Log with reports that have been through JSON', () => {
 
   /** What migrateRadioLog()/mergeIncomingEntries() now hand downstream. */
   function restored(dates: string[]): RadioLogEntryType[] {
-    return dates.map((iso, i) => rehydrateDateFields({
-      id: i,
-      callsign: `ACS${i}`,
-      location: { lat: 0, lng: 0, address: '', derivedFromAddress: false },
-      date: iso,
-      status: 'Normal',
-      notes: '',
-    } as unknown as RadioLogEntryType, ['date', 'revisedAt', 'printedAt']))
+    return dates.map((iso, i) =>
+      rehydrateDateFields(
+        {
+          id: i,
+          callsign: `ACS${i}`,
+          location: { lat: 0, lng: 0, address: '', derivedFromAddress: false },
+          date: iso,
+          status: 'Normal',
+          notes: '',
+        } as unknown as RadioLogEntryType,
+        ['date', 'revisedAt', 'printedAt']
+      )
+    )
   }
 
   it('does not throw on two or more reports - the exact 0.90.5 crash', () => {
@@ -159,12 +221,14 @@ describe('buildIcs309Log with reports that have been through JSON', () => {
 
   it('orders them correctly, not just without throwing', () => {
     const reports = restored([
-      '2026-08-26T14:00:00', '2026-08-26T11:00:00', '2026-08-26T19:00:00',
+      '2026-08-26T14:00:00',
+      '2026-08-26T11:00:00',
+      '2026-08-26T19:00:00',
     ])
 
     const rows = buildIcs309Log(reports, mission).rows
 
-    expect(rows.map(r => r.time.getHours())).toEqual([11, 14, 19])
+    expect(rows.map((r) => r.time.getHours())).toEqual([11, 14, 19])
   })
 
   it('still handles the single-report case that always happened to work', () => {
@@ -173,61 +237,101 @@ describe('buildIcs309Log with reports that have been through JSON', () => {
 
   it('lists each live attachment under its row, and not a removed one (E-194)', () => {
     const sha = (c: string) => c.repeat(64)
-    const ref = (c: string, over = {}) => ({ sha256: sha(c), name: c + '.jpg', type: 'image/jpeg', size: 1, addedAt: '2026-10-16T10:00:00Z', addedBy: 'K7ABC', ...over })
-    const entry = { ...restored(['2026-08-26T14:00:00'])[0], attachments: [ref('a'), ref('b', { removed: { at: '2026-10-16T11:00:00Z', by: 'K7ABC' } })] }
+    const ref = (c: string, over = {}) => ({
+      sha256: sha(c),
+      name: c + '.jpg',
+      type: 'image/jpeg',
+      size: 1,
+      addedAt: '2026-10-16T10:00:00Z',
+      addedBy: 'K7ABC',
+      ...over,
+    })
+    const entry = {
+      ...restored(['2026-08-26T14:00:00'])[0],
+      attachments: [
+        ref('a'),
+        ref('b', { removed: { at: '2026-10-16T11:00:00Z', by: 'K7ABC' } }),
+      ],
+    }
 
     const log = buildIcs309Log([entry], mission)
 
-    expect(log.rows[0].attachments).toEqual([{ name: 'a.jpg', fingerprint: 'aaaaaaaa…aaaa', sha256: sha('a'), isImage: true }])
+    expect(log.rows[0].attachments).toEqual([
+      { name: 'a.jpg', fingerprint: 'aaaaaaaa…aaaa', sha256: sha('a'), isImage: true },
+    ])
   })
 
   it('formats the operational period from a mission that has been through JSON', () => {
     // The same class of bug on the mission side: formatOperationalPeriod() calls
     // opPeriodStart.toLocaleString(), which throws on a string.
     const roundTripped = JSON.parse(JSON.stringify(mission)) as Ics309MissionInfo
-    const restoredMission = rehydrateDateFields(roundTripped, ['opPeriodStart', 'opPeriodEnd'])
+    const restoredMission = rehydrateDateFields(roundTripped, [
+      'opPeriodStart',
+      'opPeriodEnd',
+    ])
 
-    expect(() => buildIcs309Log(restored(['2026-08-26T14:00:00']), restoredMission)).not.toThrow()
+    expect(() =>
+      buildIcs309Log(restored(['2026-08-26T14:00:00']), restoredMission)
+    ).not.toThrow()
   })
 
   // E-220 / E-218: the leftmost mark and Msg # columns, and the line printed once above them.
   describe('mark and message number columns', () => {
     const report = (over: Partial<RadioLogEntryType>): RadioLogEntryType => ({
-      id: 0, callsign: 'ACS1',
+      id: 0,
+      callsign: 'ACS1',
       location: { lat: 0, lng: 0, address: '', derivedFromAddress: false },
-      date: new Date('2026-08-26T14:00:00'), status: 'Normal', notes: 'test', ...over,
+      date: new Date('2026-08-26T14:00:00'),
+      status: 'Normal',
+      notes: 'test',
+      ...over,
     })
 
     it('gives each row the mark glyph (blank when unset) and the short and full number', () => {
-      const log = buildIcs309Log([
-        report({
-          date: new Date('2026-08-26T12:00:00'),
-          msgNo: { mission: '26-0142', opPeriod: 'OP 2', station: 'A', seq: 7 },
-          handled: { mark: 'action', at: new Date('2026-08-26T12:05:00') },
-        }),
-        report({ date: new Date('2026-08-26T13:00:00') }),
-      ], mission);
+      const log = buildIcs309Log(
+        [
+          report({
+            date: new Date('2026-08-26T12:00:00'),
+            msgNo: { mission: '26-0142', opPeriod: 'OP 2', station: 'A', seq: 7 },
+            handled: { mark: 'action', at: new Date('2026-08-26T12:05:00') },
+          }),
+          report({ date: new Date('2026-08-26T13:00:00') }),
+        ],
+        mission
+      )
 
-      expect(log.rows[0].mark).toBe('!');
-      expect(log.rows[0].markLabel).toBe('Needs action');
-      expect(log.rows[0].msgNo).toBe('A007');
-      expect(log.rows[0].msgNoFull).toBe('26-0142 / OP 2 / A007');
-      expect(log.rows[1].mark).toBe('');
-      expect(log.rows[1].msgNo).toBe('');
-    });
+      expect(log.rows[0].mark).toBe('!')
+      expect(log.rows[0].markLabel).toBe('Needs action')
+      expect(log.rows[0].msgNo).toBe('A007')
+      expect(log.rows[0].msgNoFull).toBe('26-0142 / OP 2 / A007')
+      expect(log.rows[1].mark).toBe('')
+      expect(log.rows[1].msgNo).toBe('')
+    })
 
     it('uses the three glyphs for the three marks', () => {
       const marks = (['handled', 'passed', 'action'] as const).map((m, i) =>
-        report({ date: new Date(2026, 7, 26, 12, i), handled: { mark: m, at: new Date() } }));
+        report({
+          date: new Date(2026, 7, 26, 12, i),
+          handled: { mark: m, at: new Date() },
+        })
+      )
 
-      expect(buildIcs309Log(marks, mission).rows.map(r => r.mark)).toEqual(['✓', '→', '!']);
-    });
+      expect(buildIcs309Log(marks, mission).rows.map((r) => r.mark)).toEqual([
+        '✓',
+        '→',
+        '!',
+      ])
+    })
 
     it('prints "Mission ... · Op period ..." once, leaving out a blank part', () => {
-      expect(buildIcs309Log([report({})], { ...mission, mission: '26-0142', opPeriod: 'OP 2' }).header.msgNoContext)
-        .toBe('Mission 26-0142 · Op period OP 2');
-      expect(buildIcs309Log([report({})], { ...mission, mission: '', opPeriod: 'OP 2' }).header.msgNoContext)
-        .toBe('Op period OP 2');
-    });
-  });
+      expect(
+        buildIcs309Log([report({})], { ...mission, mission: '26-0142', opPeriod: 'OP 2' })
+          .header.msgNoContext
+      ).toBe('Mission 26-0142 · Op period OP 2')
+      expect(
+        buildIcs309Log([report({})], { ...mission, mission: '', opPeriod: 'OP 2' }).header
+          .msgNoContext
+      ).toBe('Op period OP 2')
+    })
+  })
 })

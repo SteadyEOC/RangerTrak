@@ -11,7 +11,7 @@
  * by driving a real browser, and every harness that found them was written ad hoc and thrown
  * away with the session (PRIVATE-Roadmap.md E-39).
  *
- * Karma cannot catch these. They live in real navigation, real IndexedDB, real file inputs,
+ * Unit tests cannot catch these. They live in real navigation, real IndexedDB, real file inputs,
  * and real CSS layout.
  *
  * FIXTURES ARE SYNTHETIC ON PURPOSE

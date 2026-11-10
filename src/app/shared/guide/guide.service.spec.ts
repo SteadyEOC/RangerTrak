@@ -1,6 +1,6 @@
-import { GUIDE_ROUTES } from './guide.service'
 import { GUIDE_CONTENT } from './guide-content'
 import { renderGuideText } from './guide-render'
+import { GUIDE_ROUTES } from './guide.service'
 
 // The eager route list in guide.service.ts must match the lazily loaded text (E-192).
 describe('Guide routes and text', () => {

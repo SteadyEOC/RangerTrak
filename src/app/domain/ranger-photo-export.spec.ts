@@ -1,7 +1,16 @@
-import { extensionForMime, photoEntryName, photoStem, photoStemsFor, stemForRanger } from './ranger-photo-export'
+import {
+  extensionForMime,
+  photoEntryName,
+  photoStem,
+  photoStemsFor,
+  stemForRanger,
+} from './ranger-photo-export'
 
 describe('ranger photo export', () => {
-  const has = (...stems: string[]) => (s: string) => stems.includes(s)
+  const has =
+    (...stems: string[]) =>
+    (s: string) =>
+      stems.includes(s)
 
   it('normalises stems', () => {
     expect(photoStem('  k7abc ')).toBe('K7ABC')
@@ -9,7 +18,9 @@ describe('ranger photo export', () => {
   })
 
   it('prefers the id over the call sign', () => {
-    expect(stemForRanger({ id: 'vi-1', callsign: 'k7abc' }, has('VI-1', 'K7ABC'))).toBe('VI-1')
+    expect(stemForRanger({ id: 'vi-1', callsign: 'k7abc' }, has('VI-1', 'K7ABC'))).toBe(
+      'VI-1'
+    )
   })
 
   it('falls back to the call sign when the id has no photo', () => {

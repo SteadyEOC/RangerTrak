@@ -1,8 +1,17 @@
 import type { RangerType } from '../shared/services/ranger.interface'
 import { buildRosterPrint, NO_TEAM_LABEL } from './roster-print'
 
-const r = (over: Partial<RangerType>): RangerType =>
-  ({ id: '', callsign: '', fullName: '', phone: '', image: '', team: '', role: '', note: '', ...over })
+const r = (over: Partial<RangerType>): RangerType => ({
+  id: '',
+  callsign: '',
+  fullName: '',
+  phone: '',
+  image: '',
+  team: '',
+  role: '',
+  note: '',
+  ...over,
+})
 
 describe('buildRosterPrint', () => {
   it('is empty for an empty roster', () => {
@@ -15,7 +24,7 @@ describe('buildRosterPrint', () => {
       r({ callsign: 'K2', team: '' }),
       r({ callsign: 'K3', team: 'alpha' }),
     ])
-    expect(groups.map(g => g.label)).toEqual(['alpha', 'Zulu', NO_TEAM_LABEL])
+    expect(groups.map((g) => g.label)).toEqual(['alpha', 'Zulu', NO_TEAM_LABEL])
     expect(groups[2].team).toBe('')
   })
 
@@ -36,13 +45,26 @@ describe('buildRosterPrint', () => {
       r({ callsign: 'K7VMI-2', fullName: 'B', team: 'T' }),
       r({ callsign: 'ab7xy', fullName: 'A', team: 'T' }),
     ])
-    expect(g.rows.map(x => x.name)).toEqual(['A', 'B', 'C', 'Nocall'])
+    expect(g.rows.map((x) => x.name)).toEqual(['A', 'B', 'C', 'Nocall'])
   })
 
   it('carries call sign, name, role, phone and ID, trimmed', () => {
     const [g] = buildRosterPrint([
-      r({ callsign: ' K1 ', fullName: ' Pat ', role: 'Net control', phone: '555-0100', id: ' 42 ', team: 'T' }),
+      r({
+        callsign: ' K1 ',
+        fullName: ' Pat ',
+        role: 'Net control',
+        phone: '555-0100',
+        id: ' 42 ',
+        team: 'T',
+      }),
     ])
-    expect(g.rows[0]).toEqual({ callsign: 'K1', name: 'Pat', role: 'Net control', phone: '555-0100', id: '42' })
+    expect(g.rows[0]).toEqual({
+      callsign: 'K1',
+      name: 'Pat',
+      role: 'Net control',
+      phone: '555-0100',
+      id: '42',
+    })
   })
 })

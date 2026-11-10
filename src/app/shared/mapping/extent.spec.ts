@@ -15,22 +15,33 @@ describe('computeExtent', () => {
   })
 
   it('fits several points exactly, with no broadening once the span already exceeds the margin', () => {
-    const bounds = computeExtent([
-      { lat: 47.0, lng: -122.5 },
-      { lat: 48.0, lng: -122.0 },
-      { lat: 47.5, lng: -123.0 },
-    ], 0.0025)
+    const bounds = computeExtent(
+      [
+        { lat: 47.0, lng: -122.5 },
+        { lat: 48.0, lng: -122.0 },
+        { lat: 47.5, lng: -123.0 },
+      ],
+      0.0025
+    )
     expect(bounds).toEqual({ north: 48.0, south: 47.0, east: -122.0, west: -123.0 })
   })
 
   it('skips a NaN/undefined coordinate mixed in rather than letting it poison the fit', () => {
-    const bounds = computeExtent([
-      { lat: 47.0, lng: -122.5 },
-      { lat: NaN, lng: -122.0 },
-      { lat: 48.0, lng: NaN },
-      // @ts-expect-error - exercising a runtime-only bad value (e.g. a missing location)
-      { lat: undefined, lng: -122.1 },
-    ], 0.0025)
-    expect(bounds).toEqual({ north: 47.0025, south: 46.9975, east: -122.4975, west: -122.5025 })
+    const bounds = computeExtent(
+      [
+        { lat: 47.0, lng: -122.5 },
+        { lat: NaN, lng: -122.0 },
+        { lat: 48.0, lng: NaN },
+        // @ts-expect-error - exercising a runtime-only bad value (e.g. a missing location)
+        { lat: undefined, lng: -122.1 },
+      ],
+      0.0025
+    )
+    expect(bounds).toEqual({
+      north: 47.0025,
+      south: 46.9975,
+      east: -122.4975,
+      west: -122.5025,
+    })
   })
 })

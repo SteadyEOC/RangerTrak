@@ -1,5 +1,9 @@
-import { LocationCategoryType, LOCATION_ICON_OPTIONS, LocationIconId } from '../services'
-import { locationMarkerSvg, resolveLocationIcon, safeMarkerColor } from './location-marker'
+import { LOCATION_ICON_OPTIONS, LocationCategoryType, LocationIconId } from '../services'
+import {
+  locationMarkerSvg,
+  resolveLocationIcon,
+  safeMarkerColor,
+} from './location-marker'
 
 describe('resolveLocationIcon', () => {
   it('prefers an explicit icon over a name match', () => {
@@ -45,23 +49,25 @@ describe('resolveLocationIcon', () => {
       'Command Post': 'command-post',
       'Staging Area': 'staging',
       'Ranger First Aid': 'first-aid',
-      'EOC': 'eoc',
+      EOC: 'eoc',
       'Fire Station': 'fire-station',
-      'Dock': 'dock',
+      Dock: 'dock',
     }
     for (const category of preIconLocationTypes) {
-      expect(resolveLocationIcon(category.type, preIconLocationTypes)).toBe(expected[category.type])
+      expect(resolveLocationIcon(category.type, preIconLocationTypes)).toBe(
+        expected[category.type]
+      )
     }
   })
 })
 
 describe('resolveLocationIcon, E-195 place types', () => {
   it('resolves the Oso types by name: Decon and River Gauge to the water badge, Search Division to the pin', () => {
-    expect(resolveLocationIcon('Decon', [])).toBe('water');
-    expect(resolveLocationIcon('River Gauge', [])).toBe('water');
-    expect(resolveLocationIcon('Search Division', [])).toBe('pin');
-  });
-});
+    expect(resolveLocationIcon('Decon', [])).toBe('water')
+    expect(resolveLocationIcon('River Gauge', [])).toBe('water')
+    expect(resolveLocationIcon('Search Division', [])).toBe('pin')
+  })
+})
 
 describe('locationMarkerSvg', () => {
   it('draws a non-empty <svg> for every LocationIconId, each one visually distinct', () => {
@@ -89,13 +95,18 @@ describe('locationMarkerSvg', () => {
 
   describe('safeMarkerColor', () => {
     it('passes hex, named and rgb()/hsl() colors through unchanged', () => {
-      ['#1565C0', '#abc', 'teal', 'rgb(10, 20, 30)', 'hsl(120 50% 40%)'].forEach(c =>
-        expect(safeMarkerColor(c)).withContext(c).toBe(c))
+      ;['#1565C0', '#abc', 'teal', 'rgb(10, 20, 30)', 'hsl(120 50% 40%)'].forEach((c) =>
+        expect(safeMarkerColor(c), c).toBe(c)
+      )
     })
 
     it('replaces anything that could break out of the attribute with grey', () => {
-      ['red"/><image href=x onerror=alert(1)>', 'url(javascript:x)', '', 'red; fill: blue'].forEach(c =>
-        expect(safeMarkerColor(c)).withContext(c).toBe('#757575'))
+      ;[
+        'red"/><image href=x onerror=alert(1)>',
+        'url(javascript:x)',
+        '',
+        'red; fill: blue',
+      ].forEach((c) => expect(safeMarkerColor(c), c).toBe('#757575'))
       expect(locationMarkerSvg('pin', '"><script>')).not.toContain('<script>')
     })
   })

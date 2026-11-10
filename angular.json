@@ -200,6 +200,9 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
+            },
+            "unit-test": {
+              "polyfills": []
             }
           },
           "defaultConfiguration": "production"
@@ -223,24 +226,15 @@
           }
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "main": "src/test.ts",
-            "polyfills": ["src/polyfills.ts"],
+            "buildTarget": "rangertrak:build:development,unit-test",
             "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              "src/assets/icons/favicon.ico",
-              "src/manifest.webmanifest",
-              "src/manifest.webmanifest",
-              "src/assets/forms/ics-213.pdf",
-              "src/assets/forms/ics-214.pdf"
-            ],
-            "styles": [
-              "src/styles.scss"
-            ],
-            "scripts": []
+            "runnerConfig": "vitest.config.ts",
+            "browsers": ["chromiumHeadless"],
+            "browserViewport": "800x600",
+            "splitting": false,
+            "watch": false
           }
         }
       }
