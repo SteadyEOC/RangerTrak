@@ -143,10 +143,11 @@ meet at `:root`:
   `prefers-color-scheme` block, so a single declaration covers both schemes and neither is
   ever undefined.
 
-`SkinService` sets `data-skin` on `<html>`, and **`assets/theme-init.js` sets it again before
-Angular boots**, reading `skinChoice`/`themeMode` from `localStorage`. That file exists
-because the CSP is `script-src 'self'` with no `'unsafe-inline'` — an inline `<script>` in
-`index.html` would be blocked, and without it the app paints the default skin and then flips.
+`SkinService` sets `data-skin` on `<html>`, and **a small inline `<script>` in `index.html`
+sets it again before Angular boots**, reading `skinChoice`/`themeMode` from `localStorage`;
+without it the app paints the default skin and then flips. The CSP has no `'unsafe-inline'`:
+`src/_headers` allows that one script by its SHA-256 hash, and `npm run check:csp-hash` (CI)
+fails if the script changes without the hash (E-270; it was `assets/theme-init.js` until then).
 
 ### The rule that is easiest to get wrong
 

@@ -29,7 +29,7 @@
 // carrying here hasn't been decided yet (see the brand-architecture note). So this reverts
 // to the app's real body font - same @include type.type-label already used for sizing,
 // with the font-family/font-style overrides simply gone rather than pointed at a second
-// placeholder face. `assets/fonts/fonts.css`'s Faster One @font-face rules are left in
+// placeholder face. index.html's inline Faster One @font-face rules (fonts.css until E-270) are left in
 // place, unreferenced but harmless (an unused @font-face fetches nothing) - restore this
 // rule (or point it at whatever face SteadyEOC settles on) once that's decided.
 //

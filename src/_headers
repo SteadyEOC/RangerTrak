@@ -40,8 +40,8 @@
 # emits the compiled stylesheet as
 #     <link rel="stylesheet" href="styles-*.css" media="print" onload="this.media='all'">
 # and an enforcing script-src blocks inline EVENT HANDLERS. A hash cannot cover
-# one without 'unsafe-hashes' (same constraint that moved theme-init.js out of
-# index.html). The stylesheet then never activates, the app renders unstyled,
+# one without 'unsafe-hashes' (an inline <script> block can be hashed; an
+# attribute handler cannot). The stylesheet then never activates, the app renders unstyled,
 # and /map overflows a phone viewport. That is exactly what happened on the
 # first enforcing build, and the e2e suite caught it - because serve-dist.js
 # now applies this file. Turning inlineCritical back on means going back to
@@ -126,7 +126,11 @@
   # from maps.googleapis.com (checked in Chrome against this file). Google's own allowlist
   # example also adds 'unsafe-inline' and 'unsafe-eval' to script-src; not taken, a geocoder
   # with no map does not need them.
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com https://tile.waymarkedtrails.org https://basemap.nationalmap.gov; connect-src 'self' https: https://nominatim.openstreetmap.org https://maps.googleapis.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  # 2026-11-10, E-270: script-src gained one 'sha256-...' hash: index.html's inline theme/skin
+  # script, which was assets/theme-init.js (a render-blocking request). Still no
+  # 'unsafe-inline'. Editing that script changes the hash; `npm run check:csp-hash` (CI)
+  # fails and prints the new token.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-cW2kCtjYkRrNoYXOsDzLJeuZcUIdUydAjbQRT3Gb8kM=' https://static.cloudflareinsights.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com https://tile.waymarkedtrails.org https://basemap.nationalmap.gov; connect-src 'self' https: https://nominatim.openstreetmap.org https://maps.googleapis.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
 
 # Only the files that MUST NOT be cached are listed below. Everything else keeps
 # Cloudflare's default ETag revalidation, which is already correct for the

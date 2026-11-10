@@ -1875,6 +1875,42 @@ async function checkSkinPickerPhoneScroll() {
 }
 
 /**
+ * E-270: index.html's inline theme/skin script is allowed by a SHA-256 hash in src/_headers
+ * (serve-dist.js applies that file). If the hash goes stale the browser blocks the script
+ * and nothing errors: the page just paints the default skin, then flips once Angular's
+ * SkinService runs. So this proves the script RAN, not just that the skin ended up right:
+ * data-skin must appear while the document is still parsing ('loading'), which only a
+ * <head> script can do; Angular's module scripts run after parsing.
+ */
+async function checkThemeInitBeforeAngular() {
+  console.log('\nSaved skin and theme apply before Angular, and the CSP allows the inline script (E-270)')
+  const { identifier } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+    try { localStorage.setItem('skinChoice', 'signal'); localStorage.setItem('themeMode', 'dark') } catch {}
+    window.__e2eCsp = [];
+    document.addEventListener('securitypolicyviolation', e => window.__e2eCsp.push(e.violatedDirective + ' ' + e.blockedURI));
+    window.__e2eSkinAt = null;
+    // Observe the document, not documentElement: this runs before the parser has made <html>.
+    new MutationObserver((_, o) => {
+      if (document.documentElement?.hasAttribute('data-skin')) { window.__e2eSkinAt = document.readyState; o.disconnect() }
+    }).observe(document, { attributes: true, subtree: true, attributeFilter: ['data-skin'] });
+  ` })
+  try {
+    await goto('/')
+    const r = await evaluate(`({
+      skinAt: window.__e2eSkinAt,
+      skin: document.documentElement.getAttribute('data-skin'),
+      csp: window.__e2eCsp,
+    })`)
+    check('no CSP violation on load', JSON.stringify(r.csp), '[]')
+    check('data-skin was set while the page was still parsing (the inline script ran)', r.skinAt, 'loading')
+    check('the saved skin is applied', r.skin, 'signal')
+  } finally {
+    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier })
+    await evaluate(`(() => { try { localStorage.removeItem('skinChoice'); localStorage.removeItem('themeMode') } catch {} })()`)
+  }
+}
+
+/**
  * E-65: the same "does it fit a phone" question as checkEntryPhoneWidth above, asked of
  * EVERY route rather than just Entry.
  *
@@ -5717,6 +5753,7 @@ async function main() {
     if (want('shell')) await checkAllRoutesPhoneWidth()
     if (want('shell')) await checkBackToTop()
     if (want('shell')) await checkSkinPickerPhoneScroll()
+    if (want('shell')) await checkThemeInitBeforeAngular()
     if (want('mission')) await checkMissionDangerZoneButtonsFit()
     if (want('shell')) await checkWelcomePanelDismissAndReopen()
     if (want('entry')) await checkLocationDdDdmDmsSync()

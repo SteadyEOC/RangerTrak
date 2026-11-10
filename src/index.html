@@ -43,8 +43,24 @@
        All the machinery this replaced is gone with it: the media="print" async swap, the
        <noscript> fallback, the preconnect to fonts.gstatic.com, and theme-init.js's
        load listener. A same-origin stylesheet of this size does not need deferring, and
-       the CSP no longer has to allow either Google host. See assets/fonts/fonts.css. -->
-  <link rel="stylesheet" href="assets/fonts/fonts.css">
+       the CSP no longer has to allow either Google host.
+
+       E-270 (2026-11-10): the @font-face rules are inline here, not in assets/fonts/fonts.css.
+       That file was a render-blocking request of its own (PageSpeed, Slow 4G). style-src
+       already allows inline styles. URLs are relative to <base href="/">.
+       Roboto's non-latin subsets are dropped (English UI); latin-ext stays for accented names.
+       The Material Icons file is a SUBSET built by tools/icon-font/; `npm run check:icons`
+       fails if the app names an icon it lacks. The .material-icons rule is NOT optional:
+       font-feature-settings 'liga' turns <i class="material-icons">emoji_people</i> into a
+       glyph; without it the literal words render, wide enough to overflow a phone. -->
+  <style>
+    @font-face{font-family:'Faster One';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/faster-one-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+    @font-face{font-family:'Faster One';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/faster-one-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+    @font-face{font-family:'Material Icons';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/material-icons-subset.woff2) format('woff2')}
+    @font-face{font-family:'Roboto';font-style:normal;font-weight:400;font-stretch:100%;font-display:swap;src:url(assets/fonts/roboto-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+    @font-face{font-family:'Roboto';font-style:normal;font-weight:400;font-stretch:100%;font-display:swap;src:url(assets/fonts/roboto-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+    .material-icons{font-family:'Material Icons';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';-webkit-font-smoothing:antialiased}
+  </style>
   <!-- E-193 (2026-10-16): fetch Roboto's latin file now, not when fonts.css is parsed and
        text first needs it. Found that late, it arrived ~0.3 s after first paint, and the swap
        from the fallback font (line-height: normal follows the font's metrics) pushed the Entry
@@ -71,16 +87,21 @@
        NOTE: this narrows D-37, which chose the Command accent here. Keep both in step. -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#12263F">
-  <!-- Pre-Angular theme/skin + the Google Fonts load-swap above, both moved out of an inline
-       <script> here into assets/theme-init.js on 2026-09-01 (E-44 CSP follow-up) - this
-       repo's CSP (src/_headers) is `script-src 'self'` with no 'unsafe-inline', which an
-       inline block violates outright. A classic `<script src>` here, same position, is
-       still parser-blocking and runs before the compiled stylesheet <link> the build injects
-       at the end of this <head> - the FOUC-prevention ordering the original inline block
-       relied on is unchanged. See that file's own header comment for the full reasoning,
-       including the one real tradeoff (a small network round trip on a truly first-ever
-       visit, gone from the second visit on once ngsw has it cached). -->
-  <script src="assets/theme-init.js"></script>
+  <!-- Pre-Angular theme and skin. It must run before the compiled stylesheet <link> the build
+       adds at the end of this <head>, or a scribe who picked light/dark or a skin sees the
+       default first, then a flip. So it blocks parsing on purpose; it is tiny.
+
+       E-270 (2026-11-10): inline again. From 09-01 it was assets/theme-init.js, because the
+       CSP is `script-src 'self'` with no 'unsafe-inline'; that cost a render-blocking round
+       trip (~540 ms on Slow 4G). Now src/_headers allows exactly this script by its SHA-256
+       hash. ANY edit to the script, even whitespace, changes the hash:
+       `npm run check:csp-hash` (CI) fails and prints the new value to put in src/_headers.
+
+       'themeMode' must match THEME_MODE_KEY (shared/services/theme.service.ts); 'auto' or
+       nothing leaves color-scheme unset, so styles.scss's `light dark` default applies.
+       'skinChoice' must match SKIN_KEY (shared/services/skin.service.ts); 'command' or nothing
+       needs no attribute. A blocked localStorage falls back to the defaults. -->
+  <script>try{var m=localStorage.getItem('themeMode');if(m==='light'||m==='dark')document.documentElement.style.colorScheme=m;var s=localStorage.getItem('skinChoice');if(s==='ridgeline'||s==='nightwatch'||s==='sagebrush'||s==='signal')document.documentElement.setAttribute('data-skin',s)}catch(e){}</script>
   <!-- E-44 audit, 2026-08-26: removed a dead SystemJS-era script comment, a mangled
        commented-out Leaflet CDN tag, and this What3Words SDK include - it loaded
        unconditionally with a blank ?key= on every page view for a feature that's shelved

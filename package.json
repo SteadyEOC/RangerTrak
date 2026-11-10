@@ -23,6 +23,7 @@
     "check:secrets": "node tools/check-no-secrets.js",
     "check:eager-bundle": "node tools/check-eager-bundle.js",
     "check:cycles": "node tools/check-import-cycles.js",
+    "check:csp-hash": "node tools/check-csp-hash.js",
     "check:regional": "node tools/check-regional-tools.js",
     "check:storage": "node tools/check-storage-inventory.js",
     "check:icons": "node tools/icon-font/scan.js --check",

@@ -100,6 +100,12 @@ jobs:
       - name: Check map libraries stay out of the eager bundle
         run: npm run check:eager-bundle
 
+      # E-270: index.html's inline theme/skin script is allowed by its SHA-256 hash in
+      # src/_headers. An edit to the script without the new hash would ship a page whose
+      # theme flashes; this hashes the built index.html and fails on a mismatch.
+      - name: Check the CSP allows index.html's inline script
+        run: npm run check:csp-hash
+
       - name: Deploy
         uses: cloudflare/wrangler-action@v4
         with:
