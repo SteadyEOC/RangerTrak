@@ -228,7 +228,6 @@
             "runnerConfig": "vitest.config.ts",
             "browsers": ["chromiumHeadless"],
             "browserViewport": "800x600",
-            "splitting": false,
             "watch": false
           }
         }

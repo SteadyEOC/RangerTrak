@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core'
 
-import { LogService } from './'
+import { LogService } from './log.service'
 
 /**
  * Requests persistent storage (protects localStorage from being silently

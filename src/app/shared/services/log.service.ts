@@ -2,7 +2,7 @@ import { Observable, ReplaySubject, throwError } from 'rxjs'
 
 import { Injectable, Optional, signal, SkipSelf, Signal } from '@angular/core'
 
-import { LogHeadings, LogLevel, LogLevelNames, LogType } from './'
+import { LogHeadings, LogLevel, LogLevelNames, LogType } from './log.interface'
 
 // Additional ideas: https://www.codemag.com/Article/1711021/Logging-in-Angular-Applications
 

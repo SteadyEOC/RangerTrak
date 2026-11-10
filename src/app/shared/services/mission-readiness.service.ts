@@ -4,7 +4,10 @@ import { wantedPmtilesUrls } from '../mapping/demo-map'
 import { CustomPmtilesService } from './custom-pmtiles.service'
 import { MapEngineService } from '../../map/map-engine.service'
 import { ViewService } from './view.service'
-import { LogService, RangerService, MissionService, StoragePersistenceService } from './'
+import { LogService } from './log.service'
+import { RangerService } from './ranger.service'
+import { MissionService } from './mission.service'
+import { StoragePersistenceService } from './storage-persistence.service'
 
 export type ReadinessLevel = 'red' | 'amber' | 'green'
 

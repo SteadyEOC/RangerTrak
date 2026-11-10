@@ -12,7 +12,7 @@ import {
   AarNoteService, ClockService, FieldModeService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService,
   OfflineBasemapService, RadioLogService, UsageStateService, MissionModeType
 } from '../services'
-import { Utility } from '../'
+import { Utility } from '../utility'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
 import { GuideService } from '../guide/guide.service'
 import { AarNoteDialogComponent, AarNoteDialogData } from '../aar-note/aar-note-dialog.component'

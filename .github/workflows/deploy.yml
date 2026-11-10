@@ -48,6 +48,11 @@ jobs:
 
       # Every persisted key needs a row in ARCHITECTURE.md's "Data stored on the device" table,
       # the rc.1 storage freeze's input (ADR D-55). Fails on a missing, unresolvable or stale key.
+      # A circular import (often through an index.ts barrel) can leave a component undefined
+      # depending on which chunk loads first; it broke 8 unit-test files on 2026-11-10.
+      - name: No import cycles
+        run: npm run check:cycles
+
       - name: Storage inventory is complete
         run: npm run check:storage
 

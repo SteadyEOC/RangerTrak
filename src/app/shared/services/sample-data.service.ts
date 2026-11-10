@@ -1,9 +1,13 @@
 import { inject, Injectable } from '@angular/core'
 
-import {
-  RadioLogService, RadioLogType, RadioLogEntryType, LogService, RangerService, RangerType,
-  MissionService, MissionLocationService, MissionLocationType
-} from './'
+import { RadioLogService } from './radio-log.service'
+import { RadioLogType, RadioLogEntryType } from './radio-log-entry.interface'
+import { LogService } from './log.service'
+import { RangerService } from './ranger.service'
+import { RangerType } from './ranger.interface'
+import { MissionService } from './mission.service'
+import { MissionLocationService } from './mission-location.service'
+import { MissionLocationType } from './mission-location.interface'
 import { DEFAULT_OP_PERIOD_HOURS } from '../../domain/mission-migration'
 import { newRangerUid } from '../../domain/ranger-migration'
 import type { TacticalCallType } from './mission.interface'
