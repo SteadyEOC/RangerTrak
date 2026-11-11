@@ -300,7 +300,7 @@
 
 // The red-tinted box itself still applies once expanded - only its own heading moved out.
 .rt-danger-zone-trigger .rt-danger-zone {
-  margin-top: 0;
+  margin-top: 0.75em; // the panel body has no top padding; 0 put the note against the header
   border    : none;
   background: none;
   padding   : 0;

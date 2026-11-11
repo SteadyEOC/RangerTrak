@@ -37,8 +37,9 @@
     } @else if (storagePersistence.persisted() === false) {
     <p class="mission__status mission__status--warn">
       <mat-icon aria-hidden="true">warning</mat-icon>
-      Persistent storage is <strong>not</strong> granted. Under storage pressure the browser
-      could clear this mission&rsquo;s data without warning.
+      <!-- One span, so the bold "not" is not a flex item of its own (it broke the line around it). -->
+      <span>Persistent storage is <strong>not</strong> granted. Under storage pressure the browser
+      could clear this mission&rsquo;s data without warning.</span>
     </p>
     <button matButton="outlined" type="button" (click)="onBtnRequestPersistence()">
       Request persistent storage

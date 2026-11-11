@@ -139,7 +139,9 @@
   <mat-card appearance="outlined" class="rt-mission-card map-box map-offline" [class.map-offline--none]="!hasOfflineTiles()" data-testid="map-offline-box">
     <mat-card-header>
       <mat-card-title class="map-box__title">
-        <mat-icon class="map-offline__icon" aria-hidden="true">{{ hasOfflineTiles() ? 'offline_pin' : 'warning' }}</mat-icon>
+        <!-- Always offline_pin, coloured green/amber: the status line below carries the
+             check/warning icon, so the title showing warning too doubled it (2026-11-11). -->
+        <mat-icon class="map-offline__icon" aria-hidden="true">offline_pin</mat-icon>
         Offline maps
       </mat-card-title>
     </mat-card-header>
