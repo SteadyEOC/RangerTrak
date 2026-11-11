@@ -296,15 +296,7 @@ export class RadioLogService {
     // Not the entry itself: it can name people and addresses, and the Log page exports to CSV.
     this.log.verbose(`Got new radio log entry.`, this.id)
 
-    // EntryComponent hands this over as JSON.stringify(mergedFormValue()) - a deliberate
-    // deep clone - so `date` arrives here as an ISO STRING even though RadioLogEntryType
-    // declares it Date, and even though nothing has touched localStorage yet. Restoring it
-    // at this boundary is what makes a locally-typed report indistinguishable from a
-    // loaded one; without it, two reports typed in a single fresh session were enough to
-    // make buildIcs309Log() throw. See json-dates.ts.
-    let newReport: RadioLogEntryType = rehydrateDateFields(
-      JSON.parse(formData) as RadioLogEntryType, //"[object Object]" is not valid JSON
-      [...RADIO_LOG_ENTRY_DATE_FIELDS])
+    let newReport = this.entryFromFormData(formData)
     newReport.id = this.radioLog.maxId++
     // D-59: permanent identity, so a hand-over can match this entry on another device.
     newReport.uid = newUid()
@@ -332,6 +324,67 @@ export class RadioLogService {
     this.updateRadioLogAndPublish() // put to localStorage & update subscribers
     this.reportSubmittedSignal.update(n => n + 1)
     return newReport
+  }
+
+  /**
+   * EntryComponent hands a report over as JSON.stringify(mergedFormValue()) - a deliberate
+   * deep clone - so `date` arrives here as an ISO STRING even though RadioLogEntryType
+   * declares it Date, and even though nothing has touched localStorage yet. Restoring it
+   * at this boundary is what makes a locally-typed report indistinguishable from a
+   * loaded one; without it, two reports typed in a single fresh session were enough to
+   * make buildIcs309Log() throw. See json-dates.ts. Shared by addRadioLogEntry() and
+   * replaceEntry() (E-251, D-69).
+   */
+  private entryFromFormData(formData: string): RadioLogEntryType {
+    return rehydrateDateFields(
+      JSON.parse(formData) as RadioLogEntryType, //"[object Object]" is not valid JSON
+      [...RADIO_LOG_ENTRY_DATE_FIELDS])
+  }
+
+  /**
+   * E-251 (2026-11-11, ADR D-69): the edit-before-send save. Entry's form data replaces the entry with
+   * this `uid`, which KEEPS its `uid`, `id`, `loggedAt`, message number and attachments (the form knows
+   * none of them). No `revisedAt`: nothing has left the phone, so there is no other copy to
+   * supersede. Saves and publishes as addRadioLogEntry() does. Returns the new entry, or undefined
+   * when no entry has this uid.
+   */
+  public replaceEntry(uid: string, formData: string): RadioLogEntryType | undefined {
+    const index = this.radioLog.logEntries.findIndex(e => e.uid === uid)
+    if (index < 0) return undefined
+    const old = this.radioLog.logEntries[index]
+    const replaced: RadioLogEntryType = {
+      ...this.entryFromFormData(formData),
+      uid: old.uid,
+      id: old.id,
+      loggedAt: old.loggedAt,
+      attachments: old.attachments,
+    }
+    if (old.msgNo) replaced.msgNo = old.msgNo
+    else delete replaced.msgNo
+    if (old.revisedAt) replaced.revisedAt = old.revisedAt
+    else delete replaced.revisedAt
+    this.radioLog.logEntries[index] = replaced
+    this.recalcRadioLogBounds(this.radioLog)
+    this.updateRadioLogAndPublish()
+    return replaced
+  }
+
+  /**
+   * E-251 (D-69): deletes one report (a not-sent one, from the phone's My reports), saves, then sweeps
+   * the photos no remaining report uses. Journalled as `report-deleted`: counts only, no text
+   * (rule 5). `maxId` and `msgNoHighWater` are untouched, so a number is never handed out twice.
+   * Returns false when no entry has this uid.
+   */
+  public async deleteEntry(uid: string): Promise<boolean> {
+    const index = this.radioLog.logEntries.findIndex(e => e.uid === uid)
+    if (index < 0) return false
+    this.radioLog.logEntries.splice(index, 1)
+    this.radioLog.numReport = this.radioLog.logEntries.length
+    this.recalcRadioLogBounds(this.radioLog)
+    this.updateRadioLogAndPublish()
+    this.journal.record('report-deleted', 'Deleted 1 report from this device.')
+    await this.attachmentStore.sweepOrphans(this.radioLog.logEntries)
+    return true
   }
 
   /**
@@ -436,8 +489,9 @@ export class RadioLogService {
    * Returns null when there is nothing to send - both callers show the identical "no reports
    * yet" message either way, so this stays a decision this method makes once.
    */
-  public buildReportPacketText(operator: string): { text: string; filename: string; count: number; uids: string[] } | null {
-    const entries = this.getCurrentRadioLog().logEntries
+  public buildReportPacketText(operator: string, chosen?: readonly RadioLogEntryType[]): { text: string; filename: string; count: number; uids: string[] } | null {
+    // E-251 (D-69): `chosen` limits the packet to those entries (Entry's "send only new"); none = everything.
+    const entries = chosen ?? this.getCurrentRadioLog().logEntries
     if (!entries.length) {
       return null
     }
@@ -468,8 +522,9 @@ export class RadioLogService {
    * files named uniquely, to go beside the Report Packet's `.txt`. References whose bytes are on
    * another device are simply not here.
    */
-  public async reportPacketMedia(): Promise<File[]> {
-    const refs = distinctLiveRefs(this.getCurrentRadioLog().logEntries)
+  public async reportPacketMedia(chosen?: readonly RadioLogEntryType[]): Promise<File[]> {
+    // E-251 (D-69): `chosen` limits the photos to those entries' own; none = everything.
+    const refs = distinctLiveRefs(chosen ?? this.getCurrentRadioLog().logEntries)
     const names = shareNames(refs)
     const out: File[] = []
     for (const ref of refs) {

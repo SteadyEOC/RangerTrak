@@ -6,6 +6,7 @@ import { MissionService } from './mission.service'
 import { RadioLogEntryType, RadioLogType } from './radio-log-entry.interface'
 import { RadioLogService } from './radio-log.service'
 import { RangerService } from './ranger.service'
+import { AttachmentStoreService } from './attachment-store.service'
 // E-122 Phase 2a: radio log entries now live behind RecordStore, not localStorage directly - see
 // that module's own doc comment. resetForTests() is this suite's equivalent of the
 // localStorage.clear() it used to rely on for isolation between specs.
@@ -647,6 +648,68 @@ describe('RadioLogService', () => {
 
       expect(seen).toEqual(['handled', 'passed', 'action', undefined])
       expect('handled' in entry).toBe(false)
+    })
+  })
+
+  // E-251 (D-69): choose what goes in a packet, edit before sending, delete.
+  describe('chosen entries, replaceEntry and deleteEntry (E-251)', () => {
+    const ref = (sha256: string) => ({ sha256, name: sha256 + '.jpg', type: 'image/jpeg', size: 1, addedAt: '2026-11-11T10:00:00Z', addedBy: 'X' })
+
+    it('builds a packet from only the chosen entries', () => {
+      const service = TestBed.inject(RadioLogService)
+      const a = service.addRadioLogEntry(makeReport({ callsign: 'AAA' }))
+      service.addRadioLogEntry(makeReport({ callsign: 'BBB' }))
+      const built = service.buildReportPacketText('OP', [a])!
+      expect(built.count).toBe(1)
+      expect(built.uids).toEqual([a.uid])
+      expect(JSON.parse(built.text).entries.map((e: RadioLogEntryType) => e.callsign)).toEqual(['AAA'])
+      expect(service.buildReportPacketText('OP', [])).toBeNull()
+      expect(service.buildReportPacketText('OP')!.count).toBe(2)
+    })
+
+    it('takes only the chosen entries photos', async () => {
+      const service = TestBed.inject(RadioLogService)
+      const store = TestBed.inject(AttachmentStoreService)
+      vi.spyOn(store, 'has').mockResolvedValue(true)
+      vi.spyOn(store, 'getOriginal').mockResolvedValue(new Blob(['x'], { type: 'image/jpeg' }))
+      const a = service.addRadioLogEntry(makeReport({ attachments: [ref('aa')] }))
+      service.addRadioLogEntry(makeReport({ attachments: [ref('bb')] }))
+      expect((await service.reportPacketMedia([a])).length).toBe(1)
+      expect((await service.reportPacketMedia()).length).toBe(2)
+    })
+
+    it('replaceEntry keeps uid, id, loggedAt and attachments, and stamps no revisedAt', () => {
+      const service = TestBed.inject(RadioLogService)
+      const first = service.addRadioLogEntry(makeReport({ callsign: 'OLD', attachments: [ref('aa')] }))
+      service.addRadioLogEntry(makeReport({ callsign: 'OTHER' }))
+      const replaced = service.replaceEntry(first.uid!, makeReport({ callsign: 'NEW', notes: 'edited' }))!
+      const stored = service.getCurrentRadioLog().logEntries
+      expect(stored.length).toBe(2)
+      expect(stored[0]).toBe(replaced)
+      expect(replaced.callsign).toBe('NEW')
+      expect(replaced.notes).toBe('edited')
+      expect(replaced.uid).toBe(first.uid)
+      expect(replaced.id).toBe(first.id)
+      expect(replaced.loggedAt).toEqual(first.loggedAt)
+      expect(replaced.attachments?.[0].sha256).toBe('aa')
+      expect(replaced.revisedAt).toBeUndefined()
+      expect(replaced.date instanceof Date).toBe(true)
+      expect(service.replaceEntry('nope', makeReport())).toBeUndefined()
+    })
+
+    it('deleteEntry removes one report and sweeps against the remaining ones only', async () => {
+      const service = TestBed.inject(RadioLogService)
+      const store = TestBed.inject(AttachmentStoreService)
+      const sweep = vi.spyOn(store, 'sweepOrphans').mockResolvedValue(0)
+      const a = service.addRadioLogEntry(makeReport({ callsign: 'AAA', attachments: [ref('aa')] }))
+      const b = service.addRadioLogEntry(makeReport({ callsign: 'BBB', attachments: [ref('bb')] }))
+      expect(await service.deleteEntry(a.uid!)).toBe(true)
+      const log = service.getCurrentRadioLog()
+      expect(log.logEntries.map(e => e.uid)).toEqual([b.uid])
+      expect(log.numReport).toBe(1)
+      expect(sweep).toHaveBeenCalledTimes(1)
+      expect((sweep.mock.calls[0][0] as RadioLogEntryType[]).map(e => e.uid)).toEqual([b.uid])
+      expect(await service.deleteEntry('nope')).toBe(false)
     })
   })
 })
