@@ -107,10 +107,11 @@ export class FieldModeService {
    *  time, so a reload is the reliable reset (same as EntryComponent.onEnableFieldMode()). */
   confirmAndTurnOff(unsent: number): void {
     // 2026-10-28, John: leaving forgets which reports were sent, and a full-app packet names this
-    // device's mission, so warn when some have not gone out yet and point at Send my reports.
+    // device's mission, so warn when some have not gone out yet and point at the Send button
+    // (2026-11-11, John: name it as the button reads, "Send N new reports").
     const message = unsent
       ? `${unsent} report${unsent === 1 ? ' on this phone has' : 's on this phone have'} not been sent yet.\n\n`
-        + 'To send them first, choose Cancel, then Send my reports on Entry.\n\n'
+        + `To send them first, choose Cancel, then Send ${unsent} new report${unsent === 1 ? '' : 's'} on Entry.\n\n`
         + 'Leave field mode anyway? The reports stay on this device.'
       : 'Turn off field mode on this device?\n\n'
         + 'Every page comes back to the menu: the roster, map, radio log and Mission. '
