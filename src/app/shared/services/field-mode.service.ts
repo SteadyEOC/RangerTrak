@@ -1,9 +1,15 @@
 import { Injectable, signal } from "@angular/core"
 
 import { LogService } from "./log.service"
+import {
+  FieldReportMap, FieldReportState, foldSentUids, newEntries, parseFieldReports, receivedEntries,
+  stateOf, unconfirmedEntries, withoutReports, withReceived, withSent,
+} from "../../domain/field-report-state"
 
 const FIELD_MODE_KEY = 'fieldMode'
+// The older key (2026-10-28, a JSON array of uids): folded into REPORTS_KEY once, then removed.
 const SENT_UIDS_KEY = 'fieldModeSentUids'
+const REPORTS_KEY = 'fieldModeReports'
 
 /**
  * E-114 §1a (2026-08-31, Private Roadmap.md): "lite mode" - a restricted device role for a
@@ -24,32 +30,69 @@ export class FieldModeService {
 
   readonly enabled = signal(localStorage.getItem(FIELD_MODE_KEY) === 'true')
 
-  /** 2026-10-28, John: the uids of the reports this phone has put in a Report Packet, so its
-   *  header can say how many are "not sent yet". A share or download counts as sent: the app
-   *  can't see what happens after the share sheet. */
-  readonly sentUids = signal<ReadonlySet<string>>(FieldModeService.readSent())
+  /** 2026-10-28, John: which reports this phone has put in a Report Packet, so its header can say
+   *  how many are "not sent yet". A share or download counts as sent: the app can't see what
+   *  happens after the share sheet. Since 2026-11-11 (E-251/E-253, D-69) a uid maps to a record
+   *  with three states (not sent / sent / received); see domain/field-report-state.ts. */
+  readonly reports = signal<FieldReportMap>(this.loadReports())
 
   constructor(private log: LogService) { }
 
-  private static readSent(): ReadonlySet<string> {
-    try {
-      const raw = JSON.parse(localStorage.getItem(SENT_UIDS_KEY) ?? '[]')
-      return new Set(Array.isArray(raw) ? raw.filter(u => typeof u === 'string') : [])
-    } catch {
-      return new Set()
+  /** Reads the map, folding in the old `fieldModeSentUids` list once (as "sent at an unknown time"). */
+  private loadReports(): FieldReportMap {
+    let map = parseFieldReports(localStorage.getItem(REPORTS_KEY))
+    const old = localStorage.getItem(SENT_UIDS_KEY)
+    if (old !== null) {
+      map = foldSentUids(old, map)
+      try {
+        localStorage.setItem(REPORTS_KEY, JSON.stringify(map))
+        localStorage.removeItem(SENT_UIDS_KEY)
+      } catch { /* storage full or blocked: the in-memory map still works this session */ }
     }
+    return map
+  }
+
+  private setReports(map: FieldReportMap): void {
+    localStorage.setItem(REPORTS_KEY, JSON.stringify(map))
+    this.reports.set(map)
+  }
+
+  stateOf(uid: string | undefined): FieldReportState {
+    return stateOf(this.reports(), uid)
+  }
+
+  /** The reports that have not been in a Report Packet yet. */
+  newEntries<T extends { uid?: string }>(entries: readonly T[]): T[] {
+    return newEntries(this.reports(), entries)
+  }
+
+  /** Sent, but no receipt or hand mark yet. */
+  unconfirmedEntries<T extends { uid?: string }>(entries: readonly T[]): T[] {
+    return unconfirmedEntries(this.reports(), entries)
+  }
+
+  receivedEntries<T extends { uid?: string }>(entries: readonly T[]): T[] {
+    return receivedEntries(this.reports(), entries)
   }
 
   /** How many of these reports have not been in a Report Packet yet. */
   unsentCount(entries: readonly { uid?: string }[]): number {
-    const sent = this.sentUids()
-    return entries.filter(e => !e.uid || !sent.has(e.uid)).length
+    return this.newEntries(entries).length
   }
 
-  markSent(uids: readonly string[]): void {
-    const next = new Set([...this.sentUids(), ...uids])
-    localStorage.setItem(SENT_UIDS_KEY, JSON.stringify([...next]))
-    this.sentUids.set(next)
+  markSent(uids: readonly string[], at: Date = new Date()): void {
+    this.setReports(withSent(this.reports(), uids, at))
+  }
+
+  /** Returns how many changed; a received report stays received. Used by Part B (E-260) too. */
+  markReceived(uids: readonly string[], at: Date = new Date(), msgNos?: ReadonlyMap<string, string>): number {
+    const { map, changed } = withReceived(this.reports(), uids, at, msgNos)
+    if (changed) this.setReports(map)
+    return changed
+  }
+
+  forget(uids: readonly string[]): void {
+    this.setReports(withoutReports(this.reports(), uids))
   }
 
   enable(): void {
@@ -81,6 +124,7 @@ export class FieldModeService {
 
   disable(): void {
     localStorage.removeItem(FIELD_MODE_KEY)
+    localStorage.removeItem(REPORTS_KEY)
     localStorage.removeItem(SENT_UIDS_KEY)
     this.enabled.set(false)
     this.log.info('Turned field mode (lite mode) off for this device.', this.id)

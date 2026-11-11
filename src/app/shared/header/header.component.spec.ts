@@ -127,7 +127,7 @@ describe('HeaderComponent', () => {
       TestBed.inject(FieldModeService).enabled.set(true)
       fixture.detectChanges()
     })
-    afterEach(() => localStorage.removeItem('fieldModeSentUids'))
+    afterEach(() => localStorage.removeItem('fieldModeReports'))
 
     it('shows the field readout instead of the mission pill', () => {
       const root: HTMLElement = fixture.nativeElement
