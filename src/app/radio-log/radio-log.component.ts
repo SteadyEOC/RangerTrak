@@ -54,6 +54,7 @@ import { checkPacketTimes, packetTimeWarning } from '../domain/packet-time-check
 import { diagnoseFile, REPORT_PACKET_DAMAGED_MESSAGE } from '../shared/export/import-file'
 import { MISSION_EXPORT_SCHEMA_VERSION } from '../shared/services/backup.service'
 import { sendReportPacket } from '../shared/export/report-packet-send'
+import { buildReceipt, receiptFilename, type ReportReceipt } from '../domain/report-receipt'
 import { mediaSummary, PHOTOS_LEFT_OUT_MESSAGE } from '../domain/report-packet-files'
 import {
   RadioLogService, RadioLogStatusType, RadioLogType, RadioLogEntryType, LogService,
@@ -69,6 +70,7 @@ import { buildHandoverFile } from '../shared/export/handover-file'
 import { liveRefs, nameWithKind } from '../domain/attachments'
 import type { AttachmentFile } from '../shared/export/attachments-zip'
 import type { HandoverDialogResult } from './handover-dialog/handover-dialog.component'
+import type { MergeSummaryDialogResult } from './merge-summary-dialog/merge-summary-dialog.component'
 // E-122 Phase 2a: reloadPage() below awaits this before reloading - see its own doc comment.
 import { RecordStore } from '../shared/storage/record-store'
 import {
@@ -1334,7 +1336,12 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         await this.importSafety.markImportDone()
         lines.push('Undo is in Mission > Data safety for 24 hours.')
       }
-      alert(lines.join('\n'))
+      if (isCatchUp && inExercise) {
+        alert(lines.join('\n'))
+      } else {
+        // E-260 (D-69): the summary, with an offer to send a receipt back. It closes before anything below.
+        await this.showMergeSummary(lines, packet.entries.map(e => e.uid).filter((u): u is string => !!u))
+      }
 
       // E-196 (D-66): offer the file's scenario clock whenever it differs from the mission's.
       if (isCatchUp && inExercise && packet.scenarioClock
@@ -1347,6 +1354,37 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       this.log.error(`Could not read "${label}" as a Report Packet: ${e?.message ?? e}`, this.id)
       alert(`Could not read "${label}".\n\n${e?.message ?? e}`)
     }
+  }
+
+  /**
+   * E-260 (D-69): the Report Packet merge summary in a small dialog (loaded on first use) with OK
+   * and Send a receipt. The receipt lists the packet's uids and the message numbers they hold in
+   * this log, nothing else (rule 5), and goes out the way a packet does: share sheet or download.
+   */
+  private async showMergeSummary(lines: string[], packetUids: readonly string[]): Promise<void> {
+    const receipt = this.buildReceiptFor(packetUids)
+    const { MergeSummaryDialogComponent } = await import('./merge-summary-dialog/merge-summary-dialog.component')
+    const ref = this.dialog.open(MergeSummaryDialogComponent, {
+      width: '34rem', maxWidth: '95vw', data: { lines, canSendReceipt: receipt.entries.length > 0 },
+    })
+    const choice: MergeSummaryDialogResult = await new Promise(resolve => ref.afterClosed().subscribe(r => resolve(r)))
+    if (choice !== 'send') return
+    const filename = receiptFilename(receipt.mission, receipt.madeAt)
+    const outcome = await sendReportPacket(JSON.stringify(receipt, null, 2), filename, [], this.document,
+      (why) => this.log.warn(`Sharing the receipt was cancelled or failed, so it was downloaded instead: ${why}`, this.id))
+    const n = receipt.entries.length
+    this.journal.record('receipt-exported', `${outcome === 'downloaded' ? 'Downloaded' : 'Sent'} a receipt for ${n} report${n === 1 ? '' : 's'}.`)
+  }
+
+  private buildReceiptFor(packetUids: readonly string[]): ReportReceipt {
+    return buildReceipt({
+      packetUids,
+      logEntries: this.radioLogService.getCurrentRadioLog().logEntries,
+      mission: this.settings?.mission?.trim() ?? '',
+      station: this.devicePrefs.getMsgStation(),
+      appVersion: JSON.parse(JSON.stringify(packageJson)).version,
+      now: new Date(),
+    })
   }
 
   /** The words for files loaded with no packet: nothing to merge, just attachments to match up. */
