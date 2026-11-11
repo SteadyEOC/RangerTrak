@@ -188,7 +188,8 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             heading: 'Sending your reports (field mode)',
             text: 'A small "Online"/"Offline" badge shows above the form at all times on a field-mode device — a coarse signal ("this device has some kind of network connection"), not a promise that a report will actually arrive anywhere. If a report is urgent or expects a reply and there is any doubt, read it over the radio instead of trusting the badge — that channel does not depend on anything RangerTrak does.',
             bullets: [
-              'Send my reports, next to the badge, packages every report on this device into one file and hands it to whatever app you pick — Mail, Messages, AirDrop, a messaging app — the same "Share" sheet a photo or a link uses. Where it goes from there is up to the person you choose, not RangerTrak.',
+              'The send button (Send 3 new reports) packages the reports that have not been sent yet into one file and hands it to whatever app you pick — Mail, Messages, AirDrop, a messaging app — the same "Share" sheet a photo or a link uses. Where it goes from there is up to the person you choose, not RangerTrak.',
+              'My reports, just below it, shows each report as Not sent, Sent or Received. Edit or Delete a report before it is sent; after sending, radio a correction to the scribe. Send again resends the ones the command post has not confirmed.',
               'Nothing is ever lost by staying offline — every report saves to this device the instant it is submitted, exactly like normal. Sending is a separate, later step, never a requirement to file a report at all.',
               'At the command post, the matching Load Report Packet button on the Radio Log page merges those reports in — see that page\'s own Help.'
             ]

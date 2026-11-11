@@ -101,8 +101,8 @@ const SHOTS = [
   { id: 'T9.2', file: 'send-my-reports', phase: 'field', pad: 14, route: '/', mobile: true,
     setupReloads: true,
     setup: `(async () => { window.__click('.entry-welcome button', /my field phone/i); await new Promise(r => setTimeout(r, 2500)) })()`,
-    find: `[...document.querySelectorAll('button')].find(b => /Send my reports/i.test(b.textContent) && b.getClientRects().length)`,
-    alt: 'Field mode’s Send my reports button on a phone' },
+    find: `[...document.querySelectorAll('button')].find(b => /Send \d+ new reports?|Nothing new to send/i.test(b.textContent) && b.getClientRects().length)`,
+    alt: 'Field mode’s Send new reports button on a phone' },
 ]
 
 function findChrome() {

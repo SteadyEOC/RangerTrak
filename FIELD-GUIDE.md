@@ -465,9 +465,12 @@ it with **Turn off field mode** in Help. Install the app on each phone from rang
 
 - **RangerTrak never sends a report over the network by itself.** Every report saves on the
   phone straight away.
-- **Send my reports** bundles them into one file and opens the phone's share sheet. The ranger
-  picks the route: email or a messaging app over cell data or Wi-Fi, or AirDrop / Quick Share
-  to a station device nearby.
+- **Send N new reports** bundles the reports not sent yet into one file and opens the phone's
+  share sheet; it sends only new ones. The ranger picks the route: email or a messaging app over
+  cell data or Wi-Fi, or AirDrop / Quick Share to a station device nearby.
+- **My reports** (under the button) marks each report **Not sent**, **Sent** or **Received**.
+  Edit or delete a report before it is sent; after that, radio the correction to the scribe.
+  **Send again** resends the sent ones the command post has not confirmed.
 - **At the command post,** **Load Report Packet** on the Radio Log page merges it, skipping
   reports it already has. Pick the packet and any photos together: each photo is stored only if
   it matches a report in the packet, and the app says how many were added and how many are

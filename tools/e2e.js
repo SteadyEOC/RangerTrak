@@ -4913,6 +4913,85 @@ async function checkReportPacketRoundTrip(downloads) {
 }
 
 /**
+ * E-251/E-253 (2026-11-11, ADR D-69): a field phone sends only the reports not sent yet, and a not-sent
+ * report edited from My reports arrives in the packet edited. Not run by the brief's session (no
+ * e2e there); Opus runs it. Field mode is switched on through localStorage and off again at the end.
+ */
+async function checkFieldPhoneSendNew(downloads) {
+  console.log('\nField phone (E-251/E-253): Send only new reports; edit a not-sent report before sending')
+  await goto('/')
+  await idbRemoveRaw('radioLog')
+  await evaluate(`localStorage.setItem('fieldMode', 'true'); localStorage.removeItem('fieldModeReports')`)
+  await goto('/')
+
+  const typeNotes = text => evaluate(`(async () => {
+    const ta = document.querySelector('#enter__What--area');
+    if (ta) {
+      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, ${JSON.stringify(text)});
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    await new Promise(r => setTimeout(r, 300));
+  })()`)
+  const clickSubmit = () => evaluate(`(async () => {
+    document.querySelector('.enter__Submit-button').click();
+    await new Promise(r => setTimeout(r, 1200));
+  })()`)
+  const sendLabel = () => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.textContent.trim() ?? null`)
+  const sendDisabled = () => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.disabled ?? null`)
+  const seen = new Set()
+  const nextPacket = async () => {
+    let fresh = []
+    for (let i = 0; i < 40 && fresh.length === 0; i++) {
+      await sleep(250)
+      fresh = fs.readdirSync(downloads).filter(f => /report-packet/.test(f) && f.endsWith('.txt') && !f.endsWith('.crdownload') && !seen.has(f))
+    }
+    fresh.forEach(f => seen.add(f))
+    return fresh.length ? JSON.parse(fs.readFileSync(path.join(downloads, fresh[0]), 'utf8')) : null
+  }
+
+  try {
+    await typeNotes('E2E-SEND-NEW-1')
+    await clickSubmit()
+    check('the button reads "Send 1 new report" after one save', await pollUntil(sendLabel, v => v === 'Send 1 new report'), 'Send 1 new report')
+
+    await evaluate(`document.querySelector('[data-testid="send-new-reports"]').click()`)
+    const first = await nextPacket()
+    check('Send produced a packet with the one report', first?.entries?.length, 1)
+    check('after sending, the button reads "Nothing new to send"', await pollUntil(sendLabel, v => v === 'Nothing new to send'), 'Nothing new to send')
+    check('...and is disabled', await sendDisabled(), true)
+
+    // Save a second report, then correct it through My reports before it is sent.
+    await typeNotes('E2E-SEND-NEW-2')
+    await clickSubmit()
+    await pollUntil(sendLabel, v => v === 'Send 1 new report')
+    // My reports is deferred (on viewport): scroll the placeholder into view, then wait for its row.
+    await evaluate(`document.querySelector('.entry-myreports-placeholder, rangertrak-my-reports')?.scrollIntoView()`)
+    const edited = await pollUntil(
+      () => evaluate(`(() => {
+        const row = [...document.querySelectorAll('[data-testid="my-report-row"]')].find(r => r.textContent.includes('E2E-SEND-NEW-2'));
+        const btn = row?.querySelector('[data-testid="my-report-edit"]');
+        if (!btn) return false;
+        btn.click();
+        return true;
+      })()`), v => v === true)
+    check('My reports lists the not-sent report with an Edit button', edited, true)
+    check('Editing shows the "Editing report from" line',
+      await pollUntil(() => evaluate(`!!document.querySelector('[data-testid="entry-editing"]')`), v => v === true), true)
+    await typeNotes('E2E-SEND-NEW-2-CORRECTED')
+    await clickSubmit()
+    check('Save changes leaves edit mode', await evaluate(`!document.querySelector('[data-testid="entry-editing"]')`), true)
+
+    await evaluate(`document.querySelector('[data-testid="send-new-reports"]').click()`)
+    const second = await nextPacket()
+    check('the second packet holds only the one new report', second?.entries?.length, 1)
+    check('...and it arrives edited', second?.entries?.[0]?.notes, 'E2E-SEND-NEW-2-CORRECTED')
+  } finally {
+    await evaluate(`localStorage.removeItem('fieldMode'); localStorage.removeItem('fieldModeReports')`)
+    await idbRemoveRaw('radioLog')
+  }
+}
+
+/**
  * F29-11 (2026-08-30): the sample mission's roster/report content was substantially rewritten
  * (an ICS role spread, walking-distance park clusters, real ICS-213 messages) - this check
  * verifies the new counts land correctly, not just that the button still exists. Also a real
@@ -5928,13 +6007,14 @@ async function main() {
         if (want('backup')) await checkMissionRoundTrip(downloads)
         if (want('backup')) await checkBackupFixturesRestore()
         if (want('backup')) await checkReportPacketRoundTrip(downloads)
+        if (want('backup')) await checkFieldPhoneSendNew(downloads)
         if (want('mission') || want('map')) await checkSampleMissionLoads() // the ring check needs the sample
         if (want('map')) await checkRangeRingsAndCoordReadout()
         if (want('map')) await checkMapFilterChips()
         if (want('map')) await checkMapPlacesImport(fx)
         if (want('backup')) await checkDeviceEncryption()
       } else {
-        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkSampleMissionLoads, checkRangeRingsAndCoordReadout, checkDeviceEncryption (pass --full to include)')
+        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkFieldPhoneSendNew, checkSampleMissionLoads, checkRangeRingsAndCoordReadout, checkDeviceEncryption (pass --full to include)')
       }
       // These three wipe storage, so they run LAST: placed earlier, they erased the fixture roster
       // checkCallsignIsSaved (--full) relies on, and it failed only in combined runs (2026-10-18).
