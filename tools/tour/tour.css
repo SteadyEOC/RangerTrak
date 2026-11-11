@@ -210,3 +210,8 @@ a.next { margin-left: auto; }
   input.tick { accent-color: #000; }
   .view[hidden] { display: none; }
 }
+
+/* E-244: a small picture of the control a step names (tools/tour/capture-shots.js). */
+.shot { display: block; max-width: 100%; height: auto; max-width: min(100%, 420px); margin-top: 6px;
+  border: 1px solid var(--rule); border-radius: 4px; background: #fff; }
+@media print { .shot { max-width: 200px; break-inside: avoid; } }

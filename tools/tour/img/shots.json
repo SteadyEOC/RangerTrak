@@ -1,0 +1,98 @@
+{
+  "T1.6": {
+    "file": "view-switch.webp",
+    "alt": "The Full view / Simple view switch at the top of Entry",
+    "width": 145,
+    "height": 48
+  },
+  "T1.7": {
+    "file": "aar-button.webp",
+    "alt": "The AAR/214 button in the page header",
+    "width": 141,
+    "height": 48
+  },
+  "T2.1": {
+    "file": "ranger-id.webp",
+    "alt": "Ranger ID on Entry with matching rangers listed under it",
+    "width": 366,
+    "height": 190
+  },
+  "T1.2": {
+    "file": "demo-offer.webp",
+    "alt": "The Demo line on Entry’s welcome panel, with the Load a demo button",
+    "width": 336,
+    "height": 106
+  },
+  "T2.4": {
+    "file": "disposition-box.webp",
+    "alt": "The disposition box at the left of each Radio Log row, first column",
+    "width": 451,
+    "height": 280
+  },
+  "T3.7": {
+    "file": "location-formats.webp",
+    "alt": "Entry’s location format switcher with the derived formats below it",
+    "width": 510,
+    "height": 394
+  },
+  "T4.3": {
+    "file": "danger-zone.webp",
+    "alt": "Mission’s Danger zone panel, opened",
+    "width": 729,
+    "height": 353
+  },
+  "T4.4": {
+    "file": "status-pill.webp",
+    "alt": "The status pill in the header, with its mode icon, and the panel that opens under it with the mode buttons",
+    "width": 441,
+    "height": 339
+  },
+  "T4.9": {
+    "file": "tactical-calls.webp",
+    "alt": "Mission’s Tactical call signs card",
+    "width": 628,
+    "height": 458
+  },
+  "T4.10": {
+    "file": "import-export-print.webp",
+    "alt": "Rangers’ Import, export & print panel, opened",
+    "width": 729,
+    "height": 344
+  },
+  "T6.1": {
+    "file": "offline-save.webp",
+    "alt": "The Map’s Offline maps card, with Save this area for offline use",
+    "width": 478,
+    "height": 220
+  },
+  "T6.2": {
+    "file": "map-engine-switch.webp",
+    "alt": "The switch to the Alternative map (MapLibre + PMTiles) on the Map page",
+    "width": 241,
+    "height": 48
+  },
+  "T6.6": {
+    "file": "data-safety.webp",
+    "alt": "Mission’s Data safety card showing the storage status",
+    "width": 628,
+    "height": 316
+  },
+  "T7.1": {
+    "file": "print-ics309.webp",
+    "alt": "Radio Log’s Print ICS-309 log card",
+    "width": 628,
+    "height": 176
+  },
+  "T8.2": {
+    "file": "board-card.webp",
+    "alt": "Mission’s RangerTrak Board card",
+    "width": 628,
+    "height": 419
+  },
+  "T9.2": {
+    "file": "send-my-reports.webp",
+    "alt": "Field mode’s Send my reports button on a phone",
+    "width": 134,
+    "height": 45
+  }
+}

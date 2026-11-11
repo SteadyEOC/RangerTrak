@@ -164,6 +164,21 @@ def short(h):
     return html.escape(t, quote=False)
 
 
+_SHOTS = None
+def shot_html(iid):
+    """E-244: a small picture of the control a step names; made by tools/tour/capture-shots.js (img/shots.json)."""
+    global _SHOTS
+    if _SHOTS is None:
+        import json, os
+        f = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'img', 'shots.json')
+        _SHOTS = json.load(open(f, encoding='utf-8')) if os.path.exists(f) else {}
+    s = _SHOTS.get(iid)
+    if not s:
+        return ''
+    alt = s['alt'].replace('&', '&amp;').replace('"', '&quot;')
+    return (f'<img class="shot" src="img/{s["file"]}" alt="{alt}" width="{s["width"]}" '
+            f'height="{s["height"]}" loading="lazy">')
+
 def build(root):
     out, items, cards = [], [], {}
     blocks = list(root)
@@ -275,8 +290,9 @@ def build(root):
                     tick = (f'<input type="checkbox" class="tick" data-ids="{" ".join(ids)}" '
                             f'aria-label="{what}: {iid}">')
                     mark = glyph('q', 15) if cls[0] == 'q' else ''
+                    shot = shot_html(iid)
                     lis.append(f'<li id="{iid}" class="{cls}">{spans}{tick}<div><strong>{mark}{iid}</strong> {body} '
-                               f'<a class="self" href="#{iid}" aria-label="Link to {iid}">#</a></div></li>')
+                               f'<a class="self" href="#{iid}" aria-label="Link to {iid}">#</a>{shot}</div></li>')
                 else:
                     lis.append(f'<li>{text}</li>')
             out.append(('<ul class="checks">' if check else '<ul>') + ''.join(lis) + '</ul>')
