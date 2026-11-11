@@ -395,7 +395,7 @@ backup also backfills on restore. The display `id` is still per device and renum
 validation, moved out of `RadioLogService`): it applies a `uidRemap` to `rangerUid`/`toRangerUid`, matches
 an incoming entry on `uid` (an entry without one falls back to the E-114 `sourceUid` key, so older Report
 Packets dedupe as before) and, on a `uid` match, lets the later `revisedAt` win (updated in place, display
-`id` kept; never revised counts as oldest). `mergeRangers()` now also returns `uidRemap` (incoming uid ->
+`id` kept; never revised counts as oldest). `revisedAt` is stamped by the Messages edit form, by attachment changes and, since E-282 (2026-11-11), by a Radio Log grid cell edit that really changes the value (`domain/grid-edit-stamp.ts`), so a grid correction also travels through a hand-over Merge; a status-mark change carries its own `handled.at` instead. `mergeRangers()` now also returns `uidRemap` (incoming uid ->
 the uid the row ended up with), because a matched walk-up keeps the receiving device's uid and the
 sender's entries would otherwise attach to nobody. `RadioLogService.mergeIncomingEntries()` (Report Packet)
 and `mergeHandoverEntries()` both call `mergeEntries()`; only the Report Packet path passes a reporter

@@ -1,6 +1,6 @@
 import { MasonryDirective } from '../shared/layout/masonry.directive'
 import { RouterLink } from '@angular/router'
-import { ColumnResizedEvent, GridOptions, GridSizeChangedEvent, SelectionChangedEvent } from 'ag-grid-community'
+import { CellValueChangedEvent, ColumnResizedEvent, GridOptions, GridSizeChangedEvent, SelectionChangedEvent } from 'ag-grid-community'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../domain/overdue'
 // , TeamService
 import { Observable, subscribeOn, Subscription } from 'rxjs'
@@ -8,6 +8,7 @@ import { Observable, subscribeOn, Subscription } from 'rxjs'
 import { CommonModule, DOCUMENT, formatDate } from '@angular/common'
 import { AfterViewInit, Component, inject, Inject, OnDestroy, OnInit, Pipe, PipeTransform, ElementRef, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 
+import { stampRevisedIfChanged } from '../domain/grid-edit-stamp'
 import { AgGridAngular } from 'ag-grid-angular';
 import { PageComponent } from '../shared/page/page.component';
 import { ExpandableSectionComponent } from '../shared/expandable-section/expandable-section.component';
@@ -534,7 +535,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // mutated them by the time this fires - it just has to be written out.
     // Previously nothing did, and a "Save Reports" button alerted UNIMPLEMENTED,
     // so every correction a scribe typed into the grid was lost on reload.
-    onCellValueChanged: () => this.onCellEdited(),
+    onCellValueChanged: (event: CellValueChangedEvent) => this.onCellEdited(event),
     // John 2026-10-27: content sizing let the grid run far past the screen. After every auto-size
     // (the initial autoSizeStrategy and refreshGrid's autoSizeAllColumns) and on a resize, the
     // widest columns are trimmed so the whole grid is at most 1.5 screen widths.
@@ -1484,7 +1485,9 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    * "Save Reports" button, which the page itself described as something that
    * "should happen automatically".
    */
-  private onCellEdited() {
+  private onCellEdited(event: CellValueChangedEvent) {
+    // E-282 (D-47 note): a real change stamps revisedAt so the correction travels through a hand-over Merge.
+    stampRevisedIfChanged(event.data, event.oldValue, event.newValue)
     this.log.info(`Edited a radio log entry in the grid.`, this.id)
     this.radioLogService.saveEditedRadioLog()
   }

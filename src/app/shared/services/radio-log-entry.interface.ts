@@ -214,9 +214,10 @@ export type RadioLogEntryType = {
   // Raised live 2026-08-30, tied directly to D-47 (reports/messages stay editable
   // indefinitely, no time lock): that ADR anticipated exactly this pair - "indefinitely
   // editable" and "visibly edited" - as the natural follow-on once it mattered in practice.
-  // `revisedAt` is stamped whenever MessagesComponent's own edit form saves a change (NOT by
-  // the Radio Log grid's cell edits - this is scoped to the Messages page's own new edit
-  // capability, not a general audit trail for every field). Optional/additive, same
+  // `revisedAt` is stamped whenever MessagesComponent's own edit form saves a change, and, since
+  // 2026-11-11 (E-282, D-47 note), by a Radio Log grid cell edit that really changes the value
+  // (domain/grid-edit-stamp.ts), so a grid correction travels through a hand-over Merge.
+  // Not a general audit trail for every field (the status mark carries its own handled.at). Optional/additive, same
   // no-migration treatment as every other field added this way - a report with none simply
   // has never been edited there.
   revisedAt?: Date,
