@@ -115,6 +115,13 @@
       Send again ({{ unconfirmedCount() }} not confirmed)
     </button>
     }
+    <!-- E-260 (D-69): the command post's receipt marks these reports Received. -->
+    <button type="button" class="entry-connectivity__again" data-testid="open-receipt"
+      (click)="receiptInput.click()">
+      Open a receipt
+    </button>
+    <input #receiptInput type="file" accept=".txt,.json,text/plain,application/json" hidden
+      data-testid="receipt-file" (change)="onReceiptFileSelected($event)" />
   </p>
   @defer (on viewport) {
   <rangertrak-my-reports (edit)="onEditReport($event)"></rangertrak-my-reports>

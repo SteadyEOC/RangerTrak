@@ -124,3 +124,45 @@ export function parseReceipt(text: string): ParsedReceipt {
     },
   }
 }
+
+/** 'A031' → ['A', 31]; anything else (blank, odd) has no place in a range. */
+function splitMsgNo(s: string): [string, number] | null {
+  const m = /^([A-Z])(\d+)$/.exec(s)
+  return m ? [m[1], Number(m[2])] : null
+}
+
+/**
+ * Message numbers as short runs for a sentence: 'A031–A037', or 'A031–A033, A040' when there are gaps.
+ * Over four runs it names the first four and says how many more. Blank or odd numbers are left out.
+ */
+export function msgNoRanges(msgNos: readonly string[]): string {
+  const parsed = msgNos.map(s => ({ s, p: splitMsgNo(s) })).filter(x => x.p)
+    .sort((a, b) => a.p![0].localeCompare(b.p![0]) || a.p![1] - b.p![1])
+  const runs: { from: string, to: string, last: [string, number] }[] = []
+  for (const { s, p } of parsed) {
+    const run = runs[runs.length - 1]
+    if (run && run.last[0] === p![0] && p![1] === run.last[1]) continue
+    if (run && run.last[0] === p![0] && p![1] === run.last[1] + 1) { run.to = s; run.last = p!; continue }
+    runs.push({ from: s, to: s, last: p! })
+  }
+  const text = (r: { from: string, to: string }) => r.from === r.to ? r.from : `${r.from}–${r.to}`
+  if (runs.length <= 4) return runs.map(text).join(', ')
+  return `${runs.slice(0, 4).map(text).join(', ')} and ${runs.length - 4} more`
+}
+
+/** What the phone says after opening a receipt. `held` = receipt reports this phone holds; `changed` = newly marked. */
+export function receiptOpenMessage(p: { changed: number, held: number, notHeld: number, skipped: number, msgNos: readonly string[] }): string {
+  const plural = (n: number) => `report${n === 1 ? '' : 's'}`
+  const parts: string[] = []
+  if (p.changed > 0) {
+    const range = msgNoRanges(p.msgNos)
+    parts.push(`${p.changed} ${plural(p.changed)} confirmed received${range ? ` (${range})` : ''}.`)
+  } else if (p.held > 0) {
+    parts.push('Nothing new: these reports were already marked received.')
+  } else {
+    parts.push('None of the reports in this receipt are on this phone.')
+  }
+  if (p.notHeld > 0 && p.held > 0) parts.push(`${p.notHeld} in the receipt ${p.notHeld === 1 ? 'is' : 'are'} not on this phone.`)
+  if (p.skipped > 0) parts.push(`${p.skipped} ${p.skipped === 1 ? 'entry' : 'entries'} in the file could not be read.`)
+  return parts.join(' ')
+}

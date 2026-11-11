@@ -380,15 +380,31 @@ export class RadioLogService {
    * Returns false when no entry has this uid.
    */
   public async deleteEntry(uid: string): Promise<boolean> {
-    const index = this.radioLog.logEntries.findIndex(e => e.uid === uid)
-    if (index < 0) return false
-    this.radioLog.logEntries.splice(index, 1)
+    return (await this.deleteEntries([uid], 'report-deleted')) > 0
+  }
+
+  /**
+   * E-260 (D-69): deletes several reports with ONE save and ONE photo sweep (Clear received
+   * reports on the phone). Journalled with counts only (rule 5): `report-deleted` for a single
+   * report from My reports, `reports-cleared` for the Clear received action. Returns how many
+   * were found and removed.
+   */
+  public async deleteEntries(uids: readonly string[], kind: 'report-deleted' | 'reports-cleared' = 'reports-cleared'): Promise<number> {
+    const drop = new Set(uids)
+    const before = this.radioLog.logEntries.length
+    for (let i = this.radioLog.logEntries.length - 1; i >= 0; i--) {   // in place, as deleteEntry always did
+      const u = this.radioLog.logEntries[i].uid
+      if (u && drop.has(u)) this.radioLog.logEntries.splice(i, 1)
+    }
+    const removed = before - this.radioLog.logEntries.length
+    if (!removed) return 0
     this.radioLog.numReport = this.radioLog.logEntries.length
     this.recalcRadioLogBounds(this.radioLog)
     this.updateRadioLogAndPublish()
-    this.journal.record('report-deleted', 'Deleted 1 report from this device.')
+    const n = `${removed} report${removed === 1 ? '' : 's'}`
+    this.journal.record(kind, kind === 'reports-cleared' ? `Cleared ${n} already received from this device.` : `Deleted ${n} from this device.`)
     await this.attachmentStore.sweepOrphans(this.radioLog.logEntries)
-    return true
+    return removed
   }
 
   /**

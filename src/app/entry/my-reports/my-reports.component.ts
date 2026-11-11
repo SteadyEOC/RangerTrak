@@ -7,6 +7,7 @@ import { clock, reportFirstLine, reportFullText, stateChip } from '../../domain/
 import { FieldModeService } from '../../shared/services/field-mode.service'
 import { RadioLogEntryType } from '../../shared/services/radio-log-entry.interface'
 import { RadioLogService } from '../../shared/services/radio-log.service'
+import { MissionJournalService } from '../../shared/services/mission-journal.service'
 
 /**
  * E-251/E-253 (2026-11-11, ADR D-69): "My reports" on a field phone's Entry page. Every report on this
@@ -50,6 +51,16 @@ import { RadioLogService } from '../../shared/services/radio-log.service'
             </li>
           }
         </ul>
+        @if (sentCount() || receivedCount()) {
+          <div class="mr__bulk">
+            @if (sentCount()) {
+              <button matButton type="button" data-testid="mark-received" (click)="onMarkReceived()">Mark {{ sentCount() }} sent report{{ sentCount() === 1 ? '' : 's' }} received</button>
+            }
+            @if (receivedCount()) {
+              <button matButton type="button" data-testid="clear-received" (click)="onClearReceived()">Clear {{ receivedCount() }} received report{{ receivedCount() === 1 ? '' : 's' }}</button>
+            }
+          </div>
+        }
       </section>
     }
   `,
@@ -73,13 +84,15 @@ import { RadioLogService } from '../../shared/services/radio-log.service'
     .mr__chip--received { background: var(--rt-surface-2); }
     .mr__text { margin: 0.25rem 0 0.5rem; white-space: pre-wrap; overflow-wrap: anywhere; }
     .mr__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding-bottom: 0.25rem; }
-    .mr__actions button { min-height: 44px; }
+    .mr__actions button, .mr__bulk button { min-height: 44px; }
+    .mr__bulk { display: flex; flex-wrap: wrap; gap: 0.5rem; padding-top: 0.5rem; }
   `],
 })
 export class MyReportsComponent {
   private readonly radioLog = toSignal(inject(RadioLogService).getRadioLogObserver().pipe(map(l => ({ ...l }))))   // a copy per emission: the service mutates one object in place
   private readonly service = inject(RadioLogService)
   private readonly fieldMode = inject(FieldModeService)
+  private readonly journal = inject(MissionJournalService)
 
   /** Asks Entry to load this not-sent report into its own form. */
   readonly edit = output<RadioLogEntryType>()
@@ -102,6 +115,31 @@ export class MyReportsComponent {
       chip: stateChip(entry.uid ? reports[entry.uid] : undefined),
     }))
   })
+
+  readonly sentCount = computed(() => this.rows().filter(r => r.state === 'sent').length)
+  readonly receivedCount = computed(() => this.rows().filter(r => r.state === 'received').length)
+
+  /** E-260 (D-69): for when the command post confirmed the reports by radio and no receipt came. */
+  onMarkReceived(): void {
+    const uids = this.rows().filter(r => r.state === 'sent' && r.uid).map(r => r.uid as string)
+    if (!uids.length) return
+    if (!confirm(`Mark the ${uids.length} sent report${uids.length === 1 ? '' : 's'} as received? `
+      + 'Use this when the command post has confirmed them by radio.')) return
+    const changed = this.fieldMode.markReceived(uids)
+    this.journal.record('reports-marked-received', `Marked ${changed} sent report${changed === 1 ? '' : 's'} as received by hand.`)
+  }
+
+  /** E-260 (D-69): never automatic. Deletes the received reports from this phone, one save, one photo sweep. */
+  async onClearReceived(): Promise<void> {
+    const uids = this.rows().filter(r => r.state === 'received' && r.uid).map(r => r.uid as string)
+    if (!uids.length) return
+    if (!confirm(`Clear the ${uids.length} received report${uids.length === 1 ? '' : 's'} from this phone?
+
+`
+      + 'The command post has them. This cannot be undone on this phone.')) return
+    await this.service.deleteEntries(uids, 'reports-cleared')
+    this.fieldMode.forget(uids)
+  }
 
   toggle(uid: string | undefined): void {
     this.open.update(cur => (cur === uid ? undefined : uid))

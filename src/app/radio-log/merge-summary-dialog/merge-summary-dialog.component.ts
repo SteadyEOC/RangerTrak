@@ -21,7 +21,7 @@ export type MergeSummaryDialogResult = 'send' | undefined
   selector: 'rangertrak-merge-summary-dialog',
   standalone: true,
   imports: [MatDialogModule, MatButtonModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>Reports merged</h2>
     <mat-dialog-content>

@@ -69,6 +69,7 @@ import { sendReportPacket } from '../shared/export/report-packet-send'
 import { ImportSafetyCardComponent } from '../shared/import-safety/import-safety-card.component'
 import { MyReportsComponent } from './my-reports/my-reports.component'
 import { PHOTOS_LEFT_OUT_MESSAGE } from '../domain/report-packet-files'
+import { parseReceipt, receiptOpenMessage } from '../domain/report-receipt'
 import type { ViewContext } from '../domain/view'
 import { devDiagnostics } from '../shared/dev-diagnostics'
 import { clock } from '../domain/field-report-view'
@@ -684,6 +685,33 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.journal.record('packet-exported', `Shared Report Packet: ${filename} (${count} reports, ${outcome === 'shared' ? media.length : 0} files).`)
     if (outcome === 'shared-text-only') alert(PHOTOS_LEFT_OUT_MESSAGE)
+  }
+
+  /**
+   * E-260 (D-69): opens the command post's receipt and marks the reports it lists, that this phone
+   * holds, as Received (with the message numbers the command post gave them). A uid this phone does
+   * not hold is ignored and counted. Opening the same receipt again changes nothing. The receipt has
+   * uids and numbers only, so the journal gets counts only (rule 5).
+   */
+  async onReceiptFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    input.value = '' // so re-picking the same file still fires a change event
+    if (!file) return
+    const parsed = parseReceipt(await file.text())
+    if (!parsed.ok) {
+      alert(parsed.message)
+      return
+    }
+    const held = new Set(this.radioLogService.getCurrentRadioLog().logEntries.map(e => e.uid).filter((u): u is string => !!u))
+    const mine = parsed.receipt.entries.filter(e => held.has(e.uid))
+    const msgNos = new Map(mine.filter(e => e.msgNo).map(e => [e.uid, e.msgNo] as const))
+    const before = this.fieldMode.reports()
+    const changed = this.fieldMode.markReceived(mine.map(e => e.uid), new Date(), msgNos)
+    const newlyReceived = mine.filter(e => !before[e.uid]?.receivedAt).map(e => e.msgNo)
+    const notHeld = parsed.receipt.entries.length - mine.length
+    if (changed) this.journal.record('receipt-imported', `Opened a receipt: ${changed} report${changed === 1 ? '' : 's'} marked received, ${notHeld} not on this phone.`)
+    alert(receiptOpenMessage({ changed, held: mine.length, notHeld, skipped: parsed.skipped, msgNos: newlyReceived }))
   }
 
   // ── E-251/E-253 (D-69): edit a not-sent report in this form ─────────────

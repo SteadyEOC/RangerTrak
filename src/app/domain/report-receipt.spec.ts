@@ -1,4 +1,4 @@
-import { buildReceipt, parseReceipt, receiptFilename, REPORT_RECEIPT_KIND } from './report-receipt'
+import { buildReceipt, msgNoRanges, parseReceipt, receiptFilename, receiptOpenMessage, REPORT_RECEIPT_KIND } from './report-receipt'
 
 const NOW = new Date(2026, 10, 11, 14, 32)
 const log = [
@@ -52,5 +52,22 @@ describe('report receipt', () => {
       entries: [{ uid: 'a', msgNo: 'A001' }, { uid: 5 }, null, { uid: 'b' }] }))
     expect(p.ok && p.receipt.entries.map(e => e.uid)).toEqual(['a', 'b'])
     expect(p.ok && p.skipped).toBe(2)
+  })
+
+  it('writes message numbers as short runs', () => {
+    expect(msgNoRanges(['A033', 'A031', 'A032'])).toBe('A031–A033')
+    expect(msgNoRanges(['A031', 'A033', 'A040'])).toBe('A031, A033, A040')
+    expect(msgNoRanges(['A001', 'A003', 'A005', 'A007', 'A009', 'B001'])).toBe('A001, A003, A005, A007 and 2 more')
+    expect(msgNoRanges(['A007', 'A007', ''])).toBe('A007')
+  })
+
+  it('words what opening a receipt did', () => {
+    const base = { changed: 0, held: 0, notHeld: 0, skipped: 0, msgNos: [] as string[] }
+    expect(receiptOpenMessage({ ...base, changed: 7, held: 7, notHeld: 2, msgNos: ['A031', 'A032', 'A033', 'A034', 'A035', 'A036', 'A037'] }))
+      .toBe('7 reports confirmed received (A031–A037). 2 in the receipt are not on this phone.')
+    expect(receiptOpenMessage({ ...base, held: 3 })).toBe('Nothing new: these reports were already marked received.')
+    expect(receiptOpenMessage({ ...base, notHeld: 4 })).toBe('None of the reports in this receipt are on this phone.')
+    expect(receiptOpenMessage({ ...base, changed: 1, held: 1, msgNos: ['A001'], skipped: 1 }))
+      .toBe('1 report confirmed received (A001). 1 entry in the file could not be read.')
   })
 })
