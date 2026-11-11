@@ -476,8 +476,15 @@ it with **Turn off field mode** in Help. Install the app on each phone from rang
   it matches a report in the packet, and the app says how many were added and how many are
   still on the ranger's phone. If the share sheet can't take the photos (too big), only the
   packet goes and the app says so.
-- **The phone gets no receipt.** With no data path, or for anything urgent, read the report
-  over the radio as always.
+- **A receipt comes back.** After merging, the command post's summary offers **Send a receipt**:
+  a small file of report numbers only (no report text, names or places), shared or downloaded
+  like the packet. On the phone, **Open a receipt** (beside the send buttons) marks those reports
+  **Received** and says which numbers were confirmed; opening it twice changes nothing. If the
+  command post confirmed by radio, **Mark sent reports received** in My reports does it by hand.
+  When the mission is over, or the phone is getting full, **Clear received reports** deletes the
+  received ones from the phone (it asks first and cannot be undone there).
+- **Anything urgent still goes by radio.** The Online badge says only that the phone has a
+  connection, not that a report arrived.
 
 ### RangerTrak Board
 

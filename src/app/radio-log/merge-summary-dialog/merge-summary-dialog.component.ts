@@ -33,9 +33,9 @@ export type MergeSummaryDialogResult = 'send' | undefined
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" [mat-dialog-close]="undefined">OK</button>
+      <button matButton type="button" data-testid="merge-summary-ok" [mat-dialog-close]="undefined">OK</button>
       @if (data.canSendReceipt) {
-        <button matButton="filled" type="button" [mat-dialog-close]="'send'" cdkFocusInitial>Send a receipt</button>
+        <button matButton="filled" type="button" data-testid="merge-summary-receipt" [mat-dialog-close]="'send'" cdkFocusInitial>Send a receipt</button>
       }
     </mat-dialog-actions>
   `,

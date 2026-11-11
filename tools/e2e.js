@@ -4992,6 +4992,100 @@ async function checkFieldPhoneSendNew(downloads) {
 }
 
 /**
+ * E-260 (2026-11-11, ADR D-69): the receipt. One browser plays both devices by flipping the `fieldMode`
+ * flag: the phone logs two reports and sends them; the same device as a command post loads that packet
+ * (every uid is already here, so nothing is added, but the receipt still lists them) and presses Send a
+ * receipt in the merge summary; the phone then opens the downloaded receipt and My reports shows
+ * Received with the message numbers. The same receipt again says nothing is new; Clear received reports
+ * empties the phone. Not run by the brief's session (no e2e there); Opus runs it.
+ */
+async function checkReportReceipt(downloads) {
+  console.log('\nReceipt (E-260): packet -> merge -> Send a receipt -> phone opens it -> Received; again = nothing new')
+  await goto('/')
+  await idbRemoveRaw('radioLog')
+  await evaluate(`localStorage.setItem('fieldMode', 'true'); localStorage.removeItem('fieldModeReports')`)
+  await goto('/')
+
+  const typeNotes = text => evaluate(`(async () => {
+    const ta = document.querySelector('#enter__What--area');
+    if (ta) {
+      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set.call(ta, ${JSON.stringify(text)});
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    await new Promise(r => setTimeout(r, 300));
+  })()`)
+  const clickSubmit = () => evaluate(`(async () => {
+    document.querySelector('.enter__Submit-button').click();
+    await new Promise(r => setTimeout(r, 1200));
+  })()`)
+  const waitFile = async (re) => {
+    let found = []
+    for (let i = 0; i < 40 && found.length === 0; i++) {
+      await sleep(250)
+      found = fs.readdirSync(downloads).filter(f => re.test(f) && f.endsWith('.txt') && !f.endsWith('.crdownload'))
+    }
+    return found.length ? path.join(downloads, found[0]) : null
+  }
+  const chips = () => evaluate(`[...document.querySelectorAll('[data-testid="my-report-chip"]')].map(c => c.textContent.trim())`)
+  const showMyReports = () => evaluate(`document.querySelector('.entry-myreports-placeholder, rangertrak-my-reports')?.scrollIntoView()`)
+
+  try {
+    await typeNotes('E2E-RECEIPT-1')
+    await clickSubmit()
+    await typeNotes('E2E-RECEIPT-2')
+    await clickSubmit()
+    await pollUntil(() => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.textContent.trim() ?? null`), v => v === 'Send 2 new reports')
+    await evaluate(`document.querySelector('[data-testid="send-new-reports"]').click()`)
+    const packetFile = await waitFile(/report-packet/)
+    if (!check('the phone produced a packet', !!packetFile, true)) return
+    fs.renameSync(packetFile, packetFile + '.e2e-used')   // so a later check's file search does not meet it
+
+    // The command post: field mode off, packet loaded, receipt sent from the merge summary.
+    await evaluate(`localStorage.removeItem('fieldMode')`)
+    await goto('/')
+    await navigateInApp('Radio Log', 3500)
+    await setFileInput('input[type="file"][accept^="text/plain"]', packetFile + '.e2e-used')
+    const offered = await pollUntil(() => evaluate(`!!document.querySelector('[data-testid="merge-summary-receipt"]')`), v => v === true)
+    check('the merge summary offers Send a receipt', offered, true)
+    await evaluate(`document.querySelector('[data-testid="merge-summary-receipt"]')?.click()`)
+    const receiptFile = await waitFile(/rangertrak-receipt/)
+    if (!check('Send a receipt produced a file', !!receiptFile, true)) return
+    const raw = fs.readFileSync(receiptFile, 'utf8')
+    const receipt = JSON.parse(raw)
+    check('the receipt lists both reports', receipt.entries?.length, 2)
+    check('...with message numbers', receipt.entries?.every(e => /^[A-Z]\d{3}$/.test(e.msgNo)), true)
+    check('...and carries no report text', raw.includes('E2E-RECEIPT'), false)
+
+    // The phone opens it.
+    await evaluate(`localStorage.setItem('fieldMode', 'true')`)
+    await goto('/')
+    await showMyReports()
+    await pollUntil(chips, v => Array.isArray(v) && v.length === 2)
+    check('before the receipt, both reports read Sent', (await chips()).every(c => /^Sent/.test(c)), true)
+    await setFileInput('[data-testid="receipt-file"]', receiptFile)
+    await pollUntil(chips, v => Array.isArray(v) && v.length === 2 && v.every(c => /^Received/.test(c)))
+    const after = await chips()
+    check('after the receipt, both read Received with their numbers', after.every(c => /^Received\W+[A-Z]\d{3}$/.test(c)), true)
+
+    const before = dialogs.length
+    await setFileInput('[data-testid="receipt-file"]', receiptFile)
+    await pollUntil(() => Promise.resolve(dialogs.length), v => v > before)
+    check('opening the same receipt again says nothing is new', (dialogs[dialogs.length - 1] || '').startsWith('Nothing new'), true)
+
+    await evaluate(`document.querySelector('[data-testid="clear-received"]')?.click()`)
+    check('Clear received reports empties the phone', await pollUntil(chips, v => Array.isArray(v) && v.length === 0), true)
+    const left = (JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || []).length
+    check('...and the log holds no reports', left, 0)
+  } finally {
+    await evaluate(`localStorage.removeItem('fieldMode'); localStorage.removeItem('fieldModeReports')`)
+    await idbRemoveRaw('radioLog')
+    for (const f of fs.readdirSync(downloads)) {
+      if (/rangertrak-receipt|report-packet/.test(f) && f.endsWith('.e2e-used')) fs.rmSync(path.join(downloads, f), { force: true })
+    }
+  }
+}
+
+/**
  * F29-11 (2026-08-30): the sample mission's roster/report content was substantially rewritten
  * (an ICS role spread, walking-distance park clusters, real ICS-213 messages) - this check
  * verifies the new counts land correctly, not just that the button still exists. Also a real
@@ -6008,13 +6102,14 @@ async function main() {
         if (want('backup')) await checkBackupFixturesRestore()
         if (want('backup')) await checkReportPacketRoundTrip(downloads)
         if (want('backup')) await checkFieldPhoneSendNew(downloads)
+        if (want('backup')) await checkReportReceipt(downloads)
         if (want('mission') || want('map')) await checkSampleMissionLoads() // the ring check needs the sample
         if (want('map')) await checkRangeRingsAndCoordReadout()
         if (want('map')) await checkMapFilterChips()
         if (want('map')) await checkMapPlacesImport(fx)
         if (want('backup')) await checkDeviceEncryption()
       } else {
-        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkFieldPhoneSendNew, checkSampleMissionLoads, checkRangeRingsAndCoordReadout, checkDeviceEncryption (pass --full to include)')
+        note('fast run: skipping checkMissionRoundTrip, checkReportPacketRoundTrip, checkFieldPhoneSendNew, checkReportReceipt, checkSampleMissionLoads, checkRangeRingsAndCoordReadout, checkDeviceEncryption (pass --full to include)')
       }
       // These three wipe storage, so they run LAST: placed earlier, they erased the fixture roster
       // checkCallsignIsSaved (--full) relies on, and it failed only in combined runs (2026-10-18).
