@@ -613,7 +613,18 @@ async function checkRoutesRender() {
         outlet: document.querySelector('router-outlet')?.nextElementSibling?.tagName ?? null,
         dialogs: [...document.querySelectorAll('mat-dialog-container, .cdk-overlay-pane')].map(d => d.textContent.trim().slice(0, 80)),
         text: document.body.innerText.trim().slice(0, 200),
+        sw: navigator.serviceWorker.controller?.state ?? 'none',
+        sinceNav: Math.round(performance.now()),
+        unloaded: (() => {
+          const done = new Set(performance.getEntriesByType('resource').map(e => e.name));
+          return [...document.querySelectorAll('script[src], link[rel=modulepreload], link[rel=stylesheet]')]
+            .map(e => e.src || e.href).filter(u => !done.has(u)).map(u => u.replace(location.origin, ''));
+        })(),
+        slowest: performance.getEntriesByType('resource').sort((a, b) => b.duration - a.duration).slice(0, 4)
+          .map(e => e.name.replace(location.origin, '') + ' ' + Math.round(e.startTime) + '+' + Math.round(e.duration)),
+        resources: performance.getEntriesByType('resource').length,
       })`)))
+      console.log('    ngsw/state:\n' + await evaluate(`fetch('/ngsw/state').then(r => r.text()).then(t => t.slice(0, 3000)).catch(e => 'failed: ' + e)`))
     }
     check(`${route} has no console errors`, consoleErrors.slice(0, 2), [])
   }
@@ -5711,6 +5722,35 @@ async function checkSimpleView(fx) {
   }
 }
 
+/**
+ * 2026-11-11: the "/map renders the page shell" flake (~3 runs in 7 since at least 10-20). On localhost,
+ * and only there, Angular's service worker runs its whole install prefetch (the `app` group: ~137 files,
+ * ~7 MB, fetched one at a time) INSIDE initialisation, and every fetch it handles waits for that
+ * (ngsw-worker.js scheduleInitialization: `if (isLocalhost(...)) return initialize()`; on a real host it
+ * is an idle task). In a fresh profile the worker registers while `/` loads and claims the next page
+ * part-way through: `/map`'s HTML and main.js came from the network, then main.js's imported chunks
+ * queued behind the prefetch and the page sat at readyState "interactive", body empty, past the 9.5 s
+ * the check waits (caught with /ngsw/state: driver NORMAL, no clients, 5 resources loaded). Nothing a
+ * user on rangertrak.org meets. So wait once, up front, until the worker controls the page and has
+ * finished initialising (any fetch through it waits for that), then clear storage so every group
+ * still starts from a clean profile.
+ */
+async function settleServiceWorker() {
+  await goto('/')
+  const r = await evaluate(`(async () => {
+    const t0 = performance.now(), wait = ms => new Promise(res => setTimeout(res, ms));
+    if (!('serviceWorker' in navigator)) return { ok: false, why: 'no serviceWorker API' };
+    while (!navigator.serviceWorker.controller && performance.now() - t0 < 45000) await wait(200);
+    if (!navigator.serviceWorker.controller) return { ok: false, why: 'no controlling worker after 45 s' };
+    const main = document.querySelector('script[src*="main-"]');
+    const res = await fetch(main ? main.src : '/index.html');
+    return { ok: res.ok, why: 'status ' + res.status, ms: Math.round(performance.now() - t0) };
+  })()`)
+  if (r.ok) note(`service worker settled in ${r.ms} ms`)
+  else note(`service worker did not settle (${r.why}); route checks may meet its first-install prefetch`)
+  if (!READ_ONLY) { await evaluate(`localStorage.clear()`); await idbClearAll(); await attachmentsWipe() }
+}
+
 async function main() {
   const run = makeTempRun('rangertrak-e2e-')
   const tmp = run.dir
@@ -5785,6 +5825,7 @@ async function main() {
     await send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads })
     forceFullViewId = (await send('Page.addScriptToEvaluateOnNewDocument', { source: FORCE_FULL_VIEW_SCRIPT })).identifier
 
+    await settleServiceWorker()
     if (want('shell')) await checkRoutesRender()
     if (want('shell')) await checkNavbarLayout()
     if (want('shell')) await checkStickyNavbar()
