@@ -214,6 +214,14 @@
   isolation: isolate;
 }
 
+// 2026-11-10 (blog session note, 11-08): Leaflet's window-filling fullscreen fallback (iPhone, no
+// Fullscreen API) is `position: fixed; z-index: 99999`, but the isolation above capped it below
+// the sticky header (900) and the page's own buttons, which drew over the map and hid the filter
+// chips. While the fallback is on, the map is the whole window, so the cap comes off.
+.map-fullscreen-area:has(.leaflet-pseudo-fullscreen) {
+  isolation: auto;
+}
+
 // The Fullscreen API's own pseudo-class - fills the screen and gives the map room instead
 // of sitting inside the app's normal page padding/max-width.
 .map-fullscreen-area:fullscreen {

@@ -708,6 +708,46 @@ async function checkStickyNavbar() {
   await send('Emulation.clearDeviceMetricsOverride')
 }
 
+/**
+ * 2026-11-10 (blog session note, 11-08): with no Fullscreen API (iPhone), Leaflet's fullscreen
+ * button fills the window with `.leaflet-pseudo-fullscreen` (fixed, z-index 99999). The sticky
+ * navbar's isolation rule above capped that below the navbar and the page buttons, which drew
+ * over the map. The page is scrolled first, as a user's would be. Proven red without the
+ * `:has(.leaflet-pseudo-fullscreen)` rule in map-page.component.scss.
+ */
+async function checkMapPseudoFullscreen() {
+  console.log('\nMap: the window-filling fullscreen fallback (iPhone) covers the navbar and page buttons')
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
+  await goto('/map')
+  await sleep(500)
+  const r = await evaluate(`(async () => {
+    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => false });
+    window.scrollTo(0, 200);
+    let btn = null;
+    for (let i = 0; i < 40 && !(btn = document.querySelector('#mapLeaflet-main .leaflet-control-fullscreen a')); i++) await new Promise(res => setTimeout(res, 200));
+    if (!btn) return { button: false };
+    btn.click();
+    await new Promise(res => setTimeout(res, 400));
+    const frame = document.querySelector('.mapLeaflet-frame');
+    const pseudo = frame.classList.contains('leaflet-pseudo-fullscreen');
+    const pts = [[innerWidth / 2, 20], [innerWidth - 30, 70], [innerWidth - 30, innerHeight - 30]];
+    const covered = pts.map(([x, y]) => frame.contains(document.elementFromPoint(x, y)));
+    const hits = pts.map(([x, y]) => { const el = document.elementFromPoint(x, y); return el ? el.tagName + '.' + String(el.className).slice(0, 40) : null });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise(res => setTimeout(res, 200));
+    return { button: true, pseudo, covered, hits, exited: !frame.classList.contains('leaflet-pseudo-fullscreen') };
+  })()`)
+  check('the Leaflet fullscreen button is on the map', r.button, true)
+  if (r.button) {
+    check('with no Fullscreen API, the button uses the window-filling fallback', r.pseudo, true)
+    const ok = r.covered.every(Boolean)
+    if (!ok) console.log('    points not covered by the map:', JSON.stringify(r.hits))
+    check('the map is on top at the navbar, top-right and bottom-right points', ok, true)
+    check('Escape leaves the fallback', r.exited, true)
+  }
+  await send('Emulation.clearDeviceMetricsOverride')
+}
+
 async function checkMapEngineSwitch() {
   console.log('\nMap page: the switch mounts exactly one engine at a time, never both (E-64)')
   await goto('/map')
@@ -5754,6 +5794,7 @@ async function main() {
     } else {
       note('fast run: skipping checkMapEngineSwitch, checkMapEngineSurvivesNavigation (pass --full to include)')
     }
+    if (want('map')) await checkMapPseudoFullscreen()
     // Read-only: pure DOM/layout reads and in-memory form edits, nothing persisted - so these
     // are safe against production too, which is where phone-width regressions actually bite.
     if (want('entry')) await checkEntryTabOrder()
