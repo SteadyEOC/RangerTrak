@@ -101,11 +101,26 @@
   <!-- 2026-10-28, John: Online/Offline moved up into the page header, beside the phone's
        "not sent yet" count, so only the Send button stays here. -->
   @if (fieldMode.enabled()) {
+  <!-- E-251/E-253 (2026-11-11, ADR D-69): sends only the reports not sent yet; "Send again" is
+       for when the command post says nothing arrived. My reports lists every report with its
+       state, and edits or deletes a not-sent one. Deferred so it stays out of Entry's first load. -->
   <p class="entry-connectivity">
-    <button type="button" class="entry-connectivity__send" (click)="onBtnSendMyReports()">
-      Send my reports
+    <button type="button" class="entry-connectivity__send" data-testid="send-new-reports"
+      [disabled]="!newCount()" (click)="onBtnSendMyReports()">
+      {{ newCount() ? 'Send ' + newCount() + ' new report' + (newCount() === 1 ? '' : 's') : 'Nothing new to send' }}
     </button>
+    @if (unconfirmedCount()) {
+    <button type="button" class="entry-connectivity__again" data-testid="send-again"
+      (click)="onBtnSendAgain()">
+      Send again ({{ unconfirmedCount() }} not confirmed)
+    </button>
+    }
   </p>
+  @defer (on viewport) {
+  <rangertrak-my-reports (edit)="onEditReport($event)"></rangertrak-my-reports>
+  } @placeholder {
+  <div class="entry-myreports-placeholder" aria-hidden="true"></div>
+  }
   }
 
   <!-- E-198 phase 1: "Undo last import", the same card Mission > Data safety shows. A field phone has
@@ -114,6 +129,9 @@
   <rangertrak-import-safety-card></rangertrak-import-safety-card>
   }
 
+  @if (editing()) {
+  <p class="entry-editing" role="status" data-testid="entry-editing">{{ editingLabel() }}. Nothing has been sent, so the saved report replaces it.</p>
+  }
   <form [formGroup]="entryControlsForm" (ngSubmit)="onFormSubmit()" (keydown)="onFormKeydown($event)" class="enter__form">
     <!-- Groups the mini-map with Who/Where so a breakpoint can reorder them together
          without touching desktop layout at all: default (undeclared) `display` here does
@@ -276,7 +294,7 @@
              reading it right after the reporter's own position makes more sense than finding
              it after the entire 213 section. See entry.component.ts's tabindex chain comment
              for why the tab-order slots moved with it, not just this markup. -->
-        @if (view.isShown('evidence-location', entryHere())) {
+        @if (view.isShown('evidence-location', entryHere()) && !editing()) {
         <div class="enter__evidence" [rtAdvanced]="'evidence-location'">
           <!-- Material-M3 pass, 2026-08-26: was a plain native checkbox, already bound
                manually (showEvidenceLocation is a component signal, not a Signal Forms
@@ -317,7 +335,8 @@
          Who above. -->
     <div FormControl="timepickerFormControl" class="timepicker timepicker_When-input enter__section">
       <rangertrak-time-picker #picker [datePickerLabel]="timePickerLabel" (newTimeEvent)="onNewTimeEvent($event)"
-        [dateTabIndex]="dateTabIndex" [timeTabIndexStart]="timeTabIndexStart">
+        [dateTabIndex]="dateTabIndex" [timeTabIndexStart]="timeTabIndexStart"
+        [initialDate]="pickerDate()">
         <!-- [initialDate] = "initialTime" works, but we just use default - current time -->
       </rangertrak-time-picker>
 
@@ -566,6 +585,7 @@
                across reloads: MissionService.updateMission() persists it immediately). Last
                control in this box, after Subject, per the same placement the maintainer has
                used for every other 213-box addition. -->
+          @if (!editing()) {
           <mat-checkbox [checked]="settings.autoPrint213" [tabIndex]="autoPrint213TabIndex"
             (change)="onAutoPrint213Changed($event.checked)">
             Print this ICS-213 as soon as I submit
@@ -573,6 +593,7 @@
               aria-label="This is a mission-wide setting, not just for this one report - it stays on for every scribe on this device until turned off, and can also be changed from the Mission page."
               title="This is a mission-wide setting, not just for this one report - it stays on for every scribe on this device until turned off, and can also be changed from the Mission page.">ⓘ</span>
           </mat-checkbox>
+          }
         </div>
       </div>
     </div>
@@ -637,10 +658,17 @@
          (_icon-button-chunk.mjs) after the failure, not assumed beforehand; this is the one
          spot in this pass where an assumption ("a plain directive won't touch tabindex")
          turned out wrong, caught only because the FULL e2e suite ran, not just `ng build`. -->
+    @if (editing()) {
+    <button matButton="outlined" (click)="onCancelEdit()" title="Leave this report as it was and go back to your new report"
+      type="button" [tabIndex]="resetTabIndex" data-testid="entry-cancel-edit">
+      Cancel
+    </button>
+    } @else {
     <button matButton="outlined" (click)="resetEntryForm()" title="Reset all form fields to their defaults"
       type="button" [tabIndex]="resetTabIndex">
       Reset
     </button>
+    }
 
     <!-- .enter__Submit-button kept as a plain class, not restyled from - checkEntryAutofocus
          AndReset() and several other tools/e2e.js checks reach this exact real native
@@ -649,7 +677,7 @@
          background-color/color override in entry.component.scss is gone as redundant. -->
     <button matButton="filled" class="enter__Submit-button" [disabled]="!formValid()" type="submit"
       [tabIndex]="submitTabIndex">
-      Add to radio log
+      {{ editing() ? 'Save changes' : 'Add to radio log' }}
     </button>
     <!-- E-166 (2026-09-30): ARES feedback - nothing said how to finish an entry. Plain Enter
          is taken (autocomplete picks, Notes newline), so Ctrl+Enter (Cmd+Enter on Mac)

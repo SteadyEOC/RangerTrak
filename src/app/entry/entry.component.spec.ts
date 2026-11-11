@@ -118,4 +118,105 @@ describe('EntryComponent', () => {
       expect(clickSpy).toHaveBeenCalled()
     })
   })
+
+  // E-251/E-253 (2026-11-11, ADR D-69): send only new reports, and edit a not-sent one in this form.
+  describe('field phone: send only new, edit before sending', () => {
+    const report = (notes: string) => JSON.stringify({
+      id: 0, callsign: 'W7ABC', location: { lat: 47.4, lng: -122.4, address: '', derivedFromAddress: false },
+      date: new Date(), status: 'Normal', notes,
+    })
+    let fm: FieldModeService
+    let log: RadioLogService
+    let phone: ComponentFixture<EntryComponent>
+    let phoneEntry: EntryComponent
+
+    beforeEach(async () => {
+      localStorage.removeItem('fieldModeReports')
+      fm = TestBed.inject(FieldModeService)
+      fm.enable()
+      log = TestBed.inject(RadioLogService)
+      await log.deleteAllRadioLogEntries()   // the log is stored between specs
+      phone = TestBed.createComponent(EntryComponent)
+      phoneEntry = phone.componentInstance
+      phone.detectChanges()
+    })
+
+    afterEach(async () => {
+      await log.deleteAllRadioLogEntries()
+      localStorage.removeItem('fieldMode')
+      localStorage.removeItem('fieldModeReports')
+    })
+
+    const sendButton = () => phone.nativeElement.querySelector('[data-testid="send-new-reports"]') as HTMLButtonElement
+
+    it('the Send button counts new reports, and reads Nothing new to send (disabled) with none', async () => {
+      expect(sendButton().textContent!.trim()).toBe('Nothing new to send')
+      expect(sendButton().disabled).toBe(true)
+      const a = log.addRadioLogEntry(report('one'))
+      phone.detectChanges()
+      await phone.whenStable()
+      expect(sendButton().textContent!.trim()).toBe('Send 1 new report')
+      log.addRadioLogEntry(report('two'))
+      phone.detectChanges()
+      await phone.whenStable()
+      expect(sendButton().textContent!.trim()).toBe('Send 2 new reports')
+      fm.markSent([a.uid!], new Date())
+      phone.detectChanges()
+      await phone.whenStable()
+      expect(sendButton().textContent!.trim()).toBe('Send 1 new report')
+      expect(phone.nativeElement.querySelector('[data-testid="send-again"]').textContent).toContain('1 not confirmed')
+    })
+
+    it('Send sends only the new reports and marks them sent', async () => {
+      const a = log.addRadioLogEntry(report('old'))
+      fm.markSent([a.uid!], new Date())
+      const b = log.addRadioLogEntry(report('new'))
+      const build = vi.spyOn(log, 'buildReportPacketText')
+      vi.spyOn(log, 'reportPacketMedia').mockResolvedValue([])
+      if (typeof navigator.canShare === 'function') vi.spyOn(navigator, 'canShare').mockReturnValue(false)
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockReturnValue(undefined)
+      await phoneEntry.onBtnSendMyReports()
+      expect(build.mock.calls[0][1]!.map(e => e.uid)).toEqual([b.uid])
+      expect(fm.stateOf(b.uid)).toBe('sent')
+    })
+
+    it('Edit loads the report, Save changes replaces it, and the unsent new report comes back', () => {
+      const first = log.addRadioLogEntry(report('original'))
+      phoneEntry.entryForm.notes().value.set('half-typed new report')
+      phoneEntry.onEditReport(first)
+      expect(phoneEntry.editing()).toBe(first)
+      expect(phoneEntry.entryForm.notes().value()).toBe('original')
+      expect(phoneEntry.editingLabel()).toMatch(/^Editing report from \d/)
+
+      phoneEntry.entryForm.notes().value.set('corrected')
+      phoneEntry.onFormSubmit()
+
+      const stored = log.getCurrentRadioLog().logEntries
+      expect(stored.length).toBe(1)
+      expect(stored[0].notes).toBe('corrected')
+      expect(stored[0].uid).toBe(first.uid)
+      expect(stored[0].revisedAt).toBeUndefined()
+      expect(phoneEntry.editing()).toBeNull()
+      expect(phoneEntry.entryForm.notes().value()).toBe('half-typed new report')
+    })
+
+    it('Cancel leaves the report as it was', () => {
+      const first = log.addRadioLogEntry(report('original'))
+      phoneEntry.onEditReport(first)
+      phoneEntry.entryForm.notes().value.set('changed my mind')
+      phoneEntry.onCancelEdit()
+      expect(log.getCurrentRadioLog().logEntries[0].notes).toBe('original')
+      expect(phoneEntry.editing()).toBeNull()
+      expect(phoneEntry.entryForm.notes().value()).toBe('')
+    })
+
+    it('refuses to edit a report that has been sent', () => {
+      const first = log.addRadioLogEntry(report('original'))
+      fm.markSent([first.uid!], new Date())
+      const alertSpy = vi.spyOn(window, 'alert').mockReturnValue(undefined)
+      phoneEntry.onEditReport(first)
+      expect(alertSpy).toHaveBeenCalled()
+      expect(phoneEntry.editing()).toBeNull()
+    })
+  })
 })

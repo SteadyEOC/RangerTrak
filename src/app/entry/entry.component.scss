@@ -144,7 +144,30 @@ $filledColor: var(--rt-surface-2);
   }
 }
 
+// E-251 (2026-11-11): Send and Send again are phone buttons, so 44 px tall; Send again is the quieter
+// one (no border), for when the command post says nothing arrived.
+.entry-connectivity__again {
+  margin-inline-start: 0.6em;
+  min-height   : 44px;
+  padding      : 0 0.5em;
+  border       : 0;
+  background   : transparent;
+  color        : inherit;
+  font         : inherit;
+  font-size    : 0.9em;
+  text-decoration: underline;
+  cursor       : pointer;
+}
+
+.entry-myreports-placeholder { min-height: 1px; }
+
+.entry-editing {
+  margin: 0 0 var(--rt-space-md) 0;
+  font-weight: 600;
+}
+
 .entry-connectivity__send {
+  min-height   : 44px;
   margin-inline-start: 0.6em;
   padding      : 0 0.5em;
   border       : 1px solid currentColor;
@@ -154,6 +177,11 @@ $filledColor: var(--rt-surface-2);
   font         : inherit;
   font-size    : 0.9em;
   cursor       : pointer;
+}
+
+.entry-connectivity__send:disabled {
+  opacity: 0.6;
+  cursor : default;
 }
 
 .filled {

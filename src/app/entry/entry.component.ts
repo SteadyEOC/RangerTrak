@@ -12,6 +12,7 @@ import {
   OnInit, Output, signal, ViewChild, QueryList, ViewChildren,
   ChangeDetectionStrategy, effect, inject
 } from '@angular/core'
+import { toSignal } from '@angular/core/rxjs-interop'
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms'
 import { form, FormField } from '@angular/forms/signals'
 import { RouterLink } from '@angular/router'
@@ -66,9 +67,11 @@ import { EvidenceLocationComponent } from './evidence-location.component'
 import { MiniMapLeafletComponent } from './mini-mapLeaflet.component'
 import { sendReportPacket } from '../shared/export/report-packet-send'
 import { ImportSafetyCardComponent } from '../shared/import-safety/import-safety-card.component'
+import { MyReportsComponent } from './my-reports/my-reports.component'
 import { PHOTOS_LEFT_OUT_MESSAGE } from '../domain/report-packet-files'
 import type { ViewContext } from '../domain/view'
 import { devDiagnostics } from '../shared/dev-diagnostics'
+import { clock } from '../domain/field-report-view'
 
 // TODO: IDEA: use https://material.angular.io/components/badge/ ???
 
@@ -82,6 +85,7 @@ import { devDiagnostics } from '../shared/dev-diagnostics'
     FormField,
     RouterLink,
     ImportSafetyCardComponent,
+    MyReportsComponent,
     MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatChipsModule, MatSelectModule, MatAutocompleteModule,
     PageComponent,
     TimePickerComponent,
@@ -424,6 +428,22 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // stored when the entry is saved, not on pick. Cleared by a reset.
   readonly pendingFiles = signal<PendingAttachment[]>([])
 
+  // E-251/E-253 (D-69): editing a not-sent report from My reports. The report is loaded into this
+  // same form; `editing` is the one being changed. Whatever the scribe had typed for a NEW report is
+  // set aside in memory (never storage, rule 5) and put back after Save or Cancel.
+  private readonly logSignal = toSignal(inject(RadioLogService).getRadioLogObserver().pipe(map(l => ({ ...l }))))   // a copy per emission: the service mutates one object in place, so the same reference would never notify
+  /** Reports on this phone not in a packet yet / sent but not confirmed: the Send buttons' counts. */
+  readonly newCount = computed(() => this.fieldMode.newEntries(this.logSignal()?.logEntries ?? []).length)
+  readonly unconfirmedCount = computed(() => this.fieldMode.unconfirmedEntries(this.logSignal()?.logEntries ?? []).length)
+  readonly editing = signal<RadioLogEntryType | null>(null)
+  private setAside: EntryDraft | null = null
+  /** What the time picker shows: now, or the report time while editing. */
+  readonly pickerDate = signal<Date>(new Date())
+  readonly editingLabel = computed(() => {
+    const e = this.editing()
+    return e ? `Editing report from ${clock(e.date)}` : ''
+  })
+
   /** E-207: the advanced controls on this page (Simple view hides them while unused); also what shows the header Full view switch. The coordinate
    *  format picker lives in LocationComponent. */
   protected readonly advancedIds = ['stations', 'source', 'attachments', 'evidence-location', 'coord-format'] as const
@@ -637,23 +657,117 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    * self-typed once to resolve their identity for merge purposes (E-114 §1a).
    */
   async onBtnSendMyReports(): Promise<void> {
-    const built = this.radioLogService.buildReportPacketText(this.operatorModel().operator.trim())
+    // E-251/E-253 (D-69): only the reports not sent yet, and only their photos.
+    await this.sendReports(this.fieldMode.newEntries(this.radioLogService.getCurrentRadioLog().logEntries))
+  }
+
+  /** "Send again": the sent reports nobody has confirmed. A received report is never sent again. */
+  async onBtnSendAgain(): Promise<void> {
+    await this.sendReports(this.fieldMode.unconfirmedEntries(this.radioLogService.getCurrentRadioLog().logEntries))
+  }
+
+  private async sendReports(chosen: RadioLogEntryType[]): Promise<void> {
+    const built = this.radioLogService.buildReportPacketText(this.operatorModel().operator.trim(), chosen)
     if (!built) {
       alert('There are no reports on this device to send yet.')
       return
     }
     const { text, filename, count, uids } = built
     // D-60 item 6: this phone's photos go beside the .txt, in the same share.
-    const media = await this.radioLogService.reportPacketMedia()
+    const media = await this.radioLogService.reportPacketMedia(chosen)
     const outcome = await sendReportPacket(text, filename, media, this.document,
       (why) => this.log.warn(`Sharing the Report Packet was cancelled or failed, so it was downloaded instead: ${why}`, this.id))
-    this.fieldMode.markSent(uids)   // the header's "not sent yet" count
+    this.fieldMode.markSent(uids, new Date())   // the header's "not sent yet" count and My reports' chips
     if (outcome === 'downloaded') {
       this.journal.record('packet-exported', `Downloaded Report Packet: ${filename} (${count} reports, ${media.length} files).`)
       return
     }
     this.journal.record('packet-exported', `Shared Report Packet: ${filename} (${count} reports, ${outcome === 'shared' ? media.length : 0} files).`)
     if (outcome === 'shared-text-only') alert(PHOTOS_LEFT_OUT_MESSAGE)
+  }
+
+  // ── E-251/E-253 (D-69): edit a not-sent report in this form ─────────────
+
+  /** Loads a not-sent report into the form. A new report being typed is set aside (memory only) first. */
+  onEditReport(entry: RadioLogEntryType): void {
+    if (!entry.uid || this.fieldMode.stateOf(entry.uid) !== 'not-sent') {
+      alert('This report has already been sent, so it cannot be changed here. Radio the correction to the scribe.')
+      return
+    }
+    if (!this.editing()) {
+      const draft = this.currentDraft()
+      this.setAside = draftHasContent(draft) ? draft : null
+    }
+    this.resetAll()
+    this.initFilteredRangers()
+    const date = new Date(entry.date)
+    this.onNewLocationEvent(entry.location)
+    const options = this.settings?.recipientOptions213 ?? []
+    const all = entry.recipients213 ?? []
+    this.selectedRecipients213.set(new Set(all.filter(r => options.includes(r))))
+    this.entryModel.update(m => ({
+      ...m, date, notes: entry.notes ?? '', source: entry.source ?? 'Voice',
+      generates213: !!entry.generates213, replyRequested213: !!entry.replyRequested213,
+      message213: entry.message213 ?? '', subject213: entry.subject213 ?? '',
+      recipients213: all.filter(r => !options.includes(r)).join(', '),
+    }))
+    this.pickerDate.set(date)
+    this.callsignCtrl.setValue(entry.tacticalCall || this.stationText(entry.callsign, entry.rangerUid))
+    this.toCtrl.setValue(entry.toTactical || this.stationText(entry.toCallsign, entry.toRangerUid))
+    this.entryControlsForm.setValue({ status: entry.status })
+    this.editing.set(entry)
+    // Scroll to the "Editing report from" line, which sits just above the form.
+    setTimeout(() => this.document.querySelector('[data-testid="entry-editing"]')?.scrollIntoView?.({ block: 'start' }))
+  }
+
+  /** The text for a station box: its call sign, or the ranger's name when the call sign is blank. */
+  private stationText(callsign: string | undefined, rangerUid: string | undefined): string {
+    if (callsign) return callsign
+    const r = rangerUid ? this.rangers.find(x => x.uid === rangerUid) : undefined
+    return r?.fullName || r?.id || ''
+  }
+
+  /** Cancel: the report stays as it was; the set-aside new report comes back. */
+  onCancelEdit(): void {
+    this.endEdit()
+  }
+
+  /** Save changes: replaces the report (same uid, loggedAt and photos) and puts the set-aside report back. */
+  private onSaveEdit(): void {
+    const target = this.editing()
+    if (!target?.uid) return
+    // Guard: nothing on this screen can send it while the form is open, but never edit a sent report.
+    if (this.fieldMode.stateOf(target.uid) !== 'not-sent') {
+      alert('This report has been sent since you opened it, so it cannot be changed here. Radio the correction to the scribe.')
+      this.endEdit()
+      return
+    }
+    const updated = this.radioLogService.replaceEntry(target.uid, JSON.stringify(this.mergedFormValue()))
+    if (!updated) {
+      alert('This report is no longer on this device, so there is nothing to change.')
+      this.endEdit()
+      return
+    }
+    this.log.info(`Changed report ${updated.id} before sending.`, this.id)
+    // The same intake the new-report path uses; an edit adds photos without stamping revisedAt (nothing has left the phone).
+    const picked = this.pendingFiles()
+    if (picked.length) void this.attachPicked(target.uid, picked)
+    this.endEdit(`Report from ${clock(updated.date)} saved`)
+  }
+
+  /** Leaves edit mode: clears the form, then puts back the new report that was set aside. */
+  private endEdit(message?: string): void {
+    this.editing.set(null)
+    this.resetAll()
+    this.initFilteredRangers()
+    const back = this.setAside
+    this.setAside = null
+    this.pickerDate.set(back ? back.date : new Date())
+    if (back) this.applyDraft(back)
+    if (message && this.submitInfo) {
+      this.submitInfo.innerText = message
+      Utility.resetMaterialFadeAnimation(this.submitInfo)
+    }
   }
 
   ngOnInit(): void {
@@ -931,9 +1045,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // Only when the section is actually open - collapsing it after entering a range/
       // bearing is how a scribe retracts "never mind, not a real clue," and a submitted
       // report shouldn't carry a marker its own scribe just told the form to forget.
-      evidenceLocation: this.showEvidenceLocation() ? this.evidenceLocation : null,
+      // E-251: while editing a not-sent report the evidence section is hidden, so its evidence
+      // location and heading pass through as they were rather than being dropped.
+      evidenceLocation: this.editing() ? (this.editing()!.evidenceLocation ?? null) : this.showEvidenceLocation() ? this.evidenceLocation : null,
       // E-268: same rule - a heading left in a collapsed section is not part of the report.
-      evidenceDirection: this.showEvidenceLocation() ? this.evidenceDirection() : null,
+      evidenceDirection: this.editing() ? (this.editing()!.evidenceDirection ?? null) : this.showEvidenceLocation() ? this.evidenceDirection() : null,
       // E-103: RadioLogEntryType.recipients213 combines the per-mission checklist's checked
       // options with anything typed into the "Additional" free text - a Set dedupes the rare
       // case a scribe both checks a box AND types the same name again, the same "one
@@ -1192,6 +1308,12 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // FUTURE: Allow keywords, or search Notes for semicolon delimited tokens?
 
+    // E-251 (D-69): Save changes on a not-sent report loaded from My reports.
+    if (this.editing()) {
+      this.onSaveEdit()
+      return
+    }
+
     let formDataJSON = JSON.stringify(this.mergedFormValue())
 
     let newReport = this.radioLogService.addRadioLogEntry(formDataJSON)
@@ -1293,6 +1415,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   private restoreDraft(): void {
     const d = this.drafts.take()
     if (!d) return
+    this.applyDraft(d)
+    this.pickerDate.set(d.date)
+    this.log.info('Put back the report you were typing before you left this page.', this.id)
+  }
+
+  /** Fills the form from a draft (a returning visit, or the new report set aside during an edit). */
+  private applyDraft(d: EntryDraft): void {
     if (d.location) this.onNewLocationEvent(d.location)
     this.entryModel.update(m => ({
       ...m, notes: d.notes, date: d.date, source: d.source,
@@ -1304,12 +1433,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     if (d.status) this.entryControlsForm.setValue({ status: d.status })
     this.selectedRecipients213.set(new Set(d.selectedRecipients213))
     this.pendingFiles.set(d.pendingFiles)
-    this.log.info('Put back the report you were typing before you left this page.', this.id)
   }
 
   ngOnDestroy() {
-    const draft = this.currentDraft()
-    this.drafts.save(draftHasContent(draft) ? draft : null)
+    // E-251: leaving mid-edit keeps the NEW report that was set aside, never the half-edited one
+    // (which would otherwise come back as a second copy of the report being edited).
+    const draft = this.editing() ? this.setAside : this.currentDraft()
+    this.drafts.save(draft && draftHasContent(draft) ? draft : null)
     //this.locationChange?.unsubscribe()
     this.rangersSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()

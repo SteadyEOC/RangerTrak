@@ -1,4 +1,4 @@
-import { Subscription, timer } from 'rxjs'
+import { map, Subscription, timer } from 'rxjs'
 
 import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core'
 import { toSignal } from '@angular/core/rxjs-interop'
@@ -60,7 +60,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly aarNotes = inject(AarNoteService)
 
   // 2026-10-28, John: a field phone's header reads "5 reports on this phone · 2 not sent yet".
-  private readonly radioLog = toSignal(inject(RadioLogService).getRadioLogObserver())
+  private readonly radioLog = toSignal(inject(RadioLogService).getRadioLogObserver().pipe(map(l => ({ ...l }))))   // E-251: a copy per emission, so adding a report updates the count
   readonly fieldReportsLine = computed(() => {
     const entries = this.radioLog()?.logEntries ?? []
     const unsent = this.fieldMode.unsentCount(entries)

@@ -359,10 +359,14 @@ export class RadioLogService {
       loggedAt: old.loggedAt,
       attachments: old.attachments,
     }
+    // What the form does not know stays as it was (each only when set, like every optional field).
     if (old.msgNo) replaced.msgNo = old.msgNo
-    else delete replaced.msgNo
     if (old.revisedAt) replaced.revisedAt = old.revisedAt
-    else delete replaced.revisedAt
+    if (old.printedAt) replaced.printedAt = old.printedAt
+    if (old.handled) replaced.handled = old.handled
+    if (old.handledClearedAt) replaced.handledClearedAt = old.handledClearedAt
+    if (old.sourceUid) replaced.sourceUid = old.sourceUid
+    if (!replaced.operator && old.operator) replaced.operator = old.operator
     this.radioLog.logEntries[index] = replaced
     this.recalcRadioLogBounds(this.radioLog)
     this.updateRadioLogAndPublish()
