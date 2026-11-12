@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-12)
+
+
+### Features
+
+* E-251 RadioLogService builds packets from chosen entries; replaceEntry (edit before send) and deleteEntry ([3189d53](https://github.com/SteadyEOC/RangerTrak/commit/3189d5319298bd5cd27f80206904c2380287e29f))
+* E-251/E-253 Entry on a field phone sends only new reports; Send again; My reports with Edit and Delete ([d6327b0](https://github.com/SteadyEOC/RangerTrak/commit/d6327b0ee60393bb8963d74ae3f1b48927e14582))
+* E-251/E-253 field phone reports have three states (not sent, sent, received), kept in fieldModeReports ([7445b0f](https://github.com/SteadyEOC/RangerTrak/commit/7445b0f57eea8a1b1ebde8f15760e325046416a9))
+* E-260 command post: merge summary dialog with Send a receipt (receipt-exported in the journal) ([413d4f2](https://github.com/SteadyEOC/RangerTrak/commit/413d4f270719bf2282b011a1dbdb7570c01eed2b))
+* E-260 field phone opens a receipt, marks sent reports received by hand, clears received reports; RadioLogService.deleteEntries ([331d930](https://github.com/SteadyEOC/RangerTrak/commit/331d930fe5d0483c28b454bbd85f1821bd11c0a9))
+* E-260 report receipt format: buildReceipt, receiptFilename, parseReceipt (uids and message numbers only) ([fa227e4](https://github.com/SteadyEOC/RangerTrak/commit/fa227e41d327522e6ef81bfb2a5694b576f961f2))
+* **map:** Leaflet 2.0.0-beta.3; one mapPoint() guard for its coordinate validation; toolchain refresh ([a95d001](https://github.com/SteadyEOC/RangerTrak/commit/a95d00122faeada96f1532eab1116ae977f584ba)), closes [#516](https://github.com/SteadyEOC/RangerTrak/issues/516)
+
+
+### Bug Fixes
+
+* break the two import cycles; check:cycles gate in CI; unit tests split chunks again ([f6cfc62](https://github.com/SteadyEOC/RangerTrak/commit/f6cfc6205c2d9e0c6a0971f88e4c2a0f1aea15e2))
+* Data safety status line wraps as one sentence; space under Danger zone headers; Offline maps title no longer repeats the warning icon ([8c2f087](https://github.com/SteadyEOC/RangerTrak/commit/8c2f087f32ecacb036e5dcfadea789a7b8dfc547))
+* E-282 Radio Log grid edits stamp revisedAt so a correction travels through a hand-over Merge ([547453f](https://github.com/SteadyEOC/RangerTrak/commit/547453f035377c54b078bb2fb4db858d0c2ec612))
+* **entry:** lower form also draws after 2 s, not only on idle; tab-order e2e polls and explains a short count ([2af3152](https://github.com/SteadyEOC/RangerTrak/commit/2af315274fc0d9b5ecb550e8ceab6d04a1d7b588))
+* leave-field-mode warning and Tour name the button as it reads, "Send N new reports" ([5c3c033](https://github.com/SteadyEOC/RangerTrak/commit/5c3c033e7638b04ba6c86d4000f8c52a69c73d6d))
+* map fullscreen fallback (iPhone) no longer sits under the navbar and page buttons; Entry clue Bearing/Heading labels fit ([49ed0c4](https://github.com/SteadyEOC/RangerTrak/commit/49ed0c4b21e2c03d57c0e9a5ac21f56c933dafba))
+* **test:** E-226 temp run folder on Windows only; on Linux it made Chrome's SingletonSocket path too long (CI) ([71ff4f3](https://github.com/SteadyEOC/RangerTrak/commit/71ff4f394ea85ca8b6bbcdbbe8c58e9d6ecd583d))
+
 ## [1.0.0-beta.2](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-11-09)
 
 
