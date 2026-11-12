@@ -180,7 +180,7 @@ function addLink(pdf: PDFDocument, page: PDFPage, uri: string, rect: [number, nu
 }
 
 /** The attachments list: one line each (name and short fingerprint), a thumbnail under an image, new pages as needed. */
-async function appendAttachmentPages(pdf: PDFDocument, attachments: readonly Ics213Attachment[], exercise: boolean): Promise<void> {
+export async function appendAttachmentPages(pdf: PDFDocument, attachments: readonly Ics213Attachment[], exercise: boolean): Promise<void> {
   const font = await pdf.embedFont(StandardFonts.Helvetica)
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold)
   const { width, height } = pdf.getPage(0).getSize()

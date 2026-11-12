@@ -10,7 +10,7 @@
  * ran) and put back on `afterprint`. It has no `:` or `/`, because it becomes a Windows file name.
  * One helper for every printout - map, ICS-213, ICS-309, roster, After Action - so they cannot drift.
  */
-export type PrintKind = 'Map' | 'ICS-213' | 'ICS-214' | 'ICS-309' | 'Roster' | 'Places' | 'After Action' | 'SitRep'
+export type PrintKind = 'Map' | 'ICS-213' | 'ICS-213RR' | 'ICS-214' | 'ICS-309' | 'Roster' | 'Places' | 'After Action' | 'SitRep'
 
 /** The part of the mission settings the title needs (MissionType satisfies it). */
 export type PrintTitleMission = { event?: string, mission?: string } | null | undefined

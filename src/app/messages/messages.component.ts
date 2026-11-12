@@ -1,7 +1,7 @@
 import { Subscription } from 'rxjs'
 
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 
 import { PageComponent } from '../shared/page/page.component'
@@ -13,6 +13,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox'
 import { formatReportTime } from '../shared'
 import { fillIcs213Pdf, ics213FieldsFromReport } from '../shared/export/ics213-pdf'
 import { formatStation } from '../domain/station-label'
+import { rr213LineText, rr213PriorityLabel } from '../domain/rr213'
 import { formatMsgNoFull, formatMsgNoShort, HANDLED_MARK_GLYPH, HANDLED_MARK_LABEL } from '../domain/msg-no'
 // 2026-09-28, John (item 8b): "one click to the print dialog" - the same iframe/print()
 // machinery entry.component.ts's auto-print-on-submit already uses (D1, 2026-09-22). Static
@@ -29,6 +30,11 @@ import { AttachmentViewerService } from '../shared/attachments/attachment-viewer
 import {
   RadioLogService, RadioLogEntryType, LogService, MissionService, MissionType
 } from '../shared/services'
+import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
+
+export type MessageFilter = 'all' | '213' | 'rr'
+export type MessageForm = '213' | 'rr'
+export type MessageRow = { key: string, report: RadioLogEntryType, form: MessageForm }
 
 /**
  * ICS-213 general messages - radio log entries with "Also generate an ICS-213" checked
@@ -69,11 +75,21 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private attachmentViewer = inject(AttachmentViewerService)
   private attachmentStore = inject(AttachmentStoreService)
   private journal = inject(MissionJournalService)
-  title = 'Messages — ICS-213s'
-  pageDescr = 'ICS-213 general messages generated from radio log entries.'
+  title = 'Messages'
+  pageDescr = 'ICS-213 general messages and ICS-213RR resource requests generated from radio log entries.'
 
   messages = signal<RadioLogEntryType[]>([])
-  selectedId = signal<number | null>(null)
+  /** E-283: which kind of message to list. */
+  filter = signal<MessageFilter>('all')
+  /** One row per form: an entry with both a 213 and a 213RR is listed under both. */
+  rows = computed<MessageRow[]>(() => {
+    const f = this.filter()
+    return this.messages().flatMap((report): MessageRow[] => [
+      ...(report.generates213 && f !== 'rr' ? [{ key: `${report.id}:213`, report, form: '213' as const }] : []),
+      ...(report.rr213 && f !== '213' ? [{ key: `${report.id}:rr`, report, form: 'rr' as const }] : []),
+    ])
+  })
+  selectedKey = signal<string | null>(null)
   printing = signal(false)
   // E-150: copies for the manual Print, pre-filled from the Mission page's extra copies
   // (1 + extra); changing it here never changes the Mission value. Not persisted.
@@ -113,14 +129,10 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.radioLogSubscription = this.radioLogService.getRadioLogObserver().subscribe({
       next: (reports) => {
         const filtered = (reports.logEntries ?? [])
-          .filter(r => r.generates213)
+          .filter(r => r.generates213 || r.rr213)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         this.messages.set(filtered)
-        // Keep the current selection if it still exists (e.g. a live-updating report);
-        // otherwise default to the newest message rather than leaving the pane empty.
-        if (!filtered.some(r => r.id === this.selectedId())) {
-          this.selectedId.set(filtered[0]?.id ?? null)
-        }
+        this.ensureSelection()
       },
       error: (e) => this.log.error('Radio log entries subscription got: ' + e, this.id),
     })
@@ -131,8 +143,47 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.radioLogSubscription?.unsubscribe()
   }
 
+  /** Keep the current selection if it still exists (a live-updating report); otherwise the newest row. */
+  private ensureSelection(): void {
+    const rows = this.rows()
+    if (!rows.some(r => r.key === this.selectedKey())) {
+      this.selectedKey.set(rows[0]?.key ?? null)
+    }
+  }
+
+  setFilter(f: MessageFilter): void {
+    this.filter.set(f)
+    this.editing.set(false)
+    this.ensureSelection()
+  }
+
+  get selectedRow(): MessageRow | undefined {
+    return this.rows().find(r => r.key === this.selectedKey())
+  }
+
   get selected(): RadioLogEntryType | undefined {
-    return this.messages().find(r => r.id === this.selectedId())
+    return this.selectedRow?.report
+  }
+
+  /** Which form the selected row is: the 213 general message or the 213RR resource request. */
+  get selectedForm(): MessageForm {
+    return this.selectedRow?.form ?? '213'
+  }
+
+  /** E-283: "Urgent: 2 x radio battery +1 more", the list's one-line preview of a request. */
+  rrPreview(report: RadioLogEntryType): string {
+    const rr = report.rr213
+    if (!rr) return ''
+    const more = rr.lines.length > 1 ? ` +${rr.lines.length - 1} more` : ''
+    return `${rr213PriorityLabel(rr.priority)}: ${rr.lines[0] ? rr213LineText(rr.lines[0]) : ''}${more}`
+  }
+
+  rrPriority(report: RadioLogEntryType): string {
+    return rr213PriorityLabel(report.rr213?.priority)
+  }
+
+  rrLineText(l: Rr213LineType): string {
+    return rr213LineText(l)
   }
 
   onPrintCopiesChanged(value: string | number): void {
@@ -140,8 +191,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.printCopies.set(Number.isFinite(n) ? Math.min(10, Math.max(1, n)) : 1)
   }
 
-  select(report: RadioLogEntryType): void {
-    this.selectedId.set(report.id)
+  select(row: MessageRow): void {
+    this.selectedKey.set(row.key)
     this.editing.set(false)
   }
 
@@ -272,6 +323,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
    * scribe then had to find and open themselves before they could actually print it.
    */
   async printAsIcs213(): Promise<void> {
+    if (this.selectedForm === 'rr') return this.printAsIcs213Rr()
     const report = this.selected
     if (!report || this.printing()) {
       return
@@ -296,6 +348,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
    * the file itself (attaching it to an email, archiving it) rather than a printer.
    */
   async saveIcs213Pdf(): Promise<void> {
+    if (this.selectedForm === 'rr') return this.saveIcs213RrPdf()
     const report = this.selected
     if (!report || this.printing()) {
       return
@@ -324,4 +377,66 @@ export class MessagesComponent implements OnInit, OnDestroy {
       this.printing.set(false)
     }
   }
+
+  // E-283: ICS-213RR resource requests
+
+  /** The filled 213RR bytes, and the file name (it carries the message number: the request's handle). */
+  private async buildIcs213Rr(report: RadioLogEntryType): Promise<{ bytes: Uint8Array, filename: string }> {
+    const [{ fillIcs213RrPdf, rr213FieldsFromReport }, res] = await Promise.all([
+      import('../shared/export/ics213rr-pdf'),
+      fetch('assets/forms/ics-213rr.pdf'),
+    ])
+    if (!res.ok) {
+      throw new Error(`Fetching the ICS-213RR template failed: ${res.status}`)
+    }
+    const templateBytes = new Uint8Array(await res.arrayBuffer())
+    const bytes = await fillIcs213RrPdf(templateBytes, rr213FieldsFromReport(report, this.settings),
+      this.settings?.missionMode === 'exercise', await ics213AttachmentsFor(report, this.attachmentStore), report.msgNo, this.settings?.version)
+    return { bytes, filename: `ics-213rr-${rr213FileStem(report)}.pdf` }
+  }
+
+  async printAsIcs213Rr(): Promise<void> {
+    const report = this.selected
+    if (!report || this.printing()) return
+    this.printing.set(true)
+    try {
+      const { bytes, filename } = await this.buildIcs213Rr(report)
+      const outcome = await printIcs213(bytes, filename, this.printCopies(), this.settings, 'ICS-213RR')
+      this.markPrintedOnce(report)
+      this.journal.record('print-213', `ICS-213RR for report ${report.id}: ${outcome}.`)
+    } catch (e) {
+      this.log.error(`Failed to fill ICS-213RR for report ${report.id}: ${e}`, this.id)
+    } finally {
+      this.printing.set(false)
+    }
+  }
+
+  async saveIcs213RrPdf(): Promise<void> {
+    const report = this.selected
+    if (!report || this.printing()) return
+    this.printing.set(true)
+    try {
+      const { bytes, filename } = await this.buildIcs213Rr(report)
+      const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
+      this.markPrintedOnce(report)
+      this.journal.record('pdf-213-saved', `Saved the ICS-213RR PDF for report ${report.id}.`)
+    } catch (e) {
+      this.log.error(`Failed to fill ICS-213RR for report ${report.id}: ${e}`, this.id)
+    } finally {
+      this.printing.set(false)
+    }
+  }
+}
+
+/** The file name stem: the message number when there is one (26-0142 / OP 2 / A007 becomes 26-0142-OP-2-A007), else the report id. */
+export function rr213FileStem(report: Pick<RadioLogEntryType, 'msgNo' | 'id' | 'callsign'>): string {
+  const no = formatMsgNoFull(report.msgNo)
+  const raw = no || `${report.callsign || 'request'}-${report.id}`
+  return raw.replace(/[^A-Za-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 }

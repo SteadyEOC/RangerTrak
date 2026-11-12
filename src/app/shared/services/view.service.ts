@@ -80,6 +80,7 @@ export class ViewService {
       nonDefaultSourceCount: entries.filter(e => !!e.source && e.source !== 'Voice').length,
       toStationCount: entries.filter(e => !!(e.toTactical || e.toCallsign || e.toRangerUid)).length,
       evidenceLocationCount: entries.filter(e => !!e.evidenceLocation).length,
+      resourceRequestCount: entries.filter(e => !!e.rr213).length,
       // Pages that know better (Rangers & Teams holds the layers) pass this in; see isShown().
       layerCount: 0,
       mapEngineIsAlternative: false,

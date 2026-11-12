@@ -50,6 +50,8 @@ type Row = {
   subject213?: string
   message213?: string
   recipients213?: string[]
+  /** E-283: also a resource request. */
+  rr213?: RadioLogEntryType['rr213']
   /** E-195: the station this was sent TO. Unset = the first tactical call (the older scenarios'
    *  rule); null = to no one in particular ("All units"). */
   toTactical?: string | null
@@ -413,6 +415,7 @@ export class SampleDataService {
         subject213: row.subject213,
         message213: row.message213,
         recipients213: row.recipients213,
+        ...(row.rr213 ? { rr213: row.rr213 } : {}),
       })
     })
 
@@ -526,7 +529,8 @@ export class SampleDataService {
         message213: 'Team reports a possible propane odor near the maintenance shed on the north shoreline trail. Clearing the picnic shelter as a precaution and holding a 50m perimeter. Requesting Logistics confirm whether county gas utility should be notified.',
         recipients213: ['Incident Commander', 'Logistics'],
       },
-      { callsign: 'CERT4', minutesAgo: 152, lat: DOCKTON.lat + 0.0012, lng: DOCKTON.lng + 0.0010, address: `${DOCKTON.name} - north shoreline, quarter mile`, statusIndex: 0, notes: 'Holding the shoreline trail perimeter while the shed issue is checked.', source: 'Voice', operator: OPS },
+      { callsign: 'CERT4', minutesAgo: 152, lat: DOCKTON.lat + 0.0012, lng: DOCKTON.lng + 0.0010, address: `${DOCKTON.name} - north shoreline, quarter mile`, statusIndex: 0, notes: 'Holding the shoreline trail perimeter while the shed issue is checked. Need cones and tape for the perimeter.', source: 'Voice', operator: OPS,
+        rr213: { priority: 'urgent', deliverTo: `${DOCKTON.name} - north shoreline trail`, substitutes: 'Barrier tape alone if cones are short', lines: [{ qty: '12', kind: 'Traffic cones', description: '28 inch, reflective', neededBy: '' }, { qty: '2 rolls', kind: 'Barrier tape', description: 'Yellow, 3 inch', neededBy: '' }] } },
       { callsign: 'CERT3', minutesAgo: 60, lat: DOCKTON.lat + 0.0022, lng: DOCKTON.lng + 0.0018, address: `${DOCKTON.name} - north shoreline trail`, statusIndex: 5, notes: 'Shoreline sweep complete, propane smell traced to a stored camp stove, resolved. Checking out.', source: 'Voice', operator: OPS },
 
       // ── Team D: MERT1/Medic1 - Dockton Park, marina + one water track + first aid ──

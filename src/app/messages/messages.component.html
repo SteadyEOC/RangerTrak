@@ -1,19 +1,32 @@
 <rangertrak-page [title]="title" [description]="pageDescr">
   @if (messages().length === 0) {
     <p class="messages__empty">
-      No ICS-213 messages yet. Check "Also generate an ICS-213" on a radio log entry
-      (Entry page) to have it appear here.
+      No ICS-213 messages or ICS-213RR resource requests yet. Check "Also generate an ICS-213" (or
+      "Also generate an ICS-213RR") on a radio log entry (Entry page) to have it appear here.
     </p>
   } @else {
+    <!-- E-283: General messages (ICS-213) and Resource requests (ICS-213RR). -->
+    <div class="messages__filter" role="group" aria-label="Show">
+      <button type="button" matButton="outlined" data-testid="messages-filter-all" [class.messages__filter--on]="filter() === 'all'"
+        [attr.aria-pressed]="filter() === 'all'" (click)="setFilter('all')">All</button>
+      <button type="button" matButton="outlined" data-testid="messages-filter-213" [class.messages__filter--on]="filter() === '213'"
+        [attr.aria-pressed]="filter() === '213'" (click)="setFilter('213')">General messages</button>
+      <button type="button" matButton="outlined" data-testid="messages-filter-rr" [class.messages__filter--on]="filter() === 'rr'"
+        [attr.aria-pressed]="filter() === 'rr'" (click)="setFilter('rr')">Resource requests</button>
+    </div>
     <div class="messages__layout">
       <ul class="messages__list">
-        @for (m of messages(); track m.id) {
+        @for (row of rows(); track row.key) {
           <li>
             <button type="button" class="messages__list-item"
-              [class.messages__list-item--selected]="m.id === selectedId()" (click)="select(m)">
-              <span class="messages__list-callsign">{{ stationFrom(m) || '(not given)' }}</span>
-              <span class="messages__list-time">{{ msgNoShort(m) }}@if (m.msgNo) { · }{{ formatTime(m.date) }}@if (m.handled) { · <span [attr.aria-label]="markLabel(m)">{{ markGlyph(m) }}</span> }</span>
-              <span class="messages__list-preview">{{ m.message213 }}</span>
+              [class.messages__list-item--selected]="row.key === selectedKey()" (click)="select(row)">
+              <span class="messages__list-callsign">{{ stationFrom(row.report) || '(not given)' }}</span>
+              <span class="messages__list-time">{{ msgNoShort(row.report) }}@if (row.report.msgNo) { · }{{ formatTime(row.report.date) }}@if (row.report.handled) { · <span [attr.aria-label]="markLabel(row.report)">{{ markGlyph(row.report) }}</span> }</span>
+              @if (row.form === 'rr') {
+              <span class="messages__list-preview" data-testid="messages-rr-row">ICS-213RR · {{ rrPreview(row.report) }}</span>
+              } @else {
+              <span class="messages__list-preview">{{ row.report.message213 }}</span>
+              }
             </button>
           </li>
         }
@@ -26,10 +39,57 @@
                  the card title is now Subject, not the ranger's callsign (which moves down
                  into the body's own ordered field list, as "Ranger" - see below). -->
             <mat-card-header>
+              @if (selectedForm === 'rr') {
+              <mat-card-title>Resource request · {{ rrPriority(m) }}</mat-card-title>
+              } @else {
               <mat-card-title>{{ m.subject213 || '(no subject)' }}</mat-card-title>
+              }
             </mat-card-header>
             <mat-card-content>
-              @if (!editing()) {
+              @if (selectedForm === 'rr' && m.rr213; as rr) {
+              <dl class="messages__fields" data-testid="messages-rr-detail">
+                @if (m.msgNo) {
+                <dt>Msg #</dt>
+                <dd [attr.title]="msgNoFull(m)" data-testid="messages-msgno">{{ msgNoFull(m) }}</dd>
+                }
+                <dt>Priority</dt>
+                <dd>{{ rrPriority(m) }}</dd>
+                <dt>Items</dt>
+                <dd>
+                  @for (l of rr.lines; track $index) {
+                  <div>{{ $index + 1 }}. {{ rrLineText(l) }}@if (l.type) { (type: {{ l.type }}) }@if (l.neededBy) { · needed by {{ l.neededBy }} }</div>
+                  }
+                </dd>
+                @if (rr.deliverTo) {
+                <dt>Deliver to</dt>
+                <dd>{{ rr.deliverTo }}</dd>
+                }
+                @if (rr.substitutes) {
+                <dt>Substitutes</dt>
+                <dd>{{ rr.substitutes }}</dd>
+                }
+                <dt>Time</dt>
+                <dd>
+                  {{ formatTime(m.date) }}
+                  @if (m.revisedAt) {
+                  (Last edited: {{ formatTime(m.revisedAt) }})
+                  }
+                </dd>
+                <dt>From</dt>
+                <dd>{{ stationFrom(m) || '(not given)' }}</dd>
+                @if (m.notes) {
+                <dt>Radio log</dt>
+                <dd class="messages__message-text">{{ m.notes }}</dd>
+                }
+                <dt>Operator</dt>
+                <dd>{{ m.operator || '(none recorded)' }}</dd>
+              </dl>
+              @if (m.printedAt) {
+              <p class="messages__meta">
+                <span>Printed {{ formatTime(m.printedAt) }}</span>
+              </p>
+              }
+              } @else if (!editing()) {
               <!-- Field order per the maintainer's own live spec, 2026-08-30: Subject (the
                    card title, above) - To/Reply requested - Time (with minutes elapsed,
                    plus Last edited if it differs) - Ranger originating the message - the
@@ -113,13 +173,15 @@
             </mat-card-content>
             <mat-card-actions class="messages__actions">
               @if (!editing()) {
+              @if (selectedForm === '213') {
               <button matButton="outlined" type="button" (click)="onEdit()">Edit</button>
+              }
               <!-- 2026-09-28, John (item 8b): "Print" is now the primary, one-click action -
                    opens the print dialog directly (ics213-print.ts). "Save PDF" (below) is
                    the secondary action, kept for anyone who wants the file itself rather
                    than a printer. -->
               <button matButton="outlined" type="button" [disabled]="printing()" (click)="saveIcs213Pdf()"
-                title="Download the filled ICS-213 as a PDF file">
+                [title]="selectedForm === 'rr' ? 'Download the filled ICS-213RR as a PDF file' : 'Download the filled ICS-213 as a PDF file'">
                 {{ printing() ? 'Preparing…' : 'Save PDF' }}
               </button>
               <label class="messages__copies" title="How many copies to print (1 to 10). The pages go out as one print job.">
@@ -129,7 +191,7 @@
                   data-testid="printCopies213" style="width: 3.5em">
               </label>
               <button matButton="filled" type="button" [disabled]="printing()" (click)="printAsIcs213()"
-                title="Fill the ICS-213 and open your browser's print dialog; choose your printer there">
+                [title]="selectedForm === 'rr' ? 'Fill the ICS-213RR and open the print dialog; choose your printer there' : 'Fill the ICS-213 and open the print dialog; choose your printer there'">
                 {{ printing() ? 'Preparing…' : 'Print' }}
               </button>
               } @else {

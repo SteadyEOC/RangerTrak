@@ -1400,7 +1400,9 @@ async function checkEntryTabOrder() {
     console.log(`  ....  Entry lower form missing: ${d}`)
   }
 }
-const ENTRY_TAB_STOPS = 50
+// 60, not 50: E-283 (2026-11-12) added the ICS-213RR box after the 213 box: its checkbox, one order line's
+// five fields, Add another item, Priority, Deliver to and Substitutes (ten stops).
+const ENTRY_TAB_STOPS = 60
 
 async function checkEntryAutofocusAndReset() {
   console.log('\nEntry form: callsign holds focus on load and again after submit (no mouse needed)')

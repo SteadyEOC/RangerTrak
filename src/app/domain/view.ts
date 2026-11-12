@@ -52,6 +52,8 @@ export type ViewContext = {
   mapEngineIsAlternative: boolean,
   /** An extra map layer (grid, range rings, satellite, hiking trails) is switched on. */
   mapExtraLayersOn: boolean,
+  /** Radio log entries that are also an ICS-213RR resource request (E-283). */
+  resourceRequestCount: number,
   /** ICS-214 activity lines on the mission (E-04 / D-63). */
   activityLineCount: number,
   /** The person asked for the Setup file by link (/prep, /mission#setup-file): a link must never land on nothing. */
@@ -92,6 +94,7 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'coord-format', label: 'Coordinate format picker', isInUse: never },
   { id: 'attachments', label: 'Attachments', isInUse: ctx => ctx.attachmentCount > 0 },
   { id: 'evidence-location', label: 'Evidence location', isInUse: ctx => ctx.evidenceLocationCount > 0 },
+  { id: 'resource-request', label: 'Resource request (ICS-213RR)', isInUse: ctx => ctx.resourceRequestCount > 0 },
   // Map
   { id: 'maplibre', label: 'Alternative map', isInUse: ctx => ctx.mapEngineIsAlternative },
   { id: 'map-layers-extra', label: 'Extra map layers', isInUse: ctx => ctx.mapExtraLayersOn },

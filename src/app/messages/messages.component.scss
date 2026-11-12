@@ -121,3 +121,16 @@
   flex-wrap: wrap;
   gap      : var(--rt-space-sm);
 }
+
+// E-283: the All / General messages / Resource requests filter.
+.messages__filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rt-space-xs);
+  margin-bottom: var(--rt-space-md);
+}
+
+.messages__filter--on {
+  background: var(--rt-surface-2);
+  border-color: var(--rt-accent);
+}

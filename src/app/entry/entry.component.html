@@ -603,6 +603,80 @@
           }
         </div>
       </div>
+
+      <!-- E-283 (ICS-213RR Resource Request, phase 1): a second opt-in, after the 213 box. A Full view
+           option that Simple view shows once the mission has a request; never on a field phone. Its tab
+           stops are [hidden]-reserved like the 213's (entry.component.ts, rrToggleTabIndex). -->
+      @if (view.isShown('resource-request', entryHere()) && !fieldMode.enabled()) {
+      <div class="enter__213 enter__rr" [rtAdvanced]="'resource-request'" data-testid="rr213">
+        <mat-checkbox data-testid="rr213-toggle" [checked]="rrOn()" [tabIndex]="rrToggleTabIndex"
+          (change)="onRrToggle($event.checked)">
+          Also generate an ICS-213RR (Resource Request)
+        </mat-checkbox>
+        <div class="enter__213-details enter__rr-details" [hidden]="!rrOn()">
+          @for (line of rrLines(); track $index; let i = $index; let first = $first) {
+          <div class="enter__rr-line" data-testid="rr213-line">
+            <mat-form-field class="enter__rr-qty" floatLabel="always" subscriptSizing="dynamic">
+              <mat-label>Qty</mat-label>
+              <input matInput type="text" [id]="'enter__rr-qty-' + i" [value]="line.qty" placeholder="2 cases"
+                [attr.tabindex]="first ? rrQtyTabIndex : null" (input)="setRrLine(i, 'qty', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field class="enter__rr-kind" floatLabel="always" subscriptSizing="dynamic">
+              <mat-label>Kind</mat-label>
+              <input matInput type="text" [value]="line.kind" placeholder="Radio, Water, Medic"
+                [attr.tabindex]="first ? rrKindTabIndex : null" (input)="setRrLine(i, 'kind', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field class="enter__rr-desc" floatLabel="always" subscriptSizing="dynamic">
+              <mat-label>Description</mat-label>
+              <input matInput type="text" [value]="line.description" placeholder="Brand, size, specs"
+                [attr.tabindex]="first ? rrDescTabIndex : null" (input)="setRrLine(i, 'description', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field class="enter__rr-type" floatLabel="always" subscriptSizing="dynamic">
+              <mat-label>Type</mat-label>
+              <input matInput type="text" [value]="line.type ?? ''" [attr.tabindex]="first ? rrTypeTabIndex : null"
+                (input)="setRrLine(i, 'type', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field class="enter__rr-needed" floatLabel="always" subscriptSizing="dynamic">
+              <mat-label>Needed by</mat-label>
+              <input matInput type="text" [value]="line.neededBy ?? ''" placeholder="mm/dd/yyyy HH:mm"
+                [attr.tabindex]="first ? rrNeededTabIndex : null" (input)="setRrLine(i, 'neededBy', $any($event.target).value)" />
+            </mat-form-field>
+            @if (rrLines().length > 1) {
+            <button type="button" mat-icon-button class="enter__rr-remove" data-testid="rr213-remove"
+              [attr.aria-label]="'Remove item ' + (i + 1)" (click)="removeRrLine(i)">
+              <mat-icon>close</mat-icon>
+            </button>
+            }
+          </div>
+          }
+          <div>
+            <button type="button" matButton="outlined" data-testid="rr213-add" [tabIndex]="rrAddTabIndex"
+              (click)="addRrLine()">Add another item</button>
+          </div>
+
+          <fieldset class="enter__213-field enter__field-fieldset">
+            <legend class="enter__field-label">Priority</legend>
+            <mat-chip-listbox aria-label="Priority" [tabIndex]="rrPriorityTabIndex" data-testid="rr213-priority"
+              (change)="rrPriority.set($event.value ?? rrPriority())">
+              @for (p of rrPriorities; track p.value) {
+              <mat-chip-option [value]="p.value" [selected]="rrPriority() === p.value">{{ p.label }}</mat-chip-option>
+              }
+            </mat-chip-listbox>
+          </fieldset>
+
+          <mat-form-field class="enter__213-field" floatLabel="always">
+            <mat-label>Deliver to</mat-label>
+            <input matInput type="text" [value]="rrDeliverTo()" [attr.tabindex]="rrDeliverTabIndex"
+              (input)="rrDeliverTo.set($any($event.target).value)" />
+          </mat-form-field>
+          <mat-form-field class="enter__213-field" floatLabel="always">
+            <mat-label>Suitable substitutes or suggested sources</mat-label>
+            <input matInput type="text" [value]="rrSubstitutes()" [attr.tabindex]="rrSubstitutesTabIndex"
+              (input)="rrSubstitutes.set($any($event.target).value)" />
+          </mat-form-field>
+        </div>
+      </div>
+      }
     </div>
 
     <!-- ======================================= -->

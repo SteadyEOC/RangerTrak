@@ -166,6 +166,14 @@ export type RadioLogEntryType = {
   replyRequested213?: boolean,
   message213?: string,
   recipients213?: string[],
+  /**
+   * E-283 (ICS-213RR Resource Request, phase 1): present = this radio traffic is also a resource
+   * request, printed on FEMA's ICS 213RR. Optional and additive, no schema bump - it travels in
+   * backups and Report Packets as part of the entry, and merges whole-object under `revisedAt`.
+   * `qty` is text ("2 cases"). Blocks 3 (request number), 9-19 (Logistics, Finance) are never
+   * filled by this app. `priority` is block 8 (default routine).
+   */
+  rr213?: Rr213Type,
   // F29-47 (2026-08-29, ADR D-44): "5 Approved by Name"/ICS-309's Name-Position-Signature
   // header, whichever scribe actually filed the report. Deliberately optional, additive, no
   // schema bump - same shape as `source` above. Stamped at submit from whatever the entry
@@ -274,4 +282,15 @@ export type RadioLogStatusType = {
    * incident check-in/out keys. So no migration or backfill; only an explicit change is stored.
    */
   flagOnMap?: boolean
+}
+
+/** E-283: one ordered item on an ICS 213RR. */
+export type Rr213LineType = { qty: string, kind: string, type?: string, description: string, neededBy?: string }
+
+/** E-283: the resource-request part of a radio log entry. */
+export type Rr213Type = {
+  lines: Rr213LineType[],
+  priority?: 'urgent' | 'routine' | 'low',
+  deliverTo?: string,
+  substitutes?: string,
 }

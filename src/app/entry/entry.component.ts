@@ -29,6 +29,9 @@ import { AlertsComponent } from '../shared/alerts/alerts.component'
 import { PageComponent } from '../shared/page/page.component'
 import { ViewService } from '../shared/services/view.service'
 import { AdvancedDirective } from '../shared/view/advanced.directive'
+import { RR213_PRIORITIES, RR213_DEFAULT_PRIORITY, blankRr213Line, cleanRr213 } from '../domain/rr213'
+import type { Rr213Priority } from '../domain/rr213'
+import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
 // Direct path, not the shared/services barrel - see the note in rangers.component.ts.
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
@@ -239,7 +242,22 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // the contiguity check (tools/e2e.js's checkEntryTabOrder) keeps working. Total moved from
   // 46 to 47 - see that check's own comment for the running list of who else did this.
   autoPrint213TabIndex = this.subject213TabIndex + 1
-  operatorTabIndex = this.autoPrint213TabIndex + 1
+  // E-283 (ICS-213RR): after the 213 box. [hidden]-reserved like it, so the 1..N invariant holds in the
+  // default state: the opt-in checkbox, ONE order line's five fields (Qty, Kind, Description, Type,
+  // Needed by), Add another item, the Priority group, Deliver to and Substitutes. Further order lines
+  // carry no explicit tabindex (a runtime-variable count cannot be planned for here); Add another item
+  // focuses the new line's Qty.
+  rrToggleTabIndex = this.autoPrint213TabIndex + 1
+  rrQtyTabIndex = this.rrToggleTabIndex + 1
+  rrKindTabIndex = this.rrQtyTabIndex + 1
+  rrDescTabIndex = this.rrKindTabIndex + 1
+  rrTypeTabIndex = this.rrDescTabIndex + 1
+  rrNeededTabIndex = this.rrTypeTabIndex + 1
+  rrAddTabIndex = this.rrNeededTabIndex + 1
+  rrPriorityTabIndex = this.rrAddTabIndex + 1
+  rrDeliverTabIndex = this.rrPriorityTabIndex + 1
+  rrSubstitutesTabIndex = this.rrDeliverTabIndex + 1
+  operatorTabIndex = this.rrSubstitutesTabIndex + 1
   resetTabIndex = this.operatorTabIndex + 1
   submitTabIndex = this.resetTabIndex + 1
 
@@ -303,6 +321,46 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     subject213: '',
   })
   public entryForm = form(this.entryModel)
+
+  // E-283 (ICS-213RR): the resource request, plain signals beside the form (like selectedRecipients213):
+  // a variable list of lines does not fit a flat Signal Forms model. Folded into the saved entry as
+  // `rr213` by mergedFormValue(), only while rrOn is set.
+  readonly rrOn = signal(false)
+  readonly rrLines = signal<Rr213LineType[]>([blankRr213Line()])
+  readonly rrPriority = signal<Rr213Priority>(RR213_DEFAULT_PRIORITY)
+  readonly rrDeliverTo = signal('')
+  readonly rrSubstitutes = signal('')
+  readonly rrPriorities = RR213_PRIORITIES
+
+  onRrToggle(checked: boolean): void {
+    this.rrOn.set(checked)
+    // Deliver to starts from where the report is, when that is an address; it is the scribe's to change.
+    if (checked && !this.rrDeliverTo().trim() && this.locationParent?.address?.trim()) {
+      this.rrDeliverTo.set(this.locationParent.address.trim())
+    }
+  }
+
+  setRrLine(i: number, key: keyof Rr213LineType, value: string): void {
+    this.rrLines.update(ls => ls.map((l, j) => j === i ? { ...l, [key]: value } : l))
+  }
+
+  addRrLine(): void {
+    this.rrLines.update(ls => [...ls, blankRr213Line()])
+    const n = this.rrLines().length - 1
+    setTimeout(() => this.document.getElementById(`enter__rr-qty-${n}`)?.focus())
+  }
+
+  removeRrLine(i: number): void {
+    this.rrLines.update(ls => ls.length > 1 ? ls.filter((_, j) => j !== i) : ls)
+  }
+
+  private resetRr(): void {
+    this.rrOn.set(false)
+    this.rrLines.set([blankRr213Line()])
+    this.rrPriority.set(RR213_DEFAULT_PRIORITY)
+    this.rrDeliverTo.set('')
+    this.rrSubstitutes.set('')
+  }
 
   // D-44 (2026-08-29): operator identity, deliberately OUTSIDE entryModel - unlike every
   // field above, resetAll() must NOT clear this. The maintainer's rule: it carries forward
@@ -447,7 +505,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** E-207: the advanced controls on this page (Simple view hides them while unused); also what shows the header Full view switch. The coordinate
    *  format picker lives in LocationComponent. */
-  protected readonly advancedIds = ['stations', 'source', 'attachments', 'evidence-location', 'coord-format'] as const
+  protected readonly advancedIds = ['stations', 'source', 'attachments', 'evidence-location', 'resource-request', 'coord-format'] as const
 
   /**
    * E-207 / D-62 item 3: what THIS form already holds, so Simple view never hides a control the
@@ -460,6 +518,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       nonDefaultSourceCount: f.source().value() === 'Voice' ? 0 : 1,
       attachmentCount: this.pendingFiles().length,
       evidenceLocationCount: this.showEvidenceLocation() ? 1 : 0,
+      resourceRequestCount: this.rrOn() ? 1 : 0,
     }
   }
   readonly attachReason = this.attachmentStore.unavailableReason()
@@ -739,6 +798,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       message213: entry.message213 ?? '', subject213: entry.subject213 ?? '',
       recipients213: all.filter(r => !options.includes(r)).join(', '),
     }))
+    if (entry.rr213) {
+      this.rrOn.set(true)
+      this.rrLines.set(entry.rr213.lines.length ? entry.rr213.lines.map(l => ({ ...l })) : [blankRr213Line()])
+      this.rrPriority.set(entry.rr213.priority ?? RR213_DEFAULT_PRIORITY)
+      this.rrDeliverTo.set(entry.rr213.deliverTo ?? '')
+      this.rrSubstitutes.set(entry.rr213.substitutes ?? '')
+    }
     this.pickerDate.set(date)
     this.callsignCtrl.setValue(entry.tacticalCall || this.stationText(entry.callsign, entry.rangerUid))
     this.toCtrl.setValue(entry.toTactical || this.stationText(entry.toCallsign, entry.toRangerUid))
@@ -1086,7 +1152,18 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
         ...this.selectedRecipients213(),
         ...this.splitRecipients213(this.entryModel().recipients213),
       ])),
+      // E-283: the resource request, only while its box is ticked and a line says something.
+      ...this.rrFormValue(),
     }
+  }
+
+  private rrFormValue(): { rr213?: ReturnType<typeof cleanRr213> } {
+    if (!this.rrOn()) return {}
+    const rr213 = cleanRr213({
+      lines: this.rrLines(), priority: this.rrPriority(),
+      deliverTo: this.rrDeliverTo(), substitutes: this.rrSubstitutes(),
+    })
+    return rr213 ? { rr213 } : {}
   }
 
   /** Comma-separated free text -> a trimmed, non-empty list. See mergedFormValue()'s note. */
@@ -1193,6 +1270,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.evidenceLocation = null
     this.evidenceDirection.set(null)
     this.selectedRecipients213.set(new Set())
+    this.resetRr()
     this.formGeneration++
   }
 
@@ -1430,6 +1508,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       generates213: m.generates213, replyRequested213: m.replyRequested213,
       message213: m.message213, recipients213: m.recipients213, subject213: m.subject213,
       selectedRecipients213: [...this.selectedRecipients213()],
+      rr: { on: this.rrOn(), lines: this.rrLines(), priority: this.rrPriority(), deliverTo: this.rrDeliverTo(), substitutes: this.rrSubstitutes() },
       location: atDefault || JSON.stringify(loc) === JSON.stringify(undefinedLocation) ? undefined : loc,
       pendingFiles: this.pendingFiles(),
     }
@@ -1460,6 +1539,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.toCtrl.setValue(d.to)
     if (d.status) this.entryControlsForm.setValue({ status: d.status })
     this.selectedRecipients213.set(new Set(d.selectedRecipients213))
+    if (d.rr) {
+      this.rrOn.set(d.rr.on)
+      this.rrLines.set(d.rr.lines.length ? d.rr.lines : [blankRr213Line()])
+      this.rrPriority.set(d.rr.priority)
+      this.rrDeliverTo.set(d.rr.deliverTo)
+      this.rrSubstitutes.set(d.rr.substitutes)
+    }
     this.pendingFiles.set(d.pendingFiles)
   }
 

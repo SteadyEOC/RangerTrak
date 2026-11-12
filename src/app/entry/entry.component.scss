@@ -862,3 +862,25 @@ mat-chip-option.enter__status-selected {
   color      : var(--rt-ink, inherit);
   font-weight: 600;
 }
+
+// E-283: the ICS-213RR box reuses .enter__213's look. One column at phone width: Qty and Kind share a
+// row, everything else is full width; from the tablet up the line is a single row of fields.
+.enter__rr-line {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: 0.4rem;
+  align-items: start;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--rt-line);
+
+  .enter__rr-desc,
+  .enter__rr-type,
+  .enter__rr-needed {
+    grid-column: 1 / -1;
+  }
+
+  .enter__rr-remove {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}

@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core'
 import type { LocationType } from '../shared/services'
+import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
+import type { Rr213Priority } from '../domain/rr213'
+import { rr213LineHasContent } from '../domain/rr213'
 import type { PendingAttachment } from '../shared/attachments/attachment-intake.service'
 
 /** What Entry keeps of an unsent report when the scribe leaves the page. */
@@ -19,6 +22,8 @@ export interface EntryDraft {
   /** Only when it was moved off the mission default; otherwise Entry starts from the default as before. */
   location?: LocationType
   pendingFiles: PendingAttachment[]
+  /** E-283: the resource-request part, when the scribe has opened it. */
+  rr?: { on: boolean, lines: Rr213LineType[], priority: Rr213Priority, deliverTo: string, substitutes: string }
 }
 
 /**
@@ -49,5 +54,6 @@ export class EntryDraftService {
 /** True when the scribe has typed, picked or attached anything worth keeping. */
 export function draftHasContent(d: EntryDraft): boolean {
   return !!(d.callsign.trim() || d.to.trim() || d.notes.trim() || d.message213.trim() || d.subject213.trim()
-    || d.recipients213.trim() || d.selectedRecipients213.length || d.pendingFiles.length)
+    || d.recipients213.trim() || d.selectedRecipients213.length || d.pendingFiles.length
+    || (d.rr?.on && d.rr.lines.some(rr213LineHasContent)))
 }

@@ -1,6 +1,7 @@
 import { RadioLogEntryType } from '../services/radio-log-entry.interface'
 import { formatStation } from '../../domain/station-label'
 import { formatHeading } from '../../domain/heading'
+import { rr213Summary } from '../../domain/rr213'
 import { PrintAttachment, printAttachments } from '../../domain/attachments'
 import { formatMsgNoContextLine, formatMsgNoFull, formatMsgNoShort, HANDLED_MARK_GLYPH, HANDLED_MARK_LABEL } from '../../domain/msg-no'
 
@@ -147,7 +148,9 @@ function formatMessage(report: RadioLogEntryType): string {
   const status = report.status?.trim()
   // E-268: a clue's heading rides in the message text (the 309 has no column for it).
   const heading = formatHeading(report.evidenceDirection)
-  const notes = [report.notes?.trim() ?? '', heading ? `Heading ${heading}` : ''].filter(Boolean).join(' - ')
+  // E-283: a resource request rides in the message text too (the 309 has no column for it).
+  const request = report.rr213 ? rr213Summary(report.rr213) : ''
+  const notes = [report.notes?.trim() ?? '', heading ? `Heading ${heading}` : '', request].filter(Boolean).join(' - ')
   return status ? `[${status}] ${notes}`.trim() : notes
 }
 
