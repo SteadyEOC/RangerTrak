@@ -55,4 +55,18 @@ describe('RadioLogComponent', () => {
       )
     ).toBeLessThan(0)
   })
+
+  // 2026-11-12, John: the phone's cards were in stored order (oldest first) while the grid was
+  // newest first.
+  it('lists the phone cards newest first, without reordering the stored entries', () => {
+    const entry = (id: number, iso: string) => ({ id, date: new Date(iso) }) as any
+    const stored = [
+      entry(1, '2026-09-30T17:16:05'),
+      entry(2, '2026-10-01T08:00:00'),
+      entry(3, '2026-09-30T09:00:00'),
+    ]
+    component.radioLogEntries.set(stored)
+    expect(component.cardEntries().map((e) => e.id)).toEqual([2, 1, 3])
+    expect(stored.map((e) => e.id)).toEqual([1, 2, 3])
+  })
 })

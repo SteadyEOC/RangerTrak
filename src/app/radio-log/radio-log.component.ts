@@ -170,10 +170,17 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       ? [{ key: RadioLogComponent.CURRENT_CHIP_KEY, label: `Current op period (${this.opPeriodLabel().trim()})` }, ...grid]
       : grid
   })
-  /** What the phone's card list shows: everything, or only the current op period. */
-  public cardEntries = computed(() => this.currentOnly()
-    ? this.radioLogEntries().filter(e => isCurrentOpPeriod(e, this.opPeriodLabel()))
-    : this.radioLogEntries())
+  /**
+   * What the phone's card list shows: everything, or only the current op period. Newest first, as
+   * the grid's Reported column sorts (John, 2026-11-12: the cards were in stored order, oldest
+   * first). A copy is sorted; the signal's array is left as it is.
+   */
+  public cardEntries = computed(() => {
+    const shown = this.currentOnly()
+      ? this.radioLogEntries().filter(e => isCurrentOpPeriod(e, this.opPeriodLabel()))
+      : [...this.radioLogEntries()]
+    return shown.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  })
 
   // Material-M3 pass, 2026-08-26: the export controls' state, replacing three
   // getElementById reads (see getParamValue/onBtnExport below for why each had to go -
