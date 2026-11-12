@@ -29,7 +29,7 @@ import { AlertsComponent } from '../shared/alerts/alerts.component'
 import { PageComponent } from '../shared/page/page.component'
 import { ViewService } from '../shared/services/view.service'
 import { AdvancedDirective } from '../shared/view/advanced.directive'
-import { RR213_PRIORITIES, RR213_DEFAULT_PRIORITY, blankRr213Line, cleanRr213 } from '../domain/rr213'
+import { RR213_PRIORITIES, RR213_DEFAULT_PRIORITY, blankRr213Line, cleanRr213, rr213DefaultNeededBy, rr213NeededByFromInput, rr213NeededByInputValue } from '../domain/rr213'
 import type { Rr213Priority } from '../domain/rr213'
 import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
 // Direct path, not the shared/services barrel - see the note in rangers.component.ts.
@@ -332,11 +332,27 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly rrSubstitutes = signal('')
   readonly rrPriorities = RR213_PRIORITIES
 
+  /** A line's "Needed by" as the date-and-time control's value. */
+  rrNeededValue(line: Rr213LineType): string {
+    return rr213NeededByInputValue(line.neededBy)
+  }
+
+  setRrNeeded(i: number, inputValue: string): void {
+    this.setRrLine(i, 'neededBy', rr213NeededByFromInput(inputValue))
+  }
+
   onRrToggle(checked: boolean): void {
     this.rrOn.set(checked)
+    // "Needed by" starts at the start of the next op period (rr213DefaultNeededBy); a time already there stays.
+    if (checked) {
+      const needed = rr213DefaultNeededBy(this.settings?.opPeriodEnd)
+      this.rrLines.update(ls => ls.map(l => l.neededBy?.trim() ? l : { ...l, neededBy: needed }))
+    }
     // Deliver to starts from where the report is, when that is an address; it is the scribe's to change.
-    if (checked && !this.rrDeliverTo().trim() && this.locationParent?.address?.trim()) {
-      this.rrDeliverTo.set(this.locationParent.address.trim())
+    // Never the "no location yet" marker, which is not an address (it showed in the box, 2026-11-12).
+    const address = this.locationParent?.address?.trim()
+    if (checked && !this.rrDeliverTo().trim() && address && address !== undefinedAddressFlag) {
+      this.rrDeliverTo.set(address)
     }
   }
 
@@ -345,7 +361,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   addRrLine(): void {
-    this.rrLines.update(ls => [...ls, blankRr213Line()])
+    // A further item is usually wanted at the same time as the one above it.
+    this.rrLines.update(ls => [...ls, {
+      ...blankRr213Line(),
+      neededBy: ls[ls.length - 1]?.neededBy?.trim() || rr213DefaultNeededBy(this.settings?.opPeriodEnd),
+    }])
     const n = this.rrLines().length - 1
     setTimeout(() => this.document.getElementById(`enter__rr-qty-${n}`)?.focus())
   }

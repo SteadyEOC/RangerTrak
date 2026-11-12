@@ -638,8 +638,10 @@
             </mat-form-field>
             <mat-form-field class="enter__rr-needed" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Needed by</mat-label>
-              <input matInput type="text" [value]="line.neededBy ?? ''" placeholder="mm/dd/yyyy HH:mm"
-                [attr.tabindex]="first ? rrNeededTabIndex : null" (input)="setRrLine(i, 'neededBy', $any($event.target).value)" />
+              <!-- 2026-11-12, John: a date-and-time control (the browser's own, with its hour and minute
+                   pickers), starting at the start of the next op period. Stored as mm/dd/yyyy HH:mm. -->
+              <input matInput type="datetime-local" data-testid="rr213-needed" [value]="rrNeededValue(line)"
+                [attr.tabindex]="first ? rrNeededTabIndex : null" (change)="setRrNeeded(i, $any($event.target).value)" />
             </mat-form-field>
             @if (rrLines().length > 1) {
             <button type="button" mat-icon-button class="enter__rr-remove" data-testid="rr213-remove"

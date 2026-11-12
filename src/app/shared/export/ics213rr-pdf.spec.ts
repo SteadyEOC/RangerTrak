@@ -1,6 +1,6 @@
 import { PDFDocument, PDFCheckBox } from 'pdf-lib'
 
-import { cleanRr213, rr213Summary } from '../../domain/rr213'
+import { cleanRr213, rr213DefaultNeededBy, rr213NeededByFromInput, rr213NeededByInputValue, rr213Summary } from '../../domain/rr213'
 import type { RadioLogEntryType, Rr213Type } from '../services/radio-log-entry.interface'
 import { buildIcs309Log } from './ics309-log'
 import {
@@ -114,6 +114,25 @@ describe('rr213 text', () => {
     expect(cleanRr213({ lines: [{ qty: ' 2 ', kind: ' Water ', type: ' ', description: '', neededBy: '' }, { qty: '', kind: '', description: '' }], deliverTo: ' ' }))
       .toEqual({ lines: [{ qty: '2', kind: 'Water', description: '' }], priority: 'routine' })
     expect(cleanRr213({ lines: [{ qty: '', kind: '', description: '' }] })).toBeUndefined()
+  })
+
+  // 2026-11-12, John: "Needed by" is a date-and-time control that starts at the next op period.
+  it('defaults Needed by to the op period end while that is ahead, else the top of the next hour', () => {
+    const now = new Date(2026, 10, 14, 9, 20)
+    expect(rr213DefaultNeededBy(new Date(2026, 10, 14, 18, 0), now)).toBe('11/14/2026 18:00')
+    expect(rr213DefaultNeededBy(new Date(2026, 10, 14, 18, 0).toISOString(), now)).toBe('11/14/2026 18:00')
+    expect(rr213DefaultNeededBy(new Date(2026, 10, 13, 18, 0), now)).toBe('11/14/2026 10:00')
+    expect(rr213DefaultNeededBy(undefined, now)).toBe('11/14/2026 10:00')
+    expect(rr213DefaultNeededBy('not a date', new Date(2026, 11, 31, 23, 40))).toBe('01/01/2027 00:00')
+  })
+
+  it('converts Needed by between the stored text and the date-and-time control', () => {
+    expect(rr213NeededByInputValue('11/14/2026 18:00')).toBe('2026-11-14T18:00')
+    expect(rr213NeededByInputValue('1/4/2027 8:05')).toBe('2027-01-04T08:05')
+    expect(rr213NeededByInputValue('ASAP')).toBe('')
+    expect(rr213NeededByInputValue(undefined)).toBe('')
+    expect(rr213NeededByFromInput('2026-11-14T18:00')).toBe('11/14/2026 18:00')
+    expect(rr213NeededByFromInput('')).toBe('')
   })
 
   it('puts the request text on the ICS-309 line', () => {

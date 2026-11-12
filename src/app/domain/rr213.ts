@@ -23,6 +23,38 @@ export function blankRr213Line(): Rr213LineType {
   return { qty: '', kind: '', type: '', description: '', neededBy: '' }
 }
 
+const pad2 = (x: number) => String(x).padStart(2, '0')
+
+/** "Needed by" as it is stored and printed: local "mm/dd/yyyy HH:mm", the form's own format. */
+export function rr213NeededByText(d: Date): string {
+  return `${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+}
+
+/** The stored text as an `<input type="datetime-local">` value; '' when blank or not in the stored format. */
+export function rr213NeededByInputValue(text: string | undefined): string {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/.exec((text ?? '').trim())
+  return m ? `${m[3]}-${pad2(+m[1])}-${pad2(+m[2])}T${pad2(+m[4])}:${m[5]}` : ''
+}
+
+/** A datetime-local value back to the stored text; '' when the field was cleared. */
+export function rr213NeededByFromInput(value: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value ?? '')
+  return m ? `${m[2]}/${m[3]}/${m[1]} ${m[4]}:${m[5]}` : ''
+}
+
+/**
+ * What "Needed by" starts as (John, 2026-11-12): the end of the current op period, which is the
+ * start of the next one, while that is still ahead; otherwise the top of the next hour. The scribe
+ * can change or clear it.
+ */
+export function rr213DefaultNeededBy(opPeriodEnd: Date | string | undefined | null, now: Date = new Date()): string {
+  const end = opPeriodEnd ? new Date(opPeriodEnd) : null
+  if (end && !isNaN(end.getTime()) && end.getTime() > now.getTime()) return rr213NeededByText(end)
+  const next = new Date(now)
+  next.setHours(next.getHours() + 1, 0, 0, 0)
+  return rr213NeededByText(next)
+}
+
 /** A line is worth keeping when it says what is wanted. */
 export function rr213LineHasContent(l: Rr213LineType): boolean {
   return !!(l.qty?.trim() || l.kind?.trim() || l.description?.trim())
