@@ -4943,8 +4943,8 @@ async function checkFieldPhoneSendNew(downloads) {
   })()`)
   const sendLabel = () => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.textContent.trim() ?? null`)
   const sendDisabled = () => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.disabled ?? null`)
-  // A packet's filename carries only the date, so every packet made today has the same name and
-  // Chrome overwrites the last one. Clear the folder of packets first, and delete each once read.
+  // Packet filenames end at the minute (date-only before 2026-11-11), so two sends within a minute
+  // share a name and Chrome overwrites the last one. Clear the folder of packets first, and delete each once read.
   const clearPackets = () => fs.readdirSync(downloads).filter(f => /report-packet/.test(f))
     .forEach(f => fs.rmSync(path.join(downloads, f), { force: true }))
   clearPackets()
@@ -5033,8 +5033,8 @@ async function checkReportReceipt(downloads) {
     document.querySelector('.enter__Submit-button').click();
     await new Promise(r => setTimeout(r, 1200));
   })()`)
-  // Packet filenames carry only the date, so an earlier check's packet has the same name as this
-  // one's and Chrome would overwrite it: clear old packets and receipts first.
+  // Packet filenames end at the minute, so an earlier check's packet can share this one's name and
+  // Chrome would overwrite it: clear old packets and receipts first.
   fs.readdirSync(downloads).filter(f => /report-packet|rangertrak-receipt/.test(f))
     .forEach(f => fs.rmSync(path.join(downloads, f), { force: true }))
   const waitFile = async (re) => {

@@ -2,7 +2,7 @@ import { MissionType } from '../services/mission.interface'
 import { RadioLogEntryType } from '../services/radio-log-entry.interface'
 import { stripBom } from '../../domain/import-diagnosis'
 import { readScenarioClock, type ScenarioClock } from '../../domain/scenario'
-import { localDateStamp } from './local-date'
+import { localDateStamp, localDateTimeStamp } from './local-date'
 
 /**
  * E-114 Report Packet, Phase 1 (2026-08-31, Private Roadmap.md's E-114 §2/§2a/§2b). A queued,
@@ -114,8 +114,9 @@ export function parseReportPacket(text: string): ReportPacket {
   return parsed as ReportPacket
 }
 
-/** `.txt`, not `.json` - see this file's own header comment for why (E-114 §2b). */
+/** `.txt`, not `.json` - see this file's own header comment for why (E-114 §2b). 2026-11-11 (John): the local
+ *  time to the minute follows the date, as receipts have, so a phone's packets on one day don't share a name. */
 export function reportPacketFilename(mission: string, exportedAt: string): string {
   const missionLabel = (mission || 'mission').replace(/[^a-z0-9_-]+/gi, '_')
-  return `rangertrak-report-packet-${missionLabel}-${localDateStamp(exportedAt)}.txt`
+  return `rangertrak-report-packet-${missionLabel}-${localDateStamp(exportedAt)}-${localDateTimeStamp(exportedAt).slice(-4)}.txt`
 }

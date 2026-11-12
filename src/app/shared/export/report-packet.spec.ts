@@ -164,9 +164,9 @@ describe('report-packet', () => {
     it('sanitizes the mission name and uses a .txt extension', () => {
       const name = reportPacketFilename(
         'Vashon Search #3!',
-        new Date(2026, 7, 31, 12).toISOString()
+        new Date(2026, 7, 31, 12, 5).toISOString()
       )
-      expect(name).toBe('rangertrak-report-packet-Vashon_Search_3_-2026-08-31.txt')
+      expect(name).toBe('rangertrak-report-packet-Vashon_Search_3_-2026-08-31-1205.txt')
     })
 
     it('falls back to "mission" when the mission name is blank', () => {
