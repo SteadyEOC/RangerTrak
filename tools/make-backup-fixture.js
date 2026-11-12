@@ -177,7 +177,14 @@ async function waitForDownload(dir) {
     //    2026-10-02, John: the old `queue(true, true)` left two stale answers that shifted every
     //    later dialog, so the 0.99.17 "encrypted" fixture was written in plaintext.
     await goto(b, '/mission')
-    if (!await clickButton(b, '/Load sample mission/i')) throw new Error('no "Load sample mission" button')
+    // 2026-11-11 (beta.3): on localhost ngsw holds every fetch until its first-install prefetch is done,
+    // so /mission can still be blank here. Wait for the button rather than failing at once.
+    let loaded = false
+    for (let i = 0; i < 40 && !loaded; i++) {
+      loaded = await clickButton(b, '/Load sample mission/i')
+      if (!loaded) await sleep(500)
+    }
+    if (!loaded) throw new Error('no "Load sample mission" button')
     await sleep(6000)
 
     // 2. Name the mission. There is no Save button (E-145, 2026-09-30): the page autosaves about
