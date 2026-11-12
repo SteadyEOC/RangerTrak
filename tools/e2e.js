@@ -4912,6 +4912,11 @@ async function checkReportPacketRoundTrip(downloads) {
   check('importing the exact same packet a second time changes nothing', afterSecondImport, afterFirstImport)
 }
 
+// Headless Chrome on Windows has navigator.share, and its share sheet never answers, so a Send
+// waits forever instead of downloading. Hide it on the current page so sendReportPacket downloads.
+const noShareSheet = () => evaluate(`Object.defineProperty(navigator, 'canShare', { value: undefined, configurable: true });
+  Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }); true`)
+
 /**
  * E-251/E-253 (2026-11-11, ADR D-69): a field phone sends only the reports not sent yet, and a not-sent
  * report edited from My reports arrives in the packet edited. Not run by the brief's session (no
@@ -4938,15 +4943,22 @@ async function checkFieldPhoneSendNew(downloads) {
   })()`)
   const sendLabel = () => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.textContent.trim() ?? null`)
   const sendDisabled = () => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.disabled ?? null`)
-  const seen = new Set()
+  // A packet's filename carries only the date, so every packet made today has the same name and
+  // Chrome overwrites the last one. Clear the folder of packets first, and delete each once read.
+  const clearPackets = () => fs.readdirSync(downloads).filter(f => /report-packet/.test(f))
+    .forEach(f => fs.rmSync(path.join(downloads, f), { force: true }))
+  clearPackets()
   const nextPacket = async () => {
     let fresh = []
     for (let i = 0; i < 40 && fresh.length === 0; i++) {
       await sleep(250)
-      fresh = fs.readdirSync(downloads).filter(f => /report-packet/.test(f) && f.endsWith('.txt') && !f.endsWith('.crdownload') && !seen.has(f))
+      fresh = fs.readdirSync(downloads).filter(f => /report-packet/.test(f) && f.endsWith('.txt'))
     }
-    fresh.forEach(f => seen.add(f))
-    return fresh.length ? JSON.parse(fs.readFileSync(path.join(downloads, fresh[0]), 'utf8')) : null
+    if (!fresh.length) return null
+    await sleep(300)   // let Chrome finish writing it
+    const packet = JSON.parse(fs.readFileSync(path.join(downloads, fresh[0]), 'utf8'))
+    clearPackets()
+    return packet
   }
 
   try {
@@ -4954,6 +4966,7 @@ async function checkFieldPhoneSendNew(downloads) {
     await clickSubmit()
     check('the button reads "Send 1 new report" after one save', await pollUntil(sendLabel, v => v === 'Send 1 new report'), 'Send 1 new report')
 
+    await noShareSheet()
     await evaluate(`document.querySelector('[data-testid="send-new-reports"]').click()`)
     const first = await nextPacket()
     check('Send produced a packet with the one report', first?.entries?.length, 1)
@@ -4981,8 +4994,10 @@ async function checkFieldPhoneSendNew(downloads) {
     await clickSubmit()
     check('Save changes leaves edit mode', await evaluate(`!document.querySelector('[data-testid="entry-editing"]')`), true)
 
+    await noShareSheet()
     await evaluate(`document.querySelector('[data-testid="send-new-reports"]').click()`)
     const second = await nextPacket()
+    if (!second) console.log(`        downloads: ${fs.readdirSync(downloads).join(' | ')}; last dialogs: ${dialogs.slice(-3).join(' | ')}`)
     check('the second packet holds only the one new report', second?.entries?.length, 1)
     check('...and it arrives edited', second?.entries?.[0]?.notes, 'E2E-SEND-NEW-2-CORRECTED')
   } finally {
@@ -5018,12 +5033,17 @@ async function checkReportReceipt(downloads) {
     document.querySelector('.enter__Submit-button').click();
     await new Promise(r => setTimeout(r, 1200));
   })()`)
+  // Packet filenames carry only the date, so an earlier check's packet has the same name as this
+  // one's and Chrome would overwrite it: clear old packets and receipts first.
+  fs.readdirSync(downloads).filter(f => /report-packet|rangertrak-receipt/.test(f))
+    .forEach(f => fs.rmSync(path.join(downloads, f), { force: true }))
   const waitFile = async (re) => {
     let found = []
     for (let i = 0; i < 40 && found.length === 0; i++) {
       await sleep(250)
-      found = fs.readdirSync(downloads).filter(f => re.test(f) && f.endsWith('.txt') && !f.endsWith('.crdownload'))
+      found = fs.readdirSync(downloads).filter(f => re.test(f) && f.endsWith('.txt'))
     }
+    if (found.length) await sleep(300)   // let Chrome finish writing it
     return found.length ? path.join(downloads, found[0]) : null
   }
   const chips = () => evaluate(`[...document.querySelectorAll('[data-testid="my-report-chip"]')].map(c => c.textContent.trim())`)
@@ -5035,18 +5055,20 @@ async function checkReportReceipt(downloads) {
     await typeNotes('E2E-RECEIPT-2')
     await clickSubmit()
     await pollUntil(() => evaluate(`document.querySelector('[data-testid="send-new-reports"]')?.textContent.trim() ?? null`), v => v === 'Send 2 new reports')
+    await noShareSheet()
     await evaluate(`document.querySelector('[data-testid="send-new-reports"]').click()`)
     const packetFile = await waitFile(/report-packet/)
     if (!check('the phone produced a packet', !!packetFile, true)) return
-    fs.renameSync(packetFile, packetFile + '.e2e-used')   // so a later check's file search does not meet it
 
     // The command post: field mode off, packet loaded, receipt sent from the merge summary.
     await evaluate(`localStorage.removeItem('fieldMode')`)
     await goto('/')
     await navigateInApp('Radio Log', 3500)
-    await setFileInput('input[type="file"][accept^="text/plain"]', packetFile + '.e2e-used')
+    await setFileInput('input[type="file"][accept^="text/plain"]', packetFile)
     const offered = await pollUntil(() => evaluate(`!!document.querySelector('[data-testid="merge-summary-receipt"]')`), v => v === true)
+    if (offered !== true) console.log(`        dialog text: ${await evaluate(`document.querySelector('mat-dialog-container')?.textContent.trim().slice(0, 200) ?? 'none'`)}; last dialogs: ${dialogs.slice(-3).join(' | ')}`)
     check('the merge summary offers Send a receipt', offered, true)
+    await noShareSheet()
     await evaluate(`document.querySelector('[data-testid="merge-summary-receipt"]')?.click()`)
     const receiptFile = await waitFile(/rangertrak-receipt/)
     if (!check('Send a receipt produced a file', !!receiptFile, true)) return
@@ -5073,14 +5095,14 @@ async function checkReportReceipt(downloads) {
     check('opening the same receipt again says nothing is new', (dialogs[dialogs.length - 1] || '').startsWith('Nothing new'), true)
 
     await evaluate(`document.querySelector('[data-testid="clear-received"]')?.click()`)
-    check('Clear received reports empties the phone', await pollUntil(chips, v => Array.isArray(v) && v.length === 0), true)
+    check('Clear received reports empties the phone', (await pollUntil(chips, v => Array.isArray(v) && v.length === 0))?.length, 0)
     const left = (JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || []).length
     check('...and the log holds no reports', left, 0)
   } finally {
     await evaluate(`localStorage.removeItem('fieldMode'); localStorage.removeItem('fieldModeReports')`)
     await idbRemoveRaw('radioLog')
     for (const f of fs.readdirSync(downloads)) {
-      if (/rangertrak-receipt|report-packet/.test(f) && f.endsWith('.e2e-used')) fs.rmSync(path.join(downloads, f), { force: true })
+      if (/rangertrak-receipt|report-packet/.test(f)) fs.rmSync(path.join(downloads, f), { force: true })
     }
   }
 }
@@ -5924,7 +5946,25 @@ async function settleServiceWorker() {
   if (!READ_ONLY) { await evaluate(`localStorage.clear()`); await idbClearAll(); await attachmentsWipe() }
 }
 
+/** Resolves true when nothing is listening on this local port. */
+function portIsFree(port) {
+  return new Promise(resolve => {
+    const probe = require('net').createServer()
+    probe.once('error', () => resolve(false))
+    probe.once('listening', () => probe.close(() => resolve(true)))
+    probe.listen(port, '127.0.0.1')
+  })
+}
+
 async function main() {
+  // 2026-11-11: an interrupted run left its Chrome holding PORT; the next run's Chrome could not
+  // bind it, so the script drove the OLD browser and died on "No dialog is showing". Stop plainly.
+  if (!(await portIsFree(PORT))) {
+    console.error(`Port ${PORT} is in use, most likely by Chrome left over from an interrupted e2e run.\n`
+      + `Find it with: Get-NetTCPConnection -LocalPort ${PORT} -State Listen | Select-Object OwningProcess\n`
+      + `Stop that process by its PID, delete its .tmp\\rangertrak-e2e-* folder, then run again.`)
+    process.exit(2)
+  }
   const run = makeTempRun('rangertrak-e2e-')
   const tmp = run.dir
   runTempDir = tmp
