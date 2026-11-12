@@ -101,7 +101,16 @@ const SHOTS = [
   { id: 'T9.2', file: 'send-my-reports', phase: 'field', pad: 14, route: '/', mobile: true,
     setupReloads: true,
     setup: `(async () => { window.__click('.entry-welcome button', /my field phone/i); await new Promise(r => setTimeout(r, 2500)) })()`,
-    find: `[...document.querySelectorAll('button')].find(b => /Send \d+ new reports?|Nothing new to send/i.test(b.textContent) && b.getClientRects().length)`,
+    // A new field phone has no reports, so the button reads "Nothing new to send" (disabled): file one
+    // first. Runs after setup's reload has settled.
+    after: `(async () => {
+      let ta = null
+      for (let i = 0; i < 40 && !ta; i++) { await new Promise(r => setTimeout(r, 250)); ta = document.querySelector('[data-testid="send-new-reports"]') && document.querySelector('#enter__What--area') }
+      if (ta) { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(ta, 'Team 2 at the trailhead, all OK'); ta.dispatchEvent(new Event('input', { bubbles: true })) }
+      await new Promise(r => setTimeout(r, 300));
+      document.querySelector('.enter__Submit-button')?.click();
+      await new Promise(r => setTimeout(r, 1500)) })()`,
+    find: `[...document.querySelectorAll('button')].find(b => /Send [0-9]+ new reports?|Nothing new to send/i.test(b.textContent) && b.getClientRects().length)`,
     alt: 'Field mode’s Send new reports button on a phone' },
 ]
 
@@ -214,6 +223,7 @@ async function takeShot(b, s) {
     if (s.setup) {
       try { await b.evaluate(s.setup) } catch (e) { if (!s.setupReloads) throw e; await sleep(5000) }   // e.g. field mode reloads the page
     }
+    if (s.after) await b.evaluate(s.after)   // a second step on the page setup left (after any reload)
     if (s.focus) {   // a tall element: put its top just under the sticky navbar
       await b.evaluate(`(() => { ${s.focus}.scrollIntoView({ block: 'start' }); scrollBy(0, -130) })()`)
       await sleep(300)
