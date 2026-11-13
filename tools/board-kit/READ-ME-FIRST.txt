@@ -55,6 +55,8 @@ AT THE COMMAND POST
 5. In RangerTrak, open Mission > RangerTrak Board, turn on "Send this log to a RangerTrak Board",
    paste the address, and press Test connection. Use that address even on this same computer,
    not "localhost": the viewer link is made from it.
+   Chrome or Edge may ask "rangertrak.org wants to access other devices on your local
+   network". Click Allow: that is how RangerTrak reaches the Board.
 6. STEP 2 in the window is for viewers: the same address with /view on the end, or the QR code.
 
 

@@ -8,7 +8,7 @@ The tag moved on 2026-11-13 to take in the work below, so the drill build and be
 
 ### Features
 
-* **board:** rangertrak.org/board/ walks through setting up the Board step by step: a checklist with a progress gauge, steps for Windows, Mac or Linux picked automatically, troubleshooting tucked away; the Mission card, Help and READ-ME-FIRST link to it
+* **board:** rangertrak.org/board/ walks through setting up the Board step by step: a checklist with a progress gauge, steps for Windows, Mac or Linux picked automatically, troubleshooting tucked away; the Mission card, Help and READ-ME-FIRST link to it; it and READ-ME-FIRST tell the scribe to click Allow when Chrome or Edge asks about reaching devices on the local network
 * **board:** the viewer shows the time, the mission's name and number, the op period with time in and time left, a Help link, and the Board's version
 * **board:** the Board checks once at start-up for a newer kit and says so in its window and the viewer's footer; offline it stays quiet
 * **messages:** E-283 ICS-213RR resource requests: Entry opt-in (Full view, not field phones), all nine order lines, hover help after Washington EMD's 213RR instructions, on-site contact prefilled from the roster, WA EMD priorities mapped to the FEMA boxes, FEMA 213RR PDF fill and print, Messages filter, ICS-309 line, Board summary ([30eec58](https://github.com/SteadyEOC/RangerTrak/commit/30eec581), [ac8e3f8](https://github.com/SteadyEOC/RangerTrak/commit/ac8e3f86), [60eebdb](https://github.com/SteadyEOC/RangerTrak/commit/60eebdb7))
