@@ -9,31 +9,53 @@ Nothing here touches the Internet once it is set up, and nothing is saved to dis
 Board's own certificate (in the certificate folder).
 
 
+WHICH COMPUTERS
+---------------
+The Board runs on Windows 10 or 11, macOS, or Linux. Viewers can use any phone, tablet or
+computer with a web browser; they install nothing.
+
+
+The same steps, with a checklist: https://rangertrak.org/board/
+
+
 BEFORE YOU GO (needs the Internet, once)
 ----------------------------------------
-1. Install Node.js, the LTS version, from https://nodejs.org (version 24 or newer).
+1. Install Node.js, the LTS version (24 or newer), from https://nodejs.org/en/download
+   No extra tools are needed. Accept the installer's defaults, and leave "Automatically install
+   the necessary tools" (Chocolatey, Python, build tools) UNCHECKED.
+     Windows: run the .msi installer.
+     Mac:     run the .pkg installer.
+     Linux:   use your distribution's package manager or the nodejs.org instructions. Check
+              with "node --version": it must print v24 or higher.
 2. Unzip this whole kit into a folder you can find again, for example Documents\RangerTrak Board.
    Don't run it from inside the zip.
+     Windows: right-click the zip, Extract All, Extract.
+     Mac:     double-click the zip.
+     Linux:   unzip rangertrak-board-*.zip -d "RangerTrak Board"
 
 
 AT THE COMMAND POST
 -------------------
 1. Join the Wi-Fi or hotspot everyone will use.
-2. Double-click "Start RangerTrak Board".
-     Windows: if a blue "Windows protected your PC" box appears, click More info, then Run anyway.
+2. Start the Board:
+     Windows: double-click "Start RangerTrak Board.bat".
+              If a blue "Windows protected your PC" box appears, click More info, then Run anyway.
               If Windows asks whether to allow Node.js on private networks, click Allow.
-     Mac:     the first time, right-click (or Control-click) the file, choose Open, then Open.
-3. A window opens and prints the Board's address, normally https://rangertrak-board.local
-   (with a numbered address under it for older Android phones). Keep that window open; closing
-   it stops the Board.
-4. On the scribe's device, open that address in the browser. It warns "Your connection is not
-   private". That is expected for a private server: click Advanced, then Proceed. Once per
+     Mac:     the first time, right-click (or Control-click) "Start RangerTrak Board.command",
+              choose Open, then Open. After that, double-click it.
+     Linux:   in a terminal, in the kit's folder:  node rangertrak-board.js
+              The Board uses port 443, which Linux reserves; if it says so, it moves to another
+              port and prints the address with that port. Use exactly what it prints.
+3. A window opens. STEP 1 in it is the address for the scribe, normally
+   https://rangertrak-board.local (already copied on that computer). Keep the window open;
+   closing it stops the Board.
+4. On the scribe's device, open that address in the browser once. It warns "Your connection is
+   not private". That is expected for a private server: click Advanced, then Proceed. Once per
    device; viewers do the same the first time.
 5. In RangerTrak, open Mission > RangerTrak Board, turn on "Send this log to a RangerTrak Board",
-   paste the address, and press Test connection. Use the printed address even on this same
-   computer, not "localhost": the viewer link is made from it, and a localhost link opens on
-   this computer only.
-6. Viewers open the same address with /view on the end, or scan the QR code in the window.
+   paste the address, and press Test connection. Use that address even on this same computer,
+   not "localhost": the viewer link is made from it.
+6. STEP 2 in the window is for viewers: the same address with /view on the end, or the QR code.
 
 
 GOOD TO KNOW

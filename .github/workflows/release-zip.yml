@@ -97,7 +97,9 @@ jobs:
           # Never name an env var ZIP (or ZIPOPT): Info-ZIP reads it as default options. On v1.0.0-beta.2 the
           # web zip's path sat in $ZIP, so this zip added the kit to the web zip, exited 0 and left no kit zip.
           cp -r "dist/board-kit/$NAME" "$RUNNER_TEMP/$NAME"
-          (cd "$RUNNER_TEMP" && zip -r9 "$NAME.zip" "$NAME" | tail -5)
+          # No top folder inside the zip: Windows' Extract All and macOS both make a folder named after the
+          # zip already, so a top folder gave rangertrak-board-X\rangertrak-board-X\ (John, 2026-11-13).
+          (cd "$RUNNER_TEMP/$NAME" && zip -r9 "../$NAME.zip" . | tail -5)
           test -s "$RUNNER_TEMP/$NAME.zip"
           ls -l "$RUNNER_TEMP/$NAME.zip"
           gh release upload "$TAG" "$RUNNER_TEMP/$NAME.zip" --clobber

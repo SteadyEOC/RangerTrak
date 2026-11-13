@@ -1,6 +1,7 @@
 import type { AttachmentRef } from './attachments'
 import {
   attachmentFields,
+  boardRequestUrl,
   BoardAttachment,
   BoardEvent,
   BoardState,
@@ -405,5 +406,16 @@ describe('Board snapshot resource requests (E-283)', () => {
       },
     })
     expect(out).toEqual({ rr213: 'Resource request (ICS-213RR): 9 × Hard hat +1 more, Life saving, deliver to Patrol 2' })
+  })
+})
+
+describe('board-client request URL', () => {
+  // John's laptop test 2026-11-13: through the service worker, a certificate failure came back as an empty 504.
+  it('marks every Board request to skip the service worker', () => {
+    expect(boardRequestUrl('https://rangertrak-board.local', '/api/hello')).toBe('https://rangertrak-board.local/api/hello?ngsw-bypass=1')
+    expect(boardRequestUrl('https://10.0.0.5:8443', '/api/attachments/ab12')).toBe('https://10.0.0.5:8443/api/attachments/ab12?ngsw-bypass=1')
+  })
+  it('keeps a query the path already has', () => {
+    expect(boardRequestUrl('https://b.local', '/api/requests?since=3')).toBe('https://b.local/api/requests?since=3&ngsw-bypass=1')
   })
 })

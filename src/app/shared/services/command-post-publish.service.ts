@@ -6,7 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar'
 
 import {
   attachmentFields, BoardAction, BoardAttachment, BoardIcs213, ics213Fields, rr213Fields, BoardEvent, BoardHolder, BoardState, boardStep, describeAgent,
-  readClaimReply, readKeyedReply, replacedMessage, trimThumbs,
+  boardRequestUrl, readClaimReply, readKeyedReply, replacedMessage, trimThumbs,
 } from '../../domain/board-client'
 import { normaliseBoardAddress } from '../../domain/board-address'
 import { BoardRetry } from '../../domain/board-retry'
@@ -524,7 +524,7 @@ export class CommandPostPublishService implements OnDestroy {
     const started = Date.now()
     let res: Response
     try {
-      res = await fetch(`${base}${path}`, {
+      res = await fetch(boardRequestUrl(base, path), {
         method,
         headers: { ...o.headers, ...(o.key ? { 'X-Board-Key': o.key } : {}) },
         ...(o.body !== undefined ? { body: o.body } : {}),
@@ -608,7 +608,7 @@ export class CommandPostPublishService implements OnDestroy {
   private async askHello(base: string): Promise<HelloResult> {
     const started = Date.now()
     try {
-      const res = await fetch(`${base}/api/hello`, { signal: AbortSignal.timeout(HELLO_TIMEOUT_MS) })
+      const res = await fetch(boardRequestUrl(base, '/api/hello'), { signal: AbortSignal.timeout(HELLO_TIMEOUT_MS) })
       let body: { app?: unknown, name?: unknown } | null = null
       try { body = await res.json() } catch { /* not JSON: not a Board */ }
       return body && body.app === 'rangertrak-board'

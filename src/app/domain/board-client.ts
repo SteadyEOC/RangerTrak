@@ -79,6 +79,20 @@ export function boardStep(state: BoardState, event: BoardEvent): BoardStep {
   }
 }
 
+// ---- the request URL ----
+
+/**
+ * The URL for one Board request, marked so the app's service worker leaves it alone. Angular's worker
+ * handles cross-origin fetches too, and when one fails (a certificate not yet accepted, nothing answering)
+ * it answers with a made-up empty 504 instead of letting the fetch fail. The app then read "the Board
+ * refused the claim (HTTP 504)" and "not a RangerTrak Board" where the cause was the certificate
+ * (John's laptop test, 2026-11-13). A query flag, not the `ngsw-bypass` header: a custom header would
+ * add a CORS preflight to every request. The Board ignores query strings on its routes.
+ */
+export function boardRequestUrl(base: string, path: string): string {
+  return `${base}${path}${path.includes('?') ? '&' : '?'}ngsw-bypass=1`
+}
+
 // ---- reading the server's replies ----
 
 export const WRONG_PASSWORD_MESSAGE = 'This Board has a password. Check it with whoever runs the Board.'

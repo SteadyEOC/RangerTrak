@@ -56,6 +56,13 @@
   h1 { font-size: 1.3rem; margin: 0; display: flex; align-items: center; gap: 0.45rem; align-self: center; }
   h1 img { width: 1.8rem; height: 1.8rem; flex: none; }
   .meta { color: var(--ink-2); font-size: 0.9rem; }
+  /* John, 2026-11-13: the time, the op period and a way to help at a glance. */
+  .clock { margin-left: auto; font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; align-self: center; }
+  .help-link { align-self: center; font-size: 0.9rem; }
+  #opLine { margin: -0.4rem 0 0.75rem; }
+  #opLine strong { color: var(--ink); }
+  .board-foot { margin-top: 2rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+  .board-foot .newer { color: var(--warn); font-weight: 600; }
   .badge {
     display: inline-block;
     padding: 0.15em 0.6em;
@@ -216,8 +223,11 @@
   <h1><img src="/assets/icons/rangertrak-mark.svg" alt="" width="29" height="29">RangerTrak Board</h1>
   <span id="missionMeta" class="meta">No log yet</span>
   <span id="statusBadge" class="badge badge--none">no data yet</span>
+  <span id="clock" class="clock" title="The time on this device"></span>
+  <a class="help-link" href="https://rangertrak.org/board/" target="_blank" rel="noopener">Help</a>
   <button id="themeToggle" type="button" title="Colours: follow this device, light, or dark">◐ Auto</button>
 </header>
+<p id="opLine" class="meta" hidden></p>
 <p id="claimLine" class="meta" hidden></p>
 
 <form id="pwForm" class="notice" hidden>
@@ -249,6 +259,13 @@
   </table>
 </div>
 <p id="emptyState" class="empty" hidden>No reports match.</p>
+
+<footer class="board-foot meta meta--small">
+  RangerTrak Board <span id="kitVersion"></span><span id="newerKit" class="newer"></span> ·
+  <a href="https://rangertrak.org/board/" target="_blank" rel="noopener">Setting up the Board</a> ·
+  <a href="https://github.com/SteadyEOC/RangerTrak/releases/latest" target="_blank" rel="noopener">Newest version</a>
+  (these links need the Internet)
+</footer>
 
 <div id="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ovTitle">
   <div class="dialog">
@@ -605,8 +622,10 @@
       return;
     }
 
-    metaEl.textContent = (latest.mission || '(unnamed mission)')
-      + (latest.opPeriod ? ' — ' + latest.opPeriod : '');
+    // mission is the ID or number, event the name (the Mission page's two fields).
+    metaEl.textContent = latest.event && latest.mission ? latest.event + ' (' + latest.mission + ')'
+      : latest.event || latest.mission || '(unnamed mission)';
+    drawTimes();
 
     var all = latest.reports || [];
     var msgCount = all.filter(is213).length;
@@ -886,6 +905,51 @@
   setView(view);
   poll();
   setInterval(poll, POLL_MS);
+
+  // ---- clock and op period (John, 2026-11-13) ----
+  // This device's own time, 24-hour as on ICS forms. The op period's times come from the scribe's
+  // Mission page; elapsed and left are counted on this device's clock.
+  function hhmm(d) {
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+  function whenText(d, now) {
+    return d.toDateString() === now.toDateString() ? hhmm(d)
+      : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + hhmm(d);
+  }
+  function span(ms) {
+    var min = Math.max(0, Math.round(ms / 60000));
+    var h = Math.floor(min / 60);
+    var m = min % 60;
+    return h ? h + ' h ' + m + ' min' : m + ' min';
+  }
+  // Looks its elements up each time: render() may call it before this part of the script has run.
+  function drawTimes() {
+    var clockEl = document.getElementById('clock');
+    var opLineEl = document.getElementById('opLine');
+    var now = new Date();
+    clockEl.textContent = hhmm(now);
+    var start = latest && latest.opPeriodStart ? new Date(latest.opPeriodStart) : null;
+    var end = latest && latest.opPeriodEnd ? new Date(latest.opPeriodEnd) : null;
+    if (!latest || !start || !end || isNaN(start) || isNaN(end) || end <= start) {
+      opLineEl.hidden = !(latest && latest.opPeriod);
+      opLineEl.textContent = latest && latest.opPeriod ? 'Op period ' + latest.opPeriod : '';
+      return;
+    }
+    var where = now < start ? 'starts in ' + span(start - now)
+      : now >= end ? 'ended ' + span(now - end) + ' ago'
+      : span(now - start) + ' in · <strong>' + span(end - now) + ' left</strong>';
+    opLineEl.innerHTML = esc('Op period ' + (latest.opPeriod || '')) + ' · '
+      + esc(whenText(start, now) + '–' + whenText(end, now)) + ' · ' + where;
+    opLineEl.hidden = false;
+  }
+  drawTimes();
+  setInterval(drawTimes, 5000);
+
+  // The Board's version, and a newer kit if the Board found one when it started (it checks GitHub once).
+  fetch('/api/hello').then(function (r) { return r.json(); }).then(function (h) {
+    if (h && h.version) { document.getElementById('kitVersion').textContent = h.version; }
+    if (h && h.newer) { document.getElementById('newerKit').textContent = ' (version ' + h.newer + ' is out)'; }
+  }).catch(function () { /* the version is a nicety */ });
 })();
 </script>
 

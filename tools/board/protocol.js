@@ -83,10 +83,11 @@ function safeContentType(type) {
  * @param {function} [o.onClaim]        called after a claim, a takeover or a password change, so the
  *                                      server can show the viewer QR code. Never given anything to log.
  * @param {string}   [o.version]        the RangerTrak version, told to GET /api/hello (E-216)
+ * @param {Function} [o.update]         () => { version } of a newer kit, once the start-up check finds one (update-check.js)
  * @param {string}   [o.wifi]           the Wi-Fi network's name when the server could read it, told to viewers
  *                                      so "Lost the Board" can ask "Still on <name>?" (E-216)
  */
-function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, name = '', onClaim = () => {}, version = '', wifi = '' } = {}) {
+function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, name = '', onClaim = () => {}, version = '', wifi = '', update = () => null } = {}) {
   let claim = null; // { key, password, by, at, previous? }
   let snapshot = null;
   let refs = new Map(); // sha -> { size, type }, the non-removed attachment refs in the snapshot
@@ -354,7 +355,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     const m = req.method;
     const wrongMethod = () => send(res, 405, { error: 'Method not allowed' });
     // E-216: lets the app tell "a RangerTrak Board" from "something else". No password, no claim, no state read.
-    if (urlPath === '/api/hello') return m === 'GET' ? send(res, 200, { app: 'rangertrak-board', name: board.name, version }) : wrongMethod();
+    if (urlPath === '/api/hello') return m === 'GET' ? send(res, 200, { app: 'rangertrak-board', name: board.name, version, ...(update() ? { newer: update().version } : {}) }) : wrongMethod();
     if (urlPath === '/api/claim') return m === 'POST' ? postClaim(req, res) : wrongMethod();
     if (urlPath === '/api/password') return m === 'POST' ? postPassword(req, res) : wrongMethod();
     if (urlPath === '/api/requests') return m === 'GET' ? getRequests(req, res) : wrongMethod();

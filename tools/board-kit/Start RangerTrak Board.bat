@@ -10,6 +10,8 @@ REM %~dp0 is this file's own folder, with a trailing backslash; a double-click d
 REM guarantee the starting folder.
 cd /d "%~dp0"
 title RangerTrak Board
+REM Plain white on black, whatever colours this console was set to (John 2026-11-13: dark-on-dark).
+color 0F
 
 where node >nul 2>nul
 if errorlevel 1 (
@@ -19,6 +21,7 @@ if errorlevel 1 (
   echo.
   echo Install the LTS version from https://nodejs.org ^(it needs the Internet, so do it
   echo before you leave for the field^), then double-click this file again.
+  echo No extra tools are needed: leave "Automatically install the necessary tools" unchecked.
   echo.
   pause
   exit /b 1

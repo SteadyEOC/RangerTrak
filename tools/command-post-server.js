@@ -44,6 +44,7 @@ const { boardCause } = require('./board/causes');
 const selfcheck = require('./board/selfcheck');
 const { startStatusLine } = require('./board/statusline');
 const { version: APP_VERSION } = require('../package.json');
+const { checkForUpdate, updateLine } = require('./board/update-check');
 
 // E-255: the Board kit (tools/board-kit/) runs this file bundled, from a folder with the built
 // app in app/ and the certificate kept in certificate/. Its entry sets this before loading us.
@@ -345,39 +346,31 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
     console.log(`Couldn't announce ${label}.local; use the address below.`);
     console.log('');
   }
-  console.log('Give teams this address to view the live comms log:');
-  console.log('');
-  if (nameUrl) console.log(`  ${nameUrl}/view`);
-  for (const addr of addresses) {
-    console.log(`  https://${hostPort(addr)}/view${nameUrl && addr === addresses[0] ? '   (if the name does not open, e.g. on an older Android phone)' : ''}`);
-  }
-  console.log(`  https://${hostPort('localhost')}/view   (this machine only)`);
-  console.log('');
-  console.log(`To show a QR code for phones full screen, open https://${hostPort('localhost')}/qr on this computer.`);
-  console.log('(It is shown here too once the scribe turns on publishing. That page works from this computer only.)');
+  // John 2026-11-13: the old banner buried the one thing to do under paragraphs. Two steps, address first.
   if (name && name !== `${label}.local`) {
-    console.log('');
     console.log(`Note: ${label}.local was already taken on this network, so this Board is ${name}.`);
-  }
-  console.log('');
-  console.log('FIRST VISIT ON EACH DEVICE: the browser will warn "Your connection is not');
-  console.log(`private" for ${name || 'this address'} - that is expected for a private server with no public`);
-  console.log('certificate authority, the same warning router admin pages show. Click Advanced,');
-  console.log('then Proceed. Needed ONCE per device and name; the browser remembers it after that.');
-  console.log('');
-  console.log('In RangerTrak, on the Mission page\'s RangerTrak Board card, turn on "Send this log to a');
-  console.log('RangerTrak Board" and set the server address to the first address above (without /view),');
-  console.log('even when RangerTrak runs on this same computer, e.g.:');
-  console.log(`  ${primaryUrl}`);
-  console.log('(Visit that address directly in THIS device\'s own browser first, and accept the');
-  console.log('warning, before turning the toggle on - publishing fails silently otherwise.)');
-
-  if (copyToClipboard(primaryUrl)) {
     console.log('');
-    console.log(`Copied to the clipboard on THIS computer: ${primaryUrl}`);
   }
+  const copied = copyToClipboard(primaryUrl);
+  console.log('STEP 1 - SCRIBE: paste this address into RangerTrak, Mission page, RangerTrak Board card:');
   console.log('');
-  console.log('Waiting for the scribe\'s device to publish. Press Ctrl+C to stop.');
+  console.log(`    ${primaryUrl}${copied ? '      (already copied on this computer)' : ''}`);
+  console.log('');
+  console.log('  Use this address even when RangerTrak runs on this same computer.');
+  console.log('');
+  console.log('STEP 2 - VIEWERS open this on their phone, tablet or laptop:');
+  console.log('');
+  if (nameUrl) console.log(`    ${nameUrl}/view`);
+  for (const addr of addresses) {
+    console.log(`    https://${hostPort(addr)}/view${nameUrl && addr === addresses[0] ? '   (if the name does not open, e.g. older Android)' : ''}`);
+  }
+  console.log(`  or scan the QR code: open https://${hostPort('localhost')}/qr on this computer.`);
+  console.log('');
+  console.log('"Your connection is not private"? Expected the first time on each device: click');
+  console.log('Advanced, then Proceed.');
+  console.log('');
+  console.log('Keep this window open and this computer awake. Ctrl+C stops the Board.');
+  console.log('Waiting for the scribe\'s device to publish...');
   console.log('');
 }
 
@@ -409,6 +402,9 @@ async function start() {
   }
   // The Wi-Fi name is told to viewers ("Still on <name>?"), so it is read before the Board starts. Never fatal.
   const wifiPromise = selfcheck.readWifi();
+  // Started now, read after the addresses are printed; offline it ends quietly within 5 s.
+  let newerKit = null;
+  const updatePromise = checkForUpdate({ current: APP_VERSION }).then((u) => { newerKit = u; return u; });
   const listenOn = args.allowPublic ? [...found.listen, ...found.skipped] : found.listen;
   const reachable = args.allowPublic ? [...found.lan, ...found.skipped] : found.lan;
   const skipped = args.allowPublic ? [] : found.skipped;
@@ -423,7 +419,7 @@ async function start() {
   try {
     const cert = await getOrCreateCert(reachable, name ? [name] : []);
     const wifi = await wifiPromise;
-    running = await listenWithFallback({ cert, addresses: listenOn, name: name || '', log: console.log, boardOptions: { version: APP_VERSION, wifi } }, args.port);
+    running = await listenWithFallback({ cert, addresses: listenOn, name: name || '', log: console.log, boardOptions: { version: APP_VERSION, wifi, update: () => newerKit } }, args.port);
   } catch (e) {
     await responder.stop();
     const where = e.address ? ` on ${e.address}` : '';
@@ -457,6 +453,8 @@ async function start() {
     }
   }
   printBoardUrls({ name, label: args.label, port: running.port, addresses: reachable, skipped, checkLines: listFor(check), boxed: fellBack });
+  const update = await updatePromise;
+  if (update) { console.log(updateLine(update, APP_VERSION)); console.log(''); }
   startStatusLine({ status: running.status });
 
   let stopping = false;

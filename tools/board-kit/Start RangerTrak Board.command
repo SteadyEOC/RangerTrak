@@ -22,6 +22,7 @@ if ! command -v node >/dev/null 2>&1; then
   echo ""
   echo "Install the LTS version from https://nodejs.org (it needs the Internet, so do it"
   echo "before you leave for the field), then double-click this file again."
+  echo "No extra tools are needed."
   pause_and_exit 1
 fi
 
