@@ -23,6 +23,22 @@ const CONFIG = {
   centerPlace: 'P01', // Command Post 1
   eocPlace: 'P05', // County EOC: where Dispatch and Net Control traffic is logged
   areaCode: n => (n < 100 ? 805 : 626),
+  // E-283: three plain log entries that read as messages are also filed as ICS-213s ...
+  messages213: {
+    M0011: { subject: 'Net Control traffic format', reply: true },
+    M0143: { subject: '911 queue priority guidance', reply: true },
+    M0182: { subject: 'Hospital patient count updates', reply: false },
+  },
+  // ... and two that read as requests are also ICS-213RR resource requests.
+  resourceRequests: {
+    M0007: { priority: 'life-saving', contactName: 'Dana Whitfield', contactPhone: '805-555-0142', lines: [
+      { qty: '1', kind: 'Litter team', description: 'Six bearers with a rescue litter' },
+    ] },
+    M0124: { priority: 'incident-stabilization', contactName: 'Marcus Doyle', contactPhone: '805-555-0167', lines: [
+      { qty: '6', kind: 'Handheld radios', description: 'With spare batteries' },
+      { qty: '12', kind: 'Radio batteries', description: 'Spare, handheld' },
+    ] },
+  },
 }
 
 module.exports = {

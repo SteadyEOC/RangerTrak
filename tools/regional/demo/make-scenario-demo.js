@@ -23,6 +23,8 @@
  *   - ICS-213 rows (Oso, 2026-10-20): a row with form = ICS-213 carries an `f213` block (subject,
  *     message body, addressee, reply wanted) so the app files it as a radio log entry that also
  *     generates an ICS-213, which the Messages page lists.
+ *   - Plain message rows (E-283, 2026-11-12): a config may name rows in `messages213` (row id -> { subject, reply })
+ *     whose own text becomes the ICS-213 message, for a table with no ICS-213 form rows (Montecito).
  *   - Resource requests (E-283, 2026-11-12): a scenario config may name rows in `resourceRequests`
  *     (row id -> { lines, priority, contactName, contactPhone }). Those rows carry an `rr` block, and Deliver to is the row's
  *     own place label, so the app files them as radio log entries that also carry an ICS-213RR.
@@ -270,6 +272,10 @@ function makeScenario({ msel, places, teams }, cfg) {
         const { body, reply } = split213(r.message)
         row.f213 = { subject: r.ics213_subject, message: body, to: r.to, reply: /^pending/i.test(reply) }
       }
+      // E-283: a scenario whose table has no ICS-213 form rows names plain message rows in `messages213`
+      // (row id -> { subject, reply }); the row's own text is the message and its To is the addressee.
+      const m213 = !row.f213 && cfg.messages213 && cfg.messages213[r.id]
+      if (m213) row.f213 = { subject: m213.subject, message: message, to: r.to, reply: !!m213.reply }
       const rr = cfg.resourceRequests && cfg.resourceRequests[r.id]
       if (rr) row.rr = { lines: rr.lines, priority: rr.priority, deliverTo: placeById.get(placeId).label, ...(rr.contactName ? { contactName: rr.contactName } : {}), ...(rr.contactPhone ? { contactPhone: rr.contactPhone } : {}) }
       return row

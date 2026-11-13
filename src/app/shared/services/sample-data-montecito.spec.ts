@@ -25,6 +25,8 @@ describe('Montecito sample scenario (E-195)', () => {
       expect(d.rangers.length).toBeGreaterThanOrEqual(90)
       expect(d.rangers.length).toBeLessThanOrEqual(110)
       expect(d.places.length).toBe(61)
+      expect(d.rows.filter((r) => r.f213).length).toBe(3) // E-283 ICS-213 messages
+      expect(d.rows.filter((r) => r.rr).length).toBe(2) // E-283 resource requests
     })
 
     it('carries no fatality text anywhere (softened casualties only)', () => {
@@ -138,6 +140,21 @@ describe('Montecito sample scenario (E-195)', () => {
       // Tactical calls come through, and both scribes appear (the hand-over).
       expect(entries.some((e) => e.tacticalCall === 'Dispatch')).toBe(true)
       expect(new Set(entries.map((e) => e.operator)).size).toBe(2)
+
+      // E-283: three entries are ICS-213 messages and two are resource requests, filled in.
+      const messages = entries.filter((e) => e.generates213)
+      expect(messages.length).toBe(3)
+      messages.forEach((m) => {
+        expect(m.subject213, String(m.id)).toBeTruthy()
+        expect(m.message213, String(m.id)).toBeTruthy()
+        expect(m.recipients213?.length, String(m.id)).toBe(1)
+      })
+      const requests = entries.filter((e) => e.rr213)
+      expect(requests.length).toBe(2)
+      requests.forEach((e) => {
+        expect(e.rr213!.lines.length, String(e.id)).toBeGreaterThan(0)
+        expect(e.rr213!.deliverTo, String(e.id)).toBeTruthy()
+      })
     })
   })
 })

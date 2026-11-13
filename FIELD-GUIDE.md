@@ -792,8 +792,9 @@ replaces what is on the device (see [Starting over](#starting-over-what-to-clear
 
 - The standard demos fill the app with a roster and about thirty reports in the area you pick
   (Grand Canyon by default) — for training, demonstrating, or seeing what a busy mission looks
-  like.
-- **Montecito debris flows (large):** about 400 radio log entries, 30 teams and 100 roster
+  like. Each files 3 simple ICS-213 messages and 2 ICS-213RR resource requests.
+- **Montecito debris flows (large):** about 400 radio log entries (3 of them ICS-213 messages and
+  2 of them ICS-213RR resource requests), 30 teams and 100 roster
   rows, *modeled on* the January 9, 2018 debris flows in Montecito, California.
 - **Oso landslide (large):** about 510 radio log entries (51 of them ICS-213 messages and 3 of them
   ICS-213RR resource requests), 40

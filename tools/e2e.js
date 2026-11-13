@@ -5239,6 +5239,7 @@ async function checkSampleMissionLoads() {
         reportCount: reports.length,
         roles: rangers.map(r => r.role),
         messages: reports.filter(r => r.generates213).length,
+        requests: reports.filter(r => r.rr213).length,
         operatorsSet: reports.every(r => !!r.operator),
       };
     },
@@ -5247,13 +5248,14 @@ async function checkSampleMissionLoads() {
   check('...including an Incident Commander', seeded.roles.includes('Incident Commander'), true)
   check('...and at least one Section Chief', seeded.roles.some(r => (r || '').includes('Section Chief')), true)
   check('sample mission seeds radio log entries', seeded.reportCount > 20, true)
-  check('sample mission includes 2 ICS-213 messages', seeded.messages, 2)
+  check('sample mission includes 3 ICS-213 messages', seeded.messages, 3)
+  check('sample mission includes 2 ICS-213RR resource requests', seeded.requests, 2)
   check('every sample report has an operator stamped', seeded.operatorsSet, true)
 
   await goto('/messages')
   await sleep(800)
   const messageRows = await evaluate(`document.querySelectorAll('.messages__list-item').length`)
-  check('the Messages page renders both sample messages', messageRows, 2)
+  check('the Messages page renders all five sample messages and requests', messageRows, 5)
 }
 
 /**

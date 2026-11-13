@@ -532,6 +532,16 @@ export class SampleDataService {
       },
       { callsign: 'CERT4', minutesAgo: 152, lat: DOCKTON.lat + 0.0012, lng: DOCKTON.lng + 0.0010, address: `${DOCKTON.name} - north shoreline, quarter mile`, statusIndex: 0, notes: 'Holding the shoreline trail perimeter while the shed issue is checked. Need cones and tape for the perimeter.', source: 'Voice', operator: OPS,
         rr213: { priority: 'life-saving', deliverTo: `${DOCKTON.name} - north shoreline trail`, contactName: 'Sam Okafor', contactPhone: 'CERT3 on the net', substitutes: 'Barrier tape alone if cones are short', lines: [{ qty: '12', kind: 'Traffic cones', description: '28 inch, reflective', neededBy: '' }, { qty: '2 rolls', kind: 'Barrier tape', description: 'Yellow, 3 inch', neededBy: '' }] } },
+      {
+        callsign: 'CERT4', minutesAgo: 120, lat: DOCKTON.lat, lng: DOCKTON.lng, address: `${DOCKTON.name} - boat launch, staging area`, statusIndex: 6,
+        notes: 'URGENT: a volunteer is down with a possible sprained wrist at the boat launch, being splinted by the first-aid post.', source: 'Voice', operator: OPS,
+        generates213: true, replyRequested213: false, subject213: 'Volunteer injured at the boat launch',
+        message213: 'One CERT volunteer slipped on the wet boat ramp and has a possible sprained wrist. Splinted and sitting at the staging area. Not urgent. Please log it for the incident record and let Medic1 know to check on them.',
+        recipients213: ['Incident Commander', 'Ops'],
+      },
+      { callsign: 'CERT3', minutesAgo: 110, lat: DOCKTON.lat + 0.0022, lng: DOCKTON.lng + 0.0018, address: `${DOCKTON.name} - north shoreline trail`, statusIndex: 3, notes: 'Requesting 2 cases of water and 10 cots for the picnic shelter aid station.',
+        source: 'Voice', operator: OPS,
+        rr213: { priority: 'incident-stabilization', deliverTo: `${DOCKTON.name} - picnic shelter`, contactName: 'Marge Tidepool', contactPhone: '206-555-0131', lines: [{ qty: '2 cases', kind: 'Water', description: 'Bottled, 16 oz', neededBy: '' }, { qty: '10', kind: 'Cots', description: 'Folding, with blankets', neededBy: '' }] } },
       { callsign: 'CERT3', minutesAgo: 60, lat: DOCKTON.lat + 0.0022, lng: DOCKTON.lng + 0.0018, address: `${DOCKTON.name} - north shoreline trail`, statusIndex: 5, notes: 'Shoreline sweep complete, propane smell traced to a stored camp stove, resolved. Checking out.', source: 'Voice', operator: OPS },
 
       // ── Team D: MERT1/Medic1 - Dockton Park, marina + one water track + first aid ──
@@ -703,6 +713,17 @@ export class SampleDataService {
       { callsign: 'Rim4', minutesAgo: 246, ...GC.mather, statusIndex: 5, notes: 'Copy hiker found. Rim-East standing down at Mather Point. Checking out.', source: 'Voice', operator: OPS },
 
       // ── Liaison with the family ─────────────────────────────────────────────────
+      {
+        callsign: 'Rim2', minutesAgo: 230, ...GC.hopi, statusIndex: 0,
+        notes: 'Hopi Point shuttle stop is crowded with heat-stressed visitors, asking the shuttle driver to relay a water message.', source: 'Phone', operator: OPS,
+        generates213: true, replyRequested213: false, subject213: 'Heat-stressed visitors at Hopi Point',
+        message213: 'Several visitors at the Hopi Point shuttle stop look overheated and are out of water. Rim-West is handing out what it can spare and has asked the shuttle driver to alert park staff. No one needs a medic yet.',
+        recipients213: ['Incident Commander', 'Ops'],
+      },
+      { callsign: 'Rim1', minutesAgo: 226, ...GC.hopi, statusIndex: 3, notes: 'Requesting 2 cases of water and 6 first aid kits for the Hopi Point shuttle stop.', source: 'Voice', operator: OPS,
+        rr213: { priority: 'incident-stabilization', deliverTo: `${GC.hopi.address} - shuttle stop`, contactName: 'Wren Cliffside', contactPhone: '928-555-0121', lines: [{ qty: '2 cases', kind: 'Water', description: 'Bottled, 16 oz', neededBy: '' }, { qty: '6', kind: 'First aid kits', description: 'Basic, with cooling packs', neededBy: '' }] } },
+      { callsign: 'Below1', minutesAgo: 200, ...GC.mile3, statusIndex: 3, notes: 'Requesting a litter and 4 spare radio batteries at the 3 Mile Resthouse for the walk-out.', source: 'Voice', operator: OPS,
+        rr213: { priority: 'life-saving', deliverTo: GC.mile3.address, contactName: 'Canyon Ash Deepgorge', contactPhone: 'Below1 on the net', substitutes: 'Blankets and a pack frame if no litter is free', lines: [{ qty: '1', kind: 'Litter', description: 'Wheeled, trail rated', neededBy: '' }, { qty: '4', kind: 'Radio batteries', description: 'Spare, handheld', neededBy: '' }] } },
       { callsign: 'Liaison1', minutesAgo: 250, ...CP, statusIndex: 0, notes: 'Parents told the hiker is found and talking. Keeping them here and fed until the walk-out.', source: 'Voice', operator: 'Sunny Vermillion' },
       { callsign: 'Liaison1', minutesAgo: 84, ...TRAILHEAD, statusIndex: 0, notes: 'Parents reunited with the hiker at the trailhead.', source: 'Voice', operator: 'Sunny Vermillion' },
 
@@ -791,6 +812,17 @@ export class SampleDataService {
         recipients213: ['Incident Commander', 'Ops'],
       },
       { callsign: 'Gate2', minutesAgo: 190, ...MAIN_GATE, statusIndex: 0, notes: 'Additional signage and a second exit lane opened, flow easing.', source: 'Voice', operator: OPS },
+      {
+        callsign: 'Gate2', minutesAgo: 140, ...MAIN_GATE, statusIndex: 0,
+        notes: 'A vendor reports a damaged electrical cord across the walkway at the main gate, taped off for now.', source: 'Phone', operator: OPS,
+        generates213: true, replyRequested213: false, subject213: 'Damaged power cord, main gate walkway',
+        message213: 'A vendor reported an exposed electrical cord across the walkway just inside the main gate. Gate-CERT has taped off the area and is keeping people clear. Requesting fair maintenance be told so they can replace it.',
+        recipients213: ['Incident Commander', 'Logistics'],
+      },
+      { callsign: 'Gate1', minutesAgo: 185, ...MAIN_GATE, statusIndex: 3, notes: 'Requesting 20 traffic cones and 4 barricades to hold the second exit lane.', source: 'Voice', operator: OPS,
+        rr213: { priority: 'incident-stabilization', deliverTo: 'State Fair of Virginia - main gate exit lane', contactName: 'Milo Carousel', contactPhone: '804-555-0121', lines: [{ qty: '20', kind: 'Traffic cones', description: '28 inch, reflective', neededBy: '' }, { qty: '4', kind: 'Barricades', description: 'Folding, with sandbags', neededBy: '' }] } },
+      { callsign: 'Medic1', minutesAgo: 165, ...FIRST_AID, statusIndex: 3, notes: 'Requesting a generator and 2 cases of water for the first-aid station, shade tent is losing power.', source: 'Voice', operator: OPS,
+        rr213: { priority: 'life-saving', deliverTo: 'State Fair of Virginia - first-aid station', contactName: 'Hollis Sawdust', contactPhone: 'Medic1 on the net', substitutes: 'Battery fans and ice if no generator is free', lines: [{ qty: '1', kind: 'Generator', type: '3', description: '5 kW, with fuel and cord', neededBy: '' }, { qty: '2 cases', kind: 'Water', description: 'Bottled, 16 oz', neededBy: '' }] } },
       { callsign: 'Gate2', minutesAgo: 110, ...MAIN_GATE, statusIndex: 3, notes: 'Requesting a short break and water after directing traffic all afternoon.', source: 'Voice', operator: OPS },
       { callsign: 'Gate1', minutesAgo: 96, ...MAIN_GATE, statusIndex: 5, notes: 'Gate flow back to normal, checking out.', source: 'Voice', operator: OPS },
 
@@ -850,7 +882,7 @@ export class SampleDataService {
 
   /**
    * A big, busy mission modeled on the January 9, 2018 Montecito debris flows: about 400 log
-   * entries, 31 tactical calls and about 100 roster rows. The data is generated by
+   * entries (3 of them ICS-213 messages, 2 ICS-213RR resource requests), 31 tactical calls and about 100 roster rows. The data is generated by
    * tools/regional/demo/make-montecito-demo.js into sample-data-montecito.ts, which is pulled in
    * by a dynamic import() here so it is its own chunk, fetched only when this demo loads (E-192),
    * never part of the initial bundle. Softened casualty wording only: no fatality text ships.
@@ -873,6 +905,16 @@ export class SampleDataService {
       callsign: r.call, minutesAgo: r.ago, ...at(r.place), statusIndex: r.status,
       notes: r.notes, source: r.source, operator: d.scribes[r.scribe] ?? d.scribes[0],
       toTactical: r.to ?? null,
+      // E-283: plain message rows are also ICS-213s, and rows with an `rr` block are also resource requests.
+      ...(r.f213
+        ? {
+          generates213: true, replyRequested213: r.f213.reply,
+          subject213: r.f213.subject, message213: r.f213.message, recipients213: [r.f213.to],
+        }
+        : {}),
+      ...(r.rr
+        ? { rr213: cleanRr213({ lines: r.rr.lines.map(l => ({ ...l, neededBy: '' })), priority: r.rr.priority, deliverTo: r.rr.deliverTo, contactName: r.rr.contactName, contactPhone: r.rr.contactPhone }) }
+        : {}),
     }))
     const locations: MissionLocationType[] = d.places.map(p => ({
       name: p.label, type: p.type, lat: p.lat, lng: p.lon, address: p.label,
@@ -982,6 +1024,17 @@ export class SampleDataService {
       { callsign: 'North2', minutesAgo: 250, ...this.offset(center, 300, 40), address: 'North trail segment, midpoint' + GENERIC, statusIndex: 1, notes: 'Location report: north trail segment, about a quarter mile out.', source: 'Voice', operator: OPS },
       { callsign: 'North1', minutesAgo: 180, ...this.offset(center, 500, 10), address: 'North trail segment, turnaround' + GENERIC, statusIndex: 0, notes: 'North trail segment clear so far, continuing toward the turnaround point.', source: 'Voice', operator: OPS },
       { callsign: 'North2', minutesAgo: 120, ...this.offset(center, 500, 10), address: 'North trail segment, turnaround' + GENERIC, statusIndex: 3, notes: 'Requesting a short rest and water before heading back.', source: 'Voice', operator: OPS },
+      {
+        callsign: 'North2', minutesAgo: 150, ...this.offset(center, 500, 10), address: 'North trail segment, turnaround' + GENERIC, statusIndex: 0,
+        notes: 'A hiker not on our list passed us heading toward the turnaround, said they saw fresh footprints on the north trail.', source: 'Voice', operator: OPS,
+        generates213: true, replyRequested213: false, subject213: 'Hiker reports fresh footprints, north trail',
+        message213: 'A passing hiker reported fresh footprints leaving the north trail near the turnaround, heading uphill. North team marked the spot and did not follow. Requesting Ops decide whether to send another team to look.',
+        recipients213: ['Incident Commander', 'Ops'],
+      },
+      { callsign: 'North1', minutesAgo: 140, ...this.offset(center, 500, 10), address: 'North trail segment, turnaround' + GENERIC, statusIndex: 3, notes: 'Requesting a team of 4 searchers and 4 spare radio batteries at the turnaround.', source: 'Voice', operator: OPS,
+        rr213: { priority: 'life-saving', deliverTo: 'North trail segment, turnaround', contactName: 'Finn Northgate', contactPhone: 'North1 on the net', lines: [{ qty: '1', kind: 'Search team', type: '2', description: 'Team of 4 searchers with radios', neededBy: '' }, { qty: '4', kind: 'Radio batteries', description: 'Spare, handheld', neededBy: '' }] } },
+      { callsign: 'South1', minutesAgo: 130, ...this.offset(center, -600, -30), address: 'South trail segment, far end' + GENERIC, statusIndex: 3, notes: 'Requesting 2 first aid kits and 10 traffic cones to mark the hazard on the south segment.', source: 'Voice', operator: OPS,
+        rr213: { priority: 'property-preservation', deliverTo: 'South trail segment, far end', contactName: 'Bea Southgate', contactPhone: '555-0131', lines: [{ qty: '2', kind: 'First aid kits', description: 'Basic', neededBy: '' }, { qty: '10', kind: 'Traffic cones', description: '28 inch, reflective', neededBy: '' }] } },
       { callsign: 'North1', minutesAgo: 70, ...this.offset(center, 150, 20), address: 'North trail segment, near start' + GENERIC, statusIndex: 5, notes: 'North trail segment swept, no findings. Checking out.', source: 'Voice', operator: OPS },
 
       // ── Team East: East1/East2 ─────────────────────────────────────────────────

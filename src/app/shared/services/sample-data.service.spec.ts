@@ -30,7 +30,7 @@ import { recordStore } from '../storage/record-store'
  *     see the service's own comment on why this differs from the more descriptive `role`
  *     field) has at least 3 radio log entries, forming a trail.
  *   - Exactly 2 mission Locations (the "objectives").
- *   - Exactly 2 ICS-213 messages (`generates213`).
+ *   - Exactly 3 ICS-213 messages (`generates213`) and 2 ICS-213RR resource requests (`rr213`).
  *   - Every configured status appears on at least one report.
  *   - No report references a callsign missing from the roster.
  *
@@ -115,7 +115,7 @@ describe('SampleDataService', () => {
     describe(`scenario: ${scenario}`, () => {
       it(
         'produces 12 rangers, 4 field teams with >=3 reports each, 2 locations, ' +
-          '2 ICS-213 messages, every status, and no unknown callsigns',
+          '3 ICS-213 messages, 2 resource requests, every status, and no unknown callsigns',
         async () => {
           const sampleData = TestBed.inject(SampleDataService)
           const rangerService = TestBed.inject(RangerService)
@@ -160,13 +160,23 @@ describe('SampleDataService', () => {
           // Exactly 2 mission Locations - the "objectives".
           expect(locations.length).toBe(2)
 
-          // Exactly 2 ICS-213 messages.
+          // Exactly 3 ICS-213 messages.
           const messages = entries.filter((e) => e.generates213)
-          expect(messages.length).toBe(2)
+          expect(messages.length).toBe(3)
           messages.forEach((m) => {
             expect(m.message213, 'message213').toBeTruthy()
             expect(m.subject213, 'subject213').toBeTruthy()
             expect(m.recipients213?.length, 'recipients213').toBeGreaterThan(0)
+          })
+
+          // Exactly 2 ICS-213RR resource requests (E-283), each on its own log entry.
+          const requests = entries.filter((e) => e.rr213)
+          expect(requests.length).toBe(2)
+          requests.forEach((e) => {
+            expect(e.generates213, String(e.id)).toBeFalsy()
+            expect(e.rr213!.lines.length, String(e.id)).toBeGreaterThan(0)
+            expect(e.rr213!.deliverTo, String(e.id)).toBeTruthy()
+            expect(e.rr213!.contactName, String(e.id)).toBeTruthy()
           })
 
           // Every configured status appears on at least one report.

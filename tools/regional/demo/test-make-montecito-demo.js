@@ -97,6 +97,8 @@ if (!tablesHere) {
     assert.equal(out.rows.length, 417) // 437 rows, minus 15 media and 5 test
     assert.equal(out.places.length, 61)
     assert.equal(out.tacticalCalls.length, 31)
+    assert.equal(out.rows.filter(r => r.f213).length, 3) // E-283 ICS-213 messages
+    assert.equal(out.rows.filter(r => r.rr).length, 2) // E-283 resource requests
   })
   check('real tables: the committed module is what the tables produce', () => {
     assert.equal(fs.readFileSync(DEFAULT_OUT, 'utf8'), render(out),
