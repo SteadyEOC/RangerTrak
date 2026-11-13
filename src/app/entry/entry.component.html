@@ -645,7 +645,7 @@
             </mat-form-field>
             @if (rrLines().length > 1) {
             <button type="button" mat-icon-button class="enter__rr-remove" data-testid="rr213-remove"
-              [attr.tabindex]="rrTab(i, rrSlot.remove)" [attr.aria-label]="'Remove item ' + (i + 1)" (click)="removeRrLine(i)">
+              [tabIndex]="rrTab(i, rrSlot.remove)" [attr.aria-label]="'Remove item ' + (i + 1)" (click)="removeRrLine(i)">
               <mat-icon>close</mat-icon>
             </button>
             }
