@@ -189,4 +189,6 @@ export class MissionCommandPostComponent implements OnDestroy {
   /** E-255: the Board kit is attached to each GitHub release, beside the web zip. Not
    *  /releases/latest: GitHub skips pre-releases there, and every beta is one. */
   readonly boardKitUrl = 'https://github.com/SteadyEOC/RangerTrak/releases'
+  /** The guided setup page (tools/board-guide), absolute so it opens the same from a self-hosted copy. */
+  readonly boardGuideUrl = 'https://rangertrak.org/board/'
 }

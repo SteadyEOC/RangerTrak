@@ -27,10 +27,11 @@
          locally is the likelier case. The app can't start the Board itself; E-255's kit is the one download. -->
     @if (!isPhone()) {
       <p class="mission__note" data-testid="board-run-here">
-        <strong>To run the Board on this computer:</strong> download the
-        <a [href]="boardKitUrl" target="_blank" rel="noopener noreferrer">RangerTrak Board kit</a>
-        (<code>rangertrak-board-…zip</code> under Assets), unzip it, and double-click
-        <em>Start RangerTrak Board</em>. It needs Node.js 24 or newer. Then paste the address it prints below.
+        <strong>To run the Board on this computer:</strong> follow the
+        <a [href]="boardGuideUrl" target="_blank" rel="noopener noreferrer">step-by-step Board setup</a>
+        (install Node.js, download and unzip the
+        <a [href]="boardKitUrl" target="_blank" rel="noopener noreferrer">Board kit</a>, double-click
+        <em>Start RangerTrak Board</em>). Then paste the address it prints below.
       </p>
     }
     <div class="warn">

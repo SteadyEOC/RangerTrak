@@ -5706,7 +5706,7 @@ async function checkBoard(downloads) {
     // address gets the "only works on this computer" hint (publishing to it still works, as above).
     await goto('/mission', 3000)
     check('the Board card links the Board kit and flags the loopback address',
-      await evaluate(`[!!document.querySelector('[data-testid=board-run-here] a[href$="/releases"]'), !!document.querySelector('[data-testid=board-localhost]')]`), [true, true])
+      await evaluate(`[!!document.querySelector('[data-testid=board-run-here] a[href$="/releases"]'), !!document.querySelector('[data-testid=board-localhost]'), !!document.querySelector('[data-testid=board-run-here] a[href="https://rangertrak.org/board/"]')]`), [true, true, true])
     await goto('/')
 
     // ── the viewer, arriving by the QR link ────────────────────────────────────

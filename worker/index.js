@@ -432,6 +432,18 @@ export default {
       return env.ASSETS.fetch(new Request(new URL('/self-hosting/index.html', url), request))
     }
 
+    // Setting up the RangerTrak Board, step by step (tools/board-guide, copied to /board/ by angular.json).
+    // Same URL handling as the tour: the trailing slash keeps board-guide.js relative.
+    if (url.pathname === '/board' || url.pathname === '/board/index.html') {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: '/board/', 'Cache-Control': 'no-store' },
+      })
+    }
+    if (url.pathname === '/board/') {
+      return env.ASSETS.fetch(new Request(new URL('/board/index.html', url), request))
+    }
+
     if (!url.pathname.endsWith('.pmtiles')) {
       return env.ASSETS.fetch(request)
     }

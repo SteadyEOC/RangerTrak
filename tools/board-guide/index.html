@@ -1,0 +1,199 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later
+     Setting up the RangerTrak Board: the guided version of the kit's READ-ME-FIRST.txt (John, 2026-11-13).
+     Served at rangertrak.org/board/ (angular.json copies it; worker/index.js routes /board and /board/).
+     It stands alone: inline styles, its own board-guide.js (the CSP allows no inline script), no app code. The checklist ticks are kept in this
+     browser's localStorage, a convenience only; the page works without it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Set up the RangerTrak Board</title>
+<meta name="description" content="Step by step: let everyone at the command post watch the live radio log on their own phone, tablet or laptop.">
+<style>
+  :root { --bg: #ffffff; --fg: #1b1f24; --muted: #57606a; --rule: #d0d7de; --code: #f3f4f6; --accent: #0b5cad; --ok: #1a7f37; --track: #e6e8eb; --warn: #fff4d6; --warn-rule: #e3b341; --card: #f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121417; --fg: #e6e8eb; --muted: #9aa4af; --rule: #30363d; --code: #1d2126; --accent: #6cb0ff; --ok: #4ac26b; --track: #2a2f36; --warn: #2b2410; --warn-rule: #8a6d1f; --card: #191c20; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .25rem; }
+  .lede { color: var(--muted); margin: 0 0 1.25rem; }
+  a { color: var(--accent); }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .9em; background: var(--code); border-radius: 4px; padding: .1em .3em; overflow-wrap: anywhere; }
+  .gauge { position: sticky; top: 0; z-index: 1; background: var(--bg); padding: .6rem 0; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
+  .gauge-row { display: flex; align-items: center; gap: .75rem; }
+  .bar { flex: 1; height: .7rem; background: var(--track); border-radius: 1rem; overflow: hidden; }
+  .bar > span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .gauge.done .bar > span { background: var(--ok); }
+  .gauge-text { font-weight: 600; white-space: nowrap; }
+  .os-pick { margin-top: .4rem; font-size: .9rem; color: var(--muted); }
+  .os-pick button { font: inherit; padding: .15rem .6rem; border: 1px solid var(--rule); border-radius: 1rem; background: none; color: var(--fg); cursor: pointer; }
+  .os-pick button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  h2.phase { font-size: 1rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 1.6rem 0 .5rem; }
+  details.step { border: 1px solid var(--rule); border-radius: 8px; margin: .5rem 0; background: var(--card); }
+  details.step > summary { list-style: none; display: flex; align-items: center; gap: .7rem; padding: .7rem .9rem; cursor: pointer; font-weight: 600; }
+  details.step > summary::-webkit-details-marker { display: none; }
+  details.step > summary::after { content: "▸"; margin-left: auto; color: var(--muted); }
+  details.step[open] > summary::after { content: "▾"; }
+  details.step .body { padding: 0 .9rem .8rem 2.9rem; }
+  details.step .body p:first-child { margin-top: 0; }
+  .tick { width: 1.3rem; height: 1.3rem; flex: none; accent-color: var(--ok); cursor: pointer; }
+  details.step.checked > summary .title { color: var(--muted); text-decoration: line-through; }
+  [data-os] { display: none; }
+  body.os-windows [data-os~="windows"], body.os-mac [data-os~="mac"], body.os-linux [data-os~="linux"] { display: revert; }
+  .note { background: var(--warn); border-left: 4px solid var(--warn-rule); padding: .5rem .9rem; border-radius: 4px; }
+  .button { display: inline-block; padding: .45rem .9rem; border-radius: 6px; background: var(--accent); color: var(--bg); text-decoration: none; font-weight: 600; }
+  details.more { margin: 1.5rem 0 0; border-top: 1px solid var(--rule); padding-top: .8rem; }
+  details.more > summary { cursor: pointer; font-weight: 600; }
+  dl dt { font-weight: 600; margin-top: .8rem; }
+  dl dd { margin: .2rem 0 0; }
+  footer { margin-top: 3rem; color: var(--muted); font-size: .9rem; }
+  @media (max-width: 30rem) { details.step .body { padding-left: .9rem; } }
+</style>
+</head>
+<body class="os-windows">
+<main>
+
+<h1>Set up the RangerTrak Board</h1>
+<p class="lede">The Board lets everyone at the command post watch the live radio log on their own phone, tablet or
+laptop. It runs on one computer at the command post, and needs no Internet once it is set up.
+Tick each step as you go.</p>
+
+<div class="gauge" id="gauge">
+  <div class="gauge-row">
+    <div class="bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0"><span id="barFill"></span></div>
+    <span class="gauge-text" id="gaugeText">0 of 7 done</span>
+  </div>
+  <div class="os-pick">Steps for:
+    <button type="button" data-pick="windows" aria-pressed="true">Windows</button>
+    <button type="button" data-pick="mac" aria-pressed="false">Mac</button>
+    <button type="button" data-pick="linux" aria-pressed="false">Linux</button>
+  </div>
+</div>
+
+<h2 class="phase">Before you go (needs the Internet, once)</h2>
+
+<details class="step" data-step="node">
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">1. Install Node.js</span></summary>
+  <div class="body">
+    <p>The Board runs on Node.js, a free program. You need version 24 or newer.</p>
+    <p><a class="button" href="https://nodejs.org/en/download" target="_blank" rel="noopener">Download Node.js (LTS)</a></p>
+    <p><strong>No extra tools are needed.</strong> Accept the installer's defaults.</p>
+    <p data-os="windows">Run the <code>.msi</code> installer. When it offers <em>Automatically install the necessary tools</em>
+      (Chocolatey, Python, build tools), leave that box <strong>unchecked</strong>.</p>
+    <p data-os="mac">Run the <code>.pkg</code> installer.</p>
+    <p data-os="linux">Use your distribution's package manager or the instructions on nodejs.org. Check with
+      <code>node --version</code>: it must print v24 or higher.</p>
+  </div>
+</details>
+
+<details class="step" data-step="kit">
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">2. Download the Board kit</span></summary>
+  <div class="body">
+    <p>On the newest release, under <em>Assets</em>, download <code>rangertrak-board-&lt;version&gt;.zip</code>
+      (not the web zip).</p>
+    <p><a class="button" href="https://github.com/SteadyEOC/RangerTrak/releases/latest" target="_blank" rel="noopener">Newest release</a></p>
+  </div>
+</details>
+
+<details class="step" data-step="unzip">
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">3. Unzip it</span></summary>
+  <div class="body">
+    <p>Put it in a folder you can find again, such as <code>Documents\RangerTrak Board</code>. Don't run it from inside the zip.</p>
+    <p data-os="windows">Right-click the zip, <em>Extract All</em>, then <em>Extract</em>.</p>
+    <p data-os="mac">Double-click the zip.</p>
+    <p data-os="linux"><code>unzip rangertrak-board-*.zip -d "RangerTrak Board"</code></p>
+  </div>
+</details>
+
+<details class="step" data-step="app">
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">4. Install RangerTrak on the scribe's device</span></summary>
+  <div class="body">
+    <p>Open <a href="https://rangertrak.org/">rangertrak.org</a> on the device the scribe logs on, and install it
+      (the browser's Install button) so it works offline. It can be the same computer as the Board.</p>
+  </div>
+</details>
+
+<h2 class="phase">At the command post</h2>
+
+<details class="step" data-step="start">
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">5. Join the Wi-Fi and start the Board</span></summary>
+  <div class="body">
+    <p>Join the Wi-Fi or hotspot everyone will use. Plug the computer in and keep the lid open: if it sleeps, the Board stops.</p>
+    <div data-os="windows">
+      <p>Double-click <code>Start RangerTrak Board.bat</code>.</p>
+      <ul>
+        <li>"Windows protected your PC"? Click <em>More info</em>, then <em>Run anyway</em>.</li>
+        <li>Asked whether to allow Node.js on private networks? Click <em>Allow</em>.</li>
+      </ul>
+    </div>
+    <p data-os="mac">The first time, right-click (or Control-click) <code>Start RangerTrak Board.command</code>,
+      choose <em>Open</em>, then <em>Open</em>. After that, double-click it.</p>
+    <p data-os="linux">In a terminal, in the kit's folder: <code>node rangertrak-board.js</code>. Linux reserves port 443,
+      so the Board may move to another port. Use exactly the address it prints.</p>
+    <p>A window opens with two steps in it. Keep it open; closing it stops the Board.</p>
+  </div>
+</details>
+
+<details class="step" data-step="scribe">
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">6. Connect the scribe's RangerTrak</span></summary>
+  <div class="body">
+    <p>Use the address in the window's <strong>STEP 1</strong>, normally <code>https://rangertrak-board.local</code>.
+      It is already copied on the Board computer.</p>
+    <ol>
+      <li>Open that address once in the scribe's browser. It warns <em>Your connection is not private</em>:
+        expected for a private server. Click <em>Advanced</em>, then <em>Proceed</em>.</li>
+      <li>In RangerTrak: <em>Mission</em> page, <em>RangerTrak Board</em> card. Turn on <em>Send this log to a
+        RangerTrak Board</em>, paste the address, and press <em>Test connection</em>.</li>
+    </ol>
+    <p>Use that address even when RangerTrak runs on the Board computer itself, not <code>localhost</code>.</p>
+  </div>
+</details>
+
+<details class="step" data-step="viewers">
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">7. Let viewers in</span></summary>
+  <div class="body">
+    <p>Viewers open the address in the window's <strong>STEP 2</strong> (the same address with <code>/view</code>
+      on the end), or scan the QR code. They install nothing. The first time, each device shows the same
+      warning: <em>Advanced</em>, then <em>Proceed</em>.</p>
+    <p>The roster never goes to the Board, only report content.</p>
+  </div>
+</details>
+
+<details class="more">
+  <summary>Something not working?</summary>
+  <dl>
+    <dt>Test connection says the certificate isn't accepted</dt>
+    <dd>Open the Board's address in that device's browser, choose <em>Advanced</em>, then <em>Proceed</em>, and test again.
+      A Board that isn't running looks the same, so check its window too.</dd>
+    <dt>Nothing answers</dt>
+    <dd>The device is probably on a different Wi-Fi from the Board computer. A VPN or web-protection app can also be
+      in the way; turn it off while you use the Board.</dd>
+    <dt>The name doesn't open (often older Android phones)</dt>
+    <dd>Use the numbered address printed under it, such as <code>https://10.0.0.15/view</code>.</dd>
+    <dt>Windows treats the Wi-Fi as Public</dt>
+    <dd>Windows then blocks other devices. The Board's window says so and offers the fix.</dd>
+    <dt>Hotel or public Wi-Fi</dt>
+    <dd>Many keep devices apart. Use your own router or a phone hotspot.</dd>
+    <dt>A phone says "No internet" on the Wi-Fi</dt>
+    <dd>Choose <em>Stay connected</em>, or it may switch to mobile data and lose the Board.</dd>
+    <dt>Two Boards on one network</dt>
+    <dd>The second calls itself <code>rangertrak-board-2.local</code>. Use the address its own window prints.</dd>
+  </dl>
+  <p>More in RangerTrak's Help (the Board's entry on the Mission page) and the FAQ. Still stuck?
+    <a href="https://github.com/SteadyEOC/RangerTrak/issues" target="_blank" rel="noopener">Tell us on GitHub</a>.</p>
+</details>
+
+<footer>
+  <p>RangerTrak is free software under the GNU Affero General Public License, version 3 or later.
+    <a href="https://github.com/SteadyEOC/RangerTrak">Source</a> ·
+    <a href="https://rangertrak.org/">Open RangerTrak</a></p>
+</footer>
+</main>
+
+<script src="board-guide.js"></script>
+</body>
+</html>

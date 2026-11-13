@@ -451,3 +451,17 @@ test('/self-hosting and /self-hosting/index.html redirect to /self-hosting/, whi
   assert.equal(await res.text(), 'self-hosting')
   assert.equal(asked, '/self-hosting/index.html')
 })
+
+test('/board and /board/index.html redirect to /board/, which serves the Board setup guide', async () => {
+  const env = { ASSETS: { fetch: async () => { throw new Error('asset store should not be called') } } }
+  for (const path of ['/board', '/board/index.html']) {
+    const res = await worker.fetch(new Request(`https://rangertrak.org${path}`), env)
+    assert.equal(res.status, 302)
+    assert.equal(res.headers.get('Location'), '/board/')
+  }
+  let asked
+  const served = { ASSETS: { fetch: async (req) => { asked = new URL(req.url).pathname; return new Response('board guide') } } }
+  const res = await worker.fetch(new Request('https://rangertrak.org/board/'), served)
+  assert.equal(await res.text(), 'board guide')
+  assert.equal(asked, '/board/index.html')
+})

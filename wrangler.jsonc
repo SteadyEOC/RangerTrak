@@ -59,7 +59,7 @@
     // exercise console's real file; everything under /exercise/ is plain static assets.
     // The beta tour's short URLs (/tour, /tour/) and the self-hosting page's (/self-hosting,
     // /self-hosting/) do the same.
-    "run_worker_first": ["/assets/maps/*", "/api/*", "/regions/*", "/exercise", "/exercise/", "/tour", "/tour/", "/self-hosting", "/self-hosting/"]
+    "run_worker_first": ["/assets/maps/*", "/api/*", "/regions/*", "/exercise", "/exercise/", "/tour", "/tour/", "/self-hosting", "/self-hosting/", "/board", "/board/"]
   },
 
   "observability": {

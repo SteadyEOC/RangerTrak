@@ -68,7 +68,9 @@
     "!/tour",
     "!/tour/",
     "!/self-hosting",
-    "!/self-hosting/"
+    "!/self-hosting/",
+    "!/board",
+    "!/board/"
   ],
   "dataGroups": [
     {

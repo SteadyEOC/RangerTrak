@@ -79,6 +79,11 @@
                 "output": "./self-hosting"
               },
               {
+                "glob": "{index.html,board-guide.js}",
+                "input": "./tools/board-guide",
+                "output": "./board"
+              },
+              {
                 "glob": "**/*",
                 "input": "./src/assets",
                 "output": "./assets",
