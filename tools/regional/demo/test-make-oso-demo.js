@@ -91,6 +91,7 @@ if (!tablesHere) {
     assert.ok(out.rows.every(r => ids.has(r.place)))
     assert.equal(out.rows.length, 510) // 524 rows, minus 9 media and 5 test
     assert.equal(out.rows.filter(r => r.f213).length, 51)
+    assert.equal(out.rows.filter(r => r.rr).length, 3) // E-283 resource requests
     assert.equal(out.places.length, 73)
     assert.equal(out.tacticalCalls.length, 40)
     assert.ok(out.rangers.length >= 128 && out.rangers.length <= 150)

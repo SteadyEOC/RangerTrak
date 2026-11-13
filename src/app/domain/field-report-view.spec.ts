@@ -28,4 +28,11 @@ describe('field report view words (D-69)', () => {
     expect(clock(null)).toBe('')
     expect(clock('nope')).toBe('')
   })
+
+  it('shows a resource request (E-283) after the 213 fields', () => {
+    const rr213 = { lines: [{ qty: '9', kind: 'Hard hat', description: '', neededBy: '' }], priority: 'urgent' as const, deliverTo: 'Patrol 2' }
+    expect(reportFirstLine({ ...base, rr213 })).toBe('Resource request: 9 × Hard hat, Urgent, deliver to Patrol 2')
+    expect(reportFirstLine({ ...base, rr213, message213: 'Send a truck' })).toBe('Send a truck')
+    expect(reportFullText({ ...base, notes: 'Short on kit', rr213 })).toBe('Short on kit\nResource request: 9 × Hard hat, Urgent, deliver to Patrol 2')
+  })
 })

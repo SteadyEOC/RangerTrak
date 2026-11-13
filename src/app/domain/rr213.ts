@@ -93,8 +93,40 @@ export function cleanRr213(raw: { lines: Rr213LineType[], priority?: Rr213Priori
  * The first line only, then "+N more" when the request has several.
  */
 export function rr213Summary(rr: Rr213Type): string {
+  return `${RR213_SUMMARY_PREFIX}${rr213Brief(rr)}`
+}
+
+/** The summary without its "Resource request (ICS-213RR): " lead-in, for places that add their own label. */
+export const RR213_SUMMARY_PREFIX = 'Resource request (ICS-213RR): '
+
+export function rr213Brief(rr: Rr213Type): string {
   const first = rr.lines[0] ? rr213LineText(rr.lines[0]) : ''
   const more = rr.lines.length > 1 ? ` +${rr.lines.length - 1} more` : ''
   const deliver = rr.deliverTo?.trim() ? `, deliver to ${rr.deliverTo.trim()}` : ''
-  return `Resource request (ICS-213RR): ${first}${more}, ${rr213PriorityLabel(rr.priority)}${deliver}`
+  return `${first}${more}, ${rr213PriorityLabel(rr.priority)}${deliver}`
+}
+
+/** The FEMA form has nine order rows, so Entry takes at most nine items. */
+export const RR213_MAX_LINES = 9
+/** Tab stops reserved per order line: Qty, Kind, Description, Type, Needed by, Remove. */
+export const RR213_LINE_SLOTS = 6
+export const RR213_SLOT = { qty: 0, kind: 1, description: 2, type: 3, neededBy: 4, remove: 5 } as const
+
+/** Entry's explicit tabindex for one slot of one order line (`start` is line 1's Qty). */
+export function rr213LineTabIndex(start: number, line: number, slot: number): number {
+  return start + line * RR213_LINE_SLOTS + slot
+}
+
+/**
+ * Tab stops no drawn control owns right now: line 1's Remove button while it is the only line, and every
+ * slot of the lines not yet added. Entry keeps them as hidden placeholders so the explicit chain stays
+ * 1..N with no gaps whatever the item count, and in ascending order after the drawn lines.
+ */
+export function rr213SpareTabIndexes(start: number, lineCount: number): number[] {
+  const spare: number[] = []
+  if (lineCount <= 1) spare.push(rr213LineTabIndex(start, 0, RR213_SLOT.remove))
+  for (let i = Math.max(lineCount, 1); i < RR213_MAX_LINES; i++) {
+    for (let s = 0; s < RR213_LINE_SLOTS; s++) spare.push(rr213LineTabIndex(start, i, s))
+  }
+  return spare
 }

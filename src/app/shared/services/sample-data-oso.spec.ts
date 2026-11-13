@@ -21,9 +21,10 @@ describe('Oso sample scenario (E-195)', () => {
   const messageRows = d.rows.filter((r) => r.f213)
 
   describe('the generated data', () => {
-    it('has the expected size: 510 entries (51 ICS-213), 40 tactical calls, 128 roster rows, 73 places', () => {
+    it('has the expected size: 510 entries (51 ICS-213, 3 ICS-213RR), 40 tactical calls, 128 roster rows, 73 places', () => {
       expect(d.rows.length).toBe(510)
       expect(messageRows.length).toBe(51)
+      expect(d.rows.filter((r) => r.rr).length).toBe(3)
       expect(d.tacticalCalls.length).toBe(40)
       expect(d.rangers.length).toBeGreaterThanOrEqual(128)
       expect(d.rangers.length).toBeLessThanOrEqual(150)
@@ -168,6 +169,15 @@ describe('Oso sample scenario (E-195)', () => {
         expect(m.recipients213?.length, String(m.id)).toBe(1)
       })
       expect(messages.some((m) => m.replyRequested213)).toBe(true)
+
+      // E-283: three of the other entries are resource requests (ICS-213RR), filled in.
+      const requests = entries.filter((e) => e.rr213)
+      expect(requests.length).toBe(3)
+      requests.forEach((e) => {
+        expect(e.generates213, String(e.id)).toBeFalsy()
+        expect(e.rr213!.lines.length, String(e.id)).toBeGreaterThan(0)
+        expect(e.rr213!.deliverTo, String(e.id)).toBeTruthy()
+      })
     })
   })
 })

@@ -614,26 +614,26 @@
           Also generate an ICS-213RR (Resource Request)
         </mat-checkbox>
         <div class="enter__213-details enter__rr-details" [hidden]="!rrOn()">
-          @for (line of rrLines(); track $index; let i = $index; let first = $first) {
+          @for (line of rrLines(); track $index; let i = $index) {
           <div class="enter__rr-line" data-testid="rr213-line">
             <mat-form-field class="enter__rr-qty" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Qty</mat-label>
               <input matInput type="text" [id]="'enter__rr-qty-' + i" [value]="line.qty" placeholder="2 cases"
-                [attr.tabindex]="first ? rrQtyTabIndex : null" (input)="setRrLine(i, 'qty', $any($event.target).value)" />
+                [attr.tabindex]="rrTab(i, rrSlot.qty)" (input)="setRrLine(i, 'qty', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-kind" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Kind</mat-label>
               <input matInput type="text" [value]="line.kind" placeholder="Radio, Water, Medic"
-                [attr.tabindex]="first ? rrKindTabIndex : null" (input)="setRrLine(i, 'kind', $any($event.target).value)" />
+                [attr.tabindex]="rrTab(i, rrSlot.kind)" (input)="setRrLine(i, 'kind', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-desc" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Description</mat-label>
               <input matInput type="text" [value]="line.description" placeholder="Brand, size, specs"
-                [attr.tabindex]="first ? rrDescTabIndex : null" (input)="setRrLine(i, 'description', $any($event.target).value)" />
+                [attr.tabindex]="rrTab(i, rrSlot.description)" (input)="setRrLine(i, 'description', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-type" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Type</mat-label>
-              <input matInput type="text" [value]="line.type ?? ''" [attr.tabindex]="first ? rrTypeTabIndex : null"
+              <input matInput type="text" [value]="line.type ?? ''" [attr.tabindex]="rrTab(i, rrSlot.type)"
                 (input)="setRrLine(i, 'type', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-needed" floatLabel="always" subscriptSizing="dynamic">
@@ -641,19 +641,23 @@
               <!-- 2026-11-12, John: a date-and-time control (the browser's own, with its hour and minute
                    pickers), starting at the start of the next op period. Stored as mm/dd/yyyy HH:mm. -->
               <input matInput type="datetime-local" data-testid="rr213-needed" [value]="rrNeededValue(line)"
-                [attr.tabindex]="first ? rrNeededTabIndex : null" (change)="setRrNeeded(i, $any($event.target).value)" />
+                [attr.tabindex]="rrTab(i, rrSlot.neededBy)" (change)="setRrNeeded(i, $any($event.target).value)" />
             </mat-form-field>
             @if (rrLines().length > 1) {
             <button type="button" mat-icon-button class="enter__rr-remove" data-testid="rr213-remove"
-              [attr.aria-label]="'Remove item ' + (i + 1)" (click)="removeRrLine(i)">
+              [attr.tabindex]="rrTab(i, rrSlot.remove)" [attr.aria-label]="'Remove item ' + (i + 1)" (click)="removeRrLine(i)">
               <mat-icon>close</mat-icon>
             </button>
             }
           </div>
           }
+          <!-- Placeholders for the tab stops no drawn control owns yet (see rrSpareTabIndexes). -->
+          @for (t of rrSpareTabIndexes(); track t) {
+          <span hidden [attr.tabindex]="t"></span>
+          }
           <div>
             <button type="button" matButton="outlined" data-testid="rr213-add" [tabIndex]="rrAddTabIndex"
-              (click)="addRrLine()">Add another item</button>
+              [disabled]="rrLines().length >= rrMaxLines" (click)="addRrLine()">Add another item</button>
           </div>
 
           <fieldset class="enter__213-field enter__field-fieldset">

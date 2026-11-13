@@ -6,12 +6,14 @@
 // Load point: the end of OP 2 (the tables cover OP 0-2 so far; this becomes day 3 once later op
 // periods exist). `ago` is minutes before the moment of loading.
 // A row with `f213` is also an ICS-213 message (the Messages page lists it).
+// A row with `rr` also carries an ICS-213RR resource request (the Messages page lists those too).
 
 export type OsoPlace = { id: string, label: string, type: string, lat: number, lon: number }
 export type OsoRow = {
   id: string, call: string, ago: number, place: string, status: number,
   source: 'Voice' | 'Phone', scribe: number, notes: string, to?: string,
   f213?: { subject: string, message: string, to: string, reply: boolean },
+  rr?: { lines: { qty: string, kind: string, description: string }[], priority: 'urgent' | 'routine' | 'low', deliverTo: string },
 }
 export type OsoRanger = {
   callsign: string, fullName: string, phone: string, image: string, id: string,
@@ -300,7 +302,7 @@ export const OSO_DEMO: OsoDemo = {
   {"id":"M0062","call":"KZ0HJA","ago":1510,"place":"P06","status":0,"source":"Voice","scribe":0,"notes":"Naval Rescue airborne, ten minutes out, hoist ready. Request landing zone near the west side and survivor count.","to":"Air Boss"},
   {"id":"M0063","call":"WZ0WQG","ago":1509,"place":"P26","status":0,"source":"Voice","scribe":0,"notes":"Hand Crew 1, no further access from the road. Crew staging at the edge of Division B, waiting for the air boss.","to":"Command East"},
   {"id":"M0064","call":"WZ0CHD","ago":1509,"place":"P65","status":2,"source":"Voice","scribe":0,"notes":"Chief 37, a dog is alive in a pile at Home site 9. Rescuers are pulling it out. Marked for the vet.","to":"Command West"},
-  {"id":"M0065","call":"KZ0NRQ","ago":1509,"place":"P10","status":0,"source":"Voice","scribe":0,"notes":"SAR West, request an additional 4 hard hats and a first aid kit at staging.","to":"Command West"},
+  {"id":"M0065","call":"KZ0NRQ","ago":1509,"place":"P10","status":0,"source":"Voice","scribe":0,"notes":"SAR West, request an additional 4 hard hats and a first aid kit at staging.","to":"Command West","rr":{"lines":[{"qty":"4","kind":"Hard hat","description":"Class E, adjustable"},{"qty":"1","kind":"First aid kit","description":"Trauma kit, responder size"}],"priority":"routine","deliverTo":"Staging West (fire hall area)"}},
   {"id":"M0066","call":"KZ0ZXN","ago":1509,"place":"P18","status":0,"source":"Voice","scribe":0,"notes":"A volunteer asks where to sign in. Sent to the check-in desk with a map. Phone 360-555-0105."},
   {"id":"M0067","call":"WZ0SRM","ago":1508,"place":"P11","status":0,"source":"Voice","scribe":0,"notes":"Engine East 1, request an additional 3 hard hats and a first aid kit at staging.","to":"Command East"},
   {"id":"M0068","call":"KZ0EKK","ago":1506,"place":"P28","status":6,"source":"Voice","scribe":0,"notes":"Rescue 38 to Command, mud and water to the hips, hoist is the only way out. Two patients on the roof of a structure, third inside. Air requested.","to":"Command West"},
@@ -326,7 +328,7 @@ export const OSO_DEMO: OsoDemo = {
   {"id":"M0088","call":"KZ0LAL","ago":1489,"place":"P11","status":3,"source":"Voice","scribe":0,"notes":"Aid East, 2 personnel on the line, relief due at the next change. Fuel at half.","to":"Command East"},
   {"id":"M0089","call":"WZ0HWL","ago":1488,"place":"P05","status":0,"source":"Voice","scribe":0,"notes":"Net, Command East. Roads out, phones out. Please pass to the EOC that the east side has about forty responders and volunteers on foot, request medics and a K9 team.","to":"Net Control"},
   {"id":"M0090","call":"WZ0UKE","ago":1488,"place":"P29","status":0,"source":"Voice","scribe":0,"notes":"Patrol 1 to Command, 5 responders now in Division E. Footing is unstable, using a rope line. Request a safety lookout.","to":"Command West"},
-  {"id":"M0091","call":"WZ0WQG","ago":1488,"place":"P11","status":0,"source":"Voice","scribe":0,"notes":"Hand Crew 1, request an additional 12 hard hats and a first aid kit at staging.","to":"Command East"},
+  {"id":"M0091","call":"WZ0WQG","ago":1488,"place":"P11","status":0,"source":"Voice","scribe":0,"notes":"Hand Crew 1, request an additional 12 hard hats and a first aid kit at staging.","to":"Command East","rr":{"lines":[{"qty":"12","kind":"Hard hat","description":"Class E, adjustable"},{"qty":"2","kind":"First aid kit","description":"Trauma kit, responder size"}],"priority":"routine","deliverTo":"Staging East (town yard)"}},
   {"id":"M0092","call":"KZ0LAL","ago":1488,"place":"P26","status":6,"source":"Voice","scribe":0,"notes":"Aid East, request a litter team and a medic at the Division B edge. One local volunteer with an ankle injury.","to":"Command East"},
   {"id":"M0093","call":"WZ0NDO","ago":1487,"place":"P25","status":0,"source":"Voice","scribe":0,"notes":"Strike Team North, no further access from the road. Crew staging at the edge of Division A, waiting for the air boss.","to":"Command East"},
   {"id":"M0094","call":"KZ0EKK","ago":1487,"place":"P30","status":6,"source":"Voice","scribe":0,"notes":"Rescue 38, we hear shouting from the Division F edge. Locals, searching for family. They are walking in without a brief.","to":"Command West"},
@@ -447,7 +449,7 @@ export const OSO_DEMO: OsoDemo = {
   {"id":"M0210","call":"KZ0BEM","ago":1388,"place":"P27","status":0,"source":"Voice","scribe":0,"notes":"SAR East, we hear shouting from the Division C edge. Locals, searching for family. They are walking in without a brief.","to":"Command East"},
   {"id":"M0211","call":"WZ0HWL","ago":1387,"place":"P19","status":0,"source":"Voice","scribe":0,"notes":"A neighbor offers a flatbed and a generator. Contact taken for the volunteer coordinator. Phone 360-555-0152."},
   {"id":"M0212","call":"KZ0ZXN","ago":1387,"place":"P18","status":0,"source":"Phone","scribe":0,"notes":"A local business offers meals for crews and shelter staff. Referred to the logistics desk. Callback 425-555-0196."},
-  {"id":"M0213","call":"WZ0NRR","ago":1386,"place":"P28","status":0,"source":"Voice","scribe":0,"notes":"Patrol 2, need hard hats and gloves, 9 short. Locals do not have them.","to":"Command West"},
+  {"id":"M0213","call":"WZ0NRR","ago":1386,"place":"P28","status":0,"source":"Voice","scribe":0,"notes":"Patrol 2, need hard hats and gloves, 9 short. Locals do not have them.","to":"Command West","rr":{"lines":[{"qty":"9","kind":"Hard hat","description":"Class E, adjustable"},{"qty":"9","kind":"Gloves","description":"Work gloves, large"}],"priority":"urgent","deliverTo":"Division D (road corridor)"}},
   {"id":"M0214","call":"WZ0QNI","ago":1385,"place":"P25","status":3,"source":"Voice","scribe":0,"notes":"Engine East 2, pulling the crew for a rest and water. Rotating at the next hour.","to":"Command East"},
   {"id":"M0215","call":"WZ0WQG","ago":1382,"place":"P25","status":0,"source":"Voice","scribe":0,"notes":"Hand Crew 1 to Command, 2 responders now in Division A. Footing is unstable, using a rope line. Request a safety lookout.","to":"Command East"},
   {"id":"M0216","call":"WZ0XEL","ago":1381,"place":"P11","status":4,"source":"Voice","scribe":0,"notes":"Command, Dispatch. Two more rescue units en route from the south county, ETA about 45 minutes. Check them in at staging.","to":"Command East"},

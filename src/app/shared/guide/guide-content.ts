@@ -151,6 +151,10 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'Notes is the general record of this report — always saved, and what appears on the Radio Log grid and in the ICS-309 communications log: a ranger\'s status, purpose, or what happened. A 213 message is a separate, addressed message that only some reports generate (see the Messages page) — a formal request, order, or notification to a specific recipient. It is typed independently, not derived from your notes, because the two often serve different purposes entirely.'
           },
           {
+            heading: 'Resource requests (ICS-213RR)',
+            text: 'In Full view, tick "Also generate an ICS-213RR (Resource Request)" under the ICS-213 box to list what is needed, the priority and where to deliver it. It prints from Messages. Not available on a field phone.'
+          },
+          {
             heading: 'Attaching photos, video and audio',
             text: 'Attach, under Notes, adds files to the entry you are typing. On a phone or tablet, Take photo / video opens the camera straight away. The files wait as small chips (x removes one) and are stored when you save the entry. A saved entry shows a 📎 chip with how many it has; the chip opens the viewer.',
             bullets: [
@@ -290,6 +294,10 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           {
             heading: 'What shows up here',
             text: 'Only radio log entries with "Also generate an ICS-213" checked on Entry - not every report, and not the same list as Radio Log.'
+          },
+          {
+            heading: 'Resource requests',
+            text: 'Choose "Resource requests" in the filter above the list to see the entries that also have an ICS-213RR, each with its own Print and Save PDF. "All" shows both kinds.'
           },
           {
             heading: 'Reading one',

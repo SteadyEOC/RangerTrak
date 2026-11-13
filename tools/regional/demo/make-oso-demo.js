@@ -29,6 +29,21 @@ const CONFIG = {
   locationTypes: { 'search division': 'Search Division', decon: 'Decon', 'river gauge': 'River Gauge' },
   // Real agencies and outlets that must not reach the log (the tables use none today).
   moreRealNames: /\b(OSHA|ARRL|WSDOT|Snohomish)\b/,
+  // E-283: three log entries that are also ICS-213RR resource requests (they read as requests).
+  resourceRequests: {
+    M0213: { priority: 'urgent', lines: [
+      { qty: '9', kind: 'Hard hat', description: 'Class E, adjustable' },
+      { qty: '9', kind: 'Gloves', description: 'Work gloves, large' },
+    ] },
+    M0065: { priority: 'routine', lines: [
+      { qty: '4', kind: 'Hard hat', description: 'Class E, adjustable' },
+      { qty: '1', kind: 'First aid kit', description: 'Trauma kit, responder size' },
+    ] },
+    M0091: { priority: 'routine', lines: [
+      { qty: '12', kind: 'Hard hat', description: 'Class E, adjustable' },
+      { qty: '2', kind: 'First aid kit', description: 'Trauma kit, responder size' },
+    ] },
+  },
 }
 
 module.exports = {

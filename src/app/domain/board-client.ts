@@ -1,5 +1,7 @@
 import { liveRefs, smallerCopyLabelIn } from './attachments'
 import type { AttachmentRef } from './attachments'
+import { rr213Summary } from './rr213'
+import type { Rr213Type } from '../shared/services/radio-log-entry.interface'
 
 /**
  * The scribe's side of the Board (ADR D-61, D-60 item 6): the pure parts of
@@ -226,6 +228,15 @@ export function ics213Fields(entry: {
       ...(printed && !isNaN(printed.getTime()) ? { printedAt: printed.toISOString() } : {}),
     },
   }
+}
+
+/**
+ * The resource request (ICS-213RR, E-283) of one published report as one line of plain text
+ * (`rr213Summary`), or nothing for an entry without one. The Board carries the summary only.
+ */
+export function rr213Fields(entry: { rr213?: Rr213Type }): { rr213: string } | Record<string, never> {
+  if (!entry.rr213?.lines?.length) return {}
+  return { rr213: rr213Summary(entry.rr213) }
 }
 
 /**

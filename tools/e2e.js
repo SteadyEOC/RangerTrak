@@ -1400,9 +1400,10 @@ async function checkEntryTabOrder() {
     console.log(`  ....  Entry lower form missing: ${d}`)
   }
 }
-// 60, not 50: E-283 (2026-11-12) added the ICS-213RR box after the 213 box: its checkbox, one order line's
-// five fields, Add another item, Priority, Deliver to and Substitutes (ten stops).
-const ENTRY_TAB_STOPS = 60
+// 109, not 50: E-283 (2026-11-12) added the ICS-213RR box after the 213 box: its checkbox, NINE order lines of
+// six stops (Qty, Kind, Description, Type, Needed by, Remove; undrawn ones sit on hidden placeholders), Add
+// another item, Priority, Deliver to and Substitutes (59 stops).
+const ENTRY_TAB_STOPS = 109
 
 async function checkEntryAutofocusAndReset() {
   console.log('\nEntry form: callsign holds focus on load and again after submit (no mouse needed)')
@@ -1795,6 +1796,94 @@ async function checkMessagesPage() {
   })()`)
   await sleep(1500) // fetch the template + fill the PDF
   check('saving the ICS-213 PDF raised no console errors', consoleErrors.slice(0, 2), [])
+}
+
+/**
+ * E-283 phase 2 (2026-11-12): an ICS-213RR resource request, end to end. Full view (forced by default),
+ * tick the box on Entry, fill two order lines, save, then Messages: the Resource requests filter shows
+ * exactly that row with the first line's text, All still lists it, and a second line keeps the Entry
+ * tab chain unique and ascending. Field mode has no 213RR box. Not run by the brief's session; Opus
+ * runs it: node tools/e2e.js --full --only=radiolog
+ */
+async function checkResourceRequest() {
+  console.log('\nResource request (E-283): Entry -> Messages filter; none on a field phone')
+  await goto('/')
+  await idbRemoveRaw('radioLog')
+  await goto('/')
+  await sleep(1200)
+
+  const hasToggle = await evaluate(`!!document.querySelector('[data-testid="rr213-toggle"]')`)
+  check('Entry (Full view) offers the 213RR box', hasToggle, true)
+  await evaluate(`document.querySelector('[data-testid="rr213-toggle"] input[type=checkbox]').click()`)
+  await sleep(300)
+
+  const fillLine = (index, qty, kind, desc) => evaluate(`(async () => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    const setInput = (el, v) => { setter.call(el, v); el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); };
+    const line = document.querySelectorAll('[data-testid="rr213-line"]')[${index}];
+    setInput(line.querySelector('.enter__rr-qty input'), ${JSON.stringify(qty)});
+    setInput(line.querySelector('.enter__rr-kind input'), ${JSON.stringify(kind)});
+    setInput(line.querySelector('.enter__rr-desc input'), ${JSON.stringify(desc)});
+    await new Promise(r => setTimeout(r, 200));
+  })()`)
+  await fillLine(0, '9', 'E2E-RR-Hardhat', 'Class E')
+  await evaluate(`document.querySelector('[data-testid="rr213-add"]').click()`)
+  await sleep(400)
+  const lineCount = await evaluate(`document.querySelectorAll('[data-testid="rr213-line"]').length`)
+  check('Add another item draws a second order line', lineCount, 2)
+  await fillLine(1, '9', 'E2E-RR-Gloves', 'Large')
+
+  // The second line keeps its own place in the tab chain (not the end of the page).
+  const tabs = await evaluate(`(() => {
+    const idx = [...document.querySelectorAll('.enter__form [tabindex]')].map(el => Number(el.getAttribute('tabindex'))).filter(n => Number.isFinite(n) && n > 0);
+    const dupes = idx.filter((n, i) => idx.indexOf(n) !== i);
+    let ascending = true;
+    for (let i = 1; i < idx.length; i++) if (idx[i] <= idx[i - 1]) ascending = false;
+    const second = document.querySelectorAll('[data-testid="rr213-line"]')[1].querySelector('.enter__rr-qty input');
+    return { dupes, ascending, secondQty: Number(second.getAttribute('tabindex')), count: idx.length };
+  })()`)
+  check('with two order lines, every Entry tabindex is still unique', tabs.dupes, [])
+  check('with two order lines, Entry tabindexes still ascend in DOM order', tabs.ascending, true)
+  check('the second line has an explicit tabindex', tabs.secondQty > 0, true)
+  check('with two order lines, the Entry tab stop count is unchanged', tabs.count, ENTRY_TAB_STOPS)
+
+  await evaluate(`(async () => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    const cs = document.getElementById('enter__Callsign-input');
+    setter.call(cs, 'E2E-RR'); cs.dispatchEvent(new Event('input', {bubbles:true})); cs.dispatchEvent(new Event('change', {bubbles:true}));
+    await new Promise(r => setTimeout(r, 900));
+    document.querySelector('.enter__Submit-button')?.click();
+    await new Promise(r => setTimeout(r, 1200));
+  })()`)
+  const stored = JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries?.find(e => e.callsign === 'E2E-RR')
+  check('the saved entry has both order lines', (stored?.rr213?.lines || []).length, 2)
+
+  await goto('/messages')
+  await sleep(500)
+  await evaluate(`document.querySelector('[data-testid="messages-filter-rr"]').click()`)
+  await sleep(400)
+  const rr = await evaluate(`(() => {
+    const rows = [...document.querySelectorAll('.messages__list-item')];
+    return { count: rows.length, first: rows[0]?.textContent || '' };
+  })()`)
+  check('the Resource requests filter shows exactly one row', rr.count, 1)
+  check("...with the first line's text", rr.first.includes('E2E-RR-Hardhat'), true)
+  await evaluate(`document.querySelector('[data-testid="messages-filter-all"]').click()`)
+  await sleep(400)
+  const all = await evaluate(`[...document.querySelectorAll('.messages__list-item')].some(el => el.textContent.includes('E2E-RR-Hardhat'))`)
+  check('the All filter still lists the resource request', all, true)
+
+  // A field phone never fills one in.
+  await evaluate(`localStorage.setItem('fieldMode', 'true'); localStorage.removeItem('fieldModeReports')`)
+  try {
+    await goto('/')
+    await sleep(1200)
+    const inField = await evaluate(`!!document.querySelector('[data-testid="rr213-toggle"]')`)
+    check('field mode has no 213RR box on Entry', inField, false)
+  } finally {
+    await evaluate(`localStorage.removeItem('fieldMode'); localStorage.removeItem('fieldModeReports')`)
+    await goto('/')
+  }
 }
 
 async function checkEntryPhoneWidth() {
@@ -6108,8 +6197,9 @@ async function main() {
         if (want('entry')) await checkEvidenceLocation()
         if (want('entry')) await checkClueHeading()
         if (want('radiolog')) await checkMessagesPage()
+        if (want('radiolog')) await checkResourceRequest() // E-283
       } else {
-        note('fast run: skipping checkEvidenceLocation, checkClueHeading, checkMessagesPage (pass --full to include)')
+        note('fast run: skipping checkEvidenceLocation, checkClueHeading, checkMessagesPage, checkResourceRequest (pass --full to include)')
       }
       if (want('entry')) await checkDerivedValuesDoNotCarryOver() // also submits, same reason
       if (want('mission')) await checkMissionFormSave()

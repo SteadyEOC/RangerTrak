@@ -391,6 +391,11 @@
     tabButtons[ti].addEventListener('click', function (ev) { setView(ev.currentTarget.getAttribute('data-view')); });
   }
 
+  // E-283: the entry's resource request (ICS-213RR) as one plain-text line, shown under the notes.
+  function rrLine(r) {
+    if (!r || typeof r.rr213 !== 'string' || !r.rr213) return '';
+    return '<div class="rr213">Resource request: ' + esc(r.rr213.replace(/^Resource request \(ICS-213RR\): /, '')) + '</div>';
+  }
   function is213(r) { return !!(r && r.ics213 && typeof r.ics213 === 'object'); }
 
   function drawHead() {
@@ -613,7 +618,7 @@
     if (filterText) {
       reports = reports.filter(function (r) {
         var m = is213(r) ? r.ics213 : {};
-        return [r.callsign, r.tacticalCall, r.toCallsign, r.toTactical, r.status, r.msgNo, r.notes,
+        return [r.callsign, r.tacticalCall, r.toCallsign, r.toTactical, r.status, r.msgNo, r.notes, r.rr213,
           (m.to || []).join(' '), m.subject, m.message].some(function (s) {
           return String(s || '').toLowerCase().indexOf(filterText) !== -1;
         });
@@ -652,7 +657,7 @@
       } else {
         cells += '<td>' + (r.status ? '<span class="status-pill">' + esc(r.status) + '</span>' : '') + '</td>'
           + '<td>' + esc(r.source) + '</td>'
-          + '<td>' + esc(r.notes) + '</td>';
+          + '<td>' + esc(r.notes) + rrLine(r) + '</td>';
       }
       return '<tr' + (marked ? ' class="marked"' : '') + '>' + cells + '<td>' + filesCell(r) + '</td></tr>';
     }).join('');

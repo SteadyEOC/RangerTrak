@@ -5,7 +5,7 @@ import { Injectable, OnDestroy, inject, signal } from '@angular/core'
 import { MatSnackBar } from '@angular/material/snack-bar'
 
 import {
-  attachmentFields, BoardAction, BoardAttachment, BoardIcs213, ics213Fields, BoardEvent, BoardHolder, BoardState, boardStep, describeAgent,
+  attachmentFields, BoardAction, BoardAttachment, BoardIcs213, ics213Fields, rr213Fields, BoardEvent, BoardHolder, BoardState, boardStep, describeAgent,
   readClaimReply, readKeyedReply, replacedMessage, trimThumbs,
 } from '../../domain/board-client'
 import { normaliseBoardAddress } from '../../domain/board-address'
@@ -84,6 +84,8 @@ export type CommandPostReport = {
   attachments?: BoardAttachment[]
   // E-228 phase 1: only on an entry that generates an ICS-213; the Board lists these on its own tab.
   ics213?: BoardIcs213
+  // E-283: the one-line summary of the entry's ICS-213RR resource request, when it has one.
+  rr213?: string
 }
 
 export type CommandPostMission = {
@@ -673,6 +675,7 @@ export class CommandPostPublishService implements OnDestroy {
           : null,
         ...attachmentFields(r, show, thumbs),
         ...ics213Fields(r),
+        ...rr213Fields(r),
       })),
     }
     if (show) {

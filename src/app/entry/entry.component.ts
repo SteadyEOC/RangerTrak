@@ -29,7 +29,7 @@ import { AlertsComponent } from '../shared/alerts/alerts.component'
 import { PageComponent } from '../shared/page/page.component'
 import { ViewService } from '../shared/services/view.service'
 import { AdvancedDirective } from '../shared/view/advanced.directive'
-import { RR213_PRIORITIES, RR213_DEFAULT_PRIORITY, blankRr213Line, cleanRr213, rr213DefaultNeededBy, rr213NeededByFromInput, rr213NeededByInputValue } from '../domain/rr213'
+import { RR213_PRIORITIES, RR213_DEFAULT_PRIORITY, RR213_MAX_LINES, RR213_LINE_SLOTS, RR213_SLOT, rr213LineTabIndex, rr213SpareTabIndexes, blankRr213Line, cleanRr213, rr213DefaultNeededBy, rr213NeededByFromInput, rr213NeededByInputValue } from '../domain/rr213'
 import type { Rr213Priority } from '../domain/rr213'
 import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
 // Direct path, not the shared/services barrel - see the note in rangers.component.ts.
@@ -243,17 +243,13 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // 46 to 47 - see that check's own comment for the running list of who else did this.
   autoPrint213TabIndex = this.subject213TabIndex + 1
   // E-283 (ICS-213RR): after the 213 box. [hidden]-reserved like it, so the 1..N invariant holds in the
-  // default state: the opt-in checkbox, ONE order line's five fields (Qty, Kind, Description, Type,
-  // Needed by), Add another item, the Priority group, Deliver to and Substitutes. Further order lines
-  // carry no explicit tabindex (a runtime-variable count cannot be planned for here); Add another item
-  // focuses the new line's Qty.
+  // default state: the opt-in checkbox, then NINE order lines of six stops each (Qty, Kind, Description,
+  // Type, Needed by, Remove: rr213LineTabIndex), Add another item, the Priority group, Deliver to and
+  // Substitutes. Lines not drawn yet (and line 1's Remove while it is alone) keep their numbers on hidden
+  // placeholders (rrSpareTabIndexes), so adding an item never leaves a gap or sends focus to the page end.
   rrToggleTabIndex = this.autoPrint213TabIndex + 1
-  rrQtyTabIndex = this.rrToggleTabIndex + 1
-  rrKindTabIndex = this.rrQtyTabIndex + 1
-  rrDescTabIndex = this.rrKindTabIndex + 1
-  rrTypeTabIndex = this.rrDescTabIndex + 1
-  rrNeededTabIndex = this.rrTypeTabIndex + 1
-  rrAddTabIndex = this.rrNeededTabIndex + 1
+  rrLineTabIndexStart = this.rrToggleTabIndex + 1
+  rrAddTabIndex = this.rrLineTabIndexStart + RR213_MAX_LINES * RR213_LINE_SLOTS
   rrPriorityTabIndex = this.rrAddTabIndex + 1
   rrDeliverTabIndex = this.rrPriorityTabIndex + 1
   rrSubstitutesTabIndex = this.rrDeliverTabIndex + 1
@@ -331,6 +327,14 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly rrDeliverTo = signal('')
   readonly rrSubstitutes = signal('')
   readonly rrPriorities = RR213_PRIORITIES
+  readonly rrMaxLines = RR213_MAX_LINES
+  readonly rrSlot = RR213_SLOT
+  readonly rrSpareTabIndexes = computed(() => rr213SpareTabIndexes(this.rrLineTabIndexStart, this.rrLines().length))
+
+  /** Explicit tabindex for a slot (RR213_SLOT) of order line `i`. */
+  rrTab(i: number, slot: number): number {
+    return rr213LineTabIndex(this.rrLineTabIndexStart, i, slot)
+  }
 
   /** A line's "Needed by" as the date-and-time control's value. */
   rrNeededValue(line: Rr213LineType): string {
@@ -361,6 +365,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   addRrLine(): void {
+    if (this.rrLines().length >= RR213_MAX_LINES) return
     // A further item is usually wanted at the same time as the one above it.
     this.rrLines.update(ls => [...ls, {
       ...blankRr213Line(),

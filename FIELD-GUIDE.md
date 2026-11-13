@@ -332,6 +332,21 @@ optional **Heading** are in degrees **true** north, 0 to 359. Heading is which w
 drag marks or subject were going; it shows as an arrow at the clue on the map, and in the Radio
 Log, the ICS-309 and the CSV. Ask for the heading in degrees true; if they read a compass, note it.
 
+### Resource requests (ICS-213RR)
+
+To ask Logistics for supplies, tick **Also generate an ICS-213RR (Resource Request)** on Entry
+(under the ICS-213 box; Full view only, never on a field phone). Fill in each item (quantity,
+kind, description, type and when it is needed by; up to nine, with **Add another item**), then
+the priority and where to deliver it.
+
+- Print it from **Messages**: choose **Resource requests** in the filter, then **Print** or
+  **Save PDF** on its row. **All** lists both kinds of message.
+- The printed form leaves the Logistics and Finance parts and the request number blank for
+  Logistics to fill in. Our message number is printed in the top and bottom margins, so the
+  paper can be matched to the log.
+- A request edited on two devices keeps the later edit, whole.
+- To change a request, edit its radio log entry on Entry. Messages and Radio Log do not edit it.
+
 ### Message numbers
 
 Every entry gets a number when it is logged, such as **A007**: the station letter, then a
@@ -777,7 +792,8 @@ replaces what is on the device (see [Starting over](#starting-over-what-to-clear
   like.
 - **Montecito debris flows (large):** about 400 radio log entries, 30 teams and 100 roster
   rows, *modeled on* the January 9, 2018 debris flows in Montecito, California.
-- **Oso landslide (large):** about 510 radio log entries (51 of them ICS-213 messages), 40
+- **Oso landslide (large):** about 510 radio log entries (51 of them ICS-213 messages and 3 of them
+  ICS-213RR resource requests), 40
   teams, 128 roster rows and a command post on each side of the slide, *modeled on* the March
   22, 2014 SR 530 landslide near Oso, Washington.
 
