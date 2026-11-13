@@ -156,8 +156,12 @@
            paint (~260 ms at 4x CPU throttle, the PageSpeed "long task"). On a desktop the map is
            in view, so `on viewport` still loads it at once; on a phone in Simple view it sits
            below the fold (top ~1230 px on an 823 px screen) and now loads when scrolled near,
-           or after 8 s, whichever comes first, so it is ready in the usual case. -->
-      @defer (on viewport; on timer(8s)) {
+           or after 8 s, whichever comes first, so it is ready in the usual case.
+           John, 2026-11-13: on a phone his first tap on the map was lost and the map then zoomed in.
+           Scrolled down within 8 s, the tap can land on the placeholder while Leaflet's chunk is still
+           downloading (0.2 s on a local build; longer over cellular). `prefetch on idle` downloads the
+           chunk early so the swap is near-instant; the map itself still starts only when in view. -->
+      @defer (on viewport; on timer(8s); prefetch on idle) {
       <mini-mapLeaflet [locationUpdated]="locationParent" (locationChange)="onNewLocationEvent($event)"
         [evidenceLocationUpdated]="showEvidenceLocation() ? evidenceLocation : null"
         [evidenceHeadingUpdated]="showEvidenceLocation() ? evidenceDirection() : null"

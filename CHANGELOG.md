@@ -2,8 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-12)
+## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-13)
 
+The tag moved on 2026-11-13 to take in the work below, so the drill build and beta.3 are the same.
+
+### Features
+
+* **board:** rangertrak.org/board/ walks through setting up the Board step by step: a checklist with a progress gauge, steps for Windows, Mac or Linux picked automatically, troubleshooting tucked away; the Mission card, Help and READ-ME-FIRST link to it
+* **board:** the viewer shows the time, the mission's name and number, the op period with time in and time left, a Help link, and the Board's version
+* **board:** the Board checks once at start-up for a newer kit and says so in its window and the viewer's footer; offline it stays quiet
+* **messages:** E-283 ICS-213RR resource requests: Entry opt-in (Full view, not field phones), all nine order lines, hover help after Washington EMD's 213RR instructions, on-site contact prefilled from the roster, WA EMD priorities mapped to the FEMA boxes, FEMA 213RR PDF fill and print, Messages filter, ICS-309 line, Board summary ([30eec58](https://github.com/SteadyEOC/RangerTrak/commit/30eec581), [ac8e3f8](https://github.com/SteadyEOC/RangerTrak/commit/ac8e3f86), [60eebdb](https://github.com/SteadyEOC/RangerTrak/commit/60eebdb7))
+* **demo:** every demo files simple ICS-213s and resource requests ([f30df6f](https://github.com/SteadyEOC/RangerTrak/commit/f30df6fb))
+* **map:** entry popups show the entry's Notes, long notes clamped with More/Less ([64890ac](https://github.com/SteadyEOC/RangerTrak/commit/64890ac9))
+* **map:** Leaflet 2.0.0-beta.4: smoother zoom and panning, keyboard layers control ([4b0c746](https://github.com/SteadyEOC/RangerTrak/commit/4b0c7465))
+
+### Bug Fixes
+
+* **board:** Test connection and publishing name an unaccepted certificate correctly; the app's service worker had turned the failure into "HTTP 504" and "not a RangerTrak Board"
+* **board kit:** shorter start-up window (two steps, the scribe's address first) in plain colours; READ-ME-FIRST covers Windows, Mac and Linux separately and says Node needs no extra tools; the zip no longer nests a second folder
+* **radio-log:** phone cards list newest first, as the grid does ([e3c83d5](https://github.com/SteadyEOC/RangerTrak/commit/e3c83d5d))
+* Report Packet filenames add the local time, so one day's packets no longer share a name ([40c0e51](https://github.com/SteadyEOC/RangerTrak/commit/40c0e51c))
+* **entry:** 213RR fields keep their tab order; the contact prefill clears when the new reporter is not on the roster ([d367df7](https://github.com/SteadyEOC/RangerTrak/commit/d367df74), [e1d90bc](https://github.com/SteadyEOC/RangerTrak/commit/e1d90bc7))
+
+### Earlier in beta.3 (tagged 2026-11-11)
 
 ### Features
 
