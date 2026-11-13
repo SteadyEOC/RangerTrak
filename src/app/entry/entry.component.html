@@ -612,6 +612,12 @@
         <mat-checkbox data-testid="rr213-toggle" [checked]="rrOn()" [tabIndex]="rrToggleTabIndex"
           (change)="onRrToggle($event.checked)">
           Also generate an ICS-213RR (Resource Request)
+          <!-- E-283 hover text (2026-11-12, John): worded after the WA EMD 213RR instructions
+               (mil.wa.gov, "Instructions for filling out the WA ICS-213RR Form"); block numbers
+               there differ from the FEMA form we fill, so the text names no block numbers. -->
+          <span class="field-help" tabindex="0" role="img"
+            aria-label="You fill only the requester's part. Logistics fills the estimated arrival, cost, request number and supplier; Finance fills its own part. Our message number prints in the margins so everyone can refer to this request."
+            title="You fill only the requester's part. Logistics fills the estimated arrival, cost, request number and supplier; Finance fills its own part. Our message number prints in the margins so everyone can refer to this request.">ⓘ</span>
         </mat-checkbox>
         <div class="enter__213-details enter__rr-details" [hidden]="!rrOn()">
           @for (line of rrLines(); track $index; let i = $index) {
@@ -619,21 +625,26 @@
             <mat-form-field class="enter__rr-qty" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Qty</mat-label>
               <input matInput type="text" [id]="'enter__rr-qty-' + i" [value]="line.qty" placeholder="2 cases"
+                title="Required: how many. Units are fine (2 cases, 1 pallet)."
                 [attr.tabindex]="rrTab(i, rrSlot.qty)" (input)="setRrLine(i, 'qty', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-kind" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Kind</mat-label>
               <input matInput type="text" [value]="line.kind" placeholder="Radio, Water, Medic"
+                title="What kind of resource, if you know it (generator, drinking water, medical team)."
                 [attr.tabindex]="rrTab(i, rrSlot.kind)" (input)="setRrLine(i, 'kind', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-desc" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Description</mat-label>
               <input matInput type="text" [value]="line.description" placeholder="Brand, size, specs"
+                title="Be as specific as possible: what it must do or have (brand, specs, size, experience), and what it is for if that helps. For people, the task they will do."
                 [attr.tabindex]="rrTab(i, rrSlot.description)" (input)="setRrLine(i, 'description', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-type" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Type</mat-label>
-              <input matInput type="text" [value]="line.type ?? ''" [attr.tabindex]="rrTab(i, rrSlot.type)"
+              <input matInput type="text" [value]="line.type ?? ''"
+                title="The resource's type or size class, if you know it (for example Type 3). Leave blank if not."
+                [attr.tabindex]="rrTab(i, rrSlot.type)"
                 (input)="setRrLine(i, 'type', $any($event.target).value)" />
             </mat-form-field>
             <mat-form-field class="enter__rr-needed" floatLabel="always" subscriptSizing="dynamic">
@@ -641,6 +652,7 @@
               <!-- 2026-11-12, John: a date-and-time control (the browser's own, with its hour and minute
                    pickers), starting at the start of the next op period. Stored as mm/dd/yyyy HH:mm. -->
               <input matInput type="datetime-local" data-testid="rr213-needed" [value]="rrNeededValue(line)"
+                title="The date and time you need it. Starts at the next operational period. Logistics fills in when it will actually arrive."
                 [attr.tabindex]="rrTab(i, rrSlot.neededBy)" (change)="setRrNeeded(i, $any($event.target).value)" />
             </mat-form-field>
             @if (rrLines().length > 1) {
@@ -661,7 +673,11 @@
           </div>
 
           <fieldset class="enter__213-field enter__field-fieldset">
-            <legend class="enter__field-label">Priority</legend>
+            <legend class="enter__field-label">Priority
+              <span class="field-help" tabindex="0" role="img"
+                aria-label="How urgent the whole request is. Life-saving needs (rescue, treating the injured, responder safety) are Urgent."
+                title="How urgent the whole request is. Life-saving needs (rescue, treating the injured, responder safety) are Urgent.">ⓘ</span>
+            </legend>
             <mat-chip-listbox aria-label="Priority" [tabIndex]="rrPriorityTabIndex" data-testid="rr213-priority"
               (change)="rrPriority.set($event.value ?? rrPriority())">
               @for (p of rrPriorities; track p.value) {
@@ -674,11 +690,17 @@
             <mat-label>Deliver to</mat-label>
             <input matInput type="text" [value]="rrDeliverTo()" [attr.tabindex]="rrDeliverTabIndex"
               (input)="rrDeliverTo.set($any($event.target).value)" />
+            <span matSuffix class="field-help" tabindex="0" role="img"
+              aria-label="Where it should be delivered: a specific staging area, an address, landmarks, or latitude and longitude. Add the on-site contact's name and phone so the driver can reach someone."
+              title="Where it should be delivered: a specific staging area, an address, landmarks, or latitude and longitude. Add the on-site contact's name and phone so the driver can reach someone.">ⓘ</span>
           </mat-form-field>
           <mat-form-field class="enter__213-field" floatLabel="always">
             <mat-label>Suitable substitutes or suggested sources</mat-label>
             <input matInput type="text" [value]="rrSubstitutes()" [attr.tabindex]="rrSubstitutesTabIndex"
               (input)="rrSubstitutes.set($any($event.target).value)" />
+            <span matSuffix class="field-help" tabindex="0" role="img"
+              aria-label="If you know any: what else would do, or where to get it. A suggested source can be a contract already in place or a spoken agreement with a local vendor."
+              title="If you know any: what else would do, or where to get it. A suggested source can be a contract already in place or a spoken agreement with a local vendor.">ⓘ</span>
           </mat-form-field>
         </div>
       </div>
