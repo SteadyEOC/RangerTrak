@@ -643,7 +643,7 @@
             <mat-form-field class="enter__rr-type" floatLabel="always" subscriptSizing="dynamic">
               <mat-label>Type</mat-label>
               <input matInput type="text" [value]="line.type ?? ''"
-                title="The resource's type or size class, if you know it (for example Type 3). Leave blank if not."
+                title="How big or capable, if you know it. NIMS types run from Type 1, the largest or most capable, to higher numbers for smaller ones (a Type 1 generator is bigger than a Type 3). How many types there are depends on the resource. Leave blank if not sure; the Description can say it in words."
                 [attr.tabindex]="rrTab(i, rrSlot.type)"
                 (input)="setRrLine(i, 'type', $any($event.target).value)" />
             </mat-form-field>
