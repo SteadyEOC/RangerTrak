@@ -376,16 +376,15 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     const station = this.resolveStation(text)
     const ranger = (station.rangerUid ? this.rangers.find(r => r.uid === station.rangerUid) : undefined)
       ?? this.rangers.find(r => !!station.callsign && r.callsign?.toLowerCase() === station.callsign.toLowerCase())
-    if (!ranger) return
+    // An unknown reporter still clears what the roster filled for the previous one (typed text stays).
     const fill = (sig: WritableSignal<string>, key: 'name' | 'phone', value: string | undefined) => {
       const cur = sig().trim()
-      if (value?.trim() && (!cur || cur === this.rrContactAuto[key])) {
-        sig.set(value.trim())
-        this.rrContactAuto[key] = value.trim()
-      }
+      if (cur && cur !== this.rrContactAuto[key]) return
+      sig.set(value?.trim() ?? '')
+      this.rrContactAuto[key] = value?.trim() ?? ''
     }
-    fill(this.rrContactName, 'name', ranger.fullName)
-    fill(this.rrContactPhone, 'phone', ranger.phone)
+    fill(this.rrContactName, 'name', ranger?.fullName)
+    fill(this.rrContactPhone, 'phone', ranger?.phone)
   }
 
   setRrLine(i: number, key: keyof Rr213LineType, value: string): void {
