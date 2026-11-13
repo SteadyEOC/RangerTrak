@@ -531,7 +531,7 @@ export class SampleDataService {
         recipients213: ['Incident Commander', 'Logistics'],
       },
       { callsign: 'CERT4', minutesAgo: 152, lat: DOCKTON.lat + 0.0012, lng: DOCKTON.lng + 0.0010, address: `${DOCKTON.name} - north shoreline, quarter mile`, statusIndex: 0, notes: 'Holding the shoreline trail perimeter while the shed issue is checked. Need cones and tape for the perimeter.', source: 'Voice', operator: OPS,
-        rr213: { priority: 'urgent', deliverTo: `${DOCKTON.name} - north shoreline trail`, substitutes: 'Barrier tape alone if cones are short', lines: [{ qty: '12', kind: 'Traffic cones', description: '28 inch, reflective', neededBy: '' }, { qty: '2 rolls', kind: 'Barrier tape', description: 'Yellow, 3 inch', neededBy: '' }] } },
+        rr213: { priority: 'life-saving', deliverTo: `${DOCKTON.name} - north shoreline trail`, contactName: 'Sam Okafor', contactPhone: 'CERT3 on the net', substitutes: 'Barrier tape alone if cones are short', lines: [{ qty: '12', kind: 'Traffic cones', description: '28 inch, reflective', neededBy: '' }, { qty: '2 rolls', kind: 'Barrier tape', description: 'Yellow, 3 inch', neededBy: '' }] } },
       { callsign: 'CERT3', minutesAgo: 60, lat: DOCKTON.lat + 0.0022, lng: DOCKTON.lng + 0.0018, address: `${DOCKTON.name} - north shoreline trail`, statusIndex: 5, notes: 'Shoreline sweep complete, propane smell traced to a stored camp stove, resolved. Checking out.', source: 'Voice', operator: OPS },
 
       // ── Team D: MERT1/Medic1 - Dockton Park, marina + one water track + first aid ──
@@ -919,7 +919,7 @@ export class SampleDataService {
         : {}),
       // E-283: a row with an `rr` block is also a resource request (ICS-213RR); Needed by is left blank.
       ...(r.rr
-        ? { rr213: cleanRr213({ lines: r.rr.lines.map(l => ({ ...l, neededBy: '' })), priority: r.rr.priority, deliverTo: r.rr.deliverTo }) }
+        ? { rr213: cleanRr213({ lines: r.rr.lines.map(l => ({ ...l, neededBy: '' })), priority: r.rr.priority, deliverTo: r.rr.deliverTo, contactName: r.rr.contactName, contactPhone: r.rr.contactPhone }) }
         : {}),
     }))
     const locations: MissionLocationType[] = d.places.map(p => ({

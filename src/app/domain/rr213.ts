@@ -7,16 +7,21 @@ import type { Rr213LineType, Rr213Type } from '../shared/services/radio-log-entr
 
 export type Rr213Priority = NonNullable<Rr213Type['priority']>
 
-export const RR213_PRIORITIES: ReadonlyArray<{ value: Rr213Priority, label: string }> = [
-  { value: 'urgent', label: 'Urgent' },
-  { value: 'routine', label: 'Routine' },
-  { value: 'low', label: 'Low' },
+export const RR213_PRIORITIES: ReadonlyArray<{ value: Rr213Priority, label: string, hint: string }> = [
+  { value: 'life-saving', label: 'Life saving', hint: 'Rescuing people in danger, treating the injured, and the safety, accountability and welfare of responders.' },
+  { value: 'incident-stabilization', label: 'Incident stabilization', hint: 'Keeping the incident from growing and bringing it under control to limit the harm.' },
+  { value: 'property-preservation', label: 'Property preservation', hint: 'Protecting property, infrastructure, evidence, the economy and the environment.' },
 ]
 
-export const RR213_DEFAULT_PRIORITY: Rr213Priority = 'routine'
+export const RR213_DEFAULT_PRIORITY: Rr213Priority = 'incident-stabilization'
 
 export function rr213PriorityLabel(p: Rr213Priority | undefined): string {
-  return RR213_PRIORITIES.find(x => x.value === (p ?? RR213_DEFAULT_PRIORITY))?.label ?? 'Routine'
+  return RR213_PRIORITIES.find(x => x.value === (p ?? RR213_DEFAULT_PRIORITY))?.label ?? 'Incident stabilization'
+}
+
+/** "name, phone" with whichever is missing left out; '' when neither is there. */
+export function rr213ContactText(rr: Pick<Rr213Type, 'contactName' | 'contactPhone'>): string {
+  return [rr.contactName?.trim(), rr.contactPhone?.trim()].filter(Boolean).join(', ')
 }
 
 export function blankRr213Line(): Rr213LineType {
@@ -71,7 +76,7 @@ export function rr213LineText(l: Rr213LineType): string {
  * The form to store: trimmed text, empty optional parts left off, blank lines dropped, priority
  * and delivery only when given. Returns undefined when no line has any content (no request).
  */
-export function cleanRr213(raw: { lines: Rr213LineType[], priority?: Rr213Priority, deliverTo?: string, substitutes?: string }): Rr213Type | undefined {
+export function cleanRr213(raw: { lines: Rr213LineType[], priority?: Rr213Priority, deliverTo?: string, contactName?: string, contactPhone?: string, substitutes?: string }): Rr213Type | undefined {
   const lines = raw.lines.filter(rr213LineHasContent).map((l): Rr213LineType => ({
     qty: l.qty?.trim() ?? '',
     kind: l.kind?.trim() ?? '',
@@ -84,12 +89,14 @@ export function cleanRr213(raw: { lines: Rr213LineType[], priority?: Rr213Priori
     lines,
     priority: raw.priority ?? RR213_DEFAULT_PRIORITY,
     ...(raw.deliverTo?.trim() ? { deliverTo: raw.deliverTo.trim() } : {}),
+    ...(raw.contactName?.trim() ? { contactName: raw.contactName.trim() } : {}),
+    ...(raw.contactPhone?.trim() ? { contactPhone: raw.contactPhone.trim() } : {}),
     ...(raw.substitutes?.trim() ? { substitutes: raw.substitutes.trim() } : {}),
   }
 }
 
 /**
- * The ICS-309 / list text: "Resource request (ICS-213RR): 2 x radio battery, Urgent, deliver to PCC 2".
+ * The ICS-309 / list text: "Resource request (ICS-213RR): 2 x radio battery, Life saving, deliver to PCC 2, contact Jo 206-555-0100".
  * The first line only, then "+N more" when the request has several.
  */
 export function rr213Summary(rr: Rr213Type): string {
@@ -103,7 +110,9 @@ export function rr213Brief(rr: Rr213Type): string {
   const first = rr.lines[0] ? rr213LineText(rr.lines[0]) : ''
   const more = rr.lines.length > 1 ? ` +${rr.lines.length - 1} more` : ''
   const deliver = rr.deliverTo?.trim() ? `, deliver to ${rr.deliverTo.trim()}` : ''
-  return `${first}${more}, ${rr213PriorityLabel(rr.priority)}${deliver}`
+  const contactText = rr213ContactText(rr)
+  const contact = contactText ? `, contact ${[rr.contactName?.trim(), rr.contactPhone?.trim()].filter(Boolean).join(' ')}` : ''
+  return `${first}${more}, ${rr213PriorityLabel(rr.priority)}${deliver}${contact}`
 }
 
 /** The FEMA form has nine order rows, so Entry takes at most nine items. */

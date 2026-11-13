@@ -9,7 +9,7 @@ import { CommonModule, DOCUMENT } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import {
   AfterViewInit, Component, computed, ElementRef, EventEmitter, Inject, Input, NgZone, OnDestroy,
-  OnInit, Output, signal, ViewChild, QueryList, ViewChildren,
+  OnInit, Output, signal, type WritableSignal, ViewChild, QueryList, ViewChildren,
   ChangeDetectionStrategy, effect, inject
 } from '@angular/core'
 import { toSignal } from '@angular/core/rxjs-interop'
@@ -252,7 +252,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   rrAddTabIndex = this.rrLineTabIndexStart + RR213_MAX_LINES * RR213_LINE_SLOTS
   rrPriorityTabIndex = this.rrAddTabIndex + 1
   rrDeliverTabIndex = this.rrPriorityTabIndex + 1
-  rrSubstitutesTabIndex = this.rrDeliverTabIndex + 1
+  rrContactNameTabIndex = this.rrDeliverTabIndex + 1
+  rrContactPhoneTabIndex = this.rrContactNameTabIndex + 1
+  rrSubstitutesTabIndex = this.rrContactPhoneTabIndex + 1
   operatorTabIndex = this.rrSubstitutesTabIndex + 1
   resetTabIndex = this.operatorTabIndex + 1
   submitTabIndex = this.resetTabIndex + 1
@@ -325,6 +327,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly rrLines = signal<Rr213LineType[]>([blankRr213Line()])
   readonly rrPriority = signal<Rr213Priority>(RR213_DEFAULT_PRIORITY)
   readonly rrDeliverTo = signal('')
+  readonly rrContactName = signal('')
+  readonly rrContactPhone = signal('')
+  // What the roster last put in the contact fields: a field still holding that (or empty) is untouched
+  // and may be refilled when the reporting callsign changes; anything else was typed and is never overwritten.
+  private rrContactAuto = { name: '', phone: '' }
   readonly rrSubstitutes = signal('')
   readonly rrPriorities = RR213_PRIORITIES
   readonly rrMaxLines = RR213_MAX_LINES
@@ -358,6 +365,27 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     if (checked && !this.rrDeliverTo().trim() && address && address !== undefinedAddressFlag) {
       this.rrDeliverTo.set(address)
     }
+    if (checked) this.prefillRrContact()
+  }
+
+  /** On-site contact starts as the reporting ranger from the roster; never overwrites what the scribe typed. */
+  private prefillRrContact(): void {
+    if (!this.rrOn()) return
+    const text = this.callsignCtrl.value ?? ''
+    if (!text) return
+    const station = this.resolveStation(text)
+    const ranger = (station.rangerUid ? this.rangers.find(r => r.uid === station.rangerUid) : undefined)
+      ?? this.rangers.find(r => !!station.callsign && r.callsign?.toLowerCase() === station.callsign.toLowerCase())
+    if (!ranger) return
+    const fill = (sig: WritableSignal<string>, key: 'name' | 'phone', value: string | undefined) => {
+      const cur = sig().trim()
+      if (value?.trim() && (!cur || cur === this.rrContactAuto[key])) {
+        sig.set(value.trim())
+        this.rrContactAuto[key] = value.trim()
+      }
+    }
+    fill(this.rrContactName, 'name', ranger.fullName)
+    fill(this.rrContactPhone, 'phone', ranger.phone)
   }
 
   setRrLine(i: number, key: keyof Rr213LineType, value: string): void {
@@ -384,6 +412,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.rrLines.set([blankRr213Line()])
     this.rrPriority.set(RR213_DEFAULT_PRIORITY)
     this.rrDeliverTo.set('')
+    this.rrContactName.set('')
+    this.rrContactPhone.set('')
+    this.rrContactAuto = { name: '', phone: '' }
     this.rrSubstitutes.set('')
   }
 
@@ -828,6 +859,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       this.rrLines.set(entry.rr213.lines.length ? entry.rr213.lines.map(l => ({ ...l })) : [blankRr213Line()])
       this.rrPriority.set(entry.rr213.priority ?? RR213_DEFAULT_PRIORITY)
       this.rrDeliverTo.set(entry.rr213.deliverTo ?? '')
+      this.rrContactName.set(entry.rr213.contactName ?? '')
+      this.rrContactPhone.set(entry.rr213.contactPhone ?? '')
+      this.rrContactAuto = { name: '', phone: '' }
       this.rrSubstitutes.set(entry.rr213.substitutes ?? '')
     }
     this.pickerDate.set(date)
@@ -1186,7 +1220,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.rrOn()) return {}
     const rr213 = cleanRr213({
       lines: this.rrLines(), priority: this.rrPriority(),
-      deliverTo: this.rrDeliverTo(), substitutes: this.rrSubstitutes(),
+      deliverTo: this.rrDeliverTo(), contactName: this.rrContactName(), contactPhone: this.rrContactPhone(),
+      substitutes: this.rrSubstitutes(),
     })
     return rr213 ? { rr213 } : {}
   }
@@ -1305,6 +1340,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   callsignChanged(callsign: string) { // Just serves timer for input field - post interaction
+
+    this.prefillRrContact()
 
     this.callImg = this.document.getElementById("enter__Callsign-image")
     this.callInfo = this.document.getElementById("enter__Callsign-upshot")
@@ -1533,7 +1570,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       generates213: m.generates213, replyRequested213: m.replyRequested213,
       message213: m.message213, recipients213: m.recipients213, subject213: m.subject213,
       selectedRecipients213: [...this.selectedRecipients213()],
-      rr: { on: this.rrOn(), lines: this.rrLines(), priority: this.rrPriority(), deliverTo: this.rrDeliverTo(), substitutes: this.rrSubstitutes() },
+      rr: { on: this.rrOn(), lines: this.rrLines(), priority: this.rrPriority(), deliverTo: this.rrDeliverTo(), contactName: this.rrContactName(), contactPhone: this.rrContactPhone(), substitutes: this.rrSubstitutes() },
       location: atDefault || JSON.stringify(loc) === JSON.stringify(undefinedLocation) ? undefined : loc,
       pendingFiles: this.pendingFiles(),
     }
@@ -1569,6 +1606,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       this.rrLines.set(d.rr.lines.length ? d.rr.lines : [blankRr213Line()])
       this.rrPriority.set(d.rr.priority)
       this.rrDeliverTo.set(d.rr.deliverTo)
+      this.rrContactName.set(d.rr.contactName ?? '')
+      this.rrContactPhone.set(d.rr.contactPhone ?? '')
       this.rrSubstitutes.set(d.rr.substitutes)
     }
     this.pendingFiles.set(d.pendingFiles)

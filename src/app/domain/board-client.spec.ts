@@ -393,17 +393,17 @@ describe('Board snapshot ICS-213 messages (E-228 phase 1)', () => {
 describe('Board snapshot resource requests (E-283)', () => {
   it('sends nothing for an entry without a resource request', () => {
     expect(rr213Fields({})).toEqual({})
-    expect(rr213Fields({ rr213: { lines: [], priority: 'routine' } })).toEqual({})
+    expect(rr213Fields({ rr213: { lines: [], priority: 'incident-stabilization' } })).toEqual({})
   })
 
   it('sends the one-line summary as plain text', () => {
     const out = rr213Fields({
       rr213: {
         lines: [{ qty: '9', kind: 'Hard hat', description: '', neededBy: '' }, { qty: '9', kind: 'Gloves', description: '', neededBy: '' }],
-        priority: 'urgent',
+        priority: 'life-saving',
         deliverTo: 'Patrol 2',
       },
     })
-    expect(out).toEqual({ rr213: 'Resource request (ICS-213RR): 9 × Hard hat +1 more, Urgent, deliver to Patrol 2' })
+    expect(out).toEqual({ rr213: 'Resource request (ICS-213RR): 9 × Hard hat +1 more, Life saving, deliver to Patrol 2' })
   })
 })

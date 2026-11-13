@@ -24,7 +24,7 @@
  *     message body, addressee, reply wanted) so the app files it as a radio log entry that also
  *     generates an ICS-213, which the Messages page lists.
  *   - Resource requests (E-283, 2026-11-12): a scenario config may name rows in `resourceRequests`
- *     (row id -> { lines, priority }). Those rows carry an `rr` block, and Deliver to is the row's
+ *     (row id -> { lines, priority, contactName, contactPhone }). Those rows carry an `rr` block, and Deliver to is the row's
  *     own place label, so the app files them as radio log entries that also carry an ICS-213RR.
  *
  * The tables are not committed with these scripts (and tools/regional/ may hold scripts only -
@@ -271,7 +271,7 @@ function makeScenario({ msel, places, teams }, cfg) {
         row.f213 = { subject: r.ics213_subject, message: body, to: r.to, reply: /^pending/i.test(reply) }
       }
       const rr = cfg.resourceRequests && cfg.resourceRequests[r.id]
-      if (rr) row.rr = { lines: rr.lines, priority: rr.priority, deliverTo: placeById.get(placeId).label }
+      if (rr) row.rr = { lines: rr.lines, priority: rr.priority, deliverTo: placeById.get(placeId).label, ...(rr.contactName ? { contactName: rr.contactName } : {}), ...(rr.contactPhone ? { contactPhone: rr.contactPhone } : {}) }
       return row
     })
 
@@ -320,7 +320,7 @@ export type ${N}Row = {
   id: string, call: string, ago: number, place: string, status: number,
   source: 'Voice' | 'Phone', scribe: number, notes: string, to?: string,${has213 ? `
   f213?: { subject: string, message: string, to: string, reply: boolean },` : ''}${hasRr ? `
-  rr?: { lines: { qty: string, kind: string, description: string }[], priority: 'urgent' | 'routine' | 'low', deliverTo: string },` : ''}
+  rr?: { lines: { qty: string, kind: string, description: string }[], priority: 'life-saving' | 'incident-stabilization' | 'property-preservation', deliverTo: string, contactName?: string, contactPhone?: string },` : ''}
 }
 export type ${N}Ranger = {
   callsign: string, fullName: string, phone: string, image: string, id: string,

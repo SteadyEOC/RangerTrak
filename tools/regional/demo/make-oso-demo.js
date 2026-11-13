@@ -31,15 +31,15 @@ const CONFIG = {
   moreRealNames: /\b(OSHA|ARRL|WSDOT|Snohomish)\b/,
   // E-283: three log entries that are also ICS-213RR resource requests (they read as requests).
   resourceRequests: {
-    M0213: { priority: 'urgent', lines: [
+    M0213: { priority: 'life-saving', contactName: 'Dana Whitfield', contactPhone: '206-555-0142', lines: [
       { qty: '9', kind: 'Hard hat', description: 'Class E, adjustable' },
       { qty: '9', kind: 'Gloves', description: 'Work gloves, large' },
     ] },
-    M0065: { priority: 'routine', lines: [
+    M0065: { priority: 'incident-stabilization', contactName: 'Marcus Doyle', contactPhone: '206-555-0167', lines: [
       { qty: '4', kind: 'Hard hat', description: 'Class E, adjustable' },
       { qty: '1', kind: 'First aid kit', description: 'Trauma kit, responder size' },
     ] },
-    M0091: { priority: 'routine', lines: [
+    M0091: { priority: 'incident-stabilization', contactName: 'Priya Natarajan', contactPhone: '425-555-0123', lines: [
       { qty: '12', kind: 'Hard hat', description: 'Class E, adjustable' },
       { qty: '2', kind: 'First aid kit', description: 'Trauma kit, responder size' },
     ] },

@@ -337,7 +337,10 @@ Log, the ICS-309 and the CSV. Ask for the heading in degrees true; if they read 
 To ask Logistics for supplies, tick **Also generate an ICS-213RR (Resource Request)** on Entry
 (under the ICS-213 box; Full view only, never on a field phone). Fill in each item (quantity,
 kind, description, type and when it is needed by; up to nine, with **Add another item**), then
-the priority and where to deliver it.
+the priority, where to deliver it and the on-site contact (name and phone, which start as the
+reporting ranger from the roster; a radio contact such as "PCC 2 on the net" is fine). The priorities
+are Washington EMD's (Life saving, Incident stabilization, Property preservation), mapped onto the
+FEMA form's boxes (Urgent, Routine, Low) and printed in the margin too.
 
 - Print it from **Messages**: choose **Resource requests** in the filter, then **Print** or
   **Save PDF** on its row. **All** lists both kinds of message.

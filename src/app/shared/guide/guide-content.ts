@@ -152,7 +152,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
           },
           {
             heading: 'Resource requests (ICS-213RR)',
-            text: 'In Full view, tick "Also generate an ICS-213RR (Resource Request)" under the ICS-213 box to list what is needed, the priority and where to deliver it. It prints from Messages. Not available on a field phone.'
+            text: 'In Full view, tick "Also generate an ICS-213RR (Resource Request)" under the ICS-213 box to list what is needed, the priority and where to deliver it, with an on-site contact. The priorities are Washington EMD\'s (Life saving, Incident stabilization, Property preservation), mapped onto the FEMA form\'s boxes. It prints from Messages. Not available on a field phone.'
           },
           {
             heading: 'Attaching photos, video and audio',

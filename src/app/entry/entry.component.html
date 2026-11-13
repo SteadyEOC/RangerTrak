@@ -675,13 +675,13 @@
           <fieldset class="enter__213-field enter__field-fieldset">
             <legend class="enter__field-label">Priority
               <span class="field-help" tabindex="0" role="img"
-                aria-label="How urgent the whole request is. Life-saving needs (rescue, treating the injured, responder safety) are Urgent."
-                title="How urgent the whole request is. Life-saving needs (rescue, treating the injured, responder safety) are Urgent.">ⓘ</span>
+                aria-label="Washington EMD's priorities for the whole request. The printed FEMA form ticks the nearest of its own boxes (Life saving = Urgent, Incident stabilization = Routine, Property preservation = Low) and prints these words too."
+                title="Washington EMD's priorities for the whole request. The printed FEMA form ticks the nearest of its own boxes (Life saving = Urgent, Incident stabilization = Routine, Property preservation = Low) and prints these words too.">ⓘ</span>
             </legend>
             <mat-chip-listbox aria-label="Priority" [tabIndex]="rrPriorityTabIndex" data-testid="rr213-priority"
               (change)="rrPriority.set($event.value ?? rrPriority())">
               @for (p of rrPriorities; track p.value) {
-              <mat-chip-option [value]="p.value" [selected]="rrPriority() === p.value">{{ p.label }}</mat-chip-option>
+              <mat-chip-option [value]="p.value" [selected]="rrPriority() === p.value" [title]="p.hint">{{ p.label }}</mat-chip-option>
               }
             </mat-chip-listbox>
           </fieldset>
@@ -691,8 +691,24 @@
             <input matInput type="text" [value]="rrDeliverTo()" [attr.tabindex]="rrDeliverTabIndex"
               (input)="rrDeliverTo.set($any($event.target).value)" />
             <span matSuffix class="field-help" tabindex="0" role="img"
-              aria-label="Where it should be delivered: a specific staging area, an address, landmarks, or latitude and longitude. Add the on-site contact's name and phone so the driver can reach someone."
-              title="Where it should be delivered: a specific staging area, an address, landmarks, or latitude and longitude. Add the on-site contact's name and phone so the driver can reach someone.">ⓘ</span>
+              aria-label="Where it should be delivered: a specific staging area, an address, landmarks, or latitude and longitude."
+              title="Where it should be delivered: a specific staging area, an address, landmarks, or latitude and longitude.">ⓘ</span>
+          </mat-form-field>
+          <mat-form-field class="enter__213-field" floatLabel="always">
+            <mat-label>On-site contact</mat-label>
+            <input matInput type="text" data-testid="rr213-contact-name" [value]="rrContactName()" [attr.tabindex]="rrContactNameTabIndex"
+              (input)="rrContactName.set($any($event.target).value)" />
+            <span matSuffix class="field-help" tabindex="0" role="img"
+              aria-label="The person at the delivery location the driver should find or call on arrival or if there's a problem. Starts as the reporting ranger from the roster; change it if someone else will meet the delivery."
+              title="The person at the delivery location the driver should find or call on arrival or if there's a problem. Starts as the reporting ranger from the roster; change it if someone else will meet the delivery.">ⓘ</span>
+          </mat-form-field>
+          <mat-form-field class="enter__213-field" floatLabel="always">
+            <mat-label>Contact phone</mat-label>
+            <input matInput type="text" data-testid="rr213-contact-phone" [value]="rrContactPhone()" [attr.tabindex]="rrContactPhoneTabIndex"
+              (input)="rrContactPhone.set($any($event.target).value)" />
+            <span matSuffix class="field-help" tabindex="0" role="img"
+              aria-label="A number that will be answered at the delivery location. A radio contact is fine too, e.g. PCC 2 on the net."
+              title="A number that will be answered at the delivery location. A radio contact is fine too, e.g. PCC 2 on the net.">ⓘ</span>
           </mat-form-field>
           <mat-form-field class="enter__213-field" floatLabel="always">
             <mat-label>Suitable substitutes or suggested sources</mat-label>

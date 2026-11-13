@@ -1403,7 +1403,7 @@ async function checkEntryTabOrder() {
 // 109, not 50: E-283 (2026-11-12) added the ICS-213RR box after the 213 box: its checkbox, NINE order lines of
 // six stops (Qty, Kind, Description, Type, Needed by, Remove; undrawn ones sit on hidden placeholders), Add
 // another item, Priority, Deliver to and Substitutes (59 stops).
-const ENTRY_TAB_STOPS = 109
+const ENTRY_TAB_STOPS = 111
 
 async function checkEntryAutofocusAndReset() {
   console.log('\nEntry form: callsign holds focus on load and again after submit (no mouse needed)')

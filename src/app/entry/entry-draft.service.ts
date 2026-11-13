@@ -23,7 +23,7 @@ export interface EntryDraft {
   location?: LocationType
   pendingFiles: PendingAttachment[]
   /** E-283: the resource-request part, when the scribe has opened it. */
-  rr?: { on: boolean, lines: Rr213LineType[], priority: Rr213Priority, deliverTo: string, substitutes: string }
+  rr?: { on: boolean, lines: Rr213LineType[], priority: Rr213Priority, deliverTo: string, contactName?: string, contactPhone?: string, substitutes: string }
 }
 
 /**
