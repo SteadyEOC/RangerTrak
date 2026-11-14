@@ -2,14 +2,6 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
-
-### Bug Fixes
-
-* **board:** E-289, from the beta.3 two-machine test. The start-up firewall check reads the rules Windows actually applies to this Node.js on the network type in use, instead of looking for one rule by name: a computer that was allowed is no longer told to add a rule, and one allowed only on Public networks is no longer told it is fine. A blocking rule is named, and the fix turns it off. The network and firewall checks run as one call with a 10 s limit, so a slow laptop no longer gets "couldn't check"
-* **board:** STEP 1 and STEP 2 print the numbered address beside the .local name, and the QR code uses the numbered address: the name failed between a wired and a Wi-Fi computer on one home router. The Board also answers plain (legacy unicast) name lookups. A wired Board computer says "Connected by cable" instead of "couldn't read the Wi-Fi name"
-* **board:** Mission card: Server address and Test connection come before the switch, so a test sends nothing; "Connected" is said once and names the address typed; a failed test at a .local name points to the numbered address. The Board log says "a scribe with no name set" instead of "(unnamed)" inside parentheses
-
 ## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-13)
 
 The tag moved on 2026-11-13 to take in the work below, so the drill build and beta.3 are the same.
@@ -26,6 +18,9 @@ The tag moved on 2026-11-13 to take in the work below, so the drill build and be
 
 ### Bug Fixes
 
+* **board:** E-289, from the beta.3 two-machine test. The start-up firewall check reads the rules Windows actually applies to this Node.js on the network type in use, instead of looking for one rule by name: a computer that was allowed is no longer told to add a rule, and one allowed only on Public networks is no longer told it is fine. A blocking rule is named, and the fix turns it off. The network and firewall checks run as one call with a 10 s limit, so a slow laptop no longer gets "couldn't check"
+* **board:** STEP 1 and STEP 2 print the numbered address beside the .local name, and the QR code uses the numbered address: the name failed between a wired and a Wi-Fi computer on one home router. The Board also answers plain (legacy unicast) name lookups. A wired Board computer says "Connected by cable" instead of "couldn't read the Wi-Fi name"
+* **board:** Mission card: Server address and Test connection come before the switch, so a test sends nothing; "Connected" is said once and names the address typed; a failed test at a .local name points to the numbered address. The Board log says "a scribe with no name set" instead of "(unnamed)" inside parentheses
 * **board:** Test connection and publishing name an unaccepted certificate correctly; the app's service worker had turned the failure into "HTTP 504" and "not a RangerTrak Board"
 * **board kit:** shorter start-up window (two steps, the scribe's address first) in plain colours; READ-ME-FIRST covers Windows, Mac and Linux separately and says Node needs no extra tools; the zip no longer nests a second folder
 * **radio-log:** phone cards list newest first, as the grid does ([e3c83d5](https://github.com/SteadyEOC/RangerTrak/commit/e3c83d5d))
