@@ -26,6 +26,7 @@
 //     --port N        (or the PORT env var) use exactly this port, no fallback
 //     --name label    ask for <label>.local instead of rangertrak-board.local
 //     --allow-public  also listen on public addresses (never the default - D-61 item 3)
+//     --no-log        don't keep the log file (E-290: on by default, in logs/ beside the kit or non-distributed/board-logs)
 const https = require('https');
 const fs = require('fs');
 const os = require('os');
@@ -45,6 +46,7 @@ const selfcheck = require('./board/selfcheck');
 const { startStatusLine } = require('./board/statusline');
 const { version: APP_VERSION } = require('../package.json');
 const { checkForUpdate, updateLine } = require('./board/update-check');
+const { openLog, teeConsole } = require('./board/logfile');
 
 // E-255: the Board kit (tools/board-kit/) runs this file bundled, from a folder with the built
 // app in app/ and the certificate kept in certificate/. Its entry sets this before loading us.
@@ -56,6 +58,7 @@ const FALLBACK_PORT = 8080;
 // Never committed - see .gitignore's existing `/non-distributed` entry, reused here rather
 // than inventing a second "local, not for git" convention. A private key belongs here even
 // though it is self-signed and low-stakes: no reason to make a habit of committing one.
+const LOG_DIR = KIT_DIR ? path.join(KIT_DIR, 'logs') : path.join(__dirname, '..', 'non-distributed', 'board-logs');
 const CERT_DIR = KIT_DIR ? path.join(KIT_DIR, 'certificate') : path.join(__dirname, '..', 'non-distributed', 'command-post-cert');
 
 const MIME = {
@@ -228,7 +231,7 @@ async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
  * `port` 0 asks the OS for a free one - only meaningful with a single address, since each
  * address would otherwise get a different port.
  */
-async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', log = console.log, boardOptions = {} }) {
+async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', log = console.log, boardOptions = {}, logFile = null }) {
   const servers = [];
   // D-61 item 7: the address a phone should open, and the password if the Board has one.
   // E-289: the numbered address, not the .local name: a QR code is scanned, never typed, and .local failed across
@@ -247,6 +250,7 @@ async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', 
   };
   const { handle, board, claimState, viewerCount, status } = createBoard({ log, name, ...boardOptions, onClaim: printQr });
   const handler = (req, res) => {
+    if (logFile) logFile.request(req, res);
     if (req.url.startsWith('/api/')) return handle(req, res);
     // E-216: reachability check. No data, no password, not a claim and not a viewer.
     if (req.url.split('?')[0] === '/hello' && (req.method === 'GET' || req.method === 'HEAD')) {
@@ -270,6 +274,7 @@ async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', 
       // Node's default gives a request five minutes to finish. A scribe uploading a 400 MB
       // video over weak Wi-Fi can need longer, and the body size is already capped.
       server.requestTimeout = 0;
+      if (logFile) { server.on('connection', logFile.remember); server.on('tlsClientError', logFile.tlsError); }
       await new Promise((resolve, reject) => {
         server.once('error', reject);
         server.listen(port, address, () => { server.removeListener('error', reject); resolve(); });
@@ -380,10 +385,11 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
 }
 
 function parseArgs(argv) {
-  const args = { allowPublic: false, port: process.env.PORT ? parseInt(process.env.PORT, 10) : 0, label: DEFAULT_LABEL };
+  const args = { allowPublic: false, log: true, port: process.env.PORT ? parseInt(process.env.PORT, 10) : 0, label: DEFAULT_LABEL };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--allow-public') args.allowPublic = true;
     else if (argv[i] === '--port') args.port = parseInt(argv[++i], 10);
+    else if (argv[i] === '--no-log') args.log = false;
     else if (argv[i] === '--name') args.label = sanitizeLabel(argv[++i] || '') || DEFAULT_LABEL;
   }
   if (args.port && !(args.port > 0 && args.port < 65536)) {
@@ -395,6 +401,20 @@ function parseArgs(argv) {
 
 async function start() {
   const args = parseArgs(process.argv.slice(2));
+  const logFile = args.log ? openLog({
+    dir: LOG_DIR,
+    warn: console.log,
+    header: [
+      `RangerTrak Board ${APP_VERSION}, Node.js ${process.version}, ${os.platform()} ${os.release()} ${os.arch()}, computer ${os.hostname()}`,
+      `Started with: ${process.argv.slice(2).join(' ') || '(no options)'}`,
+      ...Object.entries(os.networkInterfaces()).map(([n, list]) => `Network adapter ${n}: ${(list || []).map((a) => `${a.address}${a.internal ? ' (internal)' : ''}`).join(', ')}`),
+    ],
+  }) : null;
+  if (logFile) {
+    teeConsole(logFile);
+    console.log(`Saving a log of this window and every request to ${logFile.file}`);
+    process.on('exit', () => { logFile.line('Board stopped.'); logFile.close(); });
+  }
   const found = privateAddresses(os.networkInterfaces());
 
   if (found.lan.length === 0 && !args.allowPublic) {
@@ -424,7 +444,7 @@ async function start() {
   try {
     const cert = await getOrCreateCert(reachable, name ? [name] : []);
     const wifi = await wifiPromise;
-    running = await listenWithFallback({ cert, addresses: listenOn, name: name || '', log: console.log, boardOptions: { version: APP_VERSION, wifi, update: () => newerKit } }, args.port);
+    running = await listenWithFallback({ cert, addresses: listenOn, name: name || '', log: console.log, logFile, boardOptions: { version: APP_VERSION, wifi, update: () => newerKit } }, args.port);
   } catch (e) {
     await responder.stop();
     const where = e.address ? ` on ${e.address}` : '';

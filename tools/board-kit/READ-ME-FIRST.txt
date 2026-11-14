@@ -5,8 +5,8 @@ The Board lets people on the command post's Wi-Fi or hotspot watch the live radi
 own phone, tablet or laptop. It runs on one laptop or desktop at the command post. That can be
 the same computer the scribe logs on.
 
-Nothing here touches the Internet once it is set up, and nothing is saved to disk except the
-Board's own certificate (in the certificate folder).
+Nothing here touches the Internet once it is set up. It saves two things to disk: the Board's own
+certificate (in the certificate folder), and a log of each run (in the logs folder, see below).
 
 
 WHICH COMPUTERS
@@ -60,6 +60,15 @@ AT THE COMMAND POST
    Chrome or Edge may ask "rangertrak.org wants to access other devices on your local
    network". Click Allow: that is how RangerTrak reaches the Board.
 6. STEP 2 in the window is for viewers: the same address with /view on the end, or the QR code.
+
+
+THE LOG
+-------
+Each time the Board starts, it writes a new file in the logs folder, named for the date and time,
+for example logsoard-2026-11-14-110509.txt. It holds everything the window shows, plus one line
+for each connection: the time, the device's address, what it asked for and how long it took. It
+never holds the passwords or keys devices send. If something didn't work, send that file to
+whoever is helping you. To run without a log, start it from a terminal with:  node rangertrak-board.js --no-log
 
 
 GOOD TO KNOW
