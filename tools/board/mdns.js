@@ -8,6 +8,9 @@
 //      holds the name, so try rangertrak-board-2.local, then -3, and so on.
 //   2. ANNOUNCES the name twice, 1 s apart, then answers A queries for it.
 //   3. Sends a GOODBYE (TTL 0) on exit so neighbours' caches drop it at once.
+// Also answers (E-289) a query that asks for a unicast reply (the QU bit) straight to the asker, and a
+// "legacy unicast" query - one sent from a port other than 5353 by a plain DNS resolver - the way RFC 6762
+// section 6.7 says: the query's id echoed, the question repeated, a short TTL, no cache-flush bit.
 // IPv4 only. Not a general mDNS stack: no AAAA, no service discovery, no known-answer
 // suppression, no simultaneous-probe tiebreak. If another responder already owns UDP 5353
 // exclusively (Bonjour on some Windows machines), claim() resolves null and the caller carries
@@ -35,9 +38,9 @@ function encodeName(name) {
   return Buffer.concat(out);
 }
 
-function header(flags, questions, answers) {
+function header(flags, questions, answers, id = 0) {
   const h = Buffer.alloc(12);
-  h.writeUInt16BE(0, 0); // id: always 0 in mDNS
+  h.writeUInt16BE(id, 0); // id: 0 in mDNS, the query's own id in a legacy unicast reply
   h.writeUInt16BE(flags, 2);
   h.writeUInt16BE(questions, 4);
   h.writeUInt16BE(answers, 6);
@@ -66,6 +69,33 @@ function encodeAnswer(name, addresses, ttl) {
     parts.push(encodedName, rr);
   }
   return Buffer.concat(parts);
+}
+
+// RFC 6762 section 6.7: the reply to a legacy unicast query. TTL at most 10 s, no cache-flush bit,
+// the question repeated so an ordinary DNS resolver accepts it.
+const LEGACY_TTL = 10;
+function encodeLegacyAnswer(id, name, addresses) {
+  const encodedName = encodeName(name);
+  const q = Buffer.alloc(4);
+  q.writeUInt16BE(TYPE_A, 0);
+  q.writeUInt16BE(CLASS_IN, 2);
+  const parts = [header(RESPONSE_AUTHORITATIVE, 1, addresses.length, id), encodedName, q];
+  for (const address of addresses) {
+    const rr = Buffer.alloc(10 + 4);
+    rr.writeUInt16BE(TYPE_A, 0);
+    rr.writeUInt16BE(CLASS_IN, 2);
+    rr.writeUInt32BE(LEGACY_TTL, 4);
+    rr.writeUInt16BE(4, 8);
+    Buffer.from(address.split('.').map(Number)).copy(rr, 10);
+    parts.push(encodedName, rr);
+  }
+  return Buffer.concat(parts);
+}
+
+// The addresses with the asker's own /24 first, so a resolver that takes the first answer gets one it can reach.
+function nearestFirst(addresses, from) {
+  const net = (a) => String(a).split('.').slice(0, 3).join('.');
+  return [...addresses].sort((a, b) => (net(b) === net(from)) - (net(a) === net(from)));
 }
 
 // Other responders compress names: a two-byte pointer (top two bits set) to an earlier
@@ -103,6 +133,7 @@ function readName(buf, offset) {
  */
 function decodeMessage(buf) {
   if (buf.length < 12) throw new Error('Packet shorter than a DNS header');
+  const id = buf.readUInt16BE(0);
   const flags = buf.readUInt16BE(2);
   const qd = buf.readUInt16BE(4);
   const rrCount = buf.readUInt16BE(6) + buf.readUInt16BE(8) + buf.readUInt16BE(10);
@@ -130,7 +161,7 @@ function decodeMessage(buf) {
     records.push(record);
     pos = rdata + rdlen;
   }
-  return { flags, response: !!(flags & 0x8000), questions, records };
+  return { id, flags, response: !!(flags & 0x8000), questions, records };
 }
 
 const sameName = (a, b) => String(a).toLowerCase() === String(b).toLowerCase();
@@ -185,8 +216,17 @@ function createResponder({ label, addresses, log = () => {}, port = MDNS_PORT, g
       return;
     }
     if (!claimedName || message.response) return;
-    const asked = message.questions.some((q) => sameName(q.name, claimedName) && (q.type === TYPE_A || q.type === TYPE_ANY));
-    if (asked) send(encodeAnswer(claimedName, addresses, 120)).catch(() => {});
+    const q = message.questions.find((x) => sameName(x.name, claimedName) && (x.type === TYPE_A || x.type === TYPE_ANY));
+    if (!q) return;
+    const reply = (packet, toPort) => { try { socket.send(packet, 0, packet.length, toPort, rinfo.address); } catch { /* gone */ } };
+    if (rinfo.port !== port) {
+      // A plain DNS resolver asking (RFC 6762 6.7): reply to it alone, in a form it accepts.
+      reply(encodeLegacyAnswer(message.id, q.name, nearestFirst(addresses, rinfo.address)), rinfo.port);
+    } else if (q.unicast) {
+      reply(encodeAnswer(claimedName, nearestFirst(addresses, rinfo.address), 120), rinfo.port);
+    } else {
+      send(encodeAnswer(claimedName, addresses, 120)).catch(() => {});
+    }
   }
 
   async function open() {
@@ -253,4 +293,4 @@ function createResponder({ label, addresses, log = () => {}, port = MDNS_PORT, g
   return { claim, announce, stop };
 }
 
-module.exports = { createResponder, sanitizeLabel, encodeName, encodeQuery, encodeAnswer, decodeMessage, isConflict, MDNS_PORT, MDNS_ADDRESS };
+module.exports = { createResponder, sanitizeLabel, encodeName, encodeQuery, encodeAnswer, encodeLegacyAnswer, nearestFirst, decodeMessage, isConflict, MDNS_PORT, MDNS_ADDRESS };

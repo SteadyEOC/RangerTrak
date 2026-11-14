@@ -34,23 +34,30 @@ export type BoardDiagnosis = {
 /** A failure faster than this is most likely a certificate not yet accepted (or nothing running); slower, a network problem. */
 export const QUICK_FAIL_MS = 3000
 
-export function diagnoseBoard(f: { online: boolean, localNetwork: LocalNetworkPermission, hello: HelloResult }): BoardDiagnosis {
+/**
+ * `host` is the host the scribe typed (`rangertrak-board.local`, `10.0.0.156`, `10.0.0.156:8080`), when known.
+ * E-289: the success sentence names that, not the Board's .local name, which the scribe may not have used; and a
+ * failure at a .local name says the name itself may be the problem (it failed between a wired and a Wi-Fi computer
+ * on the same home router), since a name that is not found fails as fast as an unaccepted certificate.
+ */
+export function diagnoseBoard(f: { online: boolean, localNetwork: LocalNetworkPermission, hello: HelloResult, host?: string }): BoardDiagnosis {
   const fail = (cause: string, values: Record<string, string> = {}): BoardDiagnosis => ({ ok: false, cause, ...boardCause(cause, values) })
   if (!f.online) return fail('no-network')
   if (f.localNetwork === 'denied') return fail('blocked-by-browser')
+  const localName = !!f.host && /\.local(:\d+)?$/i.test(f.host)
   switch (f.hello.kind) {
     case 'ok':
       return {
         ok: true,
-        message: `Connected to the Board ${f.hello.name || 'on this network'}.`,
-        detail: 'The Board answered and identified itself as a RangerTrak Board.',
+        message: `Connected to the Board at ${f.host || f.hello.name || 'that address'}.`,
+        detail: `The Board answered and identified itself as a RangerTrak Board${f.hello.name ? ` (${f.hello.name})` : ''}.`,
         name: f.hello.name,
       }
     case 'not-board':
       return fail('not-a-board')
     case 'failed':
-      return fail(f.hello.elapsedMs < QUICK_FAIL_MS ? 'certificate-not-accepted' : 'different-network')
     case 'timeout':
-      return fail('different-network')
+      if (localName) return fail('local-name-failed', { host: f.host! })
+      return fail(f.hello.kind === 'failed' && f.hello.elapsedMs < QUICK_FAIL_MS ? 'certificate-not-accepted' : 'different-network')
   }
 }

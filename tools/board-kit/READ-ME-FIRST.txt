@@ -46,15 +46,17 @@ AT THE COMMAND POST
      Linux:   in a terminal, in the kit's folder:  node rangertrak-board.js
               The Board uses port 443, which Linux reserves; if it says so, it moves to another
               port and prints the address with that port. Use exactly what it prints.
-3. A window opens. STEP 1 in it is the address for the scribe, normally
-   https://rangertrak-board.local (already copied on that computer). Keep the window open;
+3. A window opens. STEP 1 in it is the address for the scribe: the name, normally
+   https://rangertrak-board.local (already copied on that computer), and a numbered one under
+   it such as https://10.0.0.15. If the name doesn't work on another device, use the numbered
+   one. Keep the window open;
    closing it stops the Board.
 4. On the scribe's device, open that address in the browser once. It warns "Your connection is
    not private". That is expected for a private server: click Advanced, then Proceed. Once per
    device; viewers do the same the first time.
-5. In RangerTrak, open Mission > RangerTrak Board, turn on "Send this log to a RangerTrak Board",
-   paste the address, and press Test connection. Use that address even on this same computer,
-   not "localhost": the viewer link is made from it.
+5. In RangerTrak, open Mission > RangerTrak Board, paste the address into Server address, and
+   press Test connection. When it says Connected, turn on "Send this log to a RangerTrak Board".
+   Use that address even on this same computer, not "localhost": the viewer link is made from it.
    Chrome or Edge may ask "rangertrak.org wants to access other devices on your local
    network". Click Allow: that is how RangerTrak reaches the Board.
 6. STEP 2 in the window is for viewers: the same address with /view on the end, or the QR code.

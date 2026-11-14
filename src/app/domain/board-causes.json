@@ -49,6 +49,13 @@
     "anchor": "cant-reach-board-certificate"
   },
   {
+    "id": "local-name-failed",
+    "seenFrom": ["app"],
+    "message": "This device couldn't reach {host}. Names ending in .local don't work on every network: paste the address made of numbers that the Board printed under the name. If that fails too, open the Board once to accept its certificate.",
+    "detail": "A .local name is found by multicast DNS, which some routers do not pass between Wi-Fi and wired devices, and some devices do not support. The numbered address always works on the same network (E-289).",
+    "anchor": "cant-reach-board-local-name"
+  },
+  {
     "id": "blocked-by-browser",
     "seenFrom": ["app"],
     "message": "Your browser is blocking RangerTrak from reaching devices on this network. Allow local network access for this site in the browser's site settings.",

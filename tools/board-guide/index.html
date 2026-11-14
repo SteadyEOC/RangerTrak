@@ -141,13 +141,15 @@ Tick each step as you go.</p>
 <details class="step" data-step="scribe">
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">6. Connect the scribe's RangerTrak</span></summary>
   <div class="body">
-    <p>Use the address in the window's <strong>STEP 1</strong>, normally <code>https://rangertrak-board.local</code>.
-      It is already copied on the Board computer.</p>
+    <p>Use an address from the window's <strong>STEP 1</strong>: the name, normally <code>https://rangertrak-board.local</code>
+      (already copied on the Board computer), or the numbered one under it, such as <code>https://10.0.0.15</code>.
+      On another computer the name does not work on every network; the numbered one always does.</p>
     <ol>
       <li>Open that address once in the scribe's browser. It warns <em>Your connection is not private</em>:
         expected for a private server. Click <em>Advanced</em>, then <em>Proceed</em>.</li>
-      <li>In RangerTrak: <em>Mission</em> page, <em>RangerTrak Board</em> card. Turn on <em>Send this log to a
-        RangerTrak Board</em>, paste the address, and press <em>Test connection</em>.</li>
+      <li>In RangerTrak: <em>Mission</em> page, <em>RangerTrak Board</em> card. Paste the address into
+        <em>Server address</em> and press <em>Test connection</em>. When it says <em>Connected</em>, turn on
+        <em>Send this log to a RangerTrak Board</em>.</li>
       <li>Chrome or Edge may ask: <em>rangertrak.org wants to access other devices on your local network</em>.
         Click <em>Allow</em>. That is how RangerTrak reaches the Board.</li>
     </ol>
@@ -177,10 +179,11 @@ Tick each step as you go.</p>
     <dt>Nothing answers</dt>
     <dd>The device is probably on a different Wi-Fi from the Board computer. A VPN or web-protection app can also be
       in the way; turn it off while you use the Board.</dd>
-    <dt>The name doesn't open (often older Android phones)</dt>
-    <dd>Use the numbered address printed under it, such as <code>https://10.0.0.15/view</code>.</dd>
-    <dt>Windows treats the Wi-Fi as Public</dt>
-    <dd>Windows then blocks other devices. The Board's window says so and offers the fix.</dd>
+    <dt>The name doesn't open, or Test connection says it couldn't reach the .local name</dt>
+    <dd>Use the numbered address printed under it, such as <code>https://10.0.0.15</code> (with <code>/view</code>
+      for viewers). Some routers don't pass the name between wired and Wi-Fi devices, and some phones can't look it up.</dd>
+    <dt>Windows treats the Wi-Fi as Public, or the firewall blocks the Board</dt>
+    <dd>Windows then blocks other devices. The Board's window says which, and offers the fix.</dd>
     <dt>Hotel or public Wi-Fi</dt>
     <dd>Many keep devices apart. Use your own router or a phone hotspot.</dd>
     <dt>A phone says "No internet" on the Wi-Fi</dt>

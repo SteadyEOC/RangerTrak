@@ -62,7 +62,8 @@ export class MissionCommandPostComponent implements OnDestroy {
   boardStatus(): string {
     switch (this.publisher.state()) {
       case 'claiming': return this.publisher.unreachable() ? "Can't reach the Board." : 'Trying to reach the Board...'
-      case 'publishing': return 'Connected to the Board.'
+      // E-289: not said twice when Test connection's own "Connected to the Board at ..." is showing.
+      case 'publishing': return this.publisher.diagnosis()?.ok ? '' : 'Connected to the Board.'
       case 'replaced': return replacedMessage(this.publisher.holder())
       default: return this.publisher.unreachable() ? "Can't reach the Board." : ''
     }

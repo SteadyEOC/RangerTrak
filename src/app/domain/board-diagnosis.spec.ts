@@ -32,12 +32,25 @@ describe('diagnoseBoard (E-216)', () => {
     }
   })
 
-  it('the right signature is connected, and names the Board', () => {
-    const d = diagnoseBoard({ ...base, hello: ok })
+  it('the right signature is connected, and names the address the scribe typed (E-289)', () => {
+    const d = diagnoseBoard({ ...base, hello: ok, host: '10.0.0.156' })
     expect(d.ok).toBe(true)
     expect(d.cause).toBeUndefined()
     expect(d.name).toBe('rangertrak-board.local')
-    expect(d.message).toBe('Connected to the Board rangertrak-board.local.')
+    expect(d.message).toBe('Connected to the Board at 10.0.0.156.')
+    expect(d.detail).toContain('rangertrak-board.local')
+    expect(diagnoseBoard({ ...base, hello: ok }).message).toBe('Connected to the Board at rangertrak-board.local.')
+  })
+
+  it('a failure at a .local name says the name may be the problem and points to the numbered address (E-289)', () => {
+    for (const hello of [{ kind: 'failed', elapsedMs: 40 }, { kind: 'timeout' }] as HelloResult[]) {
+      const d = diagnoseBoard({ ...base, hello, host: 'rangertrak-board.local' })
+      expect(d.cause).toBe('local-name-failed')
+      expect(d.message).toContain("couldn't reach rangertrak-board.local")
+      expect(d.message).toContain('address made of numbers')
+    }
+    expect(diagnoseBoard({ ...base, hello: { kind: 'timeout' }, host: 'rangertrak-board-2.local:8080' }).cause).toBe('local-name-failed')
+    expect(diagnoseBoard({ ...base, hello: { kind: 'failed', elapsedMs: 40 }, host: '10.0.0.156' }).cause).toBe('certificate-not-accepted')
   })
 
   it('an answer without the signature is not-a-board', () => {

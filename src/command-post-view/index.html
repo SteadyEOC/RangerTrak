@@ -538,7 +538,7 @@
   function claimText(board) {
     var by = board.by || {};
     var text = (by.mission || '(unnamed mission)') + ', op period ' + (by.opPeriod || '?')
-      + ': published by ' + (by.scribe || '(unnamed)') + (by.agent ? ' (' + by.agent + ')' : '')
+      + ': published by ' + (by.scribe || 'a scribe with no name set') + (by.agent ? ' (' + by.agent + ')' : '')
       + (board.at ? ', ' + fmtClock(board.at) : '');
     if (board.previous && board.previous.by) {
       text += ' (took over from ' + (board.previous.by.scribe || 'another device') + ')';

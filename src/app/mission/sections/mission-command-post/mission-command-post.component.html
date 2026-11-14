@@ -40,6 +40,70 @@
       turning this on (Help has why).
     </div>
 
+    <!-- E-289: the address and Test connection come BEFORE the switch, so the scribe can check the Board is
+         reachable without sending anything. The switch is what sends the log. -->
+    <mat-form-field class="mission-command-post__url" floatLabel="always">
+      <mat-label>Server address</mat-label>
+      <input matInput type="text" [formField]="form.commandPostServerUrl"
+        placeholder="Paste the address the Board printed" (blur)="tidyAddress()" />
+      <!-- Not an example address: John read the old "https://192.168.1.5:8080" placeholder
+           as the Board's real one and lost an hour to it (2026-10-21, E-216). -->
+
+      <!-- Raised live 2026-08-31: "display it so it can be copy/pasted elsewhere in the
+           future" - once typed in here, this was the ONLY other place the address lived
+           besides the server's own console (which scrolls away, or gets closed). Copies
+           whatever is CURRENTLY in the field, not a separately-tracked value, so it is
+           always what this device would actually try to publish to. -->
+      <button matSuffix matIconButton type="button" [disabled]="!clipboardAvailable"
+        (click)="copyToClipboard('address', form.commandPostServerUrl().value())"
+        [attr.aria-label]="clipboardAvailable
+          ? 'Copy server address: ' + form.commandPostServerUrl().value()
+          : 'Copy to clipboard is not available in this browser'"
+        [title]="clipboardAvailable ? 'Copy to clipboard' : 'Not available in this browser - select and copy the text instead'">
+        <mat-icon>{{ copiedField() === 'address' ? 'check' : 'content_copy' }}</mat-icon>
+      </button>
+      <mat-hint>The Board prints it when it starts (and copies it on its own computer). Copy it again from here later.</mat-hint>
+    </mat-form-field>
+
+    <!-- E-216 slice 2: Test connection works from whatever address is typed above, with publishing on or off. -->
+    <button matButton="outlined" type="button" class="mission-command-post__test" data-testid="board-test"
+      [disabled]="publisher.testing()" (click)="testConnection()">
+      <mat-icon>wifi_find</mat-icon>
+      {{ publisher.testing() ? 'Testing...' : 'Test connection' }}
+    </button>
+
+    @if (publisher.diagnosis(); as d) {
+      <div class="mission-command-post__diagnosis" data-testid="board-diagnosis">
+        <p role="status" [class.mission-command-post__status--stopped]="!d.ok">{{ d.message }}
+          @if (d.ok && !form.commandPostEnabled().value()) {
+            Turn on <em>Send this log to a RangerTrak Board</em> below to start sending.
+          }
+        </p>
+        @if (d.detail) {
+          <details class="mission-command-post__details">
+            <summary>Details</summary>
+            <p>{{ d.detail }}</p>
+          </details>
+        }
+      </div>
+    }
+    @if (publisher.unreachable() === 'quick' || publisher.diagnosis()?.cause === 'certificate-not-accepted') {
+      <p class="mission-command-post__certificate">
+        <a matButton="outlined" [href]="helloUrl()" target="_blank" rel="noopener">Open the Board</a>
+      </p>
+    }
+    <!-- Catches the one mistake this codebase now knows is silently fatal - see
+         entersPlainHttp()'s own doc comment. -->
+    @if (entersPlainHttp()) {
+      <div class="warn mission-command-post__http-warning">{{ httpError }}</div>
+    }
+    @if (thisComputerOnly()) {
+      <p class="mission__note mission-command-post__view-hint" role="status" data-testid="board-localhost">{{ localhostHint }}</p>
+    }
+    @if (viewHint()) {
+      <p class="mission__note mission-command-post__view-hint" role="status">{{ viewHintText }}</p>
+    }
+
     <!-- Same non-[formField] pattern mission-maps-section's own checkbox uses - Signal
          Forms' formField directive cannot act as the value accessor for a Material
          checkbox/toggle (angular/components#32072). -->
@@ -49,37 +113,6 @@
     </mat-slide-toggle>
 
     @if (form.commandPostEnabled().value()) {
-      <mat-form-field class="mission-command-post__url" floatLabel="always">
-        <mat-label>Server address</mat-label>
-        <input matInput type="text" [formField]="form.commandPostServerUrl"
-          placeholder="Paste the address the Board printed" (blur)="tidyAddress()" />
-        <!-- Not an example address: John read the old "https://192.168.1.5:8080" placeholder
-             as the Board's real one and lost an hour to it (2026-10-21, E-216). -->
-
-        <!-- Raised live 2026-08-31: "display it so it can be copy/pasted elsewhere in the
-             future" - once typed in here, this was the ONLY other place the address lived
-             besides the server's own console (which scrolls away, or gets closed). Copies
-             whatever is CURRENTLY in the field, not a separately-tracked value, so it is
-             always what this device would actually try to publish to. -->
-        <button matSuffix matIconButton type="button" [disabled]="!clipboardAvailable"
-          (click)="copyToClipboard('address', form.commandPostServerUrl().value())"
-          [attr.aria-label]="clipboardAvailable
-            ? 'Copy server address: ' + form.commandPostServerUrl().value()
-            : 'Copy to clipboard is not available in this browser'"
-          [title]="clipboardAvailable ? 'Copy to clipboard' : 'Not available in this browser - select and copy the text instead'">
-          <mat-icon>{{ copiedField() === 'address' ? 'check' : 'content_copy' }}</mat-icon>
-        </button>
-        <mat-hint>Printed by the server itself on startup, and copied to ITS clipboard
-          automatically - or copy it again from here later.</mat-hint>
-      </mat-form-field>
-
-      <!-- E-216 slice 2: Test connection works from whatever address is typed above, with publishing on or off. -->
-      <button matButton="outlined" type="button" class="mission-command-post__test" data-testid="board-test"
-        [disabled]="publisher.testing()" (click)="testConnection()">
-        <mat-icon>wifi_find</mat-icon>
-        {{ publisher.testing() ? 'Testing...' : 'Test connection' }}
-      </button>
-
       <!-- D-61: where publishing stands. Four states only (E-216): Connected, Trying, Can't reach the Board plus the
            cause in a sentence, and Another device has the Board (`replaced`, which offers Take over, which claims
            the Board back with the password below). -->
@@ -87,22 +120,6 @@
         <p class="mission-command-post__status" role="status" data-testid="board-status"
           [class.mission-command-post__status--stopped]="publisher.state() === 'replaced' || publisher.state() === 'error'">
           {{ boardStatus() }} {{ statusMessage() }}
-        </p>
-      }
-      @if (publisher.diagnosis(); as d) {
-        <div class="mission-command-post__diagnosis" data-testid="board-diagnosis">
-          <p role="status" [class.mission-command-post__status--stopped]="!d.ok">{{ d.message }}</p>
-          @if (d.detail) {
-            <details class="mission-command-post__details">
-              <summary>Details</summary>
-              <p>{{ d.detail }}</p>
-            </details>
-          }
-        </div>
-      }
-      @if (publisher.unreachable() === 'quick' || publisher.diagnosis()?.cause === 'certificate-not-accepted') {
-        <p class="mission-command-post__certificate">
-          <a matButton="outlined" [href]="helloUrl()" target="_blank" rel="noopener">Open the Board</a>
         </p>
       }
       @if (publisher.state() === 'replaced') {
@@ -123,18 +140,6 @@
         (change)="form.boardShowAttachments().value.set($event.checked)">
         Show attachments on the Board
       </mat-slide-toggle>
-
-      <!-- Catches the one mistake this codebase now knows is silently fatal - see
-           entersPlainHttp()'s own doc comment. -->
-      @if (entersPlainHttp()) {
-        <div class="warn mission-command-post__http-warning">{{ httpError }}</div>
-      }
-      @if (thisComputerOnly()) {
-        <p class="mission__note mission-command-post__view-hint" role="status" data-testid="board-localhost">{{ localhostHint }}</p>
-      }
-      @if (viewHint()) {
-        <p class="mission__note mission-command-post__view-hint" role="status">{{ viewHintText }}</p>
-      }
 
       <!-- Raised live 2026-08-31: "a URL to click" to confirm /view actually works, without
            hand-typing it into a second tab. Doubles as the one-time cert-acceptance step now

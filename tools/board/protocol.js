@@ -172,7 +172,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   }
 
   const modeLine = () => (claim.password ? 'Password required' : 'Open to this network');
-  const byLine = (by) => `${by.mission || '(unnamed mission)'}, op period ${by.opPeriod || '?'}, by ${by.scribe || '(unnamed)'} (${by.agent || 'unknown browser'})`;
+  const byLine = (by) => `${by.mission || '(unnamed mission)'}, op period ${by.opPeriod || '?'}, by ${by.scribe || 'a scribe with no name set'} (${by.agent || 'unknown browser'})`;
 
   // ---- originals: an in-memory LRU, oldest dropped first ----
   function storeOriginal(sha, buf) {

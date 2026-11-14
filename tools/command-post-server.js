@@ -231,7 +231,9 @@ async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
 async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', log = console.log, boardOptions = {} }) {
   const servers = [];
   // D-61 item 7: the address a phone should open, and the password if the Board has one.
-  const qrState = () => ({ host: name || addresses[0], port: servers[0].address().port, ...claimState() });
+  // E-289: the numbered address, not the .local name: a QR code is scanned, never typed, and .local failed across
+  // devices on a home router. The name is the fallback only when there is no numbered address.
+  const qrState = () => ({ host: addresses[0] || name, port: servers[0].address().port, ...claimState() });
   const printQr = async () => {
     try {
       const s = qrState();
@@ -352,18 +354,21 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
     console.log('');
   }
   const copied = copyToClipboard(primaryUrl);
-  console.log('STEP 1 - SCRIBE: paste this address into RangerTrak, Mission page, RangerTrak Board card:');
+  // E-289: the .local name failed between a wired and a Wi-Fi computer on the same home router, so the
+  // numbered address is printed beside it, just as large, not as a footnote.
+  const numbered = addresses.map((addr) => `https://${hostPort(addr)}`);
+  const width = Math.max(primaryUrl.length, ...numbered.map((u) => u.length)) + 4;
+  console.log('STEP 1 - SCRIBE: paste one of these into RangerTrak, Mission page, RangerTrak Board card:');
   console.log('');
-  console.log(`    ${primaryUrl}${copied ? '      (already copied on this computer)' : ''}`);
+  console.log(`    ${primaryUrl.padEnd(width)}${copied ? '(already copied on this computer)' : ''}`);
+  if (nameUrl) for (const u of numbered) console.log(`    ${u.padEnd(width)}(use this one if the name does not work)`);
   console.log('');
-  console.log('  Use this address even when RangerTrak runs on this same computer.');
+  console.log('  Use it even when RangerTrak runs on this same computer.');
   console.log('');
-  console.log('STEP 2 - VIEWERS open this on their phone, tablet or laptop:');
+  console.log('STEP 2 - VIEWERS open one of these on their phone, tablet or laptop:');
   console.log('');
   if (nameUrl) console.log(`    ${nameUrl}/view`);
-  for (const addr of addresses) {
-    console.log(`    https://${hostPort(addr)}/view${nameUrl && addr === addresses[0] ? '   (if the name does not open, e.g. older Android)' : ''}`);
-  }
+  for (const u of numbered) console.log(`    ${u}/view${nameUrl ? '   (if the name does not open)' : ''}`);
   console.log(`  or scan the QR code: open https://${hostPort('localhost')}/qr on this computer.`);
   console.log('');
   console.log('"Your connection is not private"? Expected the first time on each device: click');
@@ -438,12 +443,12 @@ async function start() {
   const portLine = fellBack
     ? `✖ ${boardCause('port-taken', { port: PREFERRED_PORT, other: running.port, name: owner }).message}`
     : '';
-  const runChecks = () => selfcheck.runSelfCheck({ port: running.port, inUse });
+  const runChecks = () => selfcheck.runSelfCheck({ port: running.port, inUse, program: process.execPath });
   let check = await runChecks();
-  const listFor = (c) => selfcheck.formatSelfCheck({ check: c, wifi, virtual: found.virtual, portLine });
+  const listFor = (c) => selfcheck.formatSelfCheck({ check: c, wifi, virtual: found.virtual, portLine, inUse });
   // John 10-21: offer the fixes after one Windows prompt, never silently, and only at a keyboard.
   const fixes = selfcheck.offerableFixes(check);
-  if (process.stdin.isTTY && (fixes.publicAliases.length || fixes.addRule)) {
+  if (process.stdin.isTTY && (fixes.publicAliases.length || fixes.addRule || fixes.unblock)) {
     console.log('');
     console.log('Checking this computer:');
     for (const line of listFor(check)) console.log(line);

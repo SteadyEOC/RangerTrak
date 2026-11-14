@@ -18,7 +18,7 @@ function isLoopback(address) {
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// The address a phone should open. `host` is the .local name when there is one, else the first LAN address.
+// The address a phone should open. `host` is the first LAN address (E-289), else the .local name.
 function viewUrl({ host, port, password }) {
   const hostPort = port === 443 ? host : `${host}:${port}`;
   return `https://${hostPort}/view${password ? `#code=${encodeURIComponent(password)}` : ''}`;

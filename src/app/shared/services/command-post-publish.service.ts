@@ -595,7 +595,9 @@ export class CommandPostPublishService implements OnDestroy {
     try {
       const localNetwork = await this.localNetworkPermission()
       const hello = await this.askHello(base)
-      const d = diagnoseBoard({ online: navigator.onLine, localNetwork, hello })
+      let host = ''
+      try { host = new URL(base).host } catch { /* normalised already; leave it unnamed */ }
+      const d = diagnoseBoard({ online: navigator.onLine, localNetwork, hello, host })
       this.diagnosisSignal.set(d)
       this.log.info(`Board test: ${d.ok ? 'connected' : d.cause}.`, this.id)
       return d
