@@ -1,4 +1,4 @@
-<rangertrak-page [title]="title" [description]="pageDescr" [viewIds]="advancedIds">
+<rangertrak-page [displayable]="true" [title]="title" [description]="pageDescr" [viewIds]="advancedIds">
   <!-- E-item 13 (2026-08-27): screen-only hidden (see map-page.component.scss's own
        @media print block), shown only in a printed copy - a map on paper has no page
        title, URL bar, or app chrome to say what it is or when it was current, unlike one
@@ -81,7 +81,7 @@
   <!-- 2026-09-30, John: E-152 - the sign-off line an ICS form ends with. The input is
        screen-only; its value prints on the sheet's footer line below. Pre-filled from the
        Entry page's operator name (in-memory OperatorNameService, never saved). -->
-  <div class="map-prepared-by" [class.map-prepared-by--beside-cards]="engine() === 'maplibre'">
+  <div class="map-prepared-by rt-display-hide" [class.map-prepared-by--beside-cards]="engine() === 'maplibre'">
     <label>Prepared by (printed on the map sheet)
       <input type="text" [value]="preparedBy()" (input)="onPreparedByInput($event)" autocomplete="off" />
     </label>
@@ -89,7 +89,7 @@
   <!-- 2026-10-15, John: E-187 phase B - the places half of the Import, export & print panel
        (ADR D-58). Under either engine; hidden on paper, and in field mode by the panel itself. -->
   @if (view.isShown('places-import')) {
-  <rangertrak-places-io></rangertrak-places-io>
+  <rangertrak-places-io class="rt-display-hide"></rangertrak-places-io>
   }
   <div class="map-print-footer">
     <span>Prepared by: <span class="map-print-footer__line">{{ preparedBy() }}</span></span>

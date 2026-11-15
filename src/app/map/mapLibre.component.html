@@ -61,7 +61,7 @@
   <!-- Raised in the roadmap's own "New backlog items, 2026-08-27": PMTiles has no per-tile
        "save this area" equivalent to Leaflet's leaflet.offline (it's one archive covering a
        fixed region), so a scribe with their own coverage loads the whole file here instead. -->
-  <mat-card appearance="outlined" class="rt-mission-card">
+  <mat-card appearance="outlined" class="rt-mission-card rt-display-hide">
     <mat-card-header>
       <mat-card-title>Offline map</mat-card-title>
     </mat-card-header>
@@ -139,7 +139,7 @@
         <!-- G: prints the map alone (rt-print-map body class, styles.scss) - same approach
              as Radio Log's ICS-309 print, After Action's own onPrint(), and LmapComponent's
              copy of this button on the Leaflet engine. -->
-        <button matButton="outlined" type="button" (click)="onBtnPrintMap()"
+        <button matButton="outlined" type="button" class="rt-display-hide" (click)="onBtnPrintMap()"
           data-testid="printMap" title="Print this map. Opens your browser's print dialog; choose your printer there">
           <mat-icon>print</mat-icon>
           Print map
@@ -153,6 +153,6 @@
 
 <!-- 2026-11-07, John: "The use maplibre line should be below the Show on map text area, as it is
      on the leaflet map" - out of the Show on map card, under the cards, same wrapper as Leaflet's. -->
-<div class="map-engine map-print-hide">
+<div class="map-engine map-print-hide rt-display-hide">
   <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
 </div>

@@ -65,7 +65,7 @@
 
   <!-- G: prints the map alone (rt-print-map body class, styles.scss) - same approach as
        Radio Log's ICS-309 print and After Action's own onPrint(). -->
-  <button matButton="outlined" type="button" (click)="onBtnPrintMap()" [disabled]="printPreparing()"
+  <button matButton="outlined" type="button" class="rt-display-hide" (click)="onBtnPrintMap()" [disabled]="printPreparing()"
     data-testid="printMap" title="Print this map. Opens your browser's print dialog; choose your printer there">
     <mat-icon>print</mat-icon>
     {{ printPreparing() ? 'Preparing the map…' : 'Print map' }}
@@ -136,7 +136,7 @@
   <!-- 2026-11-04, John: everything about saved tiles in one box. The legend icon and the status
        line are green when tiles are saved on this device, amber when nothing is - the same test
        as the header readiness dot's "Offline map tiles saved" row. -->
-  <mat-card appearance="outlined" class="rt-mission-card map-box map-offline" [class.map-offline--none]="!hasOfflineTiles()" data-testid="map-offline-box">
+  <mat-card appearance="outlined" class="rt-mission-card map-box map-offline rt-display-hide" [class.map-offline--none]="!hasOfflineTiles()" data-testid="map-offline-box">
     <mat-card-header>
       <mat-card-title class="map-box__title">
         <!-- Always offline_pin, coloured green/amber: the status line below carries the
@@ -176,6 +176,6 @@
 
 <!-- E-152: .map-print-hide (styles.scss) keeps this off the printed sheet. The engine checkbox
      is projected from map-page via engineSwitchTemplate. -->
-<div class="map-engine map-print-hide">
+<div class="map-engine map-print-hide rt-display-hide">
   <ng-container *ngTemplateOutlet="engineSwitchTemplate"></ng-container>
 </div>

@@ -23,7 +23,7 @@
 </div>
 </div-->
 
-<rangertrak-page [title]="title" [description]="pageDescr" [viewIds]="advancedIds">
+<rangertrak-page [displayable]="true" [title]="title" [description]="pageDescr" [viewIds]="advancedIds">
 
   <!-- The full confidentiality notice used to sit here as a permanent block that pushed
        the roster down the page on every single visit. It is now a dismissable bar, with
@@ -62,7 +62,7 @@
         <strong>The roster is empty.</strong> Add rangers one at a time, or import a list
         from a spreadsheet.
       </p>
-      <div class="rangers__empty-state__actions">
+      <div class="rangers__empty-state__actions rt-display-hide">
         <button matButton="filled" type="button" (click)="onBtnAddRanger()"
           title="Add a new Ranger, CERT or Team tactical sign - they are handled identically">
           <mat-icon>add</mat-icon>
@@ -94,7 +94,7 @@
         -->
     </ag-grid-angular>
     @if (!isPhone()) {
-    <div class="rangers__grid-bar">
+    <div class="rangers__grid-bar rt-display-hide">
       <button matButton="outlined" type="button" data-testid="rangers-fit" [attr.aria-pressed]="fitToScreen()"
         [class.rt-grid-fit--on]="fitToScreen()" (click)="toggleFitToScreen()"
         title="Fit every column on the screen at once, shortening long text. Off, the roster can run up to one and a half screens wide.">
@@ -119,7 +119,7 @@
          <input type="file"> itself, so the label IS the control. `matButton` on the label
          gives it the same box as its sibling buttons - the same approach
          mission-advanced-options already uses for Restore mission. -->
-    <div class="rt-action-bar rangers__actions">
+    <div class="rt-action-bar rangers__actions rt-display-hide">
       <span class="rt-action-bar__status">{{ rangers().length }} in roster</span>
 
       <div class="rt-action-bar__buttons">
@@ -152,7 +152,7 @@
          The file input is still triggered from a real button via .click(), called synchronously
          inside the click handler: `matButton` only attaches to button/a elements, never a
          <label>. Phase D will add a Print card here; there is deliberately no placeholder. -->
-    <div class="rangers__cards">
+    <div class="rangers__cards rt-display-hide">
     <rangertrak-io-panel>
       <mat-card appearance="outlined" class="rt-mission-card rt-io-card">
         <mat-card-header>
@@ -297,7 +297,7 @@
          can't land on a destructive button, and these read as exceptional actions rather
          than furniture on the page - see that component's own doc comment for why this is a
          deliberate, named exception to the 2026-08-25 "no collapsible sections" removal. -->
-    <rangertrak-expandable-section class="rt-danger-zone-trigger" description="Delete the whole roster">
+    <rangertrak-expandable-section class="rt-danger-zone-trigger rt-display-hide" description="Delete the whole roster">
       <span rtSummary class="rt-danger-zone__summary">
         <mat-icon aria-hidden="true">warning</mat-icon>
         Danger zone

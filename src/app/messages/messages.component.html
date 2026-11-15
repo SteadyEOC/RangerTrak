@@ -1,4 +1,4 @@
-<rangertrak-page [title]="title" [description]="pageDescr">
+<rangertrak-page [title]="title" [description]="pageDescr" [displayable]="true">
   @if (messages().length === 0) {
     <p class="messages__empty">
       No ICS-213 messages or ICS-213RR resource requests yet. Check "Also generate an ICS-213" (or
@@ -107,11 +107,16 @@
                 }
                 <dt>Mark</dt>
                 <dd>
+                  <!-- E-314: Display only looks, so the mark is text there, not the button that changes it. -->
+                  @if (display.active()) {
+                  <span data-testid="messages-mark-text">{{ m.handled ? markGlyph(m) + ' ' + markLabel(m) : '☐ None' }}</span>
+                  } @else {
                   <!-- E-218: the same status mark as the Radio Log grid; a click cycles blank, handled, passed on, needs action. -->
                   <button matButton type="button" data-testid="messages-mark" (click)="cycleMark(m)"
                     [attr.aria-label]="'Status mark: ' + (m.handled ? markLabel(m) : 'none') + '. Click to change.'">
                     {{ m.handled ? markGlyph(m) + ' ' + markLabel(m) : '☐ None' }}
                   </button>
+                  }
                 </dd>
                 <dt>Time</dt>
                 <dd>
@@ -130,8 +135,8 @@
                 <dd class="messages__message-text">{{ m.message213 }}</dd>
                 <!-- E-194: the way to add files to an entry already saved (D-47) when it has none yet,
                      so there is no chip to open. Opens the same viewer, whose Add does the work. -->
-                <dt>Attachments</dt>
-                <dd>
+                <dt class="rt-display-hide">Attachments</dt>
+                <dd class="rt-display-hide">
                   <rangertrak-attachment-chip [entry]="m" />
                   <button matButton type="button" data-testid="messages-attachments" (click)="onOpenAttachments(m)">
                     {{ m.attachments?.length ? 'Open' : 'Add' }}
@@ -171,7 +176,7 @@
               </div>
               }
             </mat-card-content>
-            <mat-card-actions class="messages__actions">
+            <mat-card-actions class="messages__actions rt-display-hide">
               @if (!editing()) {
               @if (selectedForm === '213') {
               <button matButton="outlined" type="button" (click)="onEdit()">Edit</button>

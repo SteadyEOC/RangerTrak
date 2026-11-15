@@ -538,6 +538,23 @@ actions go in the group; page toolbars (Summary print, After action) stay on the
 own fullscreen button inside the map (its frame, with its own iPhone fallback) is a separate control and stays.
 It stores nothing.
 
+## Display: a look-only window (E-314, ADR D-71)
+
+`shared/services/display.service.ts` holds one signal, `active`, true when the URL has `?display=1` (read at start, kept
+in step with `router.navigate(... queryParamsHandling: 'merge', replaceUrl: true)`) or the header's Display button was
+pressed. It writes **nothing** (no localStorage, no sessionStorage, nothing in backups, hand-overs, Setup files or the
+Report Packet) and never touches `ViewService` (`rt-view`). It sets `<html data-display>`; `styles/_display.scss` keys
+off that: the navbar, footer, Help drawer, header button group and the status cluster's detail go, `.rt-display-hide`
+blocks go, and `--rt-display-scale: 1.25` raises the root type size. A page offers Display with
+`<rangertrak-page [displayable]="true">` (Map, Radio log, Messages, Rangers & Teams, Summary); `PageComponent` registers
+with the service, and a NavigationEnd to a page that has not registered, or field mode, leaves Display. The button press
+also asks for full screen (`FullscreenService`; a refusal is fine). Esc leaves when the browser is not full screen and
+focus is not in a field. `shared/display/display-bar.component.ts` is the one small bar (Exit display, Clear marks) that
+fades after 3 s idle. The grids (Radio log, Rangers) set `suppressClickEdit`, cancel a keyboard edit
+(`onCellEditingStarted`), scale row and header heights, and register their row selection as the marks
+(`DisplayService.setMarks`), which `exit()` clears. Messages shows text for the mark and hides Edit, Print and
+Attachments. Pop-out windows (E-313) are not built yet; they need a look-only boot that takes no tab lock.
+
 ## One active tab per browser
 
 Every domain service (`RangerService`, `RadioLogService`, `MissionLocationService`) keeps its

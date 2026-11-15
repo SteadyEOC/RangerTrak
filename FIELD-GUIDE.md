@@ -605,6 +605,12 @@ options the page is holding back. Easy menus never hides something your
 mission already uses: once an entry has an attachment, **Attach** shows in Easy menus too.
 Switching changes only what is shown, never your data.
 
+**Display.** On Map, Radio log, Messages, Rangers & Teams and Summary, the **Display** button at the top shows the
+page for a big screen or a second monitor: larger type, and none of the buttons that change things. Filters, search and
+sort stay, and you can click rows to point at them (they clear when you leave). It affects that window only, does not
+change Easy or Full menus, and never changes your data. **Exit display** (top right; it fades when idle) or **Esc**
+brings the page back.
+
 **Demo, Exercise or Incident.** The icon at the left of the status pill in the header shows what
 the mission is (hover it to change it). An exercise stamps **EXERCISE** on the printed radio
 messages (ICS-213), the communications log (ICS-309), the After Action report and the map sheet.

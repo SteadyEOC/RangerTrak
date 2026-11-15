@@ -14,6 +14,7 @@ import { GuideDrawerComponent } from './shared/guide/guide-drawer.component'
 import { GuideService } from './shared/guide/guide.service'
 import { AttachmentHoverPreviewService } from './shared/attachments/attachment-hover-preview.service'
 import { InstallUpdateComponent } from './shared/install-update/install-update.component'
+import { DisplayBarComponent } from './shared/display/display-bar.component'
 
 @Component({
   selector: 'rangertrak-root',
@@ -27,7 +28,8 @@ import { InstallUpdateComponent } from './shared/install-update/install-update.c
     BackToTopComponent,
     StaleOriginNoticeComponent,
     GuideDrawerComponent,
-    InstallUpdateComponent
+    InstallUpdateComponent,
+    DisplayBarComponent
   ],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

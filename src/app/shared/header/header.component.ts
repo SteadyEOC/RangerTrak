@@ -12,6 +12,7 @@ import {
   AarNoteService, ClockService, FieldModeService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService,
   OfflineBasemapService, RadioLogService, UsageStateService, MissionModeType
 } from '../services'
+import { DisplayService } from '../services/display.service'
 import { FullscreenService } from '../services/fullscreen.service'
 import { Utility } from '../utility'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
@@ -47,6 +48,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @Input() viewIds: readonly string[] = []
   /** E-315: the Full screen button's state and action. */
   readonly fullscreen = inject(FullscreenService)
+  /** E-314: the Display button's state and action. */
+  readonly display = inject(DisplayService)
 
   /**
    * The one Guide affordance. Lives here rather than on each page because this header is

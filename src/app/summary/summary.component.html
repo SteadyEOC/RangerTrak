@@ -1,4 +1,4 @@
-<rangertrak-page [title]="title" [description]="pageDescr">
+<rangertrak-page [displayable]="true" [title]="title" [description]="pageDescr">
   <div class="rt-summary">
     <!-- Screen only: choosing the period and the actions. -->
     <div class="rt-summary__toolbar rt-summary__noprint">
@@ -13,15 +13,15 @@
       </mat-button-toggle-group>
 
       <span class="rt-summary__spacer"></span>
-      <button matButton="outlined" type="button" (click)="refresh()"
+      <button matButton="outlined" type="button" class="rt-display-hide" (click)="refresh()"
         title="Recalculate now. The page also updates by itself as entries come in">
         <mat-icon>refresh</mat-icon> Refresh
       </button>
-      <button matButton="outlined" type="button" (click)="onPrint()" data-testid="summary-print"
+      <button matButton="outlined" type="button" class="rt-display-hide" (click)="onPrint()" data-testid="summary-print"
         title="Print this summary. Opens your browser's print dialog; choose your printer there">
         <mat-icon>print</mat-icon> Print
       </button>
-      <button matButton="outlined" type="button" (click)="onExportCsv()" data-testid="summary-export"
+      <button matButton="outlined" type="button" class="rt-display-hide" (click)="onExportCsv()" data-testid="summary-export"
         title="Download this summary as a spreadsheet (CSV)">
         <mat-icon>download</mat-icon> Export
       </button>
@@ -301,7 +301,7 @@
       <p>{{ summary().aar.appCount }} {{ summary().aar.appCount === 1 ? 'note about RangerTrak is' : 'notes about RangerTrak are' }}
         on the AAR notes page.</p>
       }
-      <p class="rt-summary__noprint"><a matButton="outlined" routerLink="/after-action" data-testid="summary-aar-link">
+      <p class="rt-summary__noprint rt-display-hide"><a matButton="outlined" routerLink="/after-action" data-testid="summary-aar-link">
         <mat-icon>edit_note</mat-icon> Edit the AAR notes</a></p>
     </section>
   </div>

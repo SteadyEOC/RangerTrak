@@ -6,9 +6,10 @@ import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../d
 import { Observable, subscribeOn, Subscription } from 'rxjs'
 
 import { CommonModule, DOCUMENT, formatDate } from '@angular/common'
-import { AfterViewInit, Component, inject, Inject, OnDestroy, OnInit, Pipe, PipeTransform, ElementRef, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { AfterViewInit, Component, inject, Inject, OnDestroy, OnInit, Pipe, PipeTransform, ElementRef, ChangeDetectionStrategy, signal, computed, effect } from '@angular/core';
 
 import { stampRevisedIfChanged } from '../domain/grid-edit-stamp'
+import { DisplayService } from '../shared/services/display.service'
 import { AgGridAngular } from 'ag-grid-angular';
 import { PageComponent } from '../shared/page/page.component';
 import { ExpandableSectionComponent } from '../shared/expandable-section/expandable-section.component';
@@ -148,6 +149,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   // Mutated inside onRowSelection(), itself invoked from gridOptions.onSelectionChanged
   // - an ag-grid-native callback, not a template event binding. Same reasoning as above.
   public selectedRows = signal(0)
+
+  /**
+   * E-314 / D-71: Display is look-only. In Display the grid stops editing (the buttons that change
+   * things are hidden in the template), rows and header grow with the type scale, and the rows
+   * the viewer selects are the marks that point things out to the room (kept in this window's
+   * grid only, never written; cleared on leaving Display).
+   */
+  protected readonly display = inject(DisplayService)
+  private static readonly DISPLAY_SCALE = 1.25
+  private readonly displayGrid = effect(() => this.applyDisplayToGrid(this.display.active()))
   /** Export every row, ignoring the selection and any filters. */
   public allRows = signal(false)
   /** E-190: one chip per column filter that is on, and how many rows get through them. */
@@ -207,6 +218,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     const perPage = Number(this.rowsPerPage())
     const visible = Number.isFinite(perPage) && perPage > 0 ? Math.min(total, perPage) : total
     const px = (Math.max(visible, 3) + 1) * RadioLogComponent.GRID_ROW_PX + RadioLogComponent.GRID_CHROME_PX
+    // Display (E-314): the grid takes the screen under the title; auto page size fits the rows to it.
+    if (this.display.active()) return 'calc(100vh - 9rem)'
     return `min(60vh, ${px}px)`
   })
   readonly rowsPerPageOptions = ['Auto', '5', '10', '25', '50', '100', 'All']
@@ -545,6 +558,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // Previously nothing did, and a "Save Reports" button alerted UNIMPLEMENTED,
     // so every correction a scribe typed into the grid was lost on reload.
     onCellValueChanged: (event: CellValueChangedEvent) => this.onCellEdited(event),
+    // E-314: Display never writes. A key press can still open an editor; this closes it, discarding.
+    onCellEditingStarted: (event) => { if (this.display.active()) event.api.stopEditing(true) },
     // John 2026-10-27: content sizing let the grid run far past the screen. After every auto-size
     // (the initial autoSizeStrategy and refreshGrid's autoSizeAllColumns) and on a resize, the
     // widest columns are trimmed so the whole grid is at most 1.5 screen widths.
@@ -620,6 +635,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     this.gridColumnApi = ""
 
     this.phoneMediaQuery.addEventListener('change', this.onPhoneMediaChange)
+    this.display.setMarks({ count: this.selectedRows, clear: () => this.gridApi?.deselectAll?.() })
   }
 
 
@@ -790,6 +806,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     this.gridApi = params.api
     this.gridColumnApi = params.columnApi
     this.refreshFilterChips()
+    this.applyDisplayToGrid(this.display.active())
 
     // E-104: `sizeColumnsToFit()` used to run here, and it is what actually produced the
     // reported defect - it distributes the grid's width across columns and IGNORES the
@@ -1531,6 +1548,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    * "should happen automatically".
    */
   private onCellEdited(event: CellValueChangedEvent) {
+    if (this.display.active()) return
     // E-282 (D-47 note): a real change stamps revisedAt so the correction travels through a hand-over Merge.
     stampRevisedIfChanged(event.data, event.oldValue, event.newValue)
     this.log.info(`Edited a radio log entry in the grid.`, this.id)
@@ -1631,7 +1649,22 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // this.refreshGrid()
   }
 
+  /** E-314: Display on or off for the grid: no editing, scaled rows, and selection as marking. */
+  private applyDisplayToGrid(on: boolean): void {
+    if (!this.gridApi?.updateGridOptions) return
+    const k = on ? RadioLogComponent.DISPLAY_SCALE : 1
+    this.gridApi.updateGridOptions({
+      suppressClickEdit: on,
+      rowHeight: Math.round(RadioLogComponent.GRID_ROW_PX * k),
+      headerHeight: Math.round(RadioLogComponent.GRID_HEADER_PX * k),
+      floatingFiltersHeight: Math.round(RadioLogComponent.GRID_HEADER_PX * k),
+    })
+    this.gridApi.resetRowHeights?.()
+    this.gridApi.stopEditing?.(true)
+  }
+
   ngOnDestroy() {
+    this.display.setMarks(null)
     this.radioLogSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()
     this.phoneMediaQuery.removeEventListener('change', this.onPhoneMediaChange)

@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Input, effect, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Input, OnChanges, effect, inject } from '@angular/core'
 
 import { HeaderComponent } from '../header/header.component'
+import { DisplayService } from '../services/display.service'
 import { FieldModeService } from '../services/field-mode.service'
 import { ViewService } from '../services/view.service'
 
@@ -28,6 +29,9 @@ import { ViewService } from '../services/view.service'
  * `viewIds` (E-214): the Simple/Full menus ids this page can hide (ADVANCED_FEATURES). When there
  * are any, the shell shows the "Full menus" switch in the header row (E-231), except in field mode (which
  * has no view choice). Pages without hideable controls pass nothing.
+ *
+ * `displayable` (E-314): the page offers Display, the look-only state of one window (DisplayService).
+ * Only the look-at pages opt in: Map, Radio log, Messages, Rangers & Teams, Summary.
  */
 @Component({
   selector: 'rangertrak-page',
@@ -37,14 +41,16 @@ import { ViewService } from '../services/view.service'
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./page.component.scss']
 })
-export class PageComponent {
+export class PageComponent implements OnChanges {
   @Input() title = ''
   @Input() description = ''
   @Input() showHeader = true
   @Input() viewIds: readonly string[] = []
+  @Input() displayable = false
 
   protected readonly fieldMode = inject(FieldModeService)
   private readonly view = inject(ViewService)
+  private readonly display = inject(DisplayService)
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef)
   private readonly destroyRef = inject(DestroyRef)
   private observer: MutationObserver | null = null
@@ -71,6 +77,15 @@ export class PageComponent {
   })
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.observer?.disconnect())
+    this.destroyRef.onDestroy(() => {
+      this.observer?.disconnect()
+      this.display.unregister(this)
+    })
+  }
+
+  /** A displayable page tells DisplayService it is on screen (and withdraws when it goes). */
+  ngOnChanges(): void {
+    if (this.displayable) this.display.register(this)
+    else this.display.unregister(this)
   }
 }

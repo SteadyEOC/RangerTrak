@@ -1,8 +1,9 @@
 import { Subscription } from 'rxjs'
 
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { DisplayService } from '../shared/services/display.service'
 
 import { PageComponent } from '../shared/page/page.component'
 import { MatFormFieldModule } from '@angular/material/form-field'
@@ -75,6 +76,16 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private attachmentViewer = inject(AttachmentViewerService)
   private attachmentStore = inject(AttachmentStoreService)
   private journal = inject(MissionJournalService)
+  /** E-314: Display is look-only; this page shows the newest message and keeps following it. */
+  protected readonly display = inject(DisplayService)
+  private followNewest = true
+  private readonly leaveEditInDisplay = effect(() => {
+    if (this.display.active()) {
+      this.editing.set(false)
+      this.followNewest = true
+      this.ensureSelection()
+    }
+  })
   title = 'Messages'
   pageDescr = 'ICS-213 general messages and ICS-213RR resource requests generated from radio log entries.'
 
@@ -146,6 +157,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
   /** Keep the current selection if it still exists (a live-updating report); otherwise the newest row. */
   private ensureSelection(): void {
     const rows = this.rows()
+    // Display (E-314): keep showing the newest message unless the viewer picked an older one.
+    if (this.display.active() && this.followNewest && rows.length) {
+      this.selectedKey.set(rows[0].key)
+      return
+    }
     if (!rows.some(r => r.key === this.selectedKey())) {
       this.selectedKey.set(rows[0]?.key ?? null)
     }
@@ -192,6 +208,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   select(row: MessageRow): void {
+    this.followNewest = row.key === this.rows()[0]?.key
     this.selectedKey.set(row.key)
     this.editing.set(false)
   }

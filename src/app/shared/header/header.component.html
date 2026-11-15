@@ -44,6 +44,8 @@
     <span class="opPeriod" [title]="'Starts ' + opPeriodStartDisplay() + ' – Ends ' + opPeriodEndDisplay()">{{opPeriod()}} <span class="status-divider status-divider--inline"></span> {{timeElapsedDisplay()}};
       {{timeLeftDisplay()}}</span>
     <span class="status-divider status-divider--clock"></span>
+    <!-- E-314: Display keeps the mission name and the clock (CSS shows this only in Display). -->
+    <span class="display-mission" data-testid="display-mission">{{ eventInfo() }}</span>
     <span class="clock" [title]="clockDisplay()"><span class="clock__date">{{clockDate()}}, </span>{{clockTime()}}</span>
     @if (scenarioLabel(); as sc) {
     <span class="status-divider status-divider--clock"></span>
@@ -113,6 +115,16 @@
     @if (showViewSwitch) {
     <rangertrak-view-switch [viewIds]="viewIds"></rangertrak-view-switch>
     }
+    <!-- E-314 (D-71): Display, a look-only state of this window alone; only on the look-at pages. The
+         Full menus choice above is untouched by it. -->
+    @if (display.offered()) {
+    <button matButton="outlined" type="button" class="rt-header-action" (click)="display.toggle()"
+      data-testid="display-toggle" [attr.aria-pressed]="display.active()" aria-label="Display"
+      title="Show this page for a big screen or a second monitor: bigger type, no editing controls. This window only; Esc comes back.">
+      <mat-icon>tv</mat-icon>
+      <span class="rt-header-action__label">Display</span>
+    </button>
+    }
     @if (!fieldMode.enabled()) {
     <button matButton="outlined" type="button" class="rt-header-action" (click)="fullscreen.toggle()"
       data-testid="fullscreen-toggle" [attr.aria-pressed]="fullscreen.isFullscreen()"
@@ -138,7 +150,7 @@
          full Help page. -->
     @if (guide.available()) {
     <button matButton="outlined" type="button" class="rt-header-action" (click)="guide.toggle()"
-      [attr.aria-expanded]="guide.isOpen()" aria-label="Help"
+      data-testid="help-toggle" [attr.aria-expanded]="guide.isOpen()" aria-label="Help"
       title="Help for this screen: instructions, tips and keyboard keys">
       <mat-icon>help_outline</mat-icon>
       <span class="rt-header-action__label">Help</span>

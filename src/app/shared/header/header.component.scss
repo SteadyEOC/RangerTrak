@@ -364,34 +364,3 @@
     // this it would sit hard against the left edge under the title.
     margin-left: auto;
   }
-
-  // E-315: the one group of page-tool buttons (Full menus, Full screen, AAR/214, Help). Every button
-  // in it carries .rt-header-action: one height, outlined, icon + label. Under 600px only the icon
-  // shows (the label lives on in aria-label and title) and each target stays at least 44px.
-  .rt-header-actions {
-    display    : flex;
-    align-items: center;
-    flex-wrap  : wrap;
-    gap        : var(--rt-space-sm);
-  }
-
-  .rt-header-actions .rt-header-action,
-  .rt-header-actions rangertrak-view-switch .rt-header-action {
-    flex      : none;
-    min-height: 40px;
-    height    : 40px;
-  }
-
-  @media (max-width: 599.98px) {
-    .rt-header-actions .rt-header-action {
-      min-width : 44px;
-      min-height: 44px;
-      height    : 44px;
-      padding   : 0 10px;
-    }
-    .rt-header-actions .rt-header-action__label {
-      // Visually hidden, still not in the accessibility tree twice: the button has aria-label.
-      position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-    }
-    .rt-header-actions .rt-header-action .mat-icon { margin: 0; }
-  }

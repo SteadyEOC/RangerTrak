@@ -1,0 +1,50 @@
+// E-314 / ADR D-71: Display, a look-only state of one window. DisplayService sets `data-display`
+// on <html> (from `?display=1` or the Display button); everything here keys off it. It hides
+// controls, never data and never warnings (D-62 item 3), and it stores nothing.
+//
+// A page marks a block that changes something with `.rt-display-hide`. The shell, the header and the
+// Help drawer are hidden by name below. The scale makes type, grid rows and map furniture larger
+// for a room across from the screen.
+
+// Only ever shown in Display (header.component.html).
+.display-mission {
+  display: none;
+}
+
+html[data-display] {
+  --rt-display-scale: 1.25;
+  font-size: calc(16px * var(--rt-display-scale));
+
+  .rt-display-hide,
+  rangertrak-navbar,
+  rangertrak-footer,
+  rangertrak-back-to-top,
+  rangertrak-guide-drawer,
+  rangertrak-install-update,
+  rangertrak-stale-origin-notice,
+  .rt-header-actions,
+  .rt-mission-info-panel,
+  .status-cluster > .rt-mode-icon,
+  .status-cluster > .opPeriod,
+  .status-cluster > .status-divider,
+  .status-cluster > .clock--scenario {
+    display: none !important;
+  }
+
+  // The mission name and the clock stay; the readiness dot stays because it is a warning.
+  .display-mission {
+    display: inline;
+    font-weight: 700;
+    margin-inline-end: 0.75em;
+  }
+
+  // The status cluster is a click target that opens Entry; it is only a readout here.
+  .status-cluster {
+    pointer-events: none;
+  }
+
+  // Grid text follows the scale (row and header height are set from the page, in px).
+  .ag-root-wrapper {
+    --ag-font-size: calc(14px * var(--rt-display-scale));
+  }
+}

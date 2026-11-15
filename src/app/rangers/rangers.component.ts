@@ -4,9 +4,10 @@ import { isAiGeneratedPhoto, withAiBadge } from '../shared/ai-photo'
 import { bundledRangerImage } from '../shared/ranger-image'
 //import { TooltipModule } from 'ng2-tooltip-directive'
 import { Subscription } from 'rxjs'
+import { DisplayService } from '../shared/services/display.service'
 
 import { CommonModule, DOCUMENT } from '@angular/common'
-import { AfterViewInit, ApplicationRef, Component, Inject, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core'
+import { AfterViewInit, ApplicationRef, Component, Inject, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy, signal, computed, inject, effect } from '@angular/core'
 import { MatDialog } from '@angular/material/dialog'
 import { MatSnackBar } from '@angular/material/snack-bar'
 import { RouterLink } from '@angular/router'
@@ -138,6 +139,8 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     const rows = Math.max(this.rangers().length, 3) + 1
     const chrome = this.isPhone() ? this.headerPx() * 3 + 2 : RangersComponent.GRID_CHROME_PX
     const px = rows * this.rowPx() + chrome
+    // Display (E-314): the roster takes the screen under the title; auto page size fits the rows to it.
+    if (this.display.active()) return 'calc(100vh - 9rem)'
     // A phone has little else on the page worth keeping in view, so the grid may take more of it.
     return `min(${this.isPhone() ? 75 : 60}vh, ${px}px)`
   })
@@ -159,6 +162,14 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   public exportFormat = signal<'xlsx' | 'csv'>('xlsx')
   /** How many grid rows are selected (the Export card's subtitle). */
   public selectedCount = signal(0)
+
+  /**
+   * E-314 / D-71: Display is look-only. Editing stops, rows grow with the type scale, and selected
+   * rows are the marks that point things out to the room (this window's grid only; never written).
+   */
+  protected readonly display = inject(DisplayService)
+  private static readonly DISPLAY_SCALE = 1.25
+  private readonly displayGrid = effect(() => this.applyDisplayToGrid(this.display.active()))
   /** Export everyone, ignoring the selection and any filters. */
   public allRows = signal(false)
   /** E-187 phase D: the contact sheet being printed; null except while the print dialog is open. */
@@ -218,6 +229,8 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     // (onCellValueChanged -> onCellEdited() -> <service>.saveEdited...()) - see
     // onCellEdited()'s own comment for why the roster gets the same treatment now.
     onCellValueChanged: () => this.onCellEdited(),
+    // E-314: Display never writes. A key press can still open an editor; this closes it, discarding.
+    onCellEditingStarted: (event) => { if (this.display.active()) event.api.stopEditing(true) },
     onSelectionChanged: () => { this.selectedCount.set(this.gridApi?.getSelectedRows?.().length ?? 0); this.refreshExportPhotoCount() },
     onFilterChanged: () => this.refreshFilterChips(),
     // 2026-10-18: rows arriving (an import, a restore) change what the grid shows without any filter
@@ -451,6 +464,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     this.now = new Date()
     this.gridApi = ""
     this.gridColumnApi = ""
+    this.display.setMarks({ count: this.selectedCount, clear: () => this.gridApi?.deselectAll?.() })
   }
 
   // Initialize data or fetch external data from services or API (https://geeksarray.com/blog/angular-component-lifecycle)
@@ -510,6 +524,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
     this.refreshFilterChips()
+    this.applyDisplayToGrid(this.display.active())
     this.photos.whenReady().then(() => this.refreshExportPhotoCount())
 
     // E-104: sizeColumnsToFit() removed - it distributes grid width evenly and ignores
@@ -607,6 +622,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
    * row can still move once its callsign commits. Not new behavior, just now automatic.
    */
   private onCellEdited() {
+    if (this.display.active()) return
     this.log.info(`Edited a ranger in the grid.`, this.id)
     this.rangerService.updateLocalStorageAndPublish()
     // E-263: an edit can make (or end) a duplicate on another row, so redraw both columns' marks.
@@ -1265,7 +1281,22 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
+  /** E-314: Display on or off for the grid: no editing, scaled rows (marking is the grid's own selection). */
+  private applyDisplayToGrid(on: boolean): void {
+    if (!this.gridApi?.updateGridOptions) return
+    const k = on ? RangersComponent.DISPLAY_SCALE : 1
+    this.gridApi.updateGridOptions({
+      suppressClickEdit: on,
+      rowHeight: Math.round(this.rowPx() * k),
+      headerHeight: Math.round(this.headerPx() * k),
+      floatingFiltersHeight: Math.round(this.headerPx() * k),
+    })
+    this.gridApi.resetRowHeights?.()
+    this.gridApi.stopEditing?.(true)
+  }
+
   ngOnDestroy() {
+    this.display.setMarks(null)
     this.phoneMediaQuery.removeEventListener('change', this.onPhoneMediaChange)
     this.rangersSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()

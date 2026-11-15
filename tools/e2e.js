@@ -5807,6 +5807,147 @@ function findChrome() {
 }
 
 /**
+ * E-315 / E-314 / D-71: the header's page-tool group, and Display.
+ *
+ * The group is the same on every page, in one order (Full menus, Display, Full screen, AAR/214, Help),
+ * and Easy menus says how many options a page is holding back. Display (Map, Radio log, Messages,
+ * Rangers & Teams, Summary only) hides the chrome and every control that changes something, keeps filters,
+ * makes the grids read-only, scales the type, keeps `?display=1` across a reload, comes back with Exit
+ * display or Esc, and never writes (no localStorage write, and the device's Easy/Full choice is untouched).
+ * With DISPLAY_SHOTS_DIR set, it also saves one 1920x1080 picture of each page in Display there.
+ */
+async function checkDisplay() {
+  console.log('\nE-315 / E-314: header page tools, and Display is look-only, per window, and never writes')
+  const has = sel => evaluate(`!!document.querySelector(${JSON.stringify(sel)})`)
+  const shown = sel => evaluate(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); return !!e && getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0 })()`)
+  const clickTid = tid => evaluate(`document.querySelector('[data-testid=${tid}]')?.click()`)
+  const view = () => evaluate(`[localStorage.getItem('rt-view'), localStorage.getItem('rt-view-source')]`)
+  const inDisplay = () => evaluate(`document.documentElement.hasAttribute('data-display')`)
+  const search = () => evaluate(`location.search`)
+  // Visible controls that change something, outside the grid's own cells: none may show in Display.
+  const changers = () => evaluate(`[...document.querySelectorAll('main button, main a[href], main label[for], main mat-checkbox')]
+    .filter(e => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && !e.closest('.ag-root-wrapper, mat-button-toggle-group, rangertrak-filter-chips, .messages__list, .messages__filter, mat-dialog-container'))
+    .map(e => (e.textContent || e.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' '))
+    .filter(t => /^(add|import|export|delete|print|save|edit|attach|clear|fit to screen|download|upload|copies)/i.test(t))`)
+  // A real double-click (two presses, clickCount 2) at the middle of the first visible cell of the column.
+  const dblclick = async col => {
+    const r = await evaluate(`(() => { const c = document.querySelector('.ag-row .ag-cell[col-id=${JSON.stringify(col)}]'); if (!c) return null; c.scrollIntoView({ block: 'center' }); const b = c.getBoundingClientRect(); return { x: b.left + Math.min(b.width / 2, 40), y: b.top + b.height / 2 } })()`)
+    if (!r) return 'no-cell'
+    for (const clickCount of [1, 2]) {
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: r.x, y: r.y, button: 'left', clickCount })
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: r.x, y: r.y, button: 'left', clickCount })
+    }
+    return 'ok'
+  }
+  const editing = () => evaluate(`document.querySelectorAll('.ag-cell-inline-editing').length`)
+  const shotsDir = process.env.DISPLAY_SHOTS_DIR
+
+  await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false })
+  try {
+    await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
+    await goto('/')
+    await evaluate(`document.querySelector('rangertrak-demo-picker mat-select')?.click()`)
+    await sleep(600)
+    await evaluate(`[...document.querySelectorAll('mat-option')].find(o => /Grand Canyon/.test(o.textContent))?.click()`)
+    await sleep(4000) // the picker loads the demo and reloads the page
+
+    // ── the header group: same buttons, same order, Easy menus says how many it holds back ──
+    await evaluate(`localStorage.setItem('rt-view', 'simple'); localStorage.setItem('rt-view-source', 'user')`)
+    await goto('/map', 4500)
+    const order = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] > *')].map(e => e.matches('rangertrak-view-switch') ? 'full-menus' : (e.getAttribute('data-testid') || e.textContent.trim()))`)
+    check('Map header group, in order: Full menus, Display, Full screen, AAR/214, Help', order, ['full-menus', 'display-toggle', 'fullscreen-toggle', 'aar-note', 'help-toggle'])
+    const heights = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] .rt-header-action')].map(b => Math.round(b.getBoundingClientRect().height))`)
+    check('every button in the group has the same height', new Set(heights).size, 1)
+    check('the in-map Full screen button is gone', await has('.fullscreen-toggle'), false)
+    const count = await evaluate(`document.querySelector('[data-testid=view-switch-count]')?.textContent.trim() ?? null`)
+    check('Easy menus shows "+N" on the Full menus button (Map holds back at least one option)', /^\+[1-9]/.test(count ?? ''), true)
+    await evaluate(`localStorage.setItem('rt-view', 'full')`)
+    await goto('/map', 4500)
+    check('Full menus shows no count', await has('[data-testid=view-switch-count]'), false)
+    await send('Emulation.setDeviceMetricsOverride', { width: 400, height: 800, deviceScaleFactor: 1, mobile: false })
+    await goto('/map', 3500)
+    const phone = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] .rt-header-action')].map(b => {
+      const r = b.getBoundingClientRect(), l = b.querySelector('.rt-header-action__label')
+      return [r.width >= 44, r.height >= 44, !!b.getAttribute('aria-label') || !!b.title, l ? getComputedStyle(l).position : 'none'] })`)
+    check('on a phone every button is at least 44px, named by aria-label or title, with the label visually hidden',
+      phone.length >= 4 && phone.every(p => p[0] && p[1] && p[2] && p[3] === 'absolute'), true)
+    await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false })
+
+    // ── Display is offered on five pages and not on the rest ──
+    for (const [route, name] of [['/', 'Entry'], ['/mission', 'Mission'], ['/after-action', 'After action'], ['/help', 'Help']]) {
+      await goto(route, 3500)
+      check(`${name} does not offer Display`, await has('[data-testid=display-toggle]'), false)
+    }
+    await goto('/', 3500)
+    check('Entry has Full screen in the header', await has('[data-testid=fullscreen-toggle]'), true)
+
+    // ── Display on each look-at page ──
+    const pages = [['/radio-log', 'Radio log', 'callsign'], ['/messages', 'Messages', null], ['/map', 'Map', null],
+      ['/rangers', 'Rangers & Teams', 'callsign'], ['/summary', 'Summary', null]]
+    for (const [route, name, editCol] of pages) {
+      if (process.env.DISPLAY_ONLY_ROUTE && process.env.DISPLAY_ONLY_ROUTE !== route) continue
+      await evaluate(`localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user')`)
+      await goto(route, 4500)
+      check(`${name} offers Display`, await has('[data-testid=display-toggle]'), true)
+      check(`${name}, before Display: the navbar shows`, await shown('rangertrak-navbar'), true)
+      if (editCol) { // proves the read-only check below can go red: outside Display a double-click opens an editor
+        await dblclick(editCol); await sleep(500)
+        check(`${name}: outside Display a double-click edits a cell (so the read-only check can fail)`, (await editing()) > 0, true)
+        await goto(route, 4000)
+      }
+      await evaluate(`window.__rtWrites = []; const o = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { window.__rtWrites.push(String(k)); return o.apply(this, arguments) }`)
+      const viewBefore = await view()
+      await clickTid('display-toggle')
+      await sleep(1200)
+      check(`${name}: Display is on`, await inDisplay(), true)
+      check(`${name}: ?display=1 is in the address`, (await search()).includes('display=1'), true)
+      check(`${name}: the navbar, footer and header buttons are gone`,
+        [await shown('rangertrak-navbar'), await shown('rangertrak-footer'), await shown('[data-testid=header-actions]')], [false, false, false])
+      check(`${name}: one small "Exit display" button`, await shown('[data-testid=display-exit]'), true)
+      check(`${name}: the clock stays`, await shown('pageHeader .clock'), true)
+      check(`${name}: the type is larger (root 20px)`, await evaluate(`getComputedStyle(document.documentElement).fontSize`), '20px')
+      check(`${name}: no add, import, export, delete, print or edit control shows`, await changers(), [])
+      if (editCol) {
+        await dblclick(editCol); await sleep(500)
+        check(`${name}: a double-click on a cell does not edit`, await editing(), 0)
+        check(`${name}: filters stay`, await has('.ag-floating-filter'), true)
+      }
+      if (name === 'Summary') check('Summary keeps its period choice', await shown('[data-testid=summary-window]'), true)
+      if (name === 'Messages') check('Messages hides Edit, Print and the status mark button', [await has('[data-testid=messages-mark]'), await shown('.messages__actions')], [false, false])
+      // updateLastChecked is the service worker's update-check clock (UpdateService), not Display or mission data.
+      check(`${name}: writes nothing to localStorage while in Display`, await evaluate(`window.__rtWrites.filter(k => k !== 'updateLastChecked')`), [])
+      check(`${name}: the device's Easy/Full choice is untouched`, await view(), viewBefore)
+      if (shotsDir) {
+        await sleep(3800) // the Exit display bar fades after 3 s idle, so it does not cover the header
+        const { data } = await send('Page.captureScreenshot', { format: 'png' })
+        const file = path.join(shotsDir, `E-314-${route.slice(1).replace(/[^a-z]/g, '') || 'entry'}.png`)
+        fs.writeFileSync(file, Buffer.from(data, 'base64'))
+        note(`Display screenshot: ${file}`)
+      }
+      // a reload keeps Display; Exit display and Esc both return
+      await goto(route + '?display=1', 4500)
+      check(`${name}: reloading with ?display=1 comes back in Display`, await inDisplay(), true)
+      await clickTid('display-exit'); await sleep(800)
+      check(`${name}: Exit display returns to the page, navbar and URL`, [await inDisplay(), await shown('rangertrak-navbar'), (await search()).includes('display=1')], [false, true, false])
+      check(`${name}: the device's Easy/Full choice is the same after Display`, await view(), viewBefore)
+      await clickTid('display-toggle'); await sleep(1000)
+      await evaluate(`(document.fullscreenElement ? document.exitFullscreen() : Promise.resolve())`).catch(() => { })
+      await sleep(400)
+      await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`)
+      await sleep(800)
+      check(`${name}: Esc leaves Display`, await inDisplay(), false)
+    }
+
+    // Display is only on pages that offer it: a link with ?display=1 to Entry does not turn it on.
+    await goto('/?display=1', 4500)
+    check('Entry with ?display=1 leaves Display (Entry does not offer it)', await inDisplay(), false)
+  } finally {
+    await send('Emulation.clearDeviceMetricsOverride').catch(() => { })
+    await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
+  }
+}
+
+/**
  * E-207 / ADR D-62: Easy menus and Full menus.
  *
  * A clean profile is a NEW install, and a new install starts in Easy menus. Every other group in this
@@ -6165,7 +6306,8 @@ async function main() {
       note('read-only: skipping roster, photo, submit and mission checks')
     } else {
       const fx = makeFixtures(path.join(tmp, 'fixtures'))
-      if (want('view')) await checkSimpleView(fx) // E-207; starts from a wiped profile, wipes it again after
+      if (want('view') && !process.env.DISPLAY_ONLY_ROUTE) await checkSimpleView(fx) // E-207; starts from a wiped profile, wipes it again after
+      if (want('view')) await checkDisplay() // E-314, E-315; loads the Grand Canyon demo, wipes the profile after
       if (want('entry')) await checkUsageModes() // E-168; wipes storage, so before checkRosterLifecycle creates the E2E-AA1 ranger
       if (want('roster')) await checkRangersFilterChips(fx)
       if (want('roster')) await checkRosterLayers(fx) // E-187 C
