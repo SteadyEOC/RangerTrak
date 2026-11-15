@@ -191,9 +191,10 @@ Tick each step as you go.</p>
     <dt>Two Boards on one network</dt>
     <dd>The second calls itself <code>rangertrak-board-2.local</code>. Use the address its own window prints.</dd>
     <dt>Something went wrong and you want help</dt>
-    <dd>Each run of the Board writes a log in the kit's <code>logs</code> folder, named for the date and time it
-      started. It holds what the window showed and which devices connected, never their passwords. Send that file
-      with your question.</dd>
+    <dd>Start the Board from a terminal with <code>node rangertrak-board.js --log</code>. Each run then writes a
+      log in the kit's <code>logs</code> folder, named for the date and time it started. It holds what the window
+      showed and which devices connected, never their passwords. Send that file with your question. Without
+      <code>--log</code> the Board keeps no log.</dd>
   </dl>
   <p>More in RangerTrak's Help (the Board's entry on the Mission page) and the FAQ. Still stuck?
     <a href="https://github.com/SteadyEOC/RangerTrak/issues" target="_blank" rel="noopener">Tell us on GitHub</a>.</p>

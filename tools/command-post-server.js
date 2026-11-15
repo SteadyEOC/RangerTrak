@@ -26,7 +26,8 @@
 //     --port N        (or the PORT env var) use exactly this port, no fallback
 //     --name label    ask for <label>.local instead of rangertrak-board.local
 //     --allow-public  also listen on public addresses (never the default - D-61 item 3)
-//     --no-log        don't keep the log file (E-290: on by default, in logs/ beside the kit or non-distributed/board-logs)
+//     --log           keep a log file of this run (E-290; off by default since 2026-11-14, in logs/ beside the kit or
+//                     non-distributed/board-logs). --no-log is still accepted and keeps it off.
 const https = require('https');
 const fs = require('fs');
 const os = require('os');
@@ -385,10 +386,11 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
 }
 
 function parseArgs(argv) {
-  const args = { allowPublic: false, log: true, port: process.env.PORT ? parseInt(process.env.PORT, 10) : 0, label: DEFAULT_LABEL };
+  const args = { allowPublic: false, log: false, port: process.env.PORT ? parseInt(process.env.PORT, 10) : 0, label: DEFAULT_LABEL };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--allow-public') args.allowPublic = true;
     else if (argv[i] === '--port') args.port = parseInt(argv[++i], 10);
+    else if (argv[i] === '--log') args.log = true;
     else if (argv[i] === '--no-log') args.log = false;
     else if (argv[i] === '--name') args.label = sanitizeLabel(argv[++i] || '') || DEFAULT_LABEL;
   }
@@ -494,6 +496,6 @@ async function start() {
   process.on('SIGTERM', shutdown);
 }
 
-module.exports = { createServer, getOrCreateCert, start };
+module.exports = { createServer, getOrCreateCert, start, parseArgs };
 
 if (require.main === module) start();

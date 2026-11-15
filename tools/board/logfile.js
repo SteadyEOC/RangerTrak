@@ -2,7 +2,7 @@
 // every Board, not only on a laptop someone remembered to set up for capture. It holds everything the window
 // prints, plus one line per request (time, address, method, path, status, ms) and failed TLS handshakes (a device
 // that has not accepted the certificate yet). Request secrets travel in headers (x-board-key, x-board-password),
-// which are never written. --no-log turns it off. Never fatal: if the file can't be opened, the Board runs on.
+// which are never written. Off by default; --log turns it on. Never fatal: if the file can't be opened, the Board runs on.
 const fs = require('fs');
 const path = require('path');
 

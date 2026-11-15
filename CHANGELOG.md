@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Bug Fixes
+
+* **board:** E-290 the Board's log is off by default again (it was on for the 2026-11-14 exercise); `node rangertrak-board.js --log` turns it on, `--no-log` is still accepted
+
 ## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-13)
 
 The tag moved on 2026-11-13 to take in the work below, so the drill build and beta.3 are the same.
