@@ -1,8 +1,8 @@
-// E-290 (John 2026-11-13): the mini web server keeps a log file, on by default, so a field test can be read afterwards on
+// E-290 (John 2026-11-13): the RangerView web server keeps a log file, on by default, so a field test can be read afterwards on
 // every RangerView, not only on a laptop someone remembered to set up for capture. It holds everything the window
 // prints, plus one line per request (time, address, method, path, status, ms) and failed TLS handshakes (a device
 // that has not accepted the certificate yet). Request secrets travel in headers (x-board-key, x-board-password),
-// which are never written. Off by default; --log turns it on. Never fatal: if the file can't be opened, the mini web server runs on.
+// which are never written. Off by default; --log turns it on. Never fatal: if the file can't be opened, the RangerView web server runs on.
 const fs = require('fs');
 const path = require('path');
 
@@ -32,11 +32,11 @@ function openLog({ dir, header = [], now = () => new Date(), warn = () => {} }) 
     file = path.join(dir, `board-${fileStamp(now())}.txt`);
     fd = fs.openSync(file, 'a');
   } catch (e) {
-    warn(`Couldn't open the log file in ${dir} (${e.message}); the mini web server runs without one.`);
+    warn(`Couldn't open the log file in ${dir} (${e.message}); the RangerView web server runs without one.`);
     return null;
   }
   let open = true;
-  // Synchronous on purpose: a mini web server closed with the window's X, or a laptop that dies, keeps every line so far.
+  // Synchronous on purpose: a RangerView web server closed with the window's X, or a laptop that dies, keeps every line so far.
   const write = (text) => {
     if (!open) return;
     try { fs.writeSync(fd, `${text}\n`); } catch { open = false; }

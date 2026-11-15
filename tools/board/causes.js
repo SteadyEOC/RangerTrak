@@ -1,4 +1,4 @@
-// E-216 slice 2: the mini web server's causes, read from the same JSON the app reads
+// E-216 slice 2: the RangerView web server's causes, read from the same JSON the app reads
 // (src/app/domain/board-causes.json). `[[ ... ]]` is dropped when a placeholder inside has no value;
 // the same fill rule is in src/app/domain/board-causes.ts.
 const ALL = require('../../src/app/domain/board-causes.json');

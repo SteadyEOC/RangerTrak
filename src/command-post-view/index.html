@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RangerView</title>
-<!-- Same files as the app's own icons: the mini web server serves the built app's root, so these
+<!-- Same files as the app's own icons: the RangerView web server serves the built app's root, so these
      load from the scribe's laptop with no Internet. -->
 <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -262,7 +262,7 @@
 
 <footer class="board-foot meta meta--small">
   RangerView <span id="kitVersion"></span><span id="newerKit" class="newer"></span> ·
-  <a href="https://rangertrak.org/view/" target="_blank" rel="noopener">Setting up the mini web server</a> ·
+  <a href="https://rangertrak.org/view/" target="_blank" rel="noopener">Setting up the RangerView web server (a mini web server that runs on one laptop)</a> ·
   <a href="https://github.com/SteadyEOC/RangerTrak/releases/latest" target="_blank" rel="noopener">Newest version</a>
   (these links need the Internet)
 </footer>
@@ -683,7 +683,7 @@
   }
 
   // ---- one ICS-213, laid out like the form, with Print (E-228 phase 1) ----
-  // The scribe's device still prints the official FEMA form; this is the mini web server's readable copy.
+  // The scribe's device still prints the official FEMA form; this is the RangerView web server's readable copy.
   function open213(r) {
     closeOverlay();
     var m = r.ics213;
@@ -731,7 +731,7 @@
     badgeEl.textContent = text;
   }
 
-  // E-216: when the mini web server last answered, and the Wi-Fi name it gave, for the "lost" message below.
+  // E-216: when the RangerView web server last answered, and the Wi-Fi name it gave, for the "lost" message below.
   var lastGoodAt = 0;
   var lastWifi = '';
   var firstFailAt = 0;
@@ -742,7 +742,7 @@
   function boardLostHtml(atMs, ssid) {
     return 'Lost RangerView at ' + esc(fmtClock(atMs)) + '.' +
       (ssid ? ' Still on <strong>' + esc(ssid) + '</strong>?' : '') +
-      ' Is the laptop running the mini web server awake?';
+      ' Is the laptop running the RangerView web server awake?';
   }
   function scribeQuietText(minutes) {
     return "RangerView is fine. The scribe's device last checked in " + minutes + ' min ago.';
@@ -850,7 +850,7 @@
           return res.arrayBuffer().then(function (bytes) { show(bytes, type); });
         }
         if (res.status === 202) { again(); return; }
-        if (res.status === 401 || res.status === 429) { fail('The mini web server needs its password again. Close this and try once more.'); return; }
+        if (res.status === 401 || res.status === 429) { fail('The RangerView web server needs its password again. Close this and try once more.'); return; }
         fail('The scribe’s device no longer has this file.');
       }).catch(function () { again(); });
     }
@@ -898,8 +898,8 @@
       if (token !== ovToken) { return; }
       if (res.status === 200 || res.status === 202) { fetchOnce(); return; }
       if (res.status === 404) { fail('That file is no longer on RangerView.'); return; }
-      fail('The mini web server could not ask for that file (HTTP ' + res.status + ').');
-    }).catch(function () { fail('The mini web server could not be reached.'); });
+      fail('The RangerView web server could not ask for that file (HTTP ' + res.status + ').');
+    }).catch(function () { fail('The RangerView web server could not be reached.'); });
   }
 
   setView(view);
@@ -945,7 +945,7 @@
   drawTimes();
   setInterval(drawTimes, 5000);
 
-  // The mini web server's version, and a newer kit if the mini web server found one when it started (it checks GitHub once).
+  // The RangerView web server's version, and a newer kit if the RangerView web server found one when it started (it checks GitHub once).
   fetch('/api/hello').then(function (r) { return r.json(); }).then(function (h) {
     if (h && h.version) { document.getElementById('kitVersion').textContent = h.version; }
     if (h && h.newer) { document.getElementById('newerKit').textContent = ' (version ' + h.newer + ' is out)'; }

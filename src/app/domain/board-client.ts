@@ -4,7 +4,7 @@ import { rr213Summary } from './rr213'
 import type { Rr213Type } from '../shared/services/radio-log-entry.interface'
 
 /**
- * The scribe's side of the mini web server (ADR D-61, D-60 item 6): the pure parts of
+ * The scribe's side of the RangerView web server (ADR D-61, D-60 item 6): the pure parts of
  * `CommandPostPublishService`. No fetch, no storage, no timers (D-57), so the whole claim /
  * re-claim / replaced story can be tested without a server. `tools/board/protocol.js` is the
  * server half and the source of truth for the replies read here.
@@ -84,10 +84,10 @@ export function boardStep(state: BoardState, event: BoardEvent): BoardStep {
 /**
  * The URL for one RangerView request, marked so the app's service worker leaves it alone. Angular's worker
  * handles cross-origin fetches too, and when one fails (a certificate not yet accepted, nothing answering)
- * it answers with a made-up empty 504 instead of letting the fetch fail. The app then read "the mini web server
- * refused the claim (HTTP 504)" and "not a mini web server" where the cause was the certificate
+ * it answers with a made-up empty 504 instead of letting the fetch fail. The app then read "the RangerView web server
+ * refused the claim (HTTP 504)" and "not a RangerView web server" where the cause was the certificate
  * (John's laptop test, 2026-11-13). A query flag, not the `ngsw-bypass` header: a custom header would
- * add a CORS preflight to every request. The mini web server ignores query strings on its routes.
+ * add a CORS preflight to every request. The RangerView web server ignores query strings on its routes.
  */
 export function boardRequestUrl(base: string, path: string): string {
   return `${base}${path}${path.includes('?') ? '&' : '?'}ngsw-bypass=1`
@@ -95,7 +95,7 @@ export function boardRequestUrl(base: string, path: string): string {
 
 // ---- reading the server's replies ----
 
-export const WRONG_PASSWORD_MESSAGE = 'RangerView has a password. Check it with whoever runs the mini web server.'
+export const WRONG_PASSWORD_MESSAGE = 'RangerView has a password. Check it with whoever runs the RangerView web server.'
 
 export type ClaimReply =
   | { kind: 'ok', key: string }
@@ -129,7 +129,7 @@ export function readClaimReply(status: number, body: unknown): ClaimReply {
     const wait = Number(b['retryAfter'])
     return { kind: 'refused', message: `Too many wrong passwords. Wait ${Number.isFinite(wait) && wait > 0 ? `${wait} seconds` : 'a minute'} and try again.` }
   }
-  return { kind: 'refused', message: `The mini web server refused the claim (HTTP ${status}).` }
+  return { kind: 'refused', message: `The RangerView web server refused the claim (HTTP ${status}).` }
 }
 
 export type KeyedReply =
@@ -219,7 +219,7 @@ export function attachmentFields(
 
 // ---- the snapshot's ICS-213 messages (E-228 phase 1) ----
 
-/** A 213 as the mini web server shows it: the form's own fields, and when it first went out on paper or PDF. */
+/** A 213 as the RangerView web server shows it: the form's own fields, and when it first went out on paper or PDF. */
 export type BoardIcs213 = { to: string[], subject: string, message: string, replyRequested: boolean, approvedBy: string, printedAt?: string }
 
 /**
@@ -246,7 +246,7 @@ export function ics213Fields(entry: {
 
 /**
  * The resource request (ICS-213RR, E-283) of one published report as one line of plain text
- * (`rr213Summary`), or nothing for an entry without one. The mini web server carries the summary only.
+ * (`rr213Summary`), or nothing for an entry without one. The RangerView web server carries the summary only.
  */
 export function rr213Fields(entry: { rr213?: Rr213Type }): { rr213: string } | Record<string, never> {
   if (!entry.rr213?.lines?.length) return {}

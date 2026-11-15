@@ -5574,7 +5574,7 @@ async function checkDeviceEncryption() {
 // ── runner ───────────────────────────────────────────────────────────────────
 
 /**
- * D-61 / D-60: the mini web server end to end. Starts the real mini web server in this process on
+ * D-61 / D-60: the RangerView web server end to end. Starts the real RangerView web server in this process on
  * 127.0.0.1:8095 (never 8081) with a throwaway certificate, so Chrome must be started with
  * --ignore-certificate-errors: main() adds that flag whenever the board group runs (by name or
  * in a run with no --only), and only then. Nothing here touches the network beyond loopback, and nothing is announced over mDNS.
@@ -5583,10 +5583,10 @@ async function checkDeviceEncryption() {
  * removed); a thumbnail click ending in "Verified"; a wrong password asking for one; a second
  * browser context taking over and the first showing "Another device publishes..."; Take over
  * from the first; and a server restart re-claimed by the holder within ~10 s, without the
- * replaced device taking the mini web server back.
+ * replaced device taking the RangerView web server back.
  */
 async function checkBoard(downloads) {
-  console.log('\nD-61 / D-60: the mini web server - password, viewer, attachment fingerprint, takeover, restart')
+  console.log('\nD-61 / D-60: the RangerView web server - password, viewer, attachment fingerprint, takeover, restart')
   const https = require('https')
   const crypto = require('crypto')
   const selfsigned = require('selfsigned')
@@ -5697,15 +5697,15 @@ async function checkBoard(downloads) {
     await sleep(1500)
 
     const first = await boardUntil(b => (b.reports || []).some(r => (r.attachments || []).length), 25)
-    check('the mini web server holds the report, claimed by device A with the password', [first?.board?.by?.mission, first?.board?.open], ['E2E RangerView', false])
+    check('the RangerView web server holds the report, claimed by device A with the password', [first?.board?.by?.mission, first?.board?.open], ['E2E RangerView', false])
     check('the snapshot carries the attachment reference and a JPEG thumbnail',
       [first?.reports?.[0]?.attachments?.[0]?.sha256, String(first?.reports?.[0]?.attachments?.[0]?.thumb || '').startsWith('data:image/jpeg;base64,')], [pngSha, true])
     check('a viewer with no password is refused', (await boardGet('/api/mission', '')).status, 401)
 
-    // John 10-28 / E-255: the card says how to run the mini web server on this computer, and device A's 127.0.0.1
+    // John 10-28 / E-255: the card says how to run the RangerView web server on this computer, and device A's 127.0.0.1
     // address gets the "only works on this computer" hint (publishing to it still works, as above).
     await goto('/mission', 3000)
-    check('the mini web server card links the RangerView kit and flags the loopback address',
+    check('the RangerView web server card links the RangerView kit and flags the loopback address',
       await evaluate(`[!!document.querySelector('[data-testid=board-run-here] a[href$="/releases"]'), !!document.querySelector('[data-testid=board-localhost]'), !!document.querySelector('[data-testid=board-run-here] a[href="https://rangertrak.org/view/"]')]`), [true, true, true])
     await goto('/')
 
@@ -5754,7 +5754,7 @@ async function checkBoard(downloads) {
     check('a wrong password shows the prompt and no rows', await evaluate(`!document.getElementById('pwForm').hidden && document.querySelectorAll('#rows tr').length === 0`, w.sessionId), true)
     await evaluate(`(() => { document.getElementById('pwInput').value = ${JSON.stringify(PASS)}; document.getElementById('pwForm').requestSubmit(); })()`, w.sessionId)
     const rowsAfter = await pollUntil(() => evaluate(`document.querySelectorAll('#rows tr').length`, w.sessionId), n => n > 0, 20, 300)
-    check('...and the right one opens the mini web server', rowsAfter > 0, true)
+    check('...and the right one opens the RangerView web server', rowsAfter > 0, true)
     await closeTarget(w.targetId)
 
     // ── device B, in its own browser context, takes over ──────────────────────
@@ -6072,7 +6072,7 @@ async function main() {
   const chrome = spawn(findChrome(), [
     '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
     '--no-first-run', '--no-default-browser-check', '--window-size=1400,1000',
-    // The board group talks to a mini web server with a throwaway certificate, so whenever that group runs.
+    // The board group talks to a RangerView web server with a throwaway certificate, so whenever that group runs.
     // want(), not ONLY.includes(): a run with no --only runs every group but has an empty ONLY, so
     // the flag was missing and device A could never publish - the "RangerView fails only in a full run"
     // that stood from 10-20 to 10-26 and was put down to harness state.

@@ -82,7 +82,7 @@ export type CommandPostReport = {
   // Off sends a count; on sends the references, with a thumbnail where there is one.
   attachmentCount?: number
   attachments?: BoardAttachment[]
-  // E-228 phase 1: only on an entry that generates an ICS-213; the mini web server lists these on its own tab.
+  // E-228 phase 1: only on an entry that generates an ICS-213; the RangerView web server lists these on its own tab.
   ics213?: BoardIcs213
   // E-283: the one-line summary of the entry's ICS-213RR resource request, when it has one.
   rr213?: string
@@ -99,7 +99,7 @@ export type CommandPostMission = {
 }
 
 const POLL_MS = 5000
-/** E-216: how long Test connection waits for the mini web server's /api/hello before calling it a timeout. */
+/** E-216: how long Test connection waits for the RangerView web server's /api/hello before calling it a timeout. */
 const HELLO_TIMEOUT_MS = 8000
 
 @Injectable({ providedIn: 'root' })
@@ -128,7 +128,7 @@ export class CommandPostPublishService implements OnDestroy {
   /** E-216: the latest answer to "why can't I reach RangerView?" (Test connection, or the automatic check after a failure). */
   readonly diagnosis = this.diagnosisSignal.asReadonly()
   private testingSignal = signal(false)
-  /** True while Test connection is waiting for the mini web server. */
+  /** True while Test connection is waiting for the RangerView web server. */
   readonly testing = this.testingSignal.asReadonly()
   private retry = new BoardRetry(() => this.retryNow())
   private listening = false
@@ -345,15 +345,15 @@ export class CommandPostPublishService implements OnDestroy {
       if (read.kind === 'ok') this.dispatch({ type: 'keyGood' })
       else if (read.kind === 'unclaimed') this.dispatch({ type: 'keyUnknown' })
       else if (read.kind === 'replaced') { this.holderSignal.set(read.holder); this.dispatch({ type: 'replaced' }) }
-      else { this.messageSignal.set(`The mini web server answered with an error (HTTP ${read.status}).`); this.refuse() }
+      else { this.messageSignal.set(`The RangerView web server answered with an error (HTTP ${read.status}).`); this.refuse() }
     } catch (e) {
       this.claimFailed(base, e)
     }
   }
 
   private claimFailed(base: string, e: unknown): void {
-    // Expected, not an error: the mini web server is a separate process a mission may not have running yet.
-    this.log.warn(`The mini web server was not reachable; is the server running at ${base}? (${e})`, this.id)
+    // Expected, not an error: the RangerView web server is a separate process a mission may not have running yet.
+    this.log.warn(`The RangerView web server was not reachable; is the server running at ${base}? (${e})`, this.id)
     this.refuse()
   }
 
@@ -541,7 +541,7 @@ export class CommandPostPublishService implements OnDestroy {
 
   /**
    * A request failed at the network (not an HTTP status). Say what is most likely at once (the fast/slow guess),
-   * try again later, and - once per failure streak - ask the mini web server `GET /api/hello` to name the cause properly.
+   * try again later, and - once per failure streak - ask the RangerView web server `GET /api/hello` to name the cause properly.
    */
   private noteUnreachable(elapsedMs: number): void {
     const firstOfStreak = !this.unreachableSignal()
@@ -552,7 +552,7 @@ export class CommandPostPublishService implements OnDestroy {
     if (firstOfStreak) void this.diagnoseStreak()
   }
 
-  /** The automatic Test connection after a failure: its answer replaces the guess, unless the mini web server turns out reachable. */
+  /** The automatic Test connection after a failure: its answer replaces the guess, unless the RangerView web server turns out reachable. */
   private async diagnoseStreak(): Promise<void> {
     const base = this.active?.base
     if (!base) return
@@ -562,7 +562,7 @@ export class CommandPostPublishService implements OnDestroy {
     this.messageSignal.set(d.message)
   }
 
-  /** Any HTTP answer at all means the mini web server was reached. */
+  /** Any HTTP answer at all means the RangerView web server was reached. */
   private noteReached(): void {
     if (!this.unreachableSignal()) return
     this.unreachableSignal.set(undefined)
@@ -574,7 +574,7 @@ export class CommandPostPublishService implements OnDestroy {
   // ---- Test connection (E-216 slice 2) ----
 
   /**
-   * The Mission card's Test connection button: asks the mini web server `GET {address}/api/hello` and names the most likely
+   * The Mission card's Test connection button: asks the RangerView web server `GET {address}/api/hello` and names the most likely
    * cause (domain/board-diagnosis.ts). Works with publishing off, from whatever address the scribe has typed.
    * A browser cannot see why a request failed, so the answer is a best guess, worded that way.
    */
@@ -582,7 +582,7 @@ export class CommandPostPublishService implements OnDestroy {
     const typed = normaliseBoardAddress(address ?? this.settings?.commandPostServerUrl)
     if (!typed.url) {
       const d: BoardDiagnosis = {
-        ok: false, message: typed.error ?? 'Type the address the mini web server printed, then test it.', detail: '',
+        ok: false, message: typed.error ?? 'Type the address the RangerView web server printed, then test it.', detail: '',
       }
       this.diagnosisSignal.set(d)
       return d
@@ -612,7 +612,7 @@ export class CommandPostPublishService implements OnDestroy {
     try {
       const res = await fetch(boardRequestUrl(base, '/api/hello'), { signal: AbortSignal.timeout(HELLO_TIMEOUT_MS) })
       let body: { app?: unknown, name?: unknown } | null = null
-      try { body = await res.json() } catch { /* not JSON: not a mini web server */ }
+      try { body = await res.json() } catch { /* not JSON: not a RangerView web server */ }
       return body && body.app === 'rangertrak-board'
         ? { kind: 'ok', name: typeof body.name === 'string' ? body.name : '' }
         : { kind: 'not-board' }

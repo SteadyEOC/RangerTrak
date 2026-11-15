@@ -35,7 +35,7 @@ function isVirtualAdapter(name) {
 }
 
 /**
- * Splits this machine's IPv4 addresses into what the mini web server may listen on and what it must not.
+ * Splits this machine's IPv4 addresses into what the RangerView web server may listen on and what it must not.
  *  - listen:  private, link-local and loopback addresses (one server is started per address);
  *  - lan:     the listen addresses minus loopback - the ones other devices can actually reach,
  *             so the ones the mDNS name should resolve to;

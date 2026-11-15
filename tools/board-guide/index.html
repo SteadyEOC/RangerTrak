@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later
-     Setting up RangerView: the guided version of the kit's READ-ME-FIRST.txt (John, 2026-11-13).
+     Setting up RangerView: the guided version of the RangerView kit's READ-ME-FIRST.txt (John, 2026-11-13).
      Served at rangertrak.org/view/ (angular.json copies it; worker/index.js routes /view and sends /board and /rangerview here).
      It stands alone: inline styles, its own board-guide.js (the CSP allows no inline script), no app code. The checklist ticks are kept in this
      browser's localStorage, a convenience only; the page works without it. -->
@@ -57,11 +57,11 @@
 <body class="os-windows">
 <main>
 
-<h1>Set up RangerView (a remote view of the radio log)</h1>
+<h1>Set up RangerView (advanced)</h1>
 <p class="lede">RangerView lets everyone at the command post watch the live radio log on their own phone, tablet or
-laptop. A small program called the mini web server runs on one computer at the command post, and needs no Internet once it is set up.
+laptop. A small program called the RangerView web server (a mini web server that runs on one laptop) runs on one computer at the command post, and needs no Internet once it is set up. Everyone else opens the RangerView pages in any web browser on the same Wi-Fi.
 Tick each step as you go.</p>
-<p class="note">Looking for the live screen? Open the address shown in the mini web server's window, or scan its QR code.</p>
+<p class="note">Looking for the live screen? Open the address shown in the RangerView web server's window, or scan its QR code.</p>
 
 <div class="gauge" id="gauge">
   <div class="gauge-row">
@@ -80,7 +80,7 @@ Tick each step as you go.</p>
 <details class="step" data-step="node">
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">1. Install Node.js</span></summary>
   <div class="body">
-    <p>The mini web server runs on Node.js, a free program. You need version 24 or newer.</p>
+    <p>The RangerView web server runs on Node.js, a free program. You need version 24 or newer.</p>
     <p><a class="button" href="https://nodejs.org/en/download" target="_blank" rel="noopener">Download Node.js (LTS)</a></p>
     <p><strong>No extra tools are needed.</strong> Accept the installer's defaults.</p>
     <p data-os="windows">Run the <code>.msi</code> installer. When it offers <em>Automatically install the necessary tools</em>
@@ -114,16 +114,16 @@ Tick each step as you go.</p>
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">4. Install RangerTrak on the scribe's device</span></summary>
   <div class="body">
     <p>Open <a href="https://rangertrak.org/">rangertrak.org</a> on the device the scribe logs on, and install it
-      (the browser's Install button) so it works offline. It can be the same computer as the mini web server.</p>
+      (the browser's Install button) so it works offline. It can be the same computer as the RangerView web server.</p>
   </div>
 </details>
 
 <h2 class="phase">At the command post</h2>
 
 <details class="step" data-step="start">
-  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">5. Join the Wi-Fi and start the mini web server</span></summary>
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">5. Join the Wi-Fi and start the RangerView web server</span></summary>
   <div class="body">
-    <p>Join the Wi-Fi or hotspot everyone will use. Plug the computer in and keep the lid open: if it sleeps, the mini web server stops.</p>
+    <p>Join the Wi-Fi or hotspot everyone will use. Plug the computer in and keep the lid open: if it sleeps, the RangerView web server stops.</p>
     <div data-os="windows">
       <p>Double-click <code>Start RangerView.bat</code>.</p>
       <ul>
@@ -133,9 +133,9 @@ Tick each step as you go.</p>
     </div>
     <p data-os="mac">The first time, right-click (or Control-click) <code>Start RangerView.command</code>,
       choose <em>Open</em>, then <em>Open</em>. After that, double-click it.</p>
-    <p data-os="linux">In a terminal, in the kit's folder: <code>node rangerview.js</code>. Linux reserves port 443,
-      so the mini web server may move to another port. Use exactly the address it prints.</p>
-    <p>A window opens with two steps in it. Keep it open; closing it stops the mini web server.</p>
+    <p data-os="linux">In a terminal, in the RangerView kit's folder: <code>node rangerview.js</code>. Linux reserves port 443,
+      so the RangerView web server may move to another port. Use exactly the address it prints.</p>
+    <p>A window opens with two steps in it. Keep it open; closing it stops the RangerView web server.</p>
   </div>
 </details>
 
@@ -143,18 +143,18 @@ Tick each step as you go.</p>
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">6. Connect the scribe's RangerTrak</span></summary>
   <div class="body">
     <p>Use an address from the window's <strong>STEP 1</strong>: the name, normally <code>https://rangerview.local</code>
-      (already copied on the mini web server computer), or the numbered one under it, such as <code>https://10.0.0.15</code>.
+      (already copied on the RangerView web server computer), or the numbered one under it, such as <code>https://10.0.0.15</code>.
       On another computer the name does not work on every network; the numbered one always does.</p>
     <ol>
       <li>Open that address once in the scribe's browser. It warns <em>Your connection is not private</em>:
         expected for a private server. Click <em>Advanced</em>, then <em>Proceed</em>.</li>
       <li>In RangerTrak: <em>Mission</em> page, <em>RangerView</em> card. Paste the address into
         <em>Server address</em> and press <em>Test connection</em>. When it says <em>Connected</em>, turn on
-        <em>Send this log to a remote view (RangerView)</em>.</li>
+        <em>Send this log to RangerView</em>.</li>
       <li>Chrome or Edge may ask: <em>rangertrak.org wants to access other devices on your local network</em>.
-        Click <em>Allow</em>. That is how RangerTrak reaches the mini web server.</li>
+        Click <em>Allow</em>. That is how RangerTrak reaches the RangerView web server.</li>
     </ol>
-    <p>Use that address even when RangerTrak runs on the mini web server computer itself, not <code>localhost</code>.</p>
+    <p>Use that address even when RangerTrak runs on the RangerView web server computer itself, not <code>localhost</code>.</p>
   </div>
 </details>
 
@@ -173,31 +173,31 @@ Tick each step as you go.</p>
   <dl>
     <dt>Test connection says the certificate isn't accepted</dt>
     <dd>Open RangerView's address in that device's browser, choose <em>Advanced</em>, then <em>Proceed</em>, and test again.
-      A mini web server that isn't running looks the same, so check its window too.</dd>
+      A RangerView web server that isn't running looks the same, so check its window too.</dd>
     <dt>Test connection says the browser is blocking the local network</dt>
     <dd><em>Block</em> was clicked on the local network question. Click the icon at the left of the address bar,
       open <em>Site settings</em>, set <em>Local network access</em> to <em>Allow</em>, reload, and test again.</dd>
     <dt>Nothing answers</dt>
-    <dd>The device is probably on a different Wi-Fi from the mini web server computer. A VPN or web-protection app can also be
-      in the way; turn it off while you use the mini web server.</dd>
+    <dd>The device is probably on a different Wi-Fi from the RangerView web server computer. A VPN or web-protection app can also be
+      in the way; turn it off while you use the RangerView web server.</dd>
     <dt>The name doesn't open, or Test connection says it couldn't reach the .local name</dt>
     <dd>Use the numbered address printed under it, such as <code>https://10.0.0.15</code> (with <code>/view</code>
       for viewers). Some routers don't pass the name between wired and Wi-Fi devices, and some phones can't look it up.</dd>
-    <dt>Windows treats the Wi-Fi as Public, or the firewall blocks the mini web server</dt>
-    <dd>Windows then blocks other devices. The mini web server's window says which, and offers the fix.</dd>
+    <dt>Windows treats the Wi-Fi as Public, or the firewall blocks the RangerView web server</dt>
+    <dd>Windows then blocks other devices. The RangerView web server's window says which, and offers the fix.</dd>
     <dt>Hotel or public Wi-Fi</dt>
     <dd>Many keep devices apart. Use your own router or a phone hotspot.</dd>
     <dt>A phone says "No internet" on the Wi-Fi</dt>
-    <dd>Choose <em>Stay connected</em>, or it may switch to mobile data and lose the mini web server.</dd>
+    <dd>Choose <em>Stay connected</em>, or it may switch to mobile data and lose the RangerView web server.</dd>
     <dt>Two Boards on one network</dt>
     <dd>The second calls itself <code>rangerview-2.local</code>. Use the address its own window prints.</dd>
     <dt>Something went wrong and you want help</dt>
-    <dd>Start the mini web server from a terminal with <code>node rangerview.js --log</code>. Each run then writes a
-      log in the kit's <code>logs</code> folder, named for the date and time it started. It holds what the window
+    <dd>Start the RangerView web server from a terminal with <code>node rangerview.js --log</code>. Each run then writes a
+      log in the RangerView kit's <code>logs</code> folder, named for the date and time it started. It holds what the window
       showed and which devices connected, never their passwords. Send that file with your question. Without
-      <code>--log</code> the mini web server keeps no log.</dd>
+      <code>--log</code> the RangerView web server keeps no log.</dd>
   </dl>
-  <p>More in RangerTrak's Help (the mini web server's entry on the Mission page) and the FAQ. Still stuck?
+  <p>More in RangerTrak's Help (the RangerView web server's entry on the Mission page) and the FAQ. Still stuck?
     <a href="https://github.com/SteadyEOC/RangerTrak/issues" target="_blank" rel="noopener">Tell us on GitHub</a>.</p>
 </details>
 

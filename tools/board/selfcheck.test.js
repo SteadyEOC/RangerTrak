@@ -33,7 +33,7 @@ test('network profiles: one object or an array, enum as a number or a word', () 
   assert.strictEqual(s.parseNetProfiles(''), null);
 });
 
-test('a Public profile only matters on an adapter the mini web server is reachable through', () => {
+test('a Public profile only matters on an adapter the RangerView web server is reachable through', () => {
   const profiles = [{ alias: 'Wi-Fi', category: 'Private' }, { alias: 'Ethernet 2', category: 'Public' }];
   assert.deepStrictEqual(s.publicProfilesInUse(profiles, ['wi-fi']), []);
   assert.deepStrictEqual(s.publicProfilesInUse(profiles, ['Ethernet 2']).map((p) => p.alias), ['Ethernet 2']);
@@ -87,7 +87,7 @@ test('fix commands quote an adapter name safely and the elevated script survives
   assert.strictEqual(s.psQuote("Bob's Wi-Fi"), "'Bob''s Wi-Fi'");
   const cmds = s.fixCommands({ publicAliases: ["Wi-Fi 'x'; calc"], addRule: true, port: 8080 });
   assert.strictEqual(cmds[0], "Set-NetConnectionProfile -InterfaceAlias 'Wi-Fi ''x''; calc' -NetworkCategory Private");
-  assert.strictEqual(cmds[1], "New-NetFirewallRule -DisplayName 'RangerView mini web server' -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow -Profile Private");
+  assert.strictEqual(cmds[1], "New-NetFirewallRule -DisplayName 'RangerView web server' -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow -Profile Private");
   const inv = s.elevatedInvocation(cmds);
   assert.match(inv, /^Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile','-EncodedCommand','[A-Za-z0-9+/=]+'$/);
   const encoded = /'-EncodedCommand','([^']+)'/.exec(inv)[1];
@@ -130,7 +130,7 @@ test('runSelfCheck on Windows: Public network, nothing lets devices in, on batte
   assert.match(text, /✖ Windows is treating this Wi-Fi as Public/);
   assert.match(text, /Set-NetConnectionProfile -InterfaceAlias 'Wi-Fi' -NetworkCategory Private/);
   assert.match(text, /✖ Firewall: nothing lets other devices reach RangerView on Private networks/);
-  assert.match(text, /New-NetFirewallRule -DisplayName 'RangerView mini web server' .* -LocalPort 8080 /);
+  assert.match(text, /New-NetFirewallRule -DisplayName 'RangerView web server' .* -LocalPort 8080 /);
   assert.match(text, /✖ This computer is running on battery\. Keep this computer plugged in/);
   assert.deepStrictEqual(s.offerableFixes(check), { publicAliases: ['Wi-Fi'], addRule: true, unblock: false, program: NODE });
 });
@@ -163,7 +163,7 @@ test('a node.exe Block rule on Private wins over any allow; the fix turns it off
   const check = await s.runSelfCheck({ port: 443, platform: 'win32', inUse: ['Wi-Fi'], program: NODE, run });
   assert.strictEqual(check.network.firewall.verdict, 'blocked');
   const text = s.formatSelfCheck({ check, wifi: 'X' }).join('\n');
-  assert.match(text, /✖ Firewall: a Windows Firewall rule blocks the mini web server on Private networks.*"Node\.js JavaScript Runtime"/);
+  assert.match(text, /✖ Firewall: a Windows Firewall rule blocks the RangerView web server on Private networks.*"Node\.js JavaScript Runtime"/);
   assert.match(text, /Get-NetFirewallApplicationFilter -Program 'C:\\Program Files\\nodejs\\node\.exe' .*Disable-NetFirewallRule/);
   assert.match(text, /New-NetFirewallRule/);
   assert.deepStrictEqual(s.offerableFixes(check), { publicAliases: [], addRule: true, unblock: true, program: NODE });

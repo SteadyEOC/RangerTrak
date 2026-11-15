@@ -10,9 +10,9 @@ function fakeRes() {
   return r;
 }
 
-test('the page names the mini web server and says it is safe to go back', () => {
+test('the page names the RangerView web server and says it is safe to go back', () => {
   const html = helloPage('rangerview.local');
-  assert.match(html, /This device can reach the mini web server <strong>rangerview.local<\/strong>/);
+  assert.match(html, /This device can reach the RangerView web server <strong>rangerview.local<\/strong>/);
   assert.match(html, /go back to RangerTrak/);
   assert.doesNotMatch(html, /https?:\/\/|<script|<link/); // self-contained, no external assets
 });

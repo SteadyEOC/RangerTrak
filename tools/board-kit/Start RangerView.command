@@ -3,7 +3,7 @@
 #
 # The kit's own launcher, built into rangerview-<version>.zip by tools/board-kit/build.js
 # (which also sets LF line endings and the executable bit). Nothing here needs npm or a build:
-# rangerview.js carries the mini web server and its packages, and app/ the built app. Node.js 24 is
+# rangerview.js carries the RangerView web server and its packages, and app/ the built app. Node.js 24 is
 # the one thing to install.
 #
 # cd to this file's own folder; macOS does not guarantee a working directory for a double-click.
@@ -46,5 +46,5 @@ fi
 node rangerview.js "$@"
 
 echo ""
-echo "The RangerView mini web server stopped. Close this window, or double-click this file again to restart it."
+echo "The RangerView web server stopped. Close this window, or double-click this file again to restart it."
 pause_and_exit 0

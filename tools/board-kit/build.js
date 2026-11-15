@@ -6,7 +6,7 @@
 // Kit layout, instructions first:
 //   READ-ME-FIRST.txt
 //   Start RangerView.bat / .command   double-click launchers; they only check for Node.js 24
-//   rangerview.js                     the mini web server and its npm dependencies, bundled by esbuild
+//   rangerview.js                     the RangerView web server and its npm dependencies, bundled by esbuild
 //   app/                                    the built app and the viewer, without assets/maps/
 //   LICENSE, THIRD-PARTY-NOTICES.txt        AGPL for RangerTrak; the bundled packages' own licences
 //
@@ -37,7 +37,7 @@ async function main() {
     target: 'node24',
     metafile: true,
     legalComments: 'none', // the full licence texts go in THIRD-PARTY-NOTICES.txt instead
-    banner: { js: `// RangerView mini web server ${version}. AGPL-3.0-or-later; see LICENSE and THIRD-PARTY-NOTICES.txt.` },
+    banner: { js: `// RangerView web server ${version}. AGPL-3.0-or-later; see LICENSE and THIRD-PARTY-NOTICES.txt.` },
     logLevel: 'warning',
   });
 
@@ -67,7 +67,7 @@ function notices(metafile) {
     const m = input.split(path.sep).join('/').match(/^(.*node_modules\/(@[^/]+\/)?[^/]+)\//);
     if (m) dirs.set(m[1], true);
   }
-  const parts = ['RangerView mini web server bundles these npm packages. Their licences follow.\n'];
+  const parts = ['RangerView web server bundles these npm packages. Their licences follow.\n'];
   for (const dir of [...dirs.keys()].sort()) {
     const abs = path.join(REPO, dir);
     const pkg = JSON.parse(fs.readFileSync(path.join(abs, 'package.json'), 'utf8'));

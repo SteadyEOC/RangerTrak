@@ -9,7 +9,7 @@ const LAST_COORDINATE_FORMAT_KEY = 'lastCoordinateFormat'
 const RANGERS_PRIVACY_DISMISSED_KEY = 'rangertrak.rangers.privacyNoticeDismissed'
 // E-187: remembered spreadsheet column mappings, keyed by header set. Header names only, never cell values.
 const IMPORT_MAPPINGS_KEY = 'rt-import-mappings'
-// D-61: this device's hold on a mini web server. See BoardPublisherPref.
+// D-61: this device's hold on a RangerView web server. See BoardPublisherPref.
 const BOARD_PUBLISHER_KEY = 'rt-board-publisher'
 // E-04 / D-63: the kind the AAR/214 capture box opens on ('aar' or 'activity'): the one used last on this device.
 const AAR_NOTE_LAST_KIND_KEY = 'aarNoteLastKind'
@@ -20,9 +20,9 @@ const MSG_STATION_KEY = 'rt-msg-station'
 const GRID_FIT_KEY = 'rt-grid-fit'
 
 /**
- * D-61: what this device remembers about publishing to a mini web server. `key` is the hidden publish key the
+ * D-61: what this device remembers about publishing to a RangerView web server. `key` is the hidden publish key the
  * server issued at the last claim, `base` the server it belongs to. `replaced` is set once another
- * device took the mini web server, so a restart does not claim it back. A secret: never exported, never logged.
+ * device took the RangerView web server, so a restart does not claim it back. A secret: never exported, never logged.
  */
 /** The grids that have a Fit to screen switch. */
 export type GridName = 'radio-log' | 'rangers'

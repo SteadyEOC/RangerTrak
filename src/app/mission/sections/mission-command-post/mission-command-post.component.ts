@@ -56,7 +56,7 @@ export class MissionCommandPostComponent implements OnDestroy {
   private onPhoneMediaChange = (e: MediaQueryListEvent) => this.isPhone.set(e.matches)
 
   /**
-   * D-61 / E-216: what the mini web server is doing, in words, for the line under the switch. Four states only:
+   * D-61 / E-216: what the RangerView web server is doing, in words, for the line under the switch. Four states only:
    * Connected, Trying, Can't reach RangerView (the cause follows, from `statusMessage()`), and Another device has it.
    */
   boardStatus(): string {
@@ -180,7 +180,7 @@ export class MissionCommandPostComponent implements OnDestroy {
 
   readonly httpError = BOARD_HTTP_ERROR
 
-  /** John, 2026-10-28: with the mini web server on this computer, `localhost` publishes fine but makes a viewer link nobody else can open. */
+  /** John, 2026-10-28: with the RangerView web server on this computer, `localhost` publishes fine but makes a viewer link nobody else can open. */
   thisComputerOnly(): boolean {
     return !!this.address().thisComputerOnly
   }

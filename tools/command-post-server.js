@@ -1,6 +1,6 @@
 // E-87 Stage 1 (2026-08-31) - "Command Post Server: serving the mission to nearby devices".
 // See `E-87 Command Post Server.md` in the private docs for the full scoping this implements.
-// Revised for D-61 (the mini web server's name, port, local-network-only listening, viewer password and
+// Revised for D-61 (the RangerView web server's name, port, local-network-only listening, viewer password and
 // single publisher) and D-60 (full-size attachments on request).
 //
 // Read-only mirror, not a sync server: the PWA running on a scribe's own device POSTs a
@@ -238,7 +238,7 @@ async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
  */
 async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', log = console.log, boardOptions = {}, logFile = null }) {
   const servers = [];
-  // D-61 item 7: the address a phone should open, and the password if the mini web server has one.
+  // D-61 item 7: the address a phone should open, and the password if the RangerView web server has one.
   // E-289: the numbered address, not the .local name: a QR code is scanned, never typed, and .local failed across
   // devices on a home router. The name is the fallback only when there is no numbered address.
   const qrState = () => ({ host: addresses[0] || name, port: servers[0].address().port, ...claimState() });
@@ -246,7 +246,7 @@ async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', 
     try {
       const s = qrState();
       log('');
-      log(`Scan to open the mini web server on a phone (${qr.plainUrl(s)}):`);
+      log(`Scan to open the RangerView web server on a phone (${qr.plainUrl(s)}):`);
       log(await qr.terminalQr(qr.viewUrl(s)));
       log(`To show it full screen on this computer, open https://localhost${s.port === 443 ? '' : ':' + s.port}/qr`);
     } catch (e) {
@@ -342,8 +342,9 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   const primaryUrl = nameUrl || `https://${hostPort(addresses[0] || 'localhost')}`;
 
   console.log('');
-  console.log('RangerView mini web server');
-  console.log('================');
+  console.log('RangerView web server');
+  console.log('=====================');
+  console.log("A mini web server that runs on one laptop. Other devices open the RangerView pages in any web browser on this Wi-Fi.");
   console.log(`Serving ${ROOT}`);
   console.log('');
   // E-216: what was found out about this computer and its network. ✔ fine, ✖ will stop devices connecting, · worth knowing.
@@ -351,7 +352,7 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   if (checkLines.length) console.log('');
   if (boxed) for (const line of selfcheck.boxedAddress(`${primaryUrl}/view`)) console.log(line);
   if (skipped.length > 0) {
-    console.log(`Not listening on public address${skipped.length > 1 ? 'es' : ''} ${skipped.join(', ')} - the mini web server is for the local network only.`);
+    console.log(`Not listening on public address${skipped.length > 1 ? 'es' : ''} ${skipped.join(', ')} - the RangerView web server is for the local network only.`);
     console.log('');
   }
   if (!name) {
@@ -384,7 +385,7 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   console.log('"Your connection is not private"? Expected the first time on each device: click');
   console.log('Advanced, then Proceed.');
   console.log('');
-  console.log('Keep this window open and this computer awake. Ctrl+C stops the mini web server.');
+  console.log('Keep this window open and this computer awake. Ctrl+C stops the RangerView web server.');
   console.log('Waiting for the scribe\'s device to publish...');
   console.log('');
 }
@@ -411,7 +412,7 @@ async function start() {
     dir: LOG_DIR,
     warn: console.log,
     header: [
-      `RangerView mini web server ${APP_VERSION}, Node.js ${process.version}, ${os.platform()} ${os.release()} ${os.arch()}, computer ${os.hostname()}`,
+      `RangerView web server ${APP_VERSION}, Node.js ${process.version}, ${os.platform()} ${os.release()} ${os.arch()}, computer ${os.hostname()}`,
       `Started with: ${process.argv.slice(2).join(' ') || '(no options)'}`,
       ...Object.entries(os.networkInterfaces()).map(([n, list]) => `Network adapter ${n}: ${(list || []).map((a) => `${a.address}${a.internal ? ' (internal)' : ''}`).join(', ')}`),
     ],
@@ -419,19 +420,19 @@ async function start() {
   if (logFile) {
     teeConsole(logFile);
     console.log(`Saving a log of this window and every request to ${logFile.file}`);
-    process.on('exit', () => { logFile.line('RangerView mini web server stopped.'); logFile.close(); });
+    process.on('exit', () => { logFile.line('RangerView web server stopped.'); logFile.close(); });
   }
   const found = privateAddresses(os.networkInterfaces());
 
   if (found.lan.length === 0 && !args.allowPublic) {
     console.log('No private network address found, so there is nothing safe to serve on.');
-    console.log('The mini web server only serves the local network (10.x, 172.16-31.x, 192.168.x or 169.254.x).');
+    console.log('The RangerView web server only serves the local network (10.x, 172.16-31.x, 192.168.x or 169.254.x).');
     console.log('Connect to the Wi-Fi or hotspot and start it again. To listen on a public address');
     console.log('anyway, start with --allow-public.');
     if (found.skipped.length > 0) console.log(`(Only public address${found.skipped.length > 1 ? 'es' : ''} found: ${found.skipped.join(', ')})`);
     process.exit(1);
   }
-  // The Wi-Fi name is told to viewers ("Still on <name>?"), so it is read before the mini web server starts. Never fatal.
+  // The Wi-Fi name is told to viewers ("Still on <name>?"), so it is read before the RangerView web server starts. Never fatal.
   const wifiPromise = selfcheck.readWifi();
   // Started now, read after the addresses are printed; offline it ends quietly within 5 s.
   let newerKit = null;
@@ -454,13 +455,13 @@ async function start() {
   } catch (e) {
     await responder.stop();
     const where = e.address ? ` on ${e.address}` : '';
-    console.log(`Could not start the mini web server${where}: ${e.code === 'EADDRINUSE' ? `port ${args.port || FALLBACK_PORT} is already in use` : e.code === 'EACCES' ? `not permitted to use port ${args.port || FALLBACK_PORT}` : e.message}`);
+    console.log(`Could not start the RangerView web server${where}: ${e.code === 'EADDRINUSE' ? `port ${args.port || FALLBACK_PORT} is already in use` : e.code === 'EACCES' ? `not permitted to use port ${args.port || FALLBACK_PORT}` : e.message}`);
     process.exit(1);
   }
 
   responder.announce();
 
-  // E-216: the start-up self-check. Every part is best-effort; none can stop the mini web server.
+  // E-216: the start-up self-check. Every part is best-effort; none can stop the RangerView web server.
   const wifi = await wifiPromise;
   const nets = os.networkInterfaces();
   const inUse = Object.keys(nets).filter((n) => !isVirtualAdapter(n) && (nets[n] || []).some((a) => reachable.includes(a.address)));

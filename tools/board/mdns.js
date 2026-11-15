@@ -1,4 +1,4 @@
-// D-61 item 1 - the mini web server announces `rangerview.local` over multicast DNS, so its address
+// D-61 item 1 - the RangerView web server announces `rangerview.local` over multicast DNS, so its address
 // stays the same from one network to the next (the IPs change every time; the name does not).
 //
 // A minimal responder, written by hand rather than pulled in as a dependency (this tool adds no

@@ -1,7 +1,7 @@
-// The mini web server's update check (John, 2026-11-13). Once at start-up, ask GitHub for the newest RangerTrak
+// The RangerView web server's update check (John, 2026-11-13). Once at start-up, ask GitHub for the newest RangerTrak
 // release and say so in the window when it is newer than this kit. It sends nothing about the mission:
 // one anonymous GET of the public releases API. With no Internet (the usual case in the field) it gives
-// up after a few seconds and says nothing; the mini web server never waits on it.
+// up after a few seconds and says nothing; the RangerView web server never waits on it.
 const RELEASES_API = 'https://api.github.com/repos/SteadyEOC/RangerTrak/releases/latest';
 const GUIDE_URL = 'https://rangertrak.org/view/';
 
@@ -59,7 +59,7 @@ async function checkForUpdate({ current, fetchImpl = globalThis.fetch, timeoutMs
   }
 }
 
-/** The line for the mini web server's window. */
+/** The line for the RangerView web server's window. */
 function updateLine(update, current) {
   return `A newer RangerView kit is out: ${update.version} (this is ${current}). Get it from ${update.url} when you have the Internet.`;
 }

@@ -1,4 +1,4 @@
-// E-290: the mini web server's log is off unless --log is given (on by default only for the 2026-11-14 exercise).
+// E-290: the RangerView web server's log is off unless --log is given (on by default only for the 2026-11-14 exercise).
 const test = require('node:test');
 const assert = require('node:assert');
 const { parseArgs } = require('../command-post-server');
