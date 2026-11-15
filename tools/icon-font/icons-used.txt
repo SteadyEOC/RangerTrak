@@ -44,6 +44,7 @@ filter
 fit_screen
 fitness_center
 folder
+folder_open
 gif
 group
 groups
@@ -70,7 +71,6 @@ map
 merge
 message
 mode
-movie
 note
 notes
 offline_pin
