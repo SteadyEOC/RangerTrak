@@ -64,7 +64,7 @@ L, M2, M3, R = 150, 303, 457, 610
 STOPS = [(1, L, R1, 'First look', 'the demo'), (2, 380, R1, 'First radio call', 'solo or pairs'),
          (3, R, R1, 'Where exactly?', 'six location formats'), (4, R, R2, 'Set up', 'starting a mission'),
          (5, M3, R2, 'Run the net', 'all hands on deck'), (6, M2, R2, 'Lights out', 'no Internet'),
-         (7, L, R2, 'After the mission', 'forms, AAR and backups'), (8, L, R3, 'The Board', 'two devices'),
+         (7, L, R2, 'After the mission', 'forms, AAR and backups'), (8, L, R3, 'RangerView', 'advanced, two devices'),
          (9, 380, R3, 'Field phones', 'two devices')]
 STAGES = [(56, R1 - 80, 648, 172, '1 · Explore the demo'), (56, R2 - 80, 648, 172, '2 · Run your own exercise'),
           (56, R3 - 80, 424, 172, '3 · Optional extras')]
