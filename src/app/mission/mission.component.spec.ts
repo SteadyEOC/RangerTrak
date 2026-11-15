@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { provideRouter } from '@angular/router'
 
 import { provideSwUpdateStub } from '../../testing/sw-update.stub'
+import { MissionReadinessService } from '../shared/services/mission-readiness.service'
+import { ViewService } from '../shared/services/view.service'
 import { MissionComponent } from './mission.component'
 
 describe('MissionComponent', () => {
@@ -168,6 +170,23 @@ describe('MissionComponent', () => {
       const end = component.opPeriodEnd()
       expect(end.getHours()).toBe(3)
       expect(end.getDate()).toBe(21)
+    })
+  })
+
+  // E-298: the MapLibre switch is hidden in Simple view, so the readiness list must not point at it there.
+  describe('MapLibre readiness gap (E-298)', () => {
+    const mapLibreGap = () => component.readinessGaps().filter(g => g.label.includes('MapLibre'))
+
+    it('is left out in Simple view', () => {
+      TestBed.inject(ViewService).setView('simple')
+      TestBed.inject(MissionReadinessService).bundledMapWarmed.set(false)
+      expect(mapLibreGap().length).toBe(0)
+    })
+
+    it('is listed in Full view when the backup map has not been opened', () => {
+      TestBed.inject(ViewService).setView('full')
+      TestBed.inject(MissionReadinessService).bundledMapWarmed.set(false)
+      expect(mapLibreGap().length).toBe(1)
     })
   })
 })

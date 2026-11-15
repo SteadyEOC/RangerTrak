@@ -246,7 +246,8 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
         link: '/map', linkText: 'Save an area on the Map page',
       })
     }
-    if (!r.bundledMapWarmed()) {
+    // E-298: Simple view hides the MapLibre switch, so it must not be listed as a gap there (`mapWarmedCounts`).
+    if (r.mapWarmedCounts() && !r.bundledMapWarmed()) {
       gaps.push({
         label: 'Backup (MapLibre) map has not been opened on this device yet.', severity: 'amber',
         link: '/map', linkText: 'Open the Map page',
