@@ -689,17 +689,22 @@ mat-slide-toggle {
   isolation: auto;
 }
 
-// 2026-11-07, John: Leaflet's fullscreen button (beta.2) enlarges this frame. The map fills it, in
-// both the browser's own fullscreen and Leaflet's window-filling fallback (iPhone).
-.mapLeaflet-frame:fullscreen,
-.mapLeaflet-frame.leaflet-pseudo-fullscreen {
-  border    : none;
-  background: var(--rt-surface);
+// 2026-11-15 (E-314/E-315 follow-up): the map fills the window's height in Display and while the
+// header's Full screen has the map area (native or the iPhone fallback), instead of keeping 70vh.
+// The rest of the page (controls under the map) scrolls below it. Leaflet re-measures by itself.
+:host-context(.map-fullscreen-area:fullscreen),
+:host-context(.rt-pseudo-fullscreen) {
+  .mapLeaflet-frame,
+  #mapLeaflet-main {
+    height: calc(100dvh - 4.5rem);
+  }
 }
 
-.mapLeaflet-frame:fullscreen #mapLeaflet-main,
-.mapLeaflet-frame.leaflet-pseudo-fullscreen #mapLeaflet-main {
-  height: 100%;
+:host-context(html[data-display]) {
+  .mapLeaflet-frame,
+  #mapLeaflet-main {
+    height: calc(100dvh - 7rem);
+  }
 }
 
 .map-filter-chips {

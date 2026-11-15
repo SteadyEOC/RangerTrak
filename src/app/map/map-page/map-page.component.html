@@ -50,6 +50,13 @@
   }
 
   <div class="map-fullscreen-area" #fullscreenArea>
+    @if (fullscreen.isFullscreen()) {
+    <button matButton="filled" type="button" class="map-fullscreen-exit rt-display-hide" data-testid="map-fullscreen-exit"
+      (click)="fullscreen.exit()">
+      <mat-icon>fullscreen_exit</mat-icon>
+      Exit full screen
+    </button>
+    }
     <!-- Maintainer, 2026-08-24: moved below the map - was above it, ahead of the thing it
          toggles. Maintainer, 2026-08-26: moved again - above each engine's own Instructions
          section specifically, not just "somewhere after the map." Projected into whichever

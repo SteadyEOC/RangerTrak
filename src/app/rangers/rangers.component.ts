@@ -1245,6 +1245,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   // Confidentiality bar
 
   dismissPrivacyNotice() {
+    if (this.display.active()) return // Display never writes (D-71); the button is hidden there too
     this.privacyNoticeDismissed = true
     if (!this.devicePrefs.dismissRangersPrivacyNotice()) {
       // Private-browsing or a full quota. The bar still goes away for this visit; it

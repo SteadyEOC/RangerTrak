@@ -2,7 +2,9 @@ import { AsyncPipe, DatePipe, NgComponentOutlet, NgTemplateOutlet } from '@angul
 import {
   ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Type, ViewChild, computed, inject, signal
 } from '@angular/core'
+import { MatButtonModule } from '@angular/material/button'
 import { MatCheckboxModule } from '@angular/material/checkbox'
+import { MatIconModule } from '@angular/material/icon'
 
 import { LmapComponent } from '../../mapLeaflet/mapLeaflet.component'
 import { PageComponent } from '../../shared/page/page.component'
@@ -34,7 +36,7 @@ import { MissionJournalService } from '../../shared/services/mission-journal.ser
 @Component({
   selector: 'rangertrak-map-page',
   standalone: true,
-  imports: [PageComponent, LmapComponent, NgComponentOutlet, NgTemplateOutlet, AsyncPipe, DatePipe, MatCheckboxModule, PlacesIoComponent, AdvancedDirective, PrintBrandComponent],
+  imports: [PageComponent, LmapComponent, NgComponentOutlet, NgTemplateOutlet, AsyncPipe, DatePipe, MatButtonModule, MatCheckboxModule, MatIconModule, PlacesIoComponent, AdvancedDirective, PrintBrandComponent],
   templateUrl: './map-page.component.html',
   styleUrls: ['./map-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -54,7 +56,9 @@ export class MapPageComponent implements OnInit, OnDestroy {
   // E-78 / E-315: the Full screen button is one of the header's page tools now (every page has it).
   // This page registers its map area (map + switch + whichever engine is mounted) as the element
   // that fills the screen, so Full screen here behaves as it did when the button sat in the map.
-  private readonly fullscreen = inject(FullscreenService)
+  // While the map area is full screen the header is out of view (and an iPhone has no Esc), so the
+  // area carries its own Exit full screen button.
+  protected readonly fullscreen = inject(FullscreenService)
 
   // Prepared by: pre-filled from the Entry page's operator name (in-memory OperatorNameService,
   // never persisted). Once the user types here, their text wins and is never overwritten.

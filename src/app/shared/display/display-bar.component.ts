@@ -9,6 +9,10 @@ import { DisplayService } from '../services/display.service'
  * while rows are marked. It fades out after 3 seconds without the mouse, a tap or a key, and comes
  * back on the next one, so a wall screen shows the page and nothing else. Rendered once, in the
  * app shell, only while Display is on. Fixed, with a four-digit z-index so it sits above the map.
+ *
+ * 2026-11-15: bottom centre, not top right, so it never covers the mission name and clock that
+ * Display keeps in the header's top right. While faded it lets clicks through, so a tap on the
+ * invisible bar cannot leave Display by accident.
  */
 @Component({
   selector: 'rangertrak-display-bar',
@@ -34,13 +38,13 @@ import { DisplayService } from '../services/display.service'
     }`,
   styles: `
     .display-bar {
-      position: fixed; top: 8px; right: 8px; z-index: 5000;
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 5000;
       display: flex; gap: 8px; align-items: center;
       padding: 6px; border-radius: 8px;
       background: var(--rt-surface); box-shadow: 0 2px 10px rgb(0 0 0 / 0.3);
       transition: opacity 0.4s;
     }
-    .display-bar--idle { opacity: 0; }
+    .display-bar--idle { opacity: 0; pointer-events: none; }
     .display-bar--idle:focus-within { opacity: 1; }
     @media (prefers-reduced-motion: reduce) { .display-bar { transition: none; } }`,
 })

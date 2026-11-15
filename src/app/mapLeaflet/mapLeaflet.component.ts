@@ -51,6 +51,7 @@ import {
   MissionLocationType, RangerService, MissionService
 } from '../shared/services'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
+import { FullscreenService } from '../shared/services/fullscreen.service'
 import { LocationDialogComponent } from '../map/location-dialog/location-dialog.component'
 import { MapEngineService } from '../map/map-engine.service'
 import { liveRefs } from '../domain/attachments'
@@ -205,7 +206,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   /** E-207: the layers box rows that are advanced, with the layers they switch. */
   private layerExtras: { label: string, layer: L.Layer }[] = []
   private layersBox: HTMLElement | null = null
-  private fullscreen?: L.FullscreenControl
+  private readonly fullscreenService = inject(FullscreenService)
 
   /**
    * E-207 / D-62: in Easy menus the layers box shows its extras (USNG/MGRS grid, satellite,
@@ -513,10 +514,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       return
     }
 
-    // 2026-11-07, John: Leaflet 2.0.0-beta.2's built-in fullscreen button, under the zoom control.
-    // It enlarges the whole frame, not just the map, so the filter chips stay in view. Where the
-    // browser has no Fullscreen API (iPhone), Leaflet fills the window with CSS instead.
-    this.fullscreen = new L.FullscreenControl({ container: this.printFrame.nativeElement }).addTo(this.lMap)
+    // 2026-11-15 (E-315 follow-up): Leaflet's own in-map fullscreen button (added 11-07) is gone. The
+    // header's Full screen fills the Map page's map area (FullscreenService, with its own iPhone
+    // fallback), and the map page shows an Exit full screen button inside that area.
 
     // tools/e2e.js (#76 - the All/selected switch): stashed for read-only e2e introspection
     // only. A wide-enough spread of reports to rule out Leaflet.markercluster merging two
@@ -1237,8 +1237,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.journal.record('print-map', 'Printed the map sheet.')
     // The print sheet lays the frame out itself, so leave fullscreen first. A native exit is awaited;
     // the window-filling fallback (iPhone) has no browser state and ends at once.
-    if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined)
-    else if (this.fullscreen?.isFullscreen()) this.fullscreen.setFullscreen(false)
+    await this.fullscreenService.exit()
     return this.print.onBtnPrintMap()
   }
 

@@ -52,6 +52,21 @@
   width: 100%;
 }
 
+// 2026-11-15 (E-314/E-315 follow-up): fill the window's height in Display and in the map area's
+// full screen, as the Leaflet map does. MapLibre re-measures by itself.
+:host-context(.map-fullscreen-area:fullscreen),
+:host-context(.rt-pseudo-fullscreen) {
+  #pmtiles-map {
+    height: calc(100dvh - 4.5rem);
+  }
+}
+
+:host-context(html[data-display]) {
+  #pmtiles-map {
+    height: calc(100dvh - 7rem);
+  }
+}
+
 // 2026-09-30, John: E-152 part 1 - MapLibre's scale bar is added for the printed sheet only;
 // on screen this engine has never had one and the map must look as it did.
 :host ::ng-deep .maplibregl-ctrl-scale {

@@ -720,11 +720,12 @@ async function checkStickyNavbar() {
 }
 
 /**
- * 2026-11-10 (blog session note, 11-08): with no Fullscreen API (iPhone), Leaflet's fullscreen
- * button fills the window with `.leaflet-pseudo-fullscreen` (fixed, z-index 99999). The sticky
- * navbar's isolation rule above capped that below the navbar and the page buttons, which drew
- * over the map. The page is scrolled first, as a user's would be. Proven red without the
- * `:has(.leaflet-pseudo-fullscreen)` rule in map-page.component.scss.
+ * 2026-11-10 (blog session note, 11-08): with no Fullscreen API (iPhone), full screen on the Map
+ * fills the window with CSS. The sticky navbar's isolation rule above once capped that below the
+ * navbar and the page buttons, which drew over the map. The page is scrolled first, as a user's
+ * would be. 2026-11-15 (E-315 follow-up): the button is the header's Full screen now (Leaflet's own
+ * in-map one is gone); FullscreenService pins the map area (`.rt-pseudo-fullscreen`), and the area
+ * carries its own Exit full screen button, since an iPhone has no Esc and the header is covered.
  */
 async function checkMapPseudoFullscreen() {
   console.log('\nMap: the window-filling fullscreen fallback (iPhone) covers the navbar and page buttons')
@@ -735,26 +736,33 @@ async function checkMapPseudoFullscreen() {
     Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => false });
     window.scrollTo(0, 200);
     let btn = null;
-    for (let i = 0; i < 40 && !(btn = document.querySelector('#mapLeaflet-main .leaflet-control-fullscreen a')); i++) await new Promise(res => setTimeout(res, 200));
-    if (!btn) return { button: false };
+    for (let i = 0; i < 40 && !(btn = document.querySelector('[data-testid="fullscreen-toggle"]')); i++) await new Promise(res => setTimeout(res, 200));
+    if (!btn || !document.querySelector('#mapLeaflet-main')) return { button: false };
+    const leafletButton = !!document.querySelector('#mapLeaflet-main .leaflet-control-fullscreen');
     btn.click();
     await new Promise(res => setTimeout(res, 400));
-    const frame = document.querySelector('.mapLeaflet-frame');
-    const pseudo = frame.classList.contains('leaflet-pseudo-fullscreen');
+    const area = document.querySelector('.map-fullscreen-area');
+    const pseudo = area.classList.contains('rt-pseudo-fullscreen');
     const pts = [[innerWidth / 2, 20], [innerWidth - 30, 70], [innerWidth - 30, innerHeight - 30]];
-    const covered = pts.map(([x, y]) => frame.contains(document.elementFromPoint(x, y)));
+    const covered = pts.map(([x, y]) => area.contains(document.elementFromPoint(x, y)));
     const hits = pts.map(([x, y]) => { const el = document.elementFromPoint(x, y); return el ? el.tagName + '.' + String(el.className).slice(0, 40) : null });
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const mapH = document.querySelector('#mapLeaflet-main').getBoundingClientRect().height;
+    const exitBtn = document.querySelector('[data-testid="map-fullscreen-exit"]');
+    const exitVisible = !!exitBtn && area.contains(document.elementFromPoint(exitBtn.getBoundingClientRect().left + 5, exitBtn.getBoundingClientRect().top + 5));
+    exitBtn?.click();
     await new Promise(res => setTimeout(res, 200));
-    return { button: true, pseudo, covered, hits, exited: !frame.classList.contains('leaflet-pseudo-fullscreen') };
+    return { button: true, leafletButton, pseudo, covered, hits, tall: mapH > innerHeight * 0.8, exitVisible, exited: !area.classList.contains('rt-pseudo-fullscreen') };
   })()`)
-  check('the Leaflet fullscreen button is on the map', r.button, true)
+  check('the header Full screen button is on the Map page', r.button, true)
   if (r.button) {
+    check("Leaflet's own in-map fullscreen button is gone", r.leafletButton, false)
     check('with no Fullscreen API, the button uses the window-filling fallback', r.pseudo, true)
     const ok = r.covered.every(Boolean)
     if (!ok) console.log('    points not covered by the map:', JSON.stringify(r.hits))
     check('the map is on top at the navbar, top-right and bottom-right points', ok, true)
-    check('Escape leaves the fallback', r.exited, true)
+    check('the map fills most of the window height', r.tall, true)
+    check('the map area shows its own Exit full screen button', r.exitVisible, true)
+    check('Exit full screen leaves the fallback', r.exited, true)
   }
   await send('Emulation.clearDeviceMetricsOverride')
 }
