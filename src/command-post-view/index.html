@@ -207,6 +207,34 @@
   .form213 dt { font-weight: 700; color: var(--ink-2); }
   .form213 dd { margin: 0; }
   .form213 .message { white-space: pre-wrap; padding: 0.5rem; border: 1px solid var(--line); border-radius: 4px; }
+  /* E-293 phase A: the Map tab. The map's own code and style sheet are fetched from RangerView the first time the tab opens. */
+  #mapPanel[hidden] { display: none; }
+  #mapNote { margin: 0 0 0.5rem; color: var(--ink-2); }
+  #mapBox { height: 62vh; min-height: 20rem; border: 1px solid var(--line); border-radius: 6px; background: #e0e0e0; }
+  .pin {
+    --pin: light-dark(#55636F, #93A3B1);
+    width: 44px; height: 44px; padding: 0; border: none; background: none; cursor: pointer; position: relative;
+  }
+  .pin::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px;
+    border-radius: 50%; background: var(--pin); border: 3px solid #fff; box-shadow: 0 0 0 1px #000, 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+  .pin-newest { z-index: 2; }
+  .pin-newest::before { width: 28px; height: 28px; margin: -14px 0 0 -14px; border-color: #ffd400; box-shadow: 0 0 0 2px #000, 0 0 10px 3px #ffd400; }
+  .pin-normal { --pin: light-dark(#55636F, #93A3B1); }
+  .pin-location-report { --pin: light-dark(#0F6E63, #4FC3B4); }
+  .pin-evidence-report { --pin: light-dark(#8A5A00, #D9A300); }
+  .pin-need-rest-food { --pin: light-dark(#3C6E2A, #7CC96A); }
+  .pin-incident-check-in { --pin: light-dark(#1F5FA8, #6BA8F0); }
+  .pin-incident-check-out { --pin: light-dark(#3A4550, #7A8896); }
+  .pin-urgent { --pin: light-dark(#B3261E, #FF6B5E); }
+  #mapBox .maplibregl-popup-content { color: #1a1a1a; font: 0.9rem/1.35 system-ui, sans-serif; max-width: 16rem; padding: 0.7rem 2.6rem 0.7rem 0.8rem; }
+  #mapBox .maplibregl-popup-close-button { width: 44px; height: 44px; font-size: 1.6rem; }
+  #mapBox .maplibregl-ctrl-group button { width: 44px; height: 44px; }
+  .pop-notes { margin: 0.3rem 0 0.4rem; white-space: pre-wrap; word-break: break-word; }
+  .pop-show { min-height: 44px; padding: 0 0.6rem; border: 1px solid #0b5fa8; border-radius: 6px; background: #fff; color: #0b5fa8; font: inherit; font-weight: 600; cursor: pointer; }
+  tr.hit td { animation: hitrow 4s ease-out; }
+  @keyframes hitrow { 0%, 60% { background: #ffe680; color: #1a1a1a; } 100% { background: transparent; } }
   /* Print from a 213: only the message prints, on a plain white page. */
   @media print {
     body.print-213 > :not(#overlay) { display: none !important; }
@@ -241,6 +269,7 @@
 <div class="tabs" role="tablist" aria-label="What to show">
   <button id="tabLog" type="button" role="tab" aria-selected="true" aria-controls="logPanel" data-view="log">Radio log</button>
   <button id="tabMsgs" type="button" role="tab" aria-selected="false" aria-controls="logPanel" data-view="msgs">ICS-213 messages</button>
+  <button id="tabMap" type="button" role="tab" aria-selected="false" aria-controls="mapPanel" data-view="map">Map</button>
 </div>
 
 <div class="controls">
@@ -259,6 +288,11 @@
   </table>
 </div>
 <p id="emptyState" class="empty" hidden>No reports match.</p>
+
+<div id="mapPanel" role="tabpanel" aria-label="Map of the reports" hidden>
+  <p id="mapNote" role="status"></p>
+  <div id="mapBox"></div>
+</div>
 
 <footer class="board-foot meta meta--small">
   RangerView <span id="kitVersion"></span><span id="newerKit" class="newer"></span> ·
@@ -307,6 +341,8 @@
   var filterEl = document.getElementById('filterInput');
   var markedOnlyBtn = document.getElementById('markedOnly');
   var headRow = document.querySelector('thead tr');
+  var logPanelEl = document.getElementById('logPanel');
+  var mapPanelEl = document.getElementById('mapPanel');
   var themeBtn = document.getElementById('themeToggle');
 
   // ---- light / dark (John, 2026-10-21) ----
@@ -397,12 +433,14 @@
 
   function setView(v) {
     view = v;
-    try { localStorage.setItem('boardView', v); } catch (e) { /* kept for this visit only */ }
-    var keys = COLUMNS[v].map(function (c) { return c[0]; });
+    // The map is not remembered: opening RangerView again starts on the log and loads nothing extra.
+    if (v !== 'map') { try { localStorage.setItem('boardView', v); } catch (e) { /* kept for this visit only */ } }
+    var keys = (COLUMNS[v] || COLUMNS.log).map(function (c) { return c[0]; });
     if (keys.indexOf(sortKey) === -1) { sortKey = 'time'; sortDir = -1; }
     filterEl.placeholder = v === 'msgs' ? 'Filter by number, station, To, subject, or message…'
       : 'Filter by number, callsign, status, or message…';
     render();
+    if (v === 'map') { openMap(); }
   }
   for (var ti = 0; ti < tabButtons.length; ti++) {
     tabButtons[ti].addEventListener('click', function (ev) { setView(ev.currentTarget.getAttribute('data-view')); });
@@ -416,7 +454,7 @@
   function is213(r) { return !!(r && r.ics213 && typeof r.ics213 === 'object'); }
 
   function drawHead() {
-    headRow.innerHTML = COLUMNS[view].map(function (c) {
+    headRow.innerHTML = (COLUMNS[view] || COLUMNS.log).map(function (c) {
       var sort = c[0] !== sortKey ? 'none' : sortDir < 0 ? 'descending' : 'ascending';
       return '<th aria-sort="' + sort + '"><button type="button" data-sort="' + c[0] + '"'
         + (c[2] ? ' aria-label="' + escAttr(c[2]) + '"' : '') + '>' + esc(c[1]) + '</button></th>';
@@ -615,7 +653,12 @@
 
   function render() {
     drawHead();
+    var onMap = view === 'map';
+    logPanelEl.hidden = onMap;
+    mapPanelEl.hidden = !onMap;
+    if (onMap) { emptyEl.hidden = true; }
     if (!latest) {
+      if (onMap) { updateMap([]); return; }
       rowsEl.innerHTML = '';
       emptyEl.hidden = false;
       emptyEl.textContent = 'Nothing yet. The log appears here once the scribe turns on sending to RangerView.';
@@ -630,7 +673,7 @@
     var all = latest.reports || [];
     var msgCount = all.filter(is213).length;
     tabButtons[1].textContent = 'ICS-213 messages' + (msgCount ? ' (' + msgCount + ')' : '');
-    var reports = view === 'msgs' ? all.filter(is213) : all.slice();
+    var reports = view === 'msgs' ? all.filter(is213) : all.slice(); // the map shows every report, like the log
     var markedCount = reports.filter(isMarked).length;
     markedOnlyBtn.textContent = '★ Marked only' + (markedCount ? ' (' + markedCount + ')' : '');
     if (markedOnly) { reports = reports.filter(isMarked); }
@@ -644,6 +687,7 @@
       });
     }
     reports.sort(compareReports);
+    if (onMap) { updateMap(reports); return; }
 
     if (!reports.length) {
       rowsEl.innerHTML = '';
@@ -678,9 +722,178 @@
           + '<td>' + esc(r.source) + '</td>'
           + '<td>' + esc(r.notes) + rrLine(r) + '</td>';
       }
-      return '<tr' + (marked ? ' class="marked"' : '') + '>' + cells + '<td>' + filesCell(r) + '</td></tr>';
+      return '<tr data-rid="' + escAttr(r.id) + '"' + (marked ? ' class="marked"' : '') + '>' + cells + '<td>' + filesCell(r) + '</td></tr>';
     }).join('');
   }
+
+  // ---- the Map tab (E-293 phase A) ----
+  // Nothing is fetched until the tab is first opened. The map code (MapLibre), the PMTiles reader and the
+  // world base map all come from RangerView itself, at /view-lib/: there is no Internet at the command post.
+  // The scribe's own area maps are a later phase; for now this is the world map and a marker per located report.
+  var LIB = '/view-lib/';
+  var STATUS_KEYS = {
+    'normal': 'normal', 'location report': 'location-report', 'evidence report': 'evidence-report',
+    'need rest/food': 'need-rest-food', 'incident check-in': 'incident-check-in',
+    'incident check-out': 'incident-check-out', 'urgent': 'urgent'
+  };
+  var maplib = null;        // the MapLibre module, once loaded
+  var mapLoading = null;    // the promise while it loads
+  var map = null;
+  var mapFitted = false;    // fitted to the reports once; after that the viewer's own pan and zoom stay
+  var pins = {};            // report id -> { marker, sig }
+  var mapReports = [];      // the reports last drawn
+  var mapNoteEl = document.getElementById('mapNote');
+
+  function loadMapLibs() {
+    if (mapLoading) { return mapLoading; }
+    mapLoading = new Promise(function (resolve, reject) {
+      document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="' + LIB + 'maplibre-gl.css">');
+      var js = document.createElement('script');
+      js.src = LIB + 'pmtiles.js';
+      js.onload = function () { resolve(); };
+      js.onerror = function () { reject(new Error('pmtiles.js')); };
+      document.head.appendChild(js);
+    }).then(function () {
+      return import(LIB + 'maplibre-gl.mjs');
+    }).then(function (m) { maplib = m; });
+    mapLoading.catch(function () { mapLoading = null; }); // so opening the tab again tries again
+    return mapLoading;
+  }
+
+  function mapStyle() {
+    var src = 'basemap';
+    return {
+      version: 8,
+      sources: { basemap: { type: 'vector', url: 'pmtiles://' + LIB + 'world.pmtiles', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' } },
+      layers: [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#e0e0e0' } },
+        { id: 'earth', type: 'fill', source: src, 'source-layer': 'earth', paint: { 'fill-color': '#f2e9d8' } },
+        { id: 'water', type: 'fill', source: src, 'source-layer': 'water', paint: { 'fill-color': '#8ec6ec' } },
+        { id: 'landuse', type: 'fill', source: src, 'source-layer': 'landuse', paint: { 'fill-color': '#c8e6c0' } },
+        { id: 'roads', type: 'line', source: src, 'source-layer': 'roads', paint: { 'line-color': '#888', 'line-width': 1 } },
+        { id: 'buildings', type: 'fill', source: src, 'source-layer': 'buildings', paint: { 'fill-color': '#c0a080' } }
+      ]
+    };
+  }
+
+  function openMap() {
+    if (map) { setTimeout(function () { map.resize(); }, 0); return; }
+    mapNoteEl.textContent = 'Loading the map…';
+    loadMapLibs().then(function () {
+      if (map) { return; }
+      var protocol = new pmtiles.Protocol();
+      // The same cache choice the app makes: a failed range read is never remembered as pending.
+      protocol.add(new pmtiles.PMTiles(LIB + 'world.pmtiles', new pmtiles.ResolvedValueCache()));
+      maplib.addProtocol('pmtiles', protocol.tile);
+      maplib.setWorkerUrl(LIB + 'maplibre-gl-worker.mjs');
+      map = new maplib.Map({ container: 'mapBox', style: mapStyle(), center: [0, 20], zoom: 1, maxZoom: 18, dragRotate: false });
+      map.touchZoomRotate.disableRotation();
+      map.addControl(new maplib.NavigationControl({ showCompass: false }), 'top-right');
+      updateMap(mapReports);
+    }).catch(function (e) {
+      if (window.console) { console.warn('RangerView map', e); }
+      mapNoteEl.textContent = 'The map could not load. The radio log still works. Tap Map again to retry.';
+    });
+  }
+
+  function located(r) {
+    var l = r && r.location;
+    return !!l && typeof l.lat === 'number' && typeof l.lng === 'number' && isFinite(l.lat) && isFinite(l.lng)
+      && Math.abs(l.lat) <= 90 && Math.abs(l.lng) <= 180;
+  }
+
+  function pinClass(r, newest) {
+    var key = STATUS_KEYS[String(r.status || '').trim().toLowerCase()] || 'normal';
+    return 'pin pin-' + key + (newest ? ' pin-newest' : '');
+  }
+
+  function popupFor(r) {
+    var box = document.createElement('div');
+    var head = document.createElement('strong');
+    head.textContent = station(r.tacticalCall, r.callsign) || '(not given)';
+    box.appendChild(head);
+    var when = document.createElement('div');
+    when.textContent = fmtTime(r.date) + (r.status ? ' · ' + r.status : '');
+    box.appendChild(when);
+    var lines = String(r.notes || '').split(/\r?\n/).slice(0, 3).join('\n');
+    if (lines.length > 200) { lines = lines.slice(0, 200) + '…'; }
+    if (lines) {
+      var notes = document.createElement('div');
+      notes.className = 'pop-notes';
+      notes.textContent = lines;
+      box.appendChild(notes);
+    }
+    var show = document.createElement('button');
+    show.type = 'button';
+    show.className = 'pop-show';
+    show.textContent = 'Show in log';
+    show.addEventListener('click', function () { showInLog(r.id); });
+    box.appendChild(show);
+    return box;
+  }
+
+  // Back to the Radio log tab, scrolled to that row, which flashes.
+  function showInLog(id) {
+    setView('log');
+    var rows = rowsEl.querySelectorAll('tr[data-rid]');
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].getAttribute('data-rid') === String(id)) {
+        rows[i].scrollIntoView({ block: 'center' });
+        rows[i].classList.add('hit');
+        setTimeout(function (row) { row.classList.remove('hit'); }.bind(null, rows[i]), 4500);
+        return;
+      }
+    }
+  }
+
+  // One marker per located report that the log's filter and search keep, colored by status, the newest ringed
+  // in yellow. Only markers that changed are rebuilt, so a poll neither closes a popup nor moves the view.
+  function updateMap(reports) {
+    mapReports = reports;
+    var pts = reports.filter(located);
+    mapNoteEl.textContent = pts.length ? ''
+      : latest && (latest.reports || []).some(located) ? 'No reports with a location match the filter.'
+        : 'No reports with a location yet.';
+    if (!map || !maplib) { return; }
+    var newest = null;
+    pts.forEach(function (r) {
+      if (!newest || (new Date(r.date).getTime() || 0) > (new Date(newest.date).getTime() || 0)) { newest = r; }
+    });
+    var keep = {};
+    pts.forEach(function (r) {
+      var id = String(r.id);
+      var isNew = r === newest;
+      var sig = [r.location.lat, r.location.lng, r.status, r.date, r.notes, r.callsign, r.tacticalCall, isNew].join('|');
+      keep[id] = true;
+      var have = pins[id];
+      if (have && have.sig === sig) { return; }
+      if (have) { have.marker.remove(); }
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = pinClass(r, isNew);
+      el.setAttribute('aria-label', (station(r.tacticalCall, r.callsign) || 'Report') + ', ' + (r.status || 'no status') + ', ' + fmtTime(r.date));
+      var marker = new maplib.Marker({ element: el })
+        .setLngLat([r.location.lng, r.location.lat])
+        .setPopup(new maplib.Popup({ offset: 18, maxWidth: '16rem' }).setDOMContent(popupFor(r)))
+        .addTo(map);
+      pins[id] = { marker: marker, sig: sig };
+    });
+    Object.keys(pins).forEach(function (id) {
+      if (!keep[id]) { pins[id].marker.remove(); delete pins[id]; }
+    });
+    // Fit once, when the first located reports are on the map; after that the viewer's pan and zoom are theirs.
+    if (!mapFitted && pts.length) {
+      mapFitted = true;
+      if (pts.length === 1) {
+        map.jumpTo({ center: [pts[0].location.lng, pts[0].location.lat], zoom: 12 });
+      } else {
+        var b = new maplib.LngLatBounds();
+        pts.forEach(function (r) { b.extend([r.location.lng, r.location.lat]); });
+        map.fitBounds(b, { padding: 60, maxZoom: 14, duration: 0 });
+      }
+    }
+  }
+
 
   // ---- one ICS-213, laid out like the form, with Print (E-228 phase 1) ----
   // The scribe's device still prints the official FEMA form; this is RangerView's readable copy.

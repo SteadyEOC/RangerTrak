@@ -94,6 +94,10 @@ jobs:
           test -f "dist/board-kit/$NAME/rangerview.js"
           test -f "dist/board-kit/$NAME/app/index.html"
           test -x "dist/board-kit/$NAME/Start RangerView.command"
+          # E-293: the viewer's Map tab files; the world base map is about 15 MB.
+          test -f "dist/board-kit/$NAME/viewer-lib/maplibre-gl.mjs"
+          test -f "dist/board-kit/$NAME/viewer-lib/pmtiles.js"
+          test "$(stat -c %s "dist/board-kit/$NAME/viewer-lib/world.pmtiles")" -gt 1000000
           # Never name an env var ZIP (or ZIPOPT): Info-ZIP reads it as default options. On v1.0.0-beta.2 the
           # web zip's path sat in $ZIP, so this zip added RangerView to the web zip, exited 0 and left no RangerView zip.
           cp -r "dist/board-kit/$NAME" "$RUNNER_TEMP/$NAME"

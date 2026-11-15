@@ -8,6 +8,7 @@
 //   Start RangerView.bat / .command   double-click launchers; they only check for Node.js 24
 //   rangerview.js                     RangerView and its npm dependencies, bundled by esbuild
 //   app/                                    the built app and the viewer, without assets/maps/
+//   viewer-lib/                             E-293: the viewer's Map tab: maplibre-gl, pmtiles and the world base map
 //   LICENSE, THIRD-PARTY-NOTICES.txt        AGPL for RangerTrak; the bundled packages' own licences
 //
 // The release workflow zips the folder and attaches it to the release beside the web zip.
@@ -44,6 +45,20 @@ async function main() {
   fs.cpSync(APP, path.join(OUT, 'app'), { recursive: true });
   fs.rmSync(path.join(OUT, 'app', 'assets', 'maps'), { recursive: true, force: true });
 
+  // E-293: the Map tab's code and the world base map, served at /view-lib/ (tools/board/viewer-lib.js). They sit
+  // in their own folder, not in app/, because app/assets/maps is removed above.
+  const lib = path.join(OUT, 'viewer-lib');
+  fs.mkdirSync(lib, { recursive: true });
+  const mapLibre = path.join(REPO, 'node_modules', 'maplibre-gl', 'dist');
+  for (const f of ['maplibre-gl.mjs', 'maplibre-gl-worker.mjs', 'maplibre-gl-shared.mjs', 'maplibre-gl.css']) {
+    fs.copyFileSync(path.join(mapLibre, f), path.join(lib, f));
+  }
+  fs.copyFileSync(path.join(REPO, 'node_modules', 'pmtiles', 'dist', 'pmtiles.js'), path.join(lib, 'pmtiles.js'));
+  const maps = path.join(REPO, 'src', 'assets', 'maps');
+  const world = fs.readdirSync(maps).filter((f) => /^world-z5-.*\.pmtiles$/.test(f)).sort().pop();
+  if (!world) throw new Error('No world-z5 map in src/assets/maps');
+  fs.copyFileSync(path.join(maps, world), path.join(lib, 'world.pmtiles'));
+
   // Line endings set here, not left to the checkout: CI checks out on Linux, and cmd.exe misreads
   // some LF-only batch files, while a CRLF .command fails on its shebang (see .gitattributes).
   const copyWithEol = (f, eol) => {
@@ -58,6 +73,17 @@ async function main() {
   fs.writeFileSync(path.join(OUT, 'THIRD-PARTY-NOTICES.txt'), notices(result.metafile));
 
   console.log(`RangerView: ${path.relative(REPO, OUT)}`);
+  console.log(`  viewer-lib: ${(dirBytes(lib) / 1048576).toFixed(1)} MB; whole folder ${(dirBytes(OUT) / 1048576).toFixed(1)} MB`);
+}
+
+/** Total bytes of every file under dir (the kit's size, printed so a jump is noticed). */
+function dirBytes(dir) {
+  let n = 0;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    n += e.isDirectory() ? dirBytes(p) : fs.statSync(p).size;
+  }
+  return n;
 }
 
 /** The licence of every npm package that ended up in the bundle, from its own folder. */

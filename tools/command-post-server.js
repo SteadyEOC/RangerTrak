@@ -41,6 +41,7 @@ const { privateAddresses, isVirtualAdapter } = require('./board/net');
 const { createResponder, sanitizeLabel } = require('./board/mdns');
 const { createBoard } = require('./board/protocol');
 const qr = require('./board/qr');
+const { createViewerLib } = require('./board/viewer-lib');
 const { handleHello } = require('./board/hello');
 const { boardCause } = require('./board/causes');
 const selfcheck = require('./board/selfcheck');
@@ -254,9 +255,12 @@ async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', 
     }
   };
   const { handle, board, claimState, viewerCount, status } = createBoard({ log, name, ...boardOptions, onClaim: printQr });
+  const viewerLib = createViewerLib({ kitDir: KIT_DIR });
   const handler = (req, res) => {
     if (logFile) logFile.request(req, res);
     if (req.url.startsWith('/api/')) return handle(req, res);
+    // E-293: the viewer's Map tab files (map code and the world base map), from RangerView's own folder.
+    if (viewerLib(req, res)) return undefined;
     // E-216: reachability check. No data, no password, not a claim and not a viewer.
     if (req.url.split('?')[0] === '/hello' && (req.method === 'GET' || req.method === 'HEAD')) {
       handleHello(req, res, name);

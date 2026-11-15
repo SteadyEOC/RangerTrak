@@ -60,6 +60,8 @@ AT THE COMMAND POST
    Chrome or Edge may ask "rangertrak.org wants to access other devices on your local
    network". Click Allow: that is how RangerTrak reaches RangerView.
 6. STEP 2 in the window is for viewers: the same address with /view on the end, or the QR code.
+   Viewers see the radio log, the ICS-213 messages, and a Map tab: a world map with a marker for each
+   report that has a location. The Map needs no Internet; it loads only when someone opens that tab.
 
 
 THE LOG
