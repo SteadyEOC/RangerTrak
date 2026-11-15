@@ -1,7 +1,7 @@
 // D-61 item 7 - the viewer QR code. For phone users, who would otherwise type the address.
 //
 // With a password set, the QR link carries it after a `#`: the browser never sends that part to
-// the server, and the RangerView web server page reads it, keeps it for the tab and removes it from the address bar.
+// the server, and RangerView page reads it, keeps it for the tab and removes it from the address bar.
 //
 // Two places show it. After a claim the terminal prints a small one. And `/qr` serves a page with
 // a large one plus the address in big type, for the laptop's user to open full screen. That page

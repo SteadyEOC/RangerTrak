@@ -1,7 +1,7 @@
 import causes from './board-causes.json'
 
 /**
- * E-216 slice 2: the one list of "why can't I reach RangerView" causes. The same JSON is read by the RangerView web server
+ * E-216 slice 2: the one list of "why can't I reach RangerView" causes. The same JSON is read by RangerView
  * server (`tools/board/causes.js`), and its two viewer sentences are copied into `src/command-post-view/index.html`
  * (plain static JS, cannot import), where `tools/board/causes.test.js` fails if they drift.
  *

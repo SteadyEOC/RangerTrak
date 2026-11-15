@@ -8,7 +8,7 @@
 #   LICENSE
 #   rangertrak/          the built site, without assets/maps/ (John, 2026-10-28: no basemap in
 #                        the zip - hosts load a .pmtiles file for their own area instead)
-# It also attaches rangerview-<version>.zip, the RangerView kit (E-255; last step below).
+# It also attaches rangerview-<version>.zip, RangerView (E-255; last step below).
 #
 # The deploy workflow has already run the tests on this commit; this only builds and packages.
 name: Release web zip
@@ -80,12 +80,12 @@ jobs:
       - name: Attach to the release
         run: gh release upload "$TAG" "$WEB_ZIP" --clobber
 
-      # E-255: the ready-to-run RangerView kit, rangerview-<version>.zip, from the same build. Its
-      # layout is in tools/board-kit/build.js. Tags from before the kit existed have no build.js.
-      - name: RangerView kit
+      # E-255: the ready-to-run RangerView, rangerview-<version>.zip, from the same build. Its
+      # layout is in tools/board-kit/build.js. Tags from before RangerView existed have no build.js.
+      - name: RangerView
         run: |
           set -euo pipefail
-          if [ ! -f tools/board-kit/build.js ]; then echo "No RangerView kit at $TAG"; exit 0; fi
+          if [ ! -f tools/board-kit/build.js ]; then echo "No RangerView at $TAG"; exit 0; fi
           npm run build:board-kit
           VERSION="${TAG#v}"
           NAME="rangerview-${VERSION}"
@@ -95,7 +95,7 @@ jobs:
           test -f "dist/board-kit/$NAME/app/index.html"
           test -x "dist/board-kit/$NAME/Start RangerView.command"
           # Never name an env var ZIP (or ZIPOPT): Info-ZIP reads it as default options. On v1.0.0-beta.2 the
-          # web zip's path sat in $ZIP, so this zip added the kit to the web zip, exited 0 and left no kit zip.
+          # web zip's path sat in $ZIP, so this zip added RangerView to the web zip, exited 0 and left no RangerView zip.
           cp -r "dist/board-kit/$NAME" "$RUNNER_TEMP/$NAME"
           # No top folder inside the zip: Windows' Extract All and macOS both make a folder named after the
           # zip already, so a top folder gave rangerview-X\rangerview-X\ (John, 2026-11-13).

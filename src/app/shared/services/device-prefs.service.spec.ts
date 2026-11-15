@@ -32,7 +32,7 @@ describe('DevicePrefsService', () => {
     expect(prefs.isRangersPrivacyNoticeDismissed()).toBe(true)
   })
 
-  it('keeps the RangerView web server publish key and replaced flag on the device (D-61)', () => {
+  it('keeps RangerView publish key and replaced flag on the device (D-61)', () => {
     expect(prefs.getBoardPublisher()).toEqual({})
     prefs.setBoardPublisher({ base: 'https://b:8080', key: 'k' })
     expect(prefs.getBoardPublisher()).toEqual({ base: 'https://b:8080', key: 'k' })

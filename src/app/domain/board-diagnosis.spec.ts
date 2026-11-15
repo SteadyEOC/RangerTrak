@@ -128,10 +128,10 @@ describe('board causes list (E-216)', () => {
 
   it('fills placeholders and drops an optional clause with no value', () => {
     expect(boardCause('board-lost', { time: '12:04', ssid: 'CERT-Net' }).message).toBe(
-      'Lost RangerView at 12:04. Still on CERT-Net? Is the laptop running the RangerView web server awake?'
+      'Lost RangerView at 12:04. Still on CERT-Net? Is the laptop running RangerView awake?'
     )
     expect(boardCause('board-lost', { time: '12:04' }).message).toBe(
-      'Lost RangerView at 12:04. Is the laptop running the RangerView web server awake?'
+      'Lost RangerView at 12:04. Is the laptop running RangerView awake?'
     )
     expect(boardCause('scribe-quiet', { minutes: 6 }).message).toBe(
       "RangerView is fine. The scribe's device last checked in 6 min ago."

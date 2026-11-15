@@ -1,4 +1,4 @@
-// D-61 / D-60: the RangerView web server's API, against a real server on a random port with a throwaway
+// D-61 / D-60: RangerView's API, against a real server on a random port with a throwaway
 // self-signed certificate. Nothing here touches the network beyond 127.0.0.1.
 const test = require('node:test');
 const assert = require('node:assert');
@@ -214,7 +214,7 @@ test('a restart forgets everything: keyed calls get 409 unclaimed, then a re-cla
   }
 });
 
-test('after a restart two devices re-claim: the first gets the RangerView web server, the second is refused, not given it', withBoard(async (b) => {
+test('after a restart two devices re-claim: the first gets RangerView, the second is refused, not given it', withBoard(async (b) => {
   const first = await b.call('POST', '/api/claim', { json: { reclaim: true, by: BY } });
   assert.strictEqual(first.status, 200);
   const second = await b.call('POST', '/api/claim', { json: { reclaim: true, by: { ...BY, scribe: 'Sam' } } });
@@ -387,7 +387,7 @@ test('getOrCreateCert: names go in the SAN list, and a cert lacking today\'s nam
   }
 });
 
-test('getOrCreateCert: a kit whose saved certificate names rangertrak-board.local gets a new one for rangerview.local (E-305)', async () => {
+test('getOrCreateCert: a RangerView whose saved certificate names rangertrak-board.local gets a new one for rangerview.local (E-305)', async () => {
   const run = makeTempRun('board-cert-');
   const dir = run.dir;
   try {
@@ -404,7 +404,7 @@ test('getOrCreateCert: a kit whose saved certificate names rangertrak-board.loca
 
 // ---- E-216 slice 2: /api/hello, the scribe's heartbeat, the viewer count, the Wi-Fi name ----
 
-test('GET /api/hello names the RangerView web server with no password, even on a protected RangerView, and says nothing else', withBoard(async (b) => {
+test('GET /api/hello names RangerView with no password, even on a protected RangerView, and says nothing else', withBoard(async (b) => {
   await claim(b, 'hunter2');
   const r = await b.call('GET', '/api/hello');
   assert.strictEqual(r.status, 200);
@@ -448,7 +448,7 @@ test('scribeSeenAt moves on a keyed call and not on a viewer call; wifi is told 
   assert.strictEqual((await call('GET', '/api/mission', {})).json.board.scribeSeenAt, after.scribeSeenAt, 'a refused key does not');
 });
 
-test('the RangerView web server has no wifi field when the name is unknown', async () => {
+test('RangerView has no wifi field when the name is unknown', async () => {
   const b = createBoard({});
   assert.strictEqual(b.status().scribeSeenAt, 0);
   assert.strictEqual(b.status().claimed, false);

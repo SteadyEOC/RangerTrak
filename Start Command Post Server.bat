@@ -57,5 +57,5 @@ if not exist "dist\rangertrak\browser\index.html" (
 node tools\command-post-server.js
 
 echo.
-echo The RangerView mini web server stopped. Close this window, or double-click this file again to restart it.
+echo RangerView stopped. Close this window, or double-click this file again to restart it.
 pause

@@ -85,7 +85,7 @@ test('against a real server: /qr from loopback is 200 and tracks the claim', asy
     assert.strictEqual(after.status, 200);
     assert.ok(after.body.includes('<svg'));
     await new Promise((r) => setTimeout(r, 200)); // the terminal QR is drawn after the reply
-    assert.ok(lines.some((l) => l.includes('Scan to open the RangerView web server')), 'the console shows a QR after a claim');
+    assert.ok(lines.some((l) => l.includes('Scan to open RangerView')), 'the console shows a QR after a claim');
     assert.ok(!lines.join('\n').includes('code=pw'), 'the password is never printed as text');
   } finally {
     await server.close();

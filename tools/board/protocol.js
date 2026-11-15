@@ -1,4 +1,4 @@
-// D-61 / D-60 - the RangerView web server's HTTP API: who may publish, who may read, and how a full-size
+// D-61 / D-60 - RangerView's HTTP API: who may publish, who may read, and how a full-size
 // attachment gets from the scribe's device to a viewer.
 //
 // ALL state is in this process's memory and nothing here touches the disk (D-61 item 8): the
@@ -83,7 +83,7 @@ function safeContentType(type) {
  * @param {function} [o.onClaim]        called after a claim, a takeover or a password change, so the
  *                                      server can show the viewer QR code. Never given anything to log.
  * @param {string}   [o.version]        the RangerTrak version, told to GET /api/hello (E-216)
- * @param {Function} [o.update]         () => { version } of a newer kit, once the start-up check finds one (update-check.js)
+ * @param {Function} [o.update]         () => { version } of a newer RangerView, once the start-up check finds one (update-check.js)
  * @param {string}   [o.wifi]           the Wi-Fi network's name when the server could read it, told to viewers
  *                                      so "Lost RangerView" can ask "Still on <name>?" (E-216)
  */
@@ -152,7 +152,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     const key = req.headers['x-board-key'];
     if (typeof key !== 'string' || !safeEqual(key, claim.key)) {
       // Who holds RangerView is told only to a device that provably held it (its key was
-      // superseded by a takeover) or when the RangerView web server is open anyway. Any other key gets no details,
+      // superseded by a takeover) or when RangerView is open anyway. Any other key gets no details,
       // so a stranger on the network learns nothing from a password-protected RangerView.
       const known = typeof key === 'string' && retiredKeys.includes(digest(key).toString('hex'));
       send(res, 403, !claim.password || known ? { state: 'replaced', by: claim.by, at: claim.at } : { state: 'replaced' });
@@ -218,7 +218,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
 
     // An automatic re-claim (the client's answer to a 409 after a restart) never takes over: a
     // device superseded before the restart may re-claim first-come, and must not then be able
-    // to swap the RangerView web server back and forth with the real publisher with nobody acting. Only a claim
+    // to swap RangerView back and forth with the real publisher with nobody acting. Only a claim
     // without reclaim - a person pressing "Take over" - falls through to the takeover below.
     if (body.reclaim === true) {
       const entitled = !claim.password || safeEqual(password, claim.password);
@@ -346,7 +346,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     // Viewers re-check the fingerprint themselves (D-60 item 9), so this is a courtesy that stops
     // a corrupt upload being held and shown as "ready"; the viewer's check is the safeguard.
     if (crypto.createHash('sha256').update(buf).digest('hex') !== sha) { send(res, 422, { error: 'Fingerprint does not match.' }); return; }
-    if (!storeOriginal(sha, buf)) { send(res, 413, { error: 'File is larger than the RangerView web server can hold.' }); return; }
+    if (!storeOriginal(sha, buf)) { send(res, 413, { error: 'File is larger than RangerView can hold.' }); return; }
     requests.delete(sha);
     send(res, 204);
   }

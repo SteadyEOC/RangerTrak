@@ -110,7 +110,7 @@ the count (`728/728 passed` on 2026-10-27). Add `--verbose` to see every check. 
 `shell` (navigation, layout, Help), `entry`, `map`, `radiolog` (Radio Log and Messages),
 `roster`, `mission` (Mission page, statuses, sample mission), `backup` (backups, report
 packets, old-release fixtures, device encryption), `attachments` (photos and files on
-entries, smaller copies), `board` (the RangerView web server and viewer), `view` (Simple and
+entries, smaller copies), `board` (RangerView and viewer), `view` (Simple and
 Full view), `controls` (control sizes and corners), `cards` (the card grid layouts). Run the groups a change touches before an
 ordinary push, and the whole suite before a release.
 

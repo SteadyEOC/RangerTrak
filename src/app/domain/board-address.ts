@@ -1,11 +1,11 @@
 /**
- * E-216 slice 1: tidy up the address a scribe types for the RangerView web server. Pure, so it can be tested
+ * E-216 slice 1: tidy up the address a scribe types for RangerView. Pure, so it can be tested
  * without a browser. Pasting the viewer's address (".../view") is the commonest slip.
  */
 
 export const BOARD_HTTP_ERROR = 'Use https:// — RangerTrak is on https, so the browser blocks plain http.'
 export const BOARD_VIEW_HINT = 'That was the viewer\'s address. The scribe uses the same address without /view.'
-export const BOARD_LOCALHOST_HINT = 'That address only works on this computer, so the viewer link below won\'t open for anyone else. Use the rangerview.local or numbered address the RangerView web server printed instead.'
+export const BOARD_LOCALHOST_HINT = 'That address only works on this computer, so the viewer link below won\'t open for anyone else. Use the rangerview.local or numbered address RangerView printed instead.'
 
 export type BoardAddress = {
   /** The cleaned address; '' when nothing was typed. Absent when there is an error. */
@@ -13,7 +13,7 @@ export type BoardAddress = {
   error?: string
   /** True when a trailing /view was removed, so the screen can say why the text changed. */
   strippedView?: boolean
-  /** True for localhost / 127.x / [::1]: publishing works when the RangerView web server is on this computer, but the viewer link is useless to anyone else. */
+  /** True for localhost / 127.x / [::1]: publishing works when RangerView is on this computer, but the viewer link is useless to anyone else. */
   thisComputerOnly?: boolean
 }
 

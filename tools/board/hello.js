@@ -1,6 +1,6 @@
 // E-216 slice 1: GET /hello - a page that holds no data and needs no password. A device opens it
 // to find out whether it can reach RangerView at all, and to accept the certificate. It is not a
-// claim and not a viewer: nothing here touches the RangerView web server's state.
+// claim and not a viewer: nothing here touches RangerView's state.
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function helloPage(name) {
@@ -10,7 +10,7 @@ function helloPage(name) {
 <title>RangerView</title>
 <style>body{font-family:system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem;line-height:1.5;font-size:1.2rem}</style>
 </head><body>
-<p>✔ This device can reach the RangerView web server <strong>${board}</strong>.</p>
+<p>✔ This device can reach RangerView <strong>${board}</strong>.</p>
 <p>You can close this tab and go back to RangerTrak.</p>
 </body></html>
 `;

@@ -1,12 +1,12 @@
-// E-255: build the ready-to-run RangerView kit from an existing app build.
+// E-255: build the ready-to-run RangerView zip from an existing app build.
 //
-//   npm run build            (first: the kit carries dist/rangertrak/browser)
+//   npm run build            (first: the zip carries dist/rangertrak/browser)
 //   npm run build:board-kit  -> dist/board-kit/rangerview-<version>/
 //
-// Kit layout, instructions first:
+// Zip layout, instructions first:
 //   READ-ME-FIRST.txt
 //   Start RangerView.bat / .command   double-click launchers; they only check for Node.js 24
-//   rangerview.js                     the RangerView web server and its npm dependencies, bundled by esbuild
+//   rangerview.js                     RangerView and its npm dependencies, bundled by esbuild
 //   app/                                    the built app and the viewer, without assets/maps/
 //   LICENSE, THIRD-PARTY-NOTICES.txt        AGPL for RangerTrak; the bundled packages' own licences
 //
@@ -37,7 +37,7 @@ async function main() {
     target: 'node24',
     metafile: true,
     legalComments: 'none', // the full licence texts go in THIRD-PARTY-NOTICES.txt instead
-    banner: { js: `// RangerView web server ${version}. AGPL-3.0-or-later; see LICENSE and THIRD-PARTY-NOTICES.txt.` },
+    banner: { js: `// RangerView ${version}. AGPL-3.0-or-later; see LICENSE and THIRD-PARTY-NOTICES.txt.` },
     logLevel: 'warning',
   });
 
@@ -57,7 +57,7 @@ async function main() {
   fs.copyFileSync(path.join(REPO, 'LICENSE'), path.join(OUT, 'LICENSE'));
   fs.writeFileSync(path.join(OUT, 'THIRD-PARTY-NOTICES.txt'), notices(result.metafile));
 
-  console.log(`RangerView kit: ${path.relative(REPO, OUT)}`);
+  console.log(`RangerView: ${path.relative(REPO, OUT)}`);
 }
 
 /** The licence of every npm package that ended up in the bundle, from its own folder. */
@@ -67,7 +67,7 @@ function notices(metafile) {
     const m = input.split(path.sep).join('/').match(/^(.*node_modules\/(@[^/]+\/)?[^/]+)\//);
     if (m) dirs.set(m[1], true);
   }
-  const parts = ['RangerView web server bundles these npm packages. Their licences follow.\n'];
+  const parts = ['RangerView bundles these npm packages. Their licences follow.\n'];
   for (const dir of [...dirs.keys()].sort()) {
     const abs = path.join(REPO, dir);
     const pkg = JSON.parse(fs.readFileSync(path.join(abs, 'package.json'), 'utf8'));

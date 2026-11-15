@@ -1,18 +1,17 @@
-RangerView web server
+RangerView
 ==========================
 
-RangerView is an advanced feature: it lets people on the command post's Wi-Fi or hotspot
-watch the live log on their own phone, tablet or laptop, by opening the RangerView pages in any web
-browser. This RangerView kit holds the RangerView web server, a mini web server that runs on one laptop
-or desktop at the command post. That can be the same computer the scribe logs on.
+RangerView is a mini web server that runs on one laptop at the command post. Anyone on the
+same Wi-Fi can watch the radio log in a web browser, on their own phone, tablet or laptop.
+It is an advanced feature. The laptop can be the same computer the scribe logs on.
 
 Nothing here touches the Internet once it is set up, and nothing is saved to disk except the
-RangerView web server's own certificate (in the certificate folder), unless you turn on the log (see below).
+RangerView's own certificate (in the certificate folder), unless you turn on the log (see below).
 
 
 WHICH COMPUTERS
 ---------------
-The RangerView web server runs on Windows 10 or 11, macOS, or Linux. Viewers can use any phone, tablet or
+RangerView runs on Windows 10 or 11, macOS, or Linux. Viewers can use any phone, tablet or
 computer with a web browser; they install nothing.
 
 
@@ -28,7 +27,7 @@ BEFORE YOU GO (needs the Internet, once)
      Mac:     run the .pkg installer.
      Linux:   use your distribution's package manager or the nodejs.org instructions. Check
               with "node --version": it must print v24 or higher.
-2. Unzip this whole kit into a folder you can find again, for example Documents\RangerView.
+2. Unzip RangerView into a folder you can find again, for example Documents\RangerView.
    Don't run it from inside the zip.
      Windows: right-click the zip, Extract All, Extract.
      Mac:     double-click the zip.
@@ -38,20 +37,20 @@ BEFORE YOU GO (needs the Internet, once)
 AT THE COMMAND POST
 -------------------
 1. Join the Wi-Fi or hotspot everyone will use.
-2. Start the RangerView web server:
+2. Start RangerView:
      Windows: double-click "Start RangerView.bat".
               If a blue "Windows protected your PC" box appears, click More info, then Run anyway.
               If Windows asks whether to allow Node.js on private networks, click Allow.
      Mac:     the first time, right-click (or Control-click) "Start RangerView.command",
               choose Open, then Open. After that, double-click it.
-     Linux:   in a terminal, in the RangerView kit's folder:  node rangerview.js
-              The RangerView web server uses port 443, which Linux reserves; if it says so, it moves to another
+     Linux:   in a terminal, in the RangerView folder:  node rangerview.js
+              RangerView uses port 443, which Linux reserves; if it says so, it moves to another
               port and prints the address with that port. Use exactly what it prints.
 3. A window opens. STEP 1 in it is the address for the scribe: the name, normally
    https://rangerview.local (already copied on that computer), and a numbered one under
    it such as https://10.0.0.15. If the name doesn't work on another device, use the numbered
    one. Keep the window open;
-   closing it stops the RangerView web server.
+   closing it stops RangerView.
 4. On the scribe's device, open that address in the browser once. It warns "Your connection is
    not private". That is expected for a private server: click Advanced, then Proceed. Once per
    device; viewers do the same the first time.
@@ -59,13 +58,13 @@ AT THE COMMAND POST
    press Test connection. When it says Connected, turn on "Send this log to RangerView".
    Use that address even on this same computer, not "localhost": the viewer link is made from it.
    Chrome or Edge may ask "rangertrak.org wants to access other devices on your local
-   network". Click Allow: that is how RangerTrak reaches the RangerView web server.
+   network". Click Allow: that is how RangerTrak reaches RangerView.
 6. STEP 2 in the window is for viewers: the same address with /view on the end, or the QR code.
 
 
 THE LOG
 -------
-The RangerView web server keeps no log unless you ask for one. If something isn't working and someone is helping
+RangerView keeps no log unless you ask for one. If something isn't working and someone is helping
 you, start it from a terminal with:  node rangerview.js --log
 Each run then writes a new file in the logs folder, named for the date and time, for example
 logsoard-2026-11-14-110509.txt. It holds everything the window shows, plus one line for each
@@ -79,8 +78,8 @@ GOOD TO KNOW
 - Some guest Wi-Fi (hotels, public hotspots) stops devices reaching each other. Use your own
   router or a phone hotspot.
 - To install RangerTrak itself on a device for offline use, open https://rangertrak.org on it
-  while you still have the Internet. The RangerView web server is for watching the log, not for installing the app.
-- Help, in RangerTrak, has more: the RangerView web server's entry in the Mission page's Help, and the FAQ.
+  while you still have the Internet. RangerView is for watching the log, not for installing the app.
+- Help, in RangerTrak, has more: RangerView's entry in the Mission page's Help, and the FAQ.
 
 RangerTrak is free software under the GNU Affero General Public License, version 3 or later
 (see LICENSE). Source: https://github.com/SteadyEOC/RangerTrak

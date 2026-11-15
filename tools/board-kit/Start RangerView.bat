@@ -1,15 +1,15 @@
 @echo off
-REM RangerView kit - double-click launcher (Windows). E-255.
+REM RangerView - double-click launcher (Windows). E-255.
 REM
-REM The kit's own launcher, built into rangerview-<version>.zip by tools\board-kit\build.js.
+REM RangerView's own launcher, built into rangerview-<version>.zip by tools\board-kit\build.js.
 REM Unlike "Start Command Post Server.bat" at the repo root, nothing here needs npm or a build:
-REM rangerview.js carries the RangerView web server and its packages, and app\ the built app. Node.js 24 is
+REM rangerview.js carries RangerView and its packages, and app\ the built app. Node.js 24 is
 REM the one thing to install.
 REM
 REM %~dp0 is this file's own folder, with a trailing backslash; a double-click does not
 REM guarantee the starting folder.
 cd /d "%~dp0"
-title RangerView web server
+title RangerView
 REM Plain white on black, whatever colours this console was set to (John 2026-11-13: dark-on-dark).
 color 0F
 
@@ -45,7 +45,7 @@ if %NODEMAJOR_N% LSS 24 (
 
 if not exist "app\index.html" (
   echo.
-  echo The app folder is missing from this kit. Unzip the whole kit into one folder
+  echo The app folder is missing from this folder. Unzip the whole zip into one folder
   echo ^(don't run this file from inside the zip^), then double-click it again.
   echo.
   pause
@@ -55,5 +55,5 @@ if not exist "app\index.html" (
 node rangerview.js %*
 
 echo.
-echo The RangerView web server stopped. Close this window, or double-click this file again to restart it.
+echo RangerView stopped. Close this window, or double-click this file again to restart it.
 pause

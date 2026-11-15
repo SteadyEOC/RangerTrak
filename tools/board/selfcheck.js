@@ -1,10 +1,10 @@
-// E-216 slice 2: the RangerView web server's start-up self-check. Printed as a short list above the banner:
+// E-216 slice 2: RangerView's start-up self-check. Printed as a short list above the banner:
 //   ✔ fine   ✖ will stop devices connecting   · worth knowing (or could not be checked)
 //
 // Two halves. The PARSERS and the FORMATTER are pure and tested with captured command output. The
 // RUNNERS (`runSelfCheck`, `readWifi`, `portOwner`, `offerFixes`) call the operating system's own tools
 // with a 10 s limit each (E-289: a cold PowerShell on a laptop ran past the old 3 s); any failure becomes
-// "unknown" and never stops the RangerView web server starting.
+// "unknown" and never stops RangerView starting.
 //
 // Nothing here changes the computer except `offerFixes`, which does so only after the person types y,
 // and then only through Windows' own permission prompt.
@@ -14,7 +14,10 @@ const { boardCause } = require('./causes');
 
 const COMMAND_TIMEOUT_MS = 10000;
 const OFFER_TIMEOUT_MS = 20000;
-const RULE_NAME = 'RangerView web server';
+const RULE_NAME = 'RangerView';
+// The names the rule had before, so a rule made by an older run is found by name and not added twice.
+const OLD_RULE_NAMES = ['RangerView web server', 'RangerView mini web server', 'RangerTrak Board'];
+const RULE_NAMES = [RULE_NAME, ...OLD_RULE_NAMES];
 
 // ---- running commands ----
 // Resolves { ok, out }; never rejects. `ok` is false on a missing program, a non-zero exit or the timeout.
@@ -70,7 +73,7 @@ function parseNetProfiles(out) {
 // node.exe allowed on Private networks and was told to add a rule; the other had only Public allow rules for
 // node.exe (so Windows never asked) and was told it was fine while port 443 was blocked. Now the rules that
 // actually apply are read (Windows' own HNetCfg.FwPolicy2, about 1 s) and judged here: an enabled inbound
-// TCP rule for this node.exe, or for any program on the RangerView web server's port, on the network type in use. Block wins.
+// TCP rule for this node.exe, or for any program on RangerView's port, on the network type in use. Block wins.
 const PROFILE_BIT = { Domain: 1, Private: 2, Public: 4 };
 
 // One PowerShell call for the network types, the firewall's on/off per type and the rules that could apply.
@@ -210,7 +213,8 @@ function fixCommands({ publicAliases = [], addRule = false, unblock = false, pro
   for (const alias of publicAliases) cmds.push(`Set-NetConnectionProfile -InterfaceAlias ${psQuote(alias)} -NetworkCategory Private`);
   // Turned off, not deleted, so it can be turned back on; only node.exe's inbound Block rules that cover Private networks.
   if (unblock && program) cmds.push(`Get-NetFirewallApplicationFilter -Program ${psQuote(program)} | Get-NetFirewallRule | Where-Object { $_.Direction -eq 'Inbound' -and $_.Action -eq 'Block' -and $_.Profile.ToString() -match 'Private|Any' } | Disable-NetFirewallRule`);
-  if (addRule) cmds.push(`New-NetFirewallRule -DisplayName ${psQuote(RULE_NAME)} -Direction Inbound -Protocol TCP -LocalPort ${Number(port)} -Action Allow -Profile Private`);
+  // Skipped when a rule under this name or an older one already exists, so there is never a second copy.
+  if (addRule) cmds.push(`if (-not (Get-NetFirewallRule -DisplayName ${RULE_NAMES.map(psQuote).join(',')} -ErrorAction SilentlyContinue)) { New-NetFirewallRule -DisplayName ${psQuote(RULE_NAME)} -Direction Inbound -Protocol TCP -LocalPort ${Number(port)} -Action Allow -Profile Private }`);
   return cmds;
 }
 
@@ -273,7 +277,7 @@ async function checkPower({ platform, run }) {
 }
 
 /**
- * Runs every check at once. `inUse` are the names of the adapters the RangerView web server is reachable through.
+ * Runs every check at once. `inUse` are the names of the adapters RangerView is reachable through.
  * Resolves { platform, port, network: {profiles, publicAliases, rule} | null, power }.
  */
 async function runSelfCheck({ port, platform = process.platform, inUse = [], program = process.execPath, run = runCommand } = {}) {
@@ -284,7 +288,7 @@ async function runSelfCheck({ port, platform = process.platform, inUse = [], pro
   return { platform, port, network, power };
 }
 
-// Who holds `port` (the one the RangerView web server wanted and could not have), in words; '' when it could not be found.
+// Who holds `port` (the one RangerView wanted and could not have), in words; '' when it could not be found.
 async function portOwner({ port, platform = process.platform, run = runCommand }) {
   try {
     if (platform === 'win32') {
@@ -339,10 +343,10 @@ function formatSelfCheck({ check, wifi = '', virtual = [], portLine = '', inUse 
     } else if (fw.verdict === 'off') {
       lines.push(`✔ Firewall: Windows Firewall is off for ${types}.`);
     } else if (fw.verdict === 'blocked') {
-      lines.push(`✖ Firewall: a Windows Firewall rule blocks the RangerView web server on ${types}, so other devices cannot connect (${fw.blockers.map((n) => `"${n}"`).join(', ')}).`);
+      lines.push(`✖ Firewall: a Windows Firewall rule blocks RangerView on ${types}, so other devices cannot connect (${fw.blockers.map((n) => `"${n}"`).join(', ')}).`);
       const fixes = offerableFixes(check);
       if (fixes.unblock) {
-        lines.push('    What the fix does: it turns that rule off (it is not deleted) and lets the RangerView web server in on Private networks. It needs administrator permission.');
+        lines.push('    What the fix does: it turns that rule off (it is not deleted) and lets RangerView in on Private networks. It needs administrator permission.');
         for (const c of fixCommands({ unblock: true, addRule: fixes.addRule, program: fixes.program, port: check.port })) lines.push(`    ${c}`);
       } else {
         lines.push('    Turn that rule off in Windows Defender Firewall, Advanced settings, Inbound Rules.');
@@ -352,7 +356,7 @@ function formatSelfCheck({ check, wifi = '', virtual = [], portLine = '', inUse 
       lines.push('    What the fix does: it adds a rule letting devices on Private networks reach RangerView. It needs administrator permission.');
       for (const c of fixCommands({ addRule: true, port: check.port })) lines.push(`    ${c}`);
     } else {
-      lines.push("· Firewall: couldn't check it. If other devices cannot connect, allow the RangerView web server through the Windows firewall (needs administrator permission):");
+      lines.push("· Firewall: couldn't check it. If other devices cannot connect, allow RangerView through the Windows firewall (needs administrator permission):");
       for (const c of fixCommands({ addRule: true, port: check.port })) lines.push(`    ${c}`);
     }
   }
@@ -417,7 +421,7 @@ async function offerFixes({ check, isTTY = !!process.stdin.isTTY, ask = askYesNo
 
 module.exports = {
   runCommand, readWifi, runSelfCheck, portOwner, formatSelfCheck, offerFixes, offerableFixes, boxedAddress, askYesNo,
-  fixCommands, elevatedInvocation, psQuote, publicProfilesInUse, describeOwner,
+  RULE_NAME, RULE_NAMES, fixCommands, elevatedInvocation, psQuote, publicProfilesInUse, describeOwner,
   firewallScript, parseFirewall, portCovered, firewallVerdict, profilesToJudge, looksWireless,
   parseWifiWindows, parseWifiMac, parseWifiLinux, parseNetProfiles, parseCount, parseNetstatPid,
   parseTasklistName, parseLsof, parseBatteryWindows, parsePmset,

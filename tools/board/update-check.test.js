@@ -1,4 +1,4 @@
-// The RangerView web server's start-up update check (John, 2026-11-13): version order, and silence when offline.
+// RangerView's start-up update check (John, 2026-11-13): version order, and silence when offline.
 const test = require('node:test');
 const assert = require('node:assert');
 const { isNewer, checkForUpdate, updateLine } = require('./update-check');

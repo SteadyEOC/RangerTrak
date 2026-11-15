@@ -240,16 +240,17 @@
     form becomes a public issue, so keep mission data out of it. And if you turn on
     <span class="ui">Send this log to RangerView</span> yourself (on the Mission page,
     off by default), report content — never
-    the roster — goes to the RangerView web server (a mini web server that runs on one laptop) on your own WiFi/hotspot, for others on that same network to
+    the roster — goes to RangerView on your own WiFi/hotspot, for others on that same network to
     read. See <strong>Your data</strong> and the Mission page's own <strong>Help</strong> button for the full detail.
   </rangertrak-expandable-section>
 
   <rangertrak-expandable-section id="rangertrak-board" summary="Can several people watch the same log at once?">
-    Yes, with RangerView (an advanced feature). Turn on publishing in the Mission page's RangerView card. Run the RangerView web server (a mini web server that runs on one laptop)
-    at the command post, which can be the scribe's own (download the RangerView kit from the latest release on
+    Yes, with RangerView (an advanced feature). RangerView is a mini web server that runs on one laptop at the command post.
+    Anyone on the same Wi-Fi can watch the radio log in a web browser. Turn on publishing in the Mission page's RangerView card.
+    The laptop can be the scribe's own (download RangerView from the latest release on
     GitHub, unzip it and double-click <span class="ui">Start RangerView</span>; step by step at
     <a href="https://rangertrak.org/view/" target="_blank" rel="noopener">rangertrak.org/view</a>); it prints an address on startup. Anyone on the same WiFi/hotspot can
-    open the RangerView pages in any web browser, using that address (with /view added, or by scanning the QR code it shows), to see a live,
+    open that address in any web browser (with /view added, or by scanning the QR code it shows) to see a live,
     read-only comms log, each with their own filter and sort. A second tab lists the ICS-213
     messages, with their To, Subject and Message, and opens each one to read or print. It's a separate view, not shared
     editing — reports are still only ever entered on the device actually filing them. You can
@@ -257,18 +258,18 @@
     that on.
   </rangertrak-expandable-section>
 
-  <rangertrak-expandable-section id="board-wont-connect" summary="The RangerView web server won't connect. What do the messages mean?">
-    On the Mission page's RangerView card, press <span class="ui">Test connection</span>. It asks the RangerView web server to
+  <rangertrak-expandable-section id="board-wont-connect" summary="RangerView won't connect. What do the messages mean?">
+    On the Mission page's RangerView card, press <span class="ui">Test connection</span>. It asks RangerView to
     say hello and names the most likely reason in one sentence. These are best guesses, because a browser can't see
     exactly why a connection failed. The usual ones: this device isn't on a network; it is on a different Wi-Fi from
-    the laptop running the RangerView web server (check the Wi-Fi name in the RangerView web server's window); the browser hasn't accepted the RangerView web server's
+    the laptop running RangerView (check the Wi-Fi name in RangerView's window); the browser hasn't accepted RangerView's
     certificate yet (press <span class="ui">Open RangerView</span>, choose Advanced, then Proceed, and come back); the
     browser is blocking access to devices on this network (allow local network access for this site in the
-    browser's site settings); or something answered that isn't a RangerView web server. <span class="ui">Details</span>
+    browser's site settings); or something answered that isn't RangerView. <span class="ui">Details</span>
     holds the technical line for whoever is helping.
     <p>
       On a viewer's screen, <strong>lost</strong> means that viewer can't reach RangerView. The last reports stay on
-      screen, and it says when it lost the RangerView web server and asks whether the laptop running the RangerView web server is awake. <strong>Scribe
+      screen, and it says when it lost RangerView and asks whether the laptop running RangerView is awake. <strong>Scribe
       quiet</strong> means RangerView is fine, but the scribe's device hasn't checked in for over 2 minutes, so the
       log may be out of date.
     </p>

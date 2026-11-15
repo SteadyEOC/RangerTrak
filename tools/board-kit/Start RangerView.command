@@ -1,9 +1,9 @@
 #!/bin/bash
-# RangerView kit - double-click launcher (macOS). E-255.
+# RangerView - double-click launcher (macOS). E-255.
 #
-# The kit's own launcher, built into rangerview-<version>.zip by tools/board-kit/build.js
+# RangerView's own launcher, built into rangerview-<version>.zip by tools/board-kit/build.js
 # (which also sets LF line endings and the executable bit). Nothing here needs npm or a build:
-# rangerview.js carries the RangerView web server and its packages, and app/ the built app. Node.js 24 is
+# rangerview.js carries RangerView and its packages, and app/ the built app. Node.js 24 is
 # the one thing to install.
 #
 # cd to this file's own folder; macOS does not guarantee a working directory for a double-click.
@@ -38,7 +38,7 @@ fi
 
 if [ ! -f "app/index.html" ]; then
   echo ""
-  echo "The app folder is missing from this kit. Unzip the whole kit into one folder,"
+  echo "The app folder is missing from this folder. Unzip the whole zip into one folder,"
   echo "then double-click this file again."
   pause_and_exit 1
 fi
@@ -46,5 +46,5 @@ fi
 node rangerview.js "$@"
 
 echo ""
-echo "The RangerView web server stopped. Close this window, or double-click this file again to restart it."
+echo "RangerView stopped. Close this window, or double-click this file again to restart it."
 pause_and_exit 0

@@ -174,13 +174,13 @@ export type MissionType = {
   // any returning user whose stored settings, or older backup, predate it.
   attachmentBudgetMB: number,
 
-  // ADR D-61 (2026-10-16): the viewers' password for the RangerView web server. Blank = anyone on the Wi-Fi can read it.
+  // ADR D-61 (2026-10-16): the viewers' password for RangerView. Blank = anyone on the Wi-Fi can read it.
   // A SECRET, handled exactly like googleGeocodingApiKey: held in the 'secrets' record, never in
   // appSettings, written to a backup only when it is passphrase-protected (BackupService) and left out
   // of Setup files. Additive-only, backfilled '' for a returning user - no MISSION_SCHEMA_VERSION bump.
   boardPassword: string,
 
-  // ADR D-60 item 6: whether the RangerView web server shows attachments. Off sends a count only; on sends thumbnails
+  // ADR D-60 item 6: whether RangerView shows attachments. Off sends a count only; on sends thumbnails
   // and lets a viewer ask for the full-size file. Additive-only, backfilled false.
   boardShowAttachments: boolean,
 

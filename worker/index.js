@@ -435,7 +435,7 @@ export default {
     // Setting up RangerView, step by step (tools/board-guide, copied to /view/ by angular.json).
     // Same URL handling as the tour: the trailing slash keeps board-guide.js relative. E-305: the guide
     // moved from /board/ to /view/; /board, /rangerview and their longer forms go to the shorter /view/.
-    // (The live screen the RangerView web server shows viewers is built to /live; the laptop serves it at /view.)
+    // (The live screen RangerView shows viewers is built to /live; the laptop serves it at /view.)
     if (url.pathname === '/view' || url.pathname === '/view/index.html'
       || url.pathname === '/board' || url.pathname === '/board/' || url.pathname === '/board/index.html'
       || url.pathname === '/rangerview' || url.pathname === '/rangerview/') {

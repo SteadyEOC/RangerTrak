@@ -9,28 +9,28 @@
   {
     "id": "different-network",
     "seenFrom": ["app", "phone"],
-    "message": "Nothing answered. Most likely this device isn't on the same Wi-Fi as the laptop running the RangerView web server[[: {ssid}]]. A VPN or firewall may also be in the way.",
-    "detail": "The request timed out or failed slowly. Next suspects: a VPN or web-protection app on this device, a firewall on the laptop running the RangerView web server, or a guest Wi-Fi that keeps devices apart.",
+    "message": "Nothing answered. Most likely this device isn't on the same Wi-Fi as the laptop running RangerView[[: {ssid}]]. A VPN or firewall may also be in the way.",
+    "detail": "The request timed out or failed slowly. Next suspects: a VPN or web-protection app on this device, a firewall on the laptop running RangerView, or a guest Wi-Fi that keeps devices apart.",
     "anchor": "cant-reach-board-different-network"
   },
   {
     "id": "firewall-public",
     "seenFrom": ["server"],
-    "message": "Windows is treating this Wi-Fi as Public, so it blocks other devices from reaching the RangerView web server.",
+    "message": "Windows is treating this Wi-Fi as Public, so it blocks other devices from reaching RangerView.",
     "detail": "Get-NetConnectionProfile reports NetworkCategory Public. As administrator: Set-NetConnectionProfile -InterfaceAlias '<adapter>' -NetworkCategory Private",
     "anchor": "cant-reach-board-public-network"
   },
   {
     "id": "port-taken",
     "seenFrom": ["server"],
-    "message": "Another program on this computer already answers on {port}[[ ({name})]]. The RangerView web server is using {other} instead, so give out the address printed below.",
-    "detail": "The usual web port is in use. The RangerView web server falls back to {other}; every address given to a device must include it.",
+    "message": "Another program on this computer already answers on {port}[[ ({name})]]. RangerView is using {other} instead, so give out the address printed below.",
+    "detail": "The usual web port is in use. RangerView falls back to {other}; every address given to a device must include it.",
     "anchor": "cant-reach-board-address-in-use"
   },
   {
     "id": "node-too-old",
     "seenFrom": ["start-script"],
-    "message": "This computer's Node.js is too old. The RangerView web server needs version 24 or newer.",
+    "message": "This computer's Node.js is too old. RangerView needs version 24 or newer.",
     "detail": "Run node --version to see the installed version, then install the current LTS from nodejs.org.",
     "anchor": "start-node-too-old"
   },
@@ -38,20 +38,20 @@
     "id": "not-built",
     "seenFrom": ["start-script"],
     "message": "RangerTrak isn't built yet. Run: npm run build",
-    "detail": "The dist folder (dist\\rangertrak\\browser) is missing, so the RangerView web server has no viewer page to serve.",
+    "detail": "The dist folder (dist\\rangertrak\\browser) is missing, so RangerView has no viewer page to serve.",
     "anchor": "start-not-built"
   },
   {
     "id": "certificate-not-accepted",
     "seenFrom": ["app", "phone"],
-    "message": "Most likely this browser hasn't accepted the RangerView web server's certificate yet, or the RangerView web server isn't running. Open RangerView, choose Advanced, then Proceed, and come back.",
-    "detail": "The request failed within a few seconds, which usually means the browser refused the RangerView web server's self-signed certificate. A browser cannot tell this from a RangerView web server that is not running.",
+    "message": "Most likely this browser hasn't accepted RangerView's certificate yet, or RangerView isn't running. Open RangerView, choose Advanced, then Proceed, and come back.",
+    "detail": "The request failed within a few seconds, which usually means the browser refused RangerView's self-signed certificate. A browser cannot tell this from RangerView that is not running.",
     "anchor": "cant-reach-board-certificate"
   },
   {
     "id": "local-name-failed",
     "seenFrom": ["app"],
-    "message": "This device couldn't reach {host}. Names ending in .local don't work on every network: paste the address made of numbers that the RangerView web server printed under the name. If that fails too, open the RangerView web server once to accept its certificate.",
+    "message": "This device couldn't reach {host}. Names ending in .local don't work on every network: paste the address made of numbers that RangerView printed under the name. If that fails too, open RangerView once to accept its certificate.",
     "detail": "A .local name is found by multicast DNS, which some routers do not pass between Wi-Fi and wired devices, and some devices do not support. The numbered address always works on the same network (E-289).",
     "anchor": "cant-reach-board-local-name"
   },
@@ -65,7 +65,7 @@
   {
     "id": "vpn-or-shield",
     "seenFrom": ["app", "phone"],
-    "message": "A VPN or web-protection app can block the RangerView web server. Turn it off while you use the RangerView web server.",
+    "message": "A VPN or web-protection app can block RangerView. Turn it off while you use RangerView.",
     "detail": "VPN apps and web-protection or ad-blocking apps can route or filter traffic to local addresses.",
     "anchor": "cant-reach-board-vpn"
   },
@@ -79,14 +79,14 @@
   {
     "id": "not-a-board",
     "seenFrom": ["app"],
-    "message": "Something answered at that address, but it isn't a RangerView web server.",
-    "detail": "The reply to /api/hello did not carry the RangerView web server signature. Check the address, or whether another program uses that address.",
+    "message": "Something answered at that address, but it isn't RangerView.",
+    "detail": "The reply to /api/hello did not carry RangerView signature. Check the address, or whether another program uses that address.",
     "anchor": "cant-reach-board-not-a-board"
   },
   {
     "id": "board-lost",
     "seenFrom": ["viewer"],
-    "message": "Lost RangerView at {time}.[[ Still on {ssid}?]] Is the laptop running the RangerView web server awake?",
+    "message": "Lost RangerView at {time}.[[ Still on {ssid}?]] Is the laptop running RangerView awake?",
     "detail": "The viewer's last request to RangerView failed. What is on screen is the last report received.",
     "anchor": "cant-reach-board-lost"
   },
@@ -107,8 +107,8 @@
   {
     "id": "laptop-asleep",
     "seenFrom": ["server"],
-    "message": "Keep this computer plugged in with the lid open. If it sleeps, the RangerView web server stops.",
-    "detail": "The RangerView web server only runs while this computer is awake. On battery, set sleep to Never while the RangerView web server is in use.",
+    "message": "Keep this computer plugged in with the lid open. If it sleeps, RangerView stops.",
+    "detail": "RangerView only runs while this computer is awake. On battery, set sleep to Never while RangerView is in use.",
     "anchor": "cant-reach-board-asleep"
   }
 ]

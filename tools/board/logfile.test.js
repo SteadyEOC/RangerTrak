@@ -1,4 +1,4 @@
-// E-290: the RangerView web server's log file.
+// E-290: RangerView's log file.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
