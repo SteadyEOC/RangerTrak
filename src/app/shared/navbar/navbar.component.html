@@ -235,8 +235,13 @@
         (click)="closeNav(); onLeaveFieldMode()"
         title="Bring back every page: roster, map, radio log and Mission">Leave field mode</button></li>
     }
-    <li *ngIf="isNavigating()" class="Navbar__progressBar">Loading... <span class="smaller"> (Please 'Refresh' the
-        page.)</span>
+    <li *ngIf="isNavigating()" class="Navbar__progressBar">Loading...
+      <!-- E-309: an installed app has no browser reload button, so a page that never finishes loading
+           left the scribe stuck. The button is always in the layout (hidden until the wait is long) so
+           it never moves anything when it appears. -->
+      <button type="button" class="Navbar__reload smaller" data-testid="nav-reload"
+        [class.Navbar__reload--hidden]="!showReload()" [attr.tabindex]="showReload() ? null : -1"
+        [attr.aria-hidden]="showReload() ? null : 'true'" (click)="reload()">Still loading? Reload</button>
       <mat-progress-bar mode="indeterminate">
       </mat-progress-bar>
     </li>

@@ -112,6 +112,16 @@
   padding-left: 2vw;
 }
 
+.Navbar__reload {
+  margin-left: 0.5em;
+  font: inherit;
+  cursor: pointer;
+
+  &--hidden {
+    visibility: hidden;
+  }
+}
+
 .smaller {
   font-size  : smaller;
   font-weight: reset;

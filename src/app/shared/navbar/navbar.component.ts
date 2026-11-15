@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, ChangeDetectionStrategy, signal, effect } from '@angular/core'
-import { NavigationEnd, NavigationError, NavigationStart, Router, RouterModule } from '@angular/router';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterModule } from '@angular/router';
 import { faL, faMapMarkedAlt } from '@fortawesome/free-solid-svg-icons'
 import { MatProgressBarModule } from '@angular/material/progress-bar'
 import { MatMenuModule } from '@angular/material/menu'
@@ -30,6 +30,28 @@ export class NavbarComponent implements OnInit {
   // guaranteed path back into change detection. Signals close that gap (Sprint G).
   // Rendered on every page.
   isNavigating = signal(false)
+
+  /** E-309: how long a page may take to load before "Still loading? Reload" appears (ms). */
+  static readonly RELOAD_DELAY_MS = 6000
+  /** True once a navigation has taken longer than RELOAD_DELAY_MS. */
+  showReload = signal(false)
+  private reloadTimer: ReturnType<typeof setTimeout> | undefined
+
+  private startReloadTimer(): void {
+    this.clearReloadTimer()
+    this.reloadTimer = setTimeout(() => this.showReload.set(true), NavbarComponent.RELOAD_DELAY_MS)
+  }
+
+  private clearReloadTimer(): void {
+    if (this.reloadTimer !== undefined) clearTimeout(this.reloadTimer)
+    this.reloadTimer = undefined
+    this.showReload.set(false)
+  }
+
+  /** E-309: the installed app has no browser reload button; the pages and data are already on the device. */
+  reload(): void {
+    location.reload()
+  }
   faMapMarkedAlt = faMapMarkedAlt
   recycled = 0
 
@@ -136,7 +158,11 @@ export class NavbarComponent implements OnInit {
           // help page get properly loaded") - an unawaited promise delays nothing, so it was
           // removed, with a never-taken `if (false)` reload block below it.
           this.isNavigating.set(true)
+          this.startReloadTimer()
           this.navOpen.set(false)
+        }
+        if (event instanceof NavigationEnd || event instanceof NavigationCancel) {
+          this.clearReloadTimer()
         }
         if (event instanceof NavigationEnd) {
           this.isNavigating.set(false)

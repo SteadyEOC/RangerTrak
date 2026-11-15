@@ -96,7 +96,7 @@ const SHOTS = [
     alt: 'Mission’s Data safety card showing the storage status' },
   { id: 'T7.1', file: 'print-ics309', phase: 'demo', route: '/radio-log', find: card('Print ICS-309 log'),
     alt: 'Radio Log’s Print ICS-309 log card' },
-  { id: 'T8.2', file: 'board-card', phase: 'demo', route: '/mission', find: card('RangerView'),
+  { id: 'T8.2', file: 'board-card', phase: 'demo', route: '/mission', find: card('RangerView (advanced)'),
     alt: 'Mission’s RangerView card' },
   { id: 'T9.2', file: 'send-my-reports', phase: 'field', pad: 14, route: '/', mobile: true,
     setupReloads: true,

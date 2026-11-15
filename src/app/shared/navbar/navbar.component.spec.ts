@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { NavigationEnd, NavigationStart, Router } from '@angular/router'
 import { RouterTestingModule } from '@angular/router/testing'
+import { Subject } from 'rxjs'
 
 import { provideSwUpdateStub } from '../../../testing/sw-update.stub'
 import { FieldModeService } from '../services/field-mode.service'
@@ -69,5 +71,50 @@ describe('NavbarComponent', () => {
     ;(q() as HTMLButtonElement).click()
     expect(spy).toHaveBeenCalled()
     fieldMode.enabled.set(false)
+  })
+
+  // E-309: an installed app has no browser reload button, so a page that never finishes loading needs one.
+  describe('Still loading? Reload', () => {
+    const events = () => TestBed.inject(Router).events as unknown as Subject<unknown>
+    const button = () => fixture.nativeElement.querySelector('[data-testid="nav-reload"]') as HTMLButtonElement | null
+    const isHidden = () => button()!.classList.contains('Navbar__reload--hidden')
+
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    it('is in the layout from the start of a navigation but only shown after the delay', () => {
+      events().next(new NavigationStart(1, '/map'))
+      fixture.detectChanges()
+      expect(button()).not.toBeNull()
+      expect(isHidden()).toBe(true) // space reserved, nothing moves when it appears
+
+      vi.advanceTimersByTime(NavbarComponent.RELOAD_DELAY_MS - 1)
+      fixture.detectChanges()
+      expect(isHidden()).toBe(true)
+
+      vi.advanceTimersByTime(1)
+      fixture.detectChanges()
+      expect(isHidden()).toBe(false)
+      expect(button()!.textContent).toContain('Still loading? Reload')
+    })
+
+    it('never appears when the page loads in time', () => {
+      events().next(new NavigationStart(1, '/map'))
+      vi.advanceTimersByTime(1000)
+      events().next(new NavigationEnd(1, '/map', '/map'))
+      vi.advanceTimersByTime(NavbarComponent.RELOAD_DELAY_MS * 2)
+      fixture.detectChanges()
+      expect(component.showReload()).toBe(false)
+      expect(button()).toBeNull()
+    })
+
+    it('reloads the page when pressed', () => {
+      events().next(new NavigationStart(1, '/map'))
+      vi.advanceTimersByTime(NavbarComponent.RELOAD_DELAY_MS)
+      fixture.detectChanges()
+      const spy = vi.spyOn(component, 'reload').mockReturnValue(undefined)
+      button()!.click()
+      expect(spy).toHaveBeenCalled()
+    })
   })
 })
