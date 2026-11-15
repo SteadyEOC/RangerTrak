@@ -50,14 +50,20 @@ function route () {
   const hash = decodeURIComponent(location.hash.slice(1))
   let target = hash ? document.getElementById(hash) : null
   let view = target?.closest('.view')
+  // John 2026-11-15: a plain /tour/ (every link from the app, Help included) always opens Start,
+  // not the view last open in this browser. The last module is still kept: the Modules tab points
+  // at it, so picking up where you left off is one click.
   if (!view) {
-    view = views.find((v) => viewKey(v) === get(VIEW)) || views[0]
+    view = views[0]
     target = null
   }
   const key = viewKey(view)
   for (const v of views) v.hidden = v !== view
-  set(VIEW, key)
-  if (key.startsWith('m')) document.getElementById('tab-modules').href = '#' + key
+  if (key.startsWith('m')) set(VIEW, key)
+  const lastModule = get(VIEW)
+  if (lastModule?.startsWith('m') && views.some((v) => viewKey(v) === lastModule)) {
+    document.getElementById('tab-modules').href = '#' + lastModule
+  }
   for (const a of document.querySelectorAll('.tabs a')) {
     const on = a.id === 'tab-modules' ? key.startsWith('m') : a.getAttribute('href') === '#' + key ||
       (key === 'finish' && a.getAttribute('href') === '#last-stop')
