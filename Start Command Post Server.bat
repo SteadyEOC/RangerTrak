@@ -1,5 +1,5 @@
 @echo off
-REM RangerTrak Board - double-click launcher (Windows).
+REM RangerView - double-click launcher (Windows).
 REM
 REM Raised live 2026-08-31: "anything to simplify creation or admin?" - before this, starting
 REM the server meant knowing what a terminal is, what npm is, and typing a command correctly.
@@ -57,5 +57,5 @@ if not exist "dist\rangertrak\browser\index.html" (
 node tools\command-post-server.js
 
 echo.
-echo The Board stopped. Close this window, or double-click this file again to restart it.
+echo The RangerView mini web server stopped. Close this window, or double-click this file again to restart it.
 pause

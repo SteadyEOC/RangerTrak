@@ -13,7 +13,7 @@ no network. **Scenarios are always free to play.**
 Phase 0 changes nothing in the app (`src/` is untouched). The boundary is **files**: the console
 writes Report Packet files, a person imports them in the app, and the class's own log comes back
 the same way. There is **no network push into the app**; a training-only live feed, alert bars and
-a Board context panel are a roadmap entry (E-197), not built.
+a mini web server context panel are a roadmap entry (E-197), not built.
 
 ## Start it
 

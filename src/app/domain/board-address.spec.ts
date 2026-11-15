@@ -2,16 +2,16 @@ import { BOARD_HTTP_ERROR, normaliseBoardAddress } from './board-address'
 
 describe('normaliseBoardAddress', () => {
   it('leaves a clean address alone', () => {
-    expect(normaliseBoardAddress('https://rangertrak-board.local')).toEqual({
-      url: 'https://rangertrak-board.local',
+    expect(normaliseBoardAddress('https://rangerview.local')).toEqual({
+      url: 'https://rangerview.local',
     })
     expect(normaliseBoardAddress('https://192.168.1.5:8080')).toEqual({
       url: 'https://192.168.1.5:8080',
     })
   })
   it('trims and drops a trailing slash', () => {
-    expect(normaliseBoardAddress('  https://rangertrak-board.local/  ').url).toBe(
-      'https://rangertrak-board.local'
+    expect(normaliseBoardAddress('  https://rangerview.local/  ').url).toBe(
+      'https://rangerview.local'
     )
     expect(normaliseBoardAddress('https://x.local///').url).toBe('https://x.local')
   })
@@ -38,8 +38,8 @@ describe('normaliseBoardAddress', () => {
     })
   })
   it('adds https:// when there is no scheme', () => {
-    expect(normaliseBoardAddress('rangertrak-board.local')).toEqual({
-      url: 'https://rangertrak-board.local',
+    expect(normaliseBoardAddress('rangerview.local')).toEqual({
+      url: 'https://rangerview.local',
     })
     expect(normaliseBoardAddress('192.168.1.5:8080/view')).toEqual({
       url: 'https://192.168.1.5:8080',

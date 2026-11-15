@@ -182,7 +182,7 @@ describe('migrateMission', () => {
     })
   })
 
-  describe('Board settings backfill (D-61 / D-60)', () => {
+  describe('RangerView settings backfill (D-61 / D-60)', () => {
     const defaults = {
       ...v0Settings(),
       boardPassword: '',

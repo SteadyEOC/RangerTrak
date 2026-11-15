@@ -81,7 +81,7 @@
               {
                 "glob": "{index.html,board-guide.js}",
                 "input": "./tools/board-guide",
-                "output": "./board"
+                "output": "./view"
               },
               {
                 "glob": "**/*",
@@ -100,7 +100,7 @@
               {
                 "glob": "**/*",
                 "input": "./src/command-post-view",
-                "output": "./view"
+                "output": "./live"
               },
               "src/manifest.webmanifest"
             ],

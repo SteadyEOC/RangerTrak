@@ -1,4 +1,4 @@
-// D-61 / D-60 - the Board's HTTP API: who may publish, who may read, and how a full-size
+// D-61 / D-60 - the mini web server's HTTP API: who may publish, who may read, and how a full-size
 // attachment gets from the scribe's device to a viewer.
 //
 // ALL state is in this process's memory and nothing here touches the disk (D-61 item 8): the
@@ -7,8 +7,8 @@
 // (every keyed call answers 409 'unclaimed'), claims again and re-sends (D-61 item 6).
 //
 // A claim body may carry `reclaim: true`. The client sets it only for the AUTOMATIC re-claim after
-// a 409 (restart), never for a person's "Take over". A reclaim on an unclaimed Board is a normal
-// first claim; on a claimed Board it never takes over (409 'claimed') - see postClaim().
+// a 409 (restart), never for a person's "Take over". A reclaim on an unclaimed RangerView is a normal
+// first claim; on a claimed RangerView it never takes over (409 'claimed') - see postClaim().
 //
 // Two secrets, never printed or logged anywhere in this file:
 //   - the viewer PASSWORD (optional; blank = the Wi-Fi is the boundary), sent by viewers in
@@ -31,7 +31,7 @@ const RATE_BLOCK_MS = 60 * 1000;
 const digest = (s) => crypto.createHash('sha256').update(String(s)).digest();
 const safeEqual = (a, b) => crypto.timingSafeEqual(digest(a), digest(b));
 
-// Text that ends up on the server's console or on the Board. Control characters are stripped so
+// Text that ends up on the server's console or on RangerView. Control characters are stripped so
 // a hostile client can't write escape sequences or fake log lines into the operator's terminal.
 function cleanText(value, max = 200) {
   if (value === undefined || value === null) return '';
@@ -85,7 +85,7 @@ function safeContentType(type) {
  * @param {string}   [o.version]        the RangerTrak version, told to GET /api/hello (E-216)
  * @param {Function} [o.update]         () => { version } of a newer kit, once the start-up check finds one (update-check.js)
  * @param {string}   [o.wifi]           the Wi-Fi network's name when the server could read it, told to viewers
- *                                      so "Lost the Board" can ask "Still on <name>?" (E-216)
+ *                                      so "Lost RangerView" can ask "Still on <name>?" (E-216)
  */
 function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, name = '', onClaim = () => {}, version = '', wifi = '', update = () => null } = {}) {
   let claim = null; // { key, password, by, at, previous? }
@@ -132,7 +132,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     attempts.set(addr, a);
   }
   // Returns 'ok' | 'wrong' | 'blocked'. A MISSING password is 'wrong' but not counted: that is
-  // a viewer arriving at a protected Board for the first time, not someone guessing.
+  // a viewer arriving at a protected RangerView for the first time, not someone guessing.
   function checkPassword(req, expected) {
     const addr = req.socket.remoteAddress || '';
     const retry = blockedFor(addr);
@@ -146,14 +146,14 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
 
   // ---- who is asking ----
   // The publisher's calls. 409: nobody has claimed (a restart) - the client claims again and
-  // resends. 403: somebody else holds the Board now - the client stops publishing.
+  // resends. 403: somebody else holds RangerView now - the client stops publishing.
   function keyed(req, res) {
     if (!claim) { send(res, 409, { state: 'unclaimed' }); return false; }
     const key = req.headers['x-board-key'];
     if (typeof key !== 'string' || !safeEqual(key, claim.key)) {
-      // Who holds the Board is told only to a device that provably held it (its key was
-      // superseded by a takeover) or when the Board is open anyway. Any other key gets no details,
-      // so a stranger on the network learns nothing from a password-protected Board.
+      // Who holds RangerView is told only to a device that provably held it (its key was
+      // superseded by a takeover) or when the mini web server is open anyway. Any other key gets no details,
+      // so a stranger on the network learns nothing from a password-protected RangerView.
       const known = typeof key === 'string' && retiredKeys.includes(digest(key).toString('hex'));
       send(res, 403, !claim.password || known ? { state: 'replaced', by: claim.by, at: claim.at } : { state: 'replaced' });
       return false;
@@ -209,7 +209,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
 
     if (!claim) {
       claim = { key: crypto.randomBytes(32).toString('base64url'), password, by, at: new Date(now()).toISOString() };
-      log(`Board claimed: ${byLine(by)}, ${clock(now())}`);
+      log(`RangerView claimed: ${byLine(by)}, ${clock(now())}`);
       log(modeLine());
       send(res, 200, { key: claim.key });
       onClaim();
@@ -218,7 +218,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
 
     // An automatic re-claim (the client's answer to a 409 after a restart) never takes over: a
     // device superseded before the restart may re-claim first-come, and must not then be able
-    // to swap the Board back and forth with the real publisher with nobody acting. Only a claim
+    // to swap the mini web server back and forth with the real publisher with nobody acting. Only a claim
     // without reclaim - a person pressing "Take over" - falls through to the takeover below.
     if (body.reclaim === true) {
       const entitled = !claim.password || safeEqual(password, claim.password);
@@ -294,7 +294,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
 
   function getMission(req, res) {
     if (!claim) { noteViewer(req); send(res, 200, { waiting: true }); return; }
-    // Password before "no snapshot yet": a protected Board shouldn't tell a stranger even that
+    // Password before "no snapshot yet": a protected RangerView shouldn't tell a stranger even that
     // much, and a viewer with a saved password just sees "Waiting for the scribe..." after it.
     if (!viewerAllowed(req, res)) return;
     noteViewer(req);
@@ -346,7 +346,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     // Viewers re-check the fingerprint themselves (D-60 item 9), so this is a courtesy that stops
     // a corrupt upload being held and shown as "ready"; the viewer's check is the safeguard.
     if (crypto.createHash('sha256').update(buf).digest('hex') !== sha) { send(res, 422, { error: 'Fingerprint does not match.' }); return; }
-    if (!storeOriginal(sha, buf)) { send(res, 413, { error: 'File is larger than the Board can hold.' }); return; }
+    if (!storeOriginal(sha, buf)) { send(res, 413, { error: 'File is larger than the mini web server can hold.' }); return; }
     requests.delete(sha);
     send(res, 204);
   }
@@ -354,7 +354,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   async function route(req, res, urlPath) {
     const m = req.method;
     const wrongMethod = () => send(res, 405, { error: 'Method not allowed' });
-    // E-216: lets the app tell "a RangerTrak Board" from "something else". No password, no claim, no state read.
+    // E-216: lets the app tell "a RangerView" from "something else". No password, no claim, no state read.
     if (urlPath === '/api/hello') return m === 'GET' ? send(res, 200, { app: 'rangertrak-board', name: board.name, version, ...(update() ? { newer: update().version } : {}) }) : wrongMethod();
     if (urlPath === '/api/claim') return m === 'POST' ? postClaim(req, res) : wrongMethod();
     if (urlPath === '/api/password') return m === 'POST' ? postPassword(req, res) : wrongMethod();
@@ -393,7 +393,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     });
   }
 
-  // For the QR code: whether anyone has claimed the Board, and the viewer password if there is one.
+  // For the QR code: whether anyone has claimed RangerView, and the viewer password if there is one.
   const claimState = () => ({ claimed: !!claim, password: claim ? claim.password : '' });
 
   // For the server's own console status line (E-216). Times are epoch ms (0 = never); no addresses.

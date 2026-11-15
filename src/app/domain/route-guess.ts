@@ -16,7 +16,7 @@ const DESTINATIONS: readonly (RouteGuess & { words: string })[] = [
   { route: '/radio-log', label: 'Radio Log', words: 'radio log radiolog reports 309 ics309' },
   { route: '/map', label: 'Map', words: 'map maps leaflet maplibre places locations' },
   { route: '/rangers', label: 'Rangers', words: 'rangers ranger roster people team teams members' },
-  { route: '/mission', label: 'Mission', words: 'mission settings setup prep config board backup' },
+  { route: '/mission', label: 'Mission', words: 'mission settings setup prep config board rangerview backup' },
   { route: '/after-action', label: 'AAR notes', words: 'after action aar notes 214 ics214' },
   { route: '/summary', label: 'SitRep', words: 'summary sitrep' },
   { route: '/messages', label: 'Messages', words: 'messages message msg' },

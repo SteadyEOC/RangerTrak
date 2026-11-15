@@ -8,7 +8,7 @@
 #   LICENSE
 #   rangertrak/          the built site, without assets/maps/ (John, 2026-10-28: no basemap in
 #                        the zip - hosts load a .pmtiles file for their own area instead)
-# It also attaches rangertrak-board-<version>.zip, the Board kit (E-255; last step below).
+# It also attaches rangerview-<version>.zip, the RangerView kit (E-255; last step below).
 #
 # The deploy workflow has already run the tests on this commit; this only builds and packages.
 name: Release web zip
@@ -80,25 +80,25 @@ jobs:
       - name: Attach to the release
         run: gh release upload "$TAG" "$WEB_ZIP" --clobber
 
-      # E-255: the ready-to-run Board kit, rangertrak-board-<version>.zip, from the same build. Its
+      # E-255: the ready-to-run RangerView kit, rangerview-<version>.zip, from the same build. Its
       # layout is in tools/board-kit/build.js. Tags from before the kit existed have no build.js.
-      - name: Board kit
+      - name: RangerView kit
         run: |
           set -euo pipefail
-          if [ ! -f tools/board-kit/build.js ]; then echo "No Board kit at $TAG"; exit 0; fi
+          if [ ! -f tools/board-kit/build.js ]; then echo "No RangerView kit at $TAG"; exit 0; fi
           npm run build:board-kit
           VERSION="${TAG#v}"
-          NAME="rangertrak-board-${VERSION}"
-          KIT="dist/board-kit/$(node -p "'rangertrak-board-' + require('./package.json').version")"
+          NAME="rangerview-${VERSION}"
+          KIT="dist/board-kit/$(node -p "'rangerview-' + require('./package.json').version")"
           [ "$KIT" = "dist/board-kit/$NAME" ] || mv "$KIT" "dist/board-kit/$NAME"
-          test -f "dist/board-kit/$NAME/rangertrak-board.js"
+          test -f "dist/board-kit/$NAME/rangerview.js"
           test -f "dist/board-kit/$NAME/app/index.html"
-          test -x "dist/board-kit/$NAME/Start RangerTrak Board.command"
+          test -x "dist/board-kit/$NAME/Start RangerView.command"
           # Never name an env var ZIP (or ZIPOPT): Info-ZIP reads it as default options. On v1.0.0-beta.2 the
           # web zip's path sat in $ZIP, so this zip added the kit to the web zip, exited 0 and left no kit zip.
           cp -r "dist/board-kit/$NAME" "$RUNNER_TEMP/$NAME"
           # No top folder inside the zip: Windows' Extract All and macOS both make a folder named after the
-          # zip already, so a top folder gave rangertrak-board-X\rangertrak-board-X\ (John, 2026-11-13).
+          # zip already, so a top folder gave rangerview-X\rangerview-X\ (John, 2026-11-13).
           (cd "$RUNNER_TEMP/$NAME" && zip -r9 "../$NAME.zip" . | tail -5)
           test -s "$RUNNER_TEMP/$NAME.zip"
           ls -l "$RUNNER_TEMP/$NAME.zip"

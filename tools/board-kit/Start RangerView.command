@@ -1,9 +1,9 @@
 #!/bin/bash
-# RangerTrak Board kit - double-click launcher (macOS). E-255.
+# RangerView kit - double-click launcher (macOS). E-255.
 #
-# The kit's own launcher, built into rangertrak-board-<version>.zip by tools/board-kit/build.js
+# The kit's own launcher, built into rangerview-<version>.zip by tools/board-kit/build.js
 # (which also sets LF line endings and the executable bit). Nothing here needs npm or a build:
-# rangertrak-board.js carries the Board and its packages, and app/ the built app. Node.js 24 is
+# rangerview.js carries the mini web server and its packages, and app/ the built app. Node.js 24 is
 # the one thing to install.
 #
 # cd to this file's own folder; macOS does not guarantee a working directory for a double-click.
@@ -17,7 +17,7 @@ pause_and_exit() {
 
 if ! command -v node >/dev/null 2>&1; then
   echo ""
-  echo "The RangerTrak Board needs Node.js, and this computer doesn't have it (or it"
+  echo "RangerView needs Node.js, and this computer doesn't have it (or it"
   echo "isn't on the PATH)."
   echo ""
   echo "Install the LTS version from https://nodejs.org (it needs the Internet, so do it"
@@ -43,8 +43,8 @@ if [ ! -f "app/index.html" ]; then
   pause_and_exit 1
 fi
 
-node rangertrak-board.js "$@"
+node rangerview.js "$@"
 
 echo ""
-echo "The Board stopped. Close this window, or double-click this file again to restart it."
+echo "The RangerView mini web server stopped. Close this window, or double-click this file again to restart it."
 pause_and_exit 0

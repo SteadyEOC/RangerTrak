@@ -101,7 +101,7 @@ Known gaps worth stating plainly:
 
 - **Nothing syncs between devices.** Each device keeps its own log, and logs move only as
   files someone sends and merges by hand: a scribe's hand-over file, or a field phone's report
-  packet. The optional Board shows a read-only copy of one device's log to others on the
+  packet. The optional RangerView screen shows a read-only copy of one device's log to others on the
   station's Wi-Fi.
 
 - It will not **interrupt** you. Overdue teams are shaded green through red on the map, the

@@ -3,7 +3,7 @@ import type { HelloResult, LocalNetworkPermission } from './board-diagnosis'
 import { QUICK_FAIL_MS, diagnoseBoard } from './board-diagnosis'
 
 const base = { online: true, localNetwork: 'unknown' as LocalNetworkPermission }
-const ok: HelloResult = { kind: 'ok', name: 'rangertrak-board.local' }
+const ok: HelloResult = { kind: 'ok', name: 'rangerview.local' }
 
 describe('diagnoseBoard (E-216)', () => {
   it('offline is no-network, before anything else', () => {
@@ -36,20 +36,20 @@ describe('diagnoseBoard (E-216)', () => {
     const d = diagnoseBoard({ ...base, hello: ok, host: '10.0.0.156' })
     expect(d.ok).toBe(true)
     expect(d.cause).toBeUndefined()
-    expect(d.name).toBe('rangertrak-board.local')
-    expect(d.message).toBe('Connected to the Board at 10.0.0.156.')
-    expect(d.detail).toContain('rangertrak-board.local')
-    expect(diagnoseBoard({ ...base, hello: ok }).message).toBe('Connected to the Board at rangertrak-board.local.')
+    expect(d.name).toBe('rangerview.local')
+    expect(d.message).toBe('Connected to RangerView at 10.0.0.156.')
+    expect(d.detail).toContain('rangerview.local')
+    expect(diagnoseBoard({ ...base, hello: ok }).message).toBe('Connected to RangerView at rangerview.local.')
   })
 
   it('a failure at a .local name says the name may be the problem and points to the numbered address (E-289)', () => {
     for (const hello of [{ kind: 'failed', elapsedMs: 40 }, { kind: 'timeout' }] as HelloResult[]) {
-      const d = diagnoseBoard({ ...base, hello, host: 'rangertrak-board.local' })
+      const d = diagnoseBoard({ ...base, hello, host: 'rangerview.local' })
       expect(d.cause).toBe('local-name-failed')
-      expect(d.message).toContain("couldn't reach rangertrak-board.local")
+      expect(d.message).toContain("couldn't reach rangerview.local")
       expect(d.message).toContain('address made of numbers')
     }
-    expect(diagnoseBoard({ ...base, hello: { kind: 'timeout' }, host: 'rangertrak-board-2.local:8080' }).cause).toBe('local-name-failed')
+    expect(diagnoseBoard({ ...base, hello: { kind: 'timeout' }, host: 'rangerview-2.local:8080' }).cause).toBe('local-name-failed')
     expect(diagnoseBoard({ ...base, hello: { kind: 'failed', elapsedMs: 40 }, host: '10.0.0.156' }).cause).toBe('certificate-not-accepted')
   })
 
@@ -128,14 +128,14 @@ describe('board causes list (E-216)', () => {
 
   it('fills placeholders and drops an optional clause with no value', () => {
     expect(boardCause('board-lost', { time: '12:04', ssid: 'CERT-Net' }).message).toBe(
-      'Lost the Board at 12:04. Still on CERT-Net? Is the Board laptop awake?'
+      'Lost RangerView at 12:04. Still on CERT-Net? Is the laptop running the mini web server awake?'
     )
     expect(boardCause('board-lost', { time: '12:04' }).message).toBe(
-      'Lost the Board at 12:04. Is the Board laptop awake?'
+      'Lost RangerView at 12:04. Is the laptop running the mini web server awake?'
     )
     expect(boardCause('scribe-quiet', { minutes: 6 }).message).toBe(
-      "The Board is fine. The scribe's device last checked in 6 min ago."
+      "RangerView is fine. The scribe's device last checked in 6 min ago."
     )
-    expect(() => boardCause('nope')).toThrowError(/Unknown Board cause/)
+    expect(() => boardCause('nope')).toThrowError(/Unknown RangerView cause/)
   })
 })

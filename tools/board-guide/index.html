@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later
-     Setting up the RangerTrak Board: the guided version of the kit's READ-ME-FIRST.txt (John, 2026-11-13).
-     Served at rangertrak.org/board/ (angular.json copies it; worker/index.js routes /board and /board/).
+     Setting up RangerView: the guided version of the kit's READ-ME-FIRST.txt (John, 2026-11-13).
+     Served at rangertrak.org/view/ (angular.json copies it; worker/index.js routes /view and sends /board and /rangerview here).
      It stands alone: inline styles, its own board-guide.js (the CSP allows no inline script), no app code. The checklist ticks are kept in this
      browser's localStorage, a convenience only; the page works without it. -->
 <html lang="en">
@@ -9,7 +9,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Set up the RangerTrak Board</title>
+<title>Set up RangerView</title>
 <meta name="description" content="Step by step: let everyone at the command post watch the live radio log on their own phone, tablet or laptop.">
 <style>
   :root { --bg: #ffffff; --fg: #1b1f24; --muted: #57606a; --rule: #d0d7de; --code: #f3f4f6; --accent: #0b5cad; --ok: #1a7f37; --track: #e6e8eb; --warn: #fff4d6; --warn-rule: #e3b341; --card: #f6f8fa; }
@@ -57,10 +57,11 @@
 <body class="os-windows">
 <main>
 
-<h1>Set up the RangerTrak Board</h1>
-<p class="lede">The Board lets everyone at the command post watch the live radio log on their own phone, tablet or
-laptop. It runs on one computer at the command post, and needs no Internet once it is set up.
+<h1>Set up RangerView (a remote view of the radio log)</h1>
+<p class="lede">RangerView lets everyone at the command post watch the live radio log on their own phone, tablet or
+laptop. A small program called the mini web server runs on one computer at the command post, and needs no Internet once it is set up.
 Tick each step as you go.</p>
+<p class="note">Looking for the live screen? Open the address shown in the mini web server's window, or scan its QR code.</p>
 
 <div class="gauge" id="gauge">
   <div class="gauge-row">
@@ -79,7 +80,7 @@ Tick each step as you go.</p>
 <details class="step" data-step="node">
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">1. Install Node.js</span></summary>
   <div class="body">
-    <p>The Board runs on Node.js, a free program. You need version 24 or newer.</p>
+    <p>The mini web server runs on Node.js, a free program. You need version 24 or newer.</p>
     <p><a class="button" href="https://nodejs.org/en/download" target="_blank" rel="noopener">Download Node.js (LTS)</a></p>
     <p><strong>No extra tools are needed.</strong> Accept the installer's defaults.</p>
     <p data-os="windows">Run the <code>.msi</code> installer. When it offers <em>Automatically install the necessary tools</em>
@@ -91,9 +92,9 @@ Tick each step as you go.</p>
 </details>
 
 <details class="step" data-step="kit">
-  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">2. Download the Board kit</span></summary>
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">2. Download the RangerView kit</span></summary>
   <div class="body">
-    <p>On the newest release, under <em>Assets</em>, download <code>rangertrak-board-&lt;version&gt;.zip</code>
+    <p>On the newest release, under <em>Assets</em>, download <code>rangerview-&lt;version&gt;.zip</code>
       (not the web zip).</p>
     <p><a class="button" href="https://github.com/SteadyEOC/RangerTrak/releases/latest" target="_blank" rel="noopener">Newest release</a></p>
   </div>
@@ -102,10 +103,10 @@ Tick each step as you go.</p>
 <details class="step" data-step="unzip">
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">3. Unzip it</span></summary>
   <div class="body">
-    <p>Put it in a folder you can find again, such as <code>Documents\RangerTrak Board</code>. Don't run it from inside the zip.</p>
+    <p>Put it in a folder you can find again, such as <code>Documents\RangerView</code>. Don't run it from inside the zip.</p>
     <p data-os="windows">Right-click the zip, <em>Extract All</em>, then <em>Extract</em>.</p>
     <p data-os="mac">Double-click the zip.</p>
-    <p data-os="linux"><code>unzip rangertrak-board-*.zip -d "RangerTrak Board"</code></p>
+    <p data-os="linux"><code>unzip rangerview-*.zip -d "RangerView"</code></p>
   </div>
 </details>
 
@@ -113,47 +114,47 @@ Tick each step as you go.</p>
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">4. Install RangerTrak on the scribe's device</span></summary>
   <div class="body">
     <p>Open <a href="https://rangertrak.org/">rangertrak.org</a> on the device the scribe logs on, and install it
-      (the browser's Install button) so it works offline. It can be the same computer as the Board.</p>
+      (the browser's Install button) so it works offline. It can be the same computer as the mini web server.</p>
   </div>
 </details>
 
 <h2 class="phase">At the command post</h2>
 
 <details class="step" data-step="start">
-  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">5. Join the Wi-Fi and start the Board</span></summary>
+  <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">5. Join the Wi-Fi and start the mini web server</span></summary>
   <div class="body">
-    <p>Join the Wi-Fi or hotspot everyone will use. Plug the computer in and keep the lid open: if it sleeps, the Board stops.</p>
+    <p>Join the Wi-Fi or hotspot everyone will use. Plug the computer in and keep the lid open: if it sleeps, the mini web server stops.</p>
     <div data-os="windows">
-      <p>Double-click <code>Start RangerTrak Board.bat</code>.</p>
+      <p>Double-click <code>Start RangerView.bat</code>.</p>
       <ul>
         <li>"Windows protected your PC"? Click <em>More info</em>, then <em>Run anyway</em>.</li>
         <li>Asked whether to allow Node.js on private networks? Click <em>Allow</em>.</li>
       </ul>
     </div>
-    <p data-os="mac">The first time, right-click (or Control-click) <code>Start RangerTrak Board.command</code>,
+    <p data-os="mac">The first time, right-click (or Control-click) <code>Start RangerView.command</code>,
       choose <em>Open</em>, then <em>Open</em>. After that, double-click it.</p>
-    <p data-os="linux">In a terminal, in the kit's folder: <code>node rangertrak-board.js</code>. Linux reserves port 443,
-      so the Board may move to another port. Use exactly the address it prints.</p>
-    <p>A window opens with two steps in it. Keep it open; closing it stops the Board.</p>
+    <p data-os="linux">In a terminal, in the kit's folder: <code>node rangerview.js</code>. Linux reserves port 443,
+      so the mini web server may move to another port. Use exactly the address it prints.</p>
+    <p>A window opens with two steps in it. Keep it open; closing it stops the mini web server.</p>
   </div>
 </details>
 
 <details class="step" data-step="scribe">
   <summary><input type="checkbox" class="tick" aria-label="Done"><span class="title">6. Connect the scribe's RangerTrak</span></summary>
   <div class="body">
-    <p>Use an address from the window's <strong>STEP 1</strong>: the name, normally <code>https://rangertrak-board.local</code>
-      (already copied on the Board computer), or the numbered one under it, such as <code>https://10.0.0.15</code>.
+    <p>Use an address from the window's <strong>STEP 1</strong>: the name, normally <code>https://rangerview.local</code>
+      (already copied on the mini web server computer), or the numbered one under it, such as <code>https://10.0.0.15</code>.
       On another computer the name does not work on every network; the numbered one always does.</p>
     <ol>
       <li>Open that address once in the scribe's browser. It warns <em>Your connection is not private</em>:
         expected for a private server. Click <em>Advanced</em>, then <em>Proceed</em>.</li>
-      <li>In RangerTrak: <em>Mission</em> page, <em>RangerTrak Board</em> card. Paste the address into
+      <li>In RangerTrak: <em>Mission</em> page, <em>RangerView</em> card. Paste the address into
         <em>Server address</em> and press <em>Test connection</em>. When it says <em>Connected</em>, turn on
-        <em>Send this log to a RangerTrak Board</em>.</li>
+        <em>Send this log to a remote view (RangerView)</em>.</li>
       <li>Chrome or Edge may ask: <em>rangertrak.org wants to access other devices on your local network</em>.
-        Click <em>Allow</em>. That is how RangerTrak reaches the Board.</li>
+        Click <em>Allow</em>. That is how RangerTrak reaches the mini web server.</li>
     </ol>
-    <p>Use that address even when RangerTrak runs on the Board computer itself, not <code>localhost</code>.</p>
+    <p>Use that address even when RangerTrak runs on the mini web server computer itself, not <code>localhost</code>.</p>
   </div>
 </details>
 
@@ -163,7 +164,7 @@ Tick each step as you go.</p>
     <p>Viewers open the address in the window's <strong>STEP 2</strong> (the same address with <code>/view</code>
       on the end), or scan the QR code. They install nothing. The first time, each device shows the same
       warning: <em>Advanced</em>, then <em>Proceed</em>.</p>
-    <p>The roster never goes to the Board, only report content.</p>
+    <p>The roster never goes to RangerView, only report content.</p>
   </div>
 </details>
 
@@ -171,32 +172,32 @@ Tick each step as you go.</p>
   <summary>Something not working?</summary>
   <dl>
     <dt>Test connection says the certificate isn't accepted</dt>
-    <dd>Open the Board's address in that device's browser, choose <em>Advanced</em>, then <em>Proceed</em>, and test again.
-      A Board that isn't running looks the same, so check its window too.</dd>
+    <dd>Open RangerView's address in that device's browser, choose <em>Advanced</em>, then <em>Proceed</em>, and test again.
+      A mini web server that isn't running looks the same, so check its window too.</dd>
     <dt>Test connection says the browser is blocking the local network</dt>
     <dd><em>Block</em> was clicked on the local network question. Click the icon at the left of the address bar,
       open <em>Site settings</em>, set <em>Local network access</em> to <em>Allow</em>, reload, and test again.</dd>
     <dt>Nothing answers</dt>
-    <dd>The device is probably on a different Wi-Fi from the Board computer. A VPN or web-protection app can also be
-      in the way; turn it off while you use the Board.</dd>
+    <dd>The device is probably on a different Wi-Fi from the mini web server computer. A VPN or web-protection app can also be
+      in the way; turn it off while you use the mini web server.</dd>
     <dt>The name doesn't open, or Test connection says it couldn't reach the .local name</dt>
     <dd>Use the numbered address printed under it, such as <code>https://10.0.0.15</code> (with <code>/view</code>
       for viewers). Some routers don't pass the name between wired and Wi-Fi devices, and some phones can't look it up.</dd>
-    <dt>Windows treats the Wi-Fi as Public, or the firewall blocks the Board</dt>
-    <dd>Windows then blocks other devices. The Board's window says which, and offers the fix.</dd>
+    <dt>Windows treats the Wi-Fi as Public, or the firewall blocks the mini web server</dt>
+    <dd>Windows then blocks other devices. The mini web server's window says which, and offers the fix.</dd>
     <dt>Hotel or public Wi-Fi</dt>
     <dd>Many keep devices apart. Use your own router or a phone hotspot.</dd>
     <dt>A phone says "No internet" on the Wi-Fi</dt>
-    <dd>Choose <em>Stay connected</em>, or it may switch to mobile data and lose the Board.</dd>
+    <dd>Choose <em>Stay connected</em>, or it may switch to mobile data and lose the mini web server.</dd>
     <dt>Two Boards on one network</dt>
-    <dd>The second calls itself <code>rangertrak-board-2.local</code>. Use the address its own window prints.</dd>
+    <dd>The second calls itself <code>rangerview-2.local</code>. Use the address its own window prints.</dd>
     <dt>Something went wrong and you want help</dt>
-    <dd>Start the Board from a terminal with <code>node rangertrak-board.js --log</code>. Each run then writes a
+    <dd>Start the mini web server from a terminal with <code>node rangerview.js --log</code>. Each run then writes a
       log in the kit's <code>logs</code> folder, named for the date and time it started. It holds what the window
       showed and which devices connected, never their passwords. Send that file with your question. Without
-      <code>--log</code> the Board keeps no log.</dd>
+      <code>--log</code> the mini web server keeps no log.</dd>
   </dl>
-  <p>More in RangerTrak's Help (the Board's entry on the Mission page) and the FAQ. Still stuck?
+  <p>More in RangerTrak's Help (the mini web server's entry on the Mission page) and the FAQ. Still stuck?
     <a href="https://github.com/SteadyEOC/RangerTrak/issues" target="_blank" rel="noopener">Tell us on GitHub</a>.</p>
 </details>
 

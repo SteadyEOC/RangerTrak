@@ -656,7 +656,7 @@ describe('BackupService', () => {
       expect(mission.settings.googleGeocodingApiKey).toBe(KEY)
     })
 
-    it('keeps the Board password out of a plain payload and a plain restore (D-61)', async () => {
+    it('keeps the RangerView password out of a plain payload and a plain restore (D-61)', async () => {
       const mission = TestBed.inject(MissionService)
       const backup = TestBed.inject(BackupService)
       const PW = 'board-pw-test'
@@ -667,7 +667,7 @@ describe('BackupService', () => {
       expect(mission.settings.boardPassword).toBe(PW)
     })
 
-    it('stores the Board password in secrets beside the geocoding key, not in appSettings (D-61)', async () => {
+    it('stores the RangerView password in secrets beside the geocoding key, not in appSettings (D-61)', async () => {
       const mission = TestBed.inject(MissionService)
       const PW = 'board-pw-test'
       mission.updateMission({

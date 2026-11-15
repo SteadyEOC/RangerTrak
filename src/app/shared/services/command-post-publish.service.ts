@@ -50,11 +50,11 @@ import { RadioLogType } from './radio-log-entry.interface'
  *   hotspot with unknown devices in range (ADR D-35).
  *
  * ADR D-61 (2026-10-16) replaced the Stage 1 "no join code" stance. The first publish CLAIMS the
- * Board (with the password, if the mission has one) and the server issues this device a hidden
+ * RangerView (with the password, if the mission has one) and the server issues this device a hidden
  * publish key, sent as X-Board-Key on every publish. A takeover by another device cuts the key off
  * (403), and this device then STOPS and says so (`replaced`); only a person pressing Take over
  * claims it back. A server restart (409) is answered by a re-claim marked `reclaim`, which can
- * only ever claim an EMPTY Board. The state machine and the reading of replies are in
+ * only ever claim an EMPTY RangerView. The state machine and the reading of replies are in
  * `domain/board-client.ts`; this class is the fetches, the timer and the signals. Neither the
  * password nor the key is ever logged: state changes only.
  */
@@ -82,7 +82,7 @@ export type CommandPostReport = {
   // Off sends a count; on sends the references, with a thumbnail where there is one.
   attachmentCount?: number
   attachments?: BoardAttachment[]
-  // E-228 phase 1: only on an entry that generates an ICS-213; the Board lists these on its own tab.
+  // E-228 phase 1: only on an entry that generates an ICS-213; the mini web server lists these on its own tab.
   ics213?: BoardIcs213
   // E-283: the one-line summary of the entry's ICS-213RR resource request, when it has one.
   rr213?: string
@@ -99,7 +99,7 @@ export type CommandPostMission = {
 }
 
 const POLL_MS = 5000
-/** E-216: how long Test connection waits for the Board's /api/hello before calling it a timeout. */
+/** E-216: how long Test connection waits for the mini web server's /api/hello before calling it a timeout. */
 const HELLO_TIMEOUT_MS = 8000
 
 @Injectable({ providedIn: 'root' })
@@ -115,20 +115,20 @@ export class CommandPostPublishService implements OnDestroy {
   /** For the Mission card. */
   readonly state = this.stateSignal.asReadonly()
   private holderSignal = signal<BoardHolder | undefined>(undefined)
-  /** Who holds the Board now, when `state` is `replaced` and the server said. */
+  /** Who holds RangerView now, when `state` is `replaced` and the server said. */
   readonly holder = this.holderSignal.asReadonly()
   private messageSignal = signal('')
   /** Why the last claim failed, in words for the operator. Empty when there is nothing to say. */
   readonly message = this.messageSignal.asReadonly()
 
   private unreachableSignal = signal<'quick' | 'slow' | undefined>(undefined)
-  /** E-216: set while the last request to the Board failed at the network. `quick` points at the certificate. */
+  /** E-216: set while the last request to RangerView failed at the network. `quick` points at the certificate. */
   readonly unreachable = this.unreachableSignal.asReadonly()
   private diagnosisSignal = signal<BoardDiagnosis | undefined>(undefined)
-  /** E-216: the latest answer to "why can't I reach the Board?" (Test connection, or the automatic check after a failure). */
+  /** E-216: the latest answer to "why can't I reach RangerView?" (Test connection, or the automatic check after a failure). */
   readonly diagnosis = this.diagnosisSignal.asReadonly()
   private testingSignal = signal(false)
-  /** True while Test connection is waiting for the Board. */
+  /** True while Test connection is waiting for the mini web server. */
   readonly testing = this.testingSignal.asReadonly()
   private retry = new BoardRetry(() => this.retryNow())
   private listening = false
@@ -277,8 +277,8 @@ export class CommandPostPublishService implements OnDestroy {
 
   private onStateChanged(before: BoardState, now: BoardState): void {
     // E-222: turning publishing on or off sends (or stops sending) mission data; other steps are only the handshake.
-    if (now === 'publishing' || now === 'off') this.journal.record('board-publishing-changed', `Board publishing: ${before} -> ${now}.`)
-    else this.log.info(`Board publishing: ${before} -> ${now}.`, this.id)
+    if (now === 'publishing' || now === 'off') this.journal.record('board-publishing-changed', `RangerView publishing: ${before} -> ${now}.`)
+    else this.log.info(`RangerView publishing: ${before} -> ${now}.`, this.id)
     if (now === 'publishing') this.startPolling()
     else this.stopPolling()
     if (now === 'off' || now === 'replaced') { this.retry.stop(); this.unreachableSignal.set(undefined); this.diagnosisSignal.set(undefined) }
@@ -326,7 +326,7 @@ export class CommandPostPublishService implements OnDestroy {
         this.dispatch({ type: 'heldByOther' })
       } else {
         this.messageSignal.set(read.message)
-        this.log.warn(`Board claim refused (HTTP ${reply.status}).`, this.id)
+        this.log.warn(`RangerView claim refused (HTTP ${reply.status}).`, this.id)
         this.refuse()
       }
     } catch (e) {
@@ -345,15 +345,15 @@ export class CommandPostPublishService implements OnDestroy {
       if (read.kind === 'ok') this.dispatch({ type: 'keyGood' })
       else if (read.kind === 'unclaimed') this.dispatch({ type: 'keyUnknown' })
       else if (read.kind === 'replaced') { this.holderSignal.set(read.holder); this.dispatch({ type: 'replaced' }) }
-      else { this.messageSignal.set(`The Board answered with an error (HTTP ${read.status}).`); this.refuse() }
+      else { this.messageSignal.set(`The mini web server answered with an error (HTTP ${read.status}).`); this.refuse() }
     } catch (e) {
       this.claimFailed(base, e)
     }
   }
 
   private claimFailed(base: string, e: unknown): void {
-    // Expected, not an error: the Board is a separate process a mission may not have running yet.
-    this.log.warn(`The Board was not reachable; is the server running at ${base}? (${e})`, this.id)
+    // Expected, not an error: the mini web server is a separate process a mission may not have running yet.
+    this.log.warn(`The mini web server was not reachable; is the server running at ${base}? (${e})`, this.id)
     this.refuse()
   }
 
@@ -415,10 +415,10 @@ export class CommandPostPublishService implements OnDestroy {
         headers: { 'Content-Type': 'application/json' }, key: usedKey, body: JSON.stringify({ password }),
       })
       const read = readKeyedReply(reply.status, reply.body)
-      if (read.kind === 'ok') this.journal.record('board-password-changed', 'Changed the Board password.')
+      if (read.kind === 'ok') this.journal.record('board-password-changed', 'Changed the RangerView password.')
       else if (read.kind !== 'other') this.onKeyedRefusal(read, usedKey)
     } catch (e) {
-      this.log.warn(`Board password not sent (${e})`, this.id)
+      this.log.warn(`RangerView password not sent (${e})`, this.id)
     }
   }
 
@@ -472,7 +472,7 @@ export class CommandPostPublishService implements OnDestroy {
         try {
           await this.upload(sha, usedKey)
         } catch (e) {
-          this.log.warn(`Board attachment not sent (${e})`, this.id)
+          this.log.warn(`RangerView attachment not sent (${e})`, this.id)
         }
         this.uploadQueue.shift()
       }
@@ -490,8 +490,8 @@ export class CommandPostPublishService implements OnDestroy {
       headers: { 'Content-Type': 'application/octet-stream' }, key: usedKey, body: bytes,
     })
     const read = readKeyedReply(reply.status, reply.body)
-    if (read.kind === 'ok') this.journal.record('board-attachment-sent', 'Sent 1 attachment to the Board.')
-    else if (read.kind === 'other') this.log.warn(`Board attachment refused (HTTP ${read.status}).`, this.id)
+    if (read.kind === 'ok') this.journal.record('board-attachment-sent', 'Sent 1 attachment to RangerView.')
+    else if (read.kind === 'other') this.log.warn(`RangerView attachment refused (HTTP ${read.status}).`, this.id)
     else this.onKeyedRefusal(read, usedKey)
   }
 
@@ -541,7 +541,7 @@ export class CommandPostPublishService implements OnDestroy {
 
   /**
    * A request failed at the network (not an HTTP status). Say what is most likely at once (the fast/slow guess),
-   * try again later, and - once per failure streak - ask the Board `GET /api/hello` to name the cause properly.
+   * try again later, and - once per failure streak - ask the mini web server `GET /api/hello` to name the cause properly.
    */
   private noteUnreachable(elapsedMs: number): void {
     const firstOfStreak = !this.unreachableSignal()
@@ -552,7 +552,7 @@ export class CommandPostPublishService implements OnDestroy {
     if (firstOfStreak) void this.diagnoseStreak()
   }
 
-  /** The automatic Test connection after a failure: its answer replaces the guess, unless the Board turns out reachable. */
+  /** The automatic Test connection after a failure: its answer replaces the guess, unless the mini web server turns out reachable. */
   private async diagnoseStreak(): Promise<void> {
     const base = this.active?.base
     if (!base) return
@@ -562,7 +562,7 @@ export class CommandPostPublishService implements OnDestroy {
     this.messageSignal.set(d.message)
   }
 
-  /** Any HTTP answer at all means the Board was reached. */
+  /** Any HTTP answer at all means the mini web server was reached. */
   private noteReached(): void {
     if (!this.unreachableSignal()) return
     this.unreachableSignal.set(undefined)
@@ -574,7 +574,7 @@ export class CommandPostPublishService implements OnDestroy {
   // ---- Test connection (E-216 slice 2) ----
 
   /**
-   * The Mission card's Test connection button: asks the Board `GET {address}/api/hello` and names the most likely
+   * The Mission card's Test connection button: asks the mini web server `GET {address}/api/hello` and names the most likely
    * cause (domain/board-diagnosis.ts). Works with publishing off, from whatever address the scribe has typed.
    * A browser cannot see why a request failed, so the answer is a best guess, worded that way.
    */
@@ -582,7 +582,7 @@ export class CommandPostPublishService implements OnDestroy {
     const typed = normaliseBoardAddress(address ?? this.settings?.commandPostServerUrl)
     if (!typed.url) {
       const d: BoardDiagnosis = {
-        ok: false, message: typed.error ?? 'Type the address the Board printed, then test it.', detail: '',
+        ok: false, message: typed.error ?? 'Type the address the mini web server printed, then test it.', detail: '',
       }
       this.diagnosisSignal.set(d)
       return d
@@ -599,7 +599,7 @@ export class CommandPostPublishService implements OnDestroy {
       try { host = new URL(base).host } catch { /* normalised already; leave it unnamed */ }
       const d = diagnoseBoard({ online: navigator.onLine, localNetwork, hello, host })
       this.diagnosisSignal.set(d)
-      this.log.info(`Board test: ${d.ok ? 'connected' : d.cause}.`, this.id)
+      this.log.info(`RangerView test: ${d.ok ? 'connected' : d.cause}.`, this.id)
       return d
     } finally {
       this.testingSignal.set(false)
@@ -612,7 +612,7 @@ export class CommandPostPublishService implements OnDestroy {
     try {
       const res = await fetch(boardRequestUrl(base, '/api/hello'), { signal: AbortSignal.timeout(HELLO_TIMEOUT_MS) })
       let body: { app?: unknown, name?: unknown } | null = null
-      try { body = await res.json() } catch { /* not JSON: not a Board */ }
+      try { body = await res.json() } catch { /* not JSON: not a mini web server */ }
       return body && body.app === 'rangertrak-board'
         ? { kind: 'ok', name: typeof body.name === 'string' ? body.name : '' }
         : { kind: 'not-board' }
@@ -683,7 +683,7 @@ export class CommandPostPublishService implements OnDestroy {
     if (show) {
       // Oldest reports first, so the newest keep their thumbnails when the lot is too big.
       const dropped = trimThumbs([...payload.reports].sort((a, b) => a.date.localeCompare(b.date)))
-      if (dropped) this.log.info(`Board snapshot: dropped ${dropped} thumbnail(s) to stay under the size limit.`, this.id)
+      if (dropped) this.log.info(`RangerView snapshot: dropped ${dropped} thumbnail(s) to stay under the size limit.`, this.id)
     }
     return payload
   }

@@ -1,11 +1,11 @@
-// D-61 item 1 - the Board announces `rangertrak-board.local` over multicast DNS, so its address
+// D-61 item 1 - the mini web server announces `rangerview.local` over multicast DNS, so its address
 // stays the same from one network to the next (the IPs change every time; the name does not).
 //
 // A minimal responder, written by hand rather than pulled in as a dependency (this tool adds no
 // npm packages). It does exactly three things:
 //   1. PROBES for the name before claiming it (RFC 6762 section 8, simplified): three queries
 //      250 ms apart. An A-record answer from an address that is not ours means another device
-//      holds the name, so try rangertrak-board-2.local, then -3, and so on.
+//      holds the name, so try rangerview-2.local, then -3, and so on.
 //   2. ANNOUNCES the name twice, 1 s apart, then answers A queries for it.
 //   3. Sends a GOODBYE (TTL 0) on exit so neighbours' caches drop it at once.
 // Also answers (E-289) a query that asks for a unicast reply (the QU bit) straight to the asker, and a
@@ -187,7 +187,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * @param {object} o
- * @param {string}   o.label       first-choice label, e.g. 'rangertrak-board'
+ * @param {string}   o.label       first-choice label, e.g. 'rangerview'
  * @param {string[]} o.addresses   the private addresses to answer with (also the interfaces we
  *                                 join the multicast group on and send from)
  * @param {function} [o.log]
@@ -247,7 +247,7 @@ function createResponder({ label, addresses, log = () => {}, port = MDNS_PORT, g
     socket = s;
   }
 
-  /** Resolves with the name actually taken (`rangertrak-board.local`, `-2.local`, ...), or null
+  /** Resolves with the name actually taken (`rangerview.local`, `-2.local`, ...), or null
    *  if mDNS can't be used here (the caller then prints IP addresses only). */
   async function claim() {
     try {

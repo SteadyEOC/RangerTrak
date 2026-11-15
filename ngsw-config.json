@@ -70,7 +70,11 @@
     "!/self-hosting",
     "!/self-hosting/",
     "!/board",
-    "!/board/"
+    "!/board/",
+    "!/view",
+    "!/view/",
+    "!/rangerview",
+    "!/rangerview/"
   ],
   "dataGroups": [
     {

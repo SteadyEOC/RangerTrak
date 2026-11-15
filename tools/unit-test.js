@@ -3,7 +3,7 @@
  *
  *   npm test                         every spec, once
  *   npm test -- --include=src/app/domain/heading.spec.ts
- *   npm test -- --filter="Board retry"
+ *   npm test -- --filter="RangerView retry"
  *   npm run test:watch               re-runs on save (stop it with Ctrl+C)
  *
  * Why a wrapper and not plain `ng test`:

@@ -49,7 +49,7 @@ index is stale. The screens' Guide text (`guide-content.ts`) is searched directl
 ```bash
 npm test           # unit tests: Vitest in headless Chrome, runs once (about 30 s)
 npm test -- --include=src/app/domain/heading.spec.ts   # one spec file (or a folder)
-npm test -- --filter="Board retry"                     # tests whose name matches
+npm test -- --filter="RangerView retry"                     # tests whose name matches
 npm run test:watch # re-runs on save; Ctrl+C stops it
 npm run lint       # ESLint + typecheck
 npm run lint:ts    # ESLint only (eslint.config.mjs)
@@ -110,7 +110,7 @@ the count (`728/728 passed` on 2026-10-27). Add `--verbose` to see every check. 
 `shell` (navigation, layout, Help), `entry`, `map`, `radiolog` (Radio Log and Messages),
 `roster`, `mission` (Mission page, statuses, sample mission), `backup` (backups, report
 packets, old-release fixtures, device encryption), `attachments` (photos and files on
-entries, smaller copies), `board` (the Mission Board server and viewer), `view` (Simple and
+entries, smaller copies), `board` (the RangerView server and viewer), `view` (Simple and
 Full view), `controls` (control sizes and corners), `cards` (the card grid layouts). Run the groups a change touches before an
 ordinary push, and the whole suite before a release.
 

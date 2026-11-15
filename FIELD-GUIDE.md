@@ -504,39 +504,39 @@ it with **Turn off field mode** in Help. Install the app on each phone from rang
 - **Anything urgent still goes by radio.** The Online badge says only that the phone has a
   connection, not that a report arrived.
 
-### RangerTrak Board
+### RangerView (advanced)
 
-The Board is not a third mode. It is an option on the command post's app that shows a
+RangerView (a remote view of the radio log) is not a third mode. It is an option on the command post's app that shows a
 read-only copy of the log to anyone on the station's Wi-Fi, behind an optional password you set
 on the Mission page. Viewers see two tabs: **Radio log** and **ICS-213 messages** (open a
 message to read or print it). Phones cannot send reports through it. Only one device publishes
 to it at a time, and another device with the password can take it over.
 
-**Starting the Board.** It runs on a laptop or desktop, often the scribe's own. Download the
-RangerTrak Board kit (`rangertrak-board-<version>.zip`, under **Assets** on the latest release at
+**Starting the mini web server.** It runs on a laptop or desktop, often the scribe's own. Download the
+RangerView kit (`rangerview-<version>.zip`, under **Assets** on the latest release at
 <https://github.com/SteadyEOC/RangerTrak/releases>), unzip it, and double-click **Start RangerTrak
-Board**. It needs Node.js 24 or newer and nothing else. <https://rangertrak.org/board/> walks through it
+RangerView**. It needs Node.js 24 or newer and nothing else. <https://rangertrak.org/view/> walks through it
 step by step, with a checklist. Paste the address it prints into the
-Mission page's Board card. Use the `rangertrak-board.local` or numbered address even on the same
+Mission page's RangerView card. Use the `rangerview.local` or numbered address even on the same
 computer: `localhost` publishes, but the viewer link made from it opens nowhere else.
 
-**If the Board won't connect,** press **Test connection** on the Mission page's RangerTrak
-Board card. It tells you, in one sentence, the most likely reason:
+**If the mini web server won't connect,** press **Test connection** on the Mission page's
+RangerView card. It tells you, in one sentence, the most likely reason:
 
 - this device is not on a network,
-- it is on a different Wi-Fi from the Board laptop,
-- the browser has not accepted the Board's certificate yet (press **Open the Board**, choose
+- it is on a different Wi-Fi from the laptop running the mini web server,
+- the browser has not accepted the mini web server's certificate yet (press **Open RangerView**, choose
   Advanced, then Proceed, and come back),
 - the browser is blocking access to devices on this network, or
-- something answered that is not a RangerTrak Board.
+- something answered that is not a mini web server.
 
-These are best guesses; **Details** shows the technical line for whoever is helping. The Board
+These are best guesses; **Details** shows the technical line for whoever is helping. The mini web server
 laptop's own window lists what it found when it started, and prints a line whenever the
 scribe, the number of viewers or the latest report changes. On a viewer's screen:
 
-- **lost** means the viewer can't reach the Board ("Lost the Board at 12:04. Still on the
-  Wi-Fi? Is the Board laptop awake?"); the last reports stay on screen.
-- **Scribe quiet** means the Board is fine but the scribe's device has not checked in for over
+- **lost** means the viewer can't reach RangerView ("Lost RangerView at 12:04. Still on the
+  Wi-Fi? Is the laptop running the mini web server awake?"); the last reports stay on screen.
+- **Scribe quiet** means RangerView is fine but the scribe's device has not checked in for over
   2 minutes.
 
 ### Handing over to another scribe

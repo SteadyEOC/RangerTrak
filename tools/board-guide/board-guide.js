@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The /board/ page's checklist and computer picker. A file of its own: the site's CSP allows no inline script.
+// The /view/ page's checklist and computer picker. A file of its own: the site's CSP allows no inline script.
 (function () {
   var KEY = 'rtBoardGuide';
   var saved = {};

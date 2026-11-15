@@ -388,7 +388,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         valueSetter: (params: { data: RadioLogEntryType, newValue: any }) => this.setCoordinate(params.data, 'lng', params.newValue)
       },
       // Newest first by default (John, 2026-10-21): the latest call is the top row of page 1, as on
-      // the Board's viewer. Sorts on the real time, not the "M-dd" text, which puts 9-30 after
+      // the mini web server's viewer. Sorts on the real time, not the "M-dd" text, which puts 9-30 after
       // 10-01. Printing is unaffected: ics309-log.ts puts its rows in time order itself.
       {
         headerName: "Reported", headerTooltip: 'The date and time the entry was logged: month-day, then 24-hour time, for example 9-30 17:16:05. It cannot be edited.', valueGetter: this.myDateGetter, maxWidth: 170, editable: false,

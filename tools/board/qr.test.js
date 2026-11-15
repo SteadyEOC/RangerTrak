@@ -12,8 +12,8 @@ test('isLoopback accepts this machine and nothing else', () => {
 });
 
 test('the viewer link carries the password after a # and nowhere else', () => {
-  assert.strictEqual(qr.viewUrl({ host: 'rangertrak-board.local', port: 443, password: '' }), 'https://rangertrak-board.local/view');
-  assert.strictEqual(qr.viewUrl({ host: 'rangertrak-board.local', port: 8080, password: 'a b&c' }), 'https://rangertrak-board.local:8080/view#code=a%20b%26c');
+  assert.strictEqual(qr.viewUrl({ host: 'rangerview.local', port: 443, password: '' }), 'https://rangerview.local/view');
+  assert.strictEqual(qr.viewUrl({ host: 'rangerview.local', port: 8080, password: 'a b&c' }), 'https://rangerview.local:8080/view#code=a%20b%26c');
   assert.strictEqual(qr.plainUrl({ host: 'h', port: 8080 }), 'https://h:8080/view');
 });
 
@@ -24,7 +24,7 @@ function fakeRes() {
   r.headersSent = false;
   return r;
 }
-const state = () => ({ host: 'rangertrak-board.local', port: 443, password: 'secretword', claimed: true });
+const state = () => ({ host: 'rangerview.local', port: 443, password: 'secretword', claimed: true });
 
 test('a request from another address is refused and sees nothing', async () => {
   for (const addr of ['192.168.1.9', '::ffff:10.0.0.4', 'fe80::2']) {
@@ -41,7 +41,7 @@ test('a request from this machine gets the page, with the QR and the address', a
   await qr.handleQr({ url: '/qr', method: 'GET', socket: { remoteAddress: '::1' } }, res, state);
   assert.strictEqual(res.status, 200);
   assert.ok(res.body.includes('<svg'));
-  assert.ok(res.body.includes('https://rangertrak-board.local/view'));
+  assert.ok(res.body.includes('https://rangerview.local/view'));
   assert.ok(!res.body.includes('secretword'), 'the password rides inside the QR code, never as text on the page');
 });
 
@@ -58,7 +58,7 @@ test('other paths are not its business', async () => {
 test('against a real server: /qr from loopback is 200 and tracks the claim', async () => {
   const pems = await selfsigned.generate([{ name: 'commonName', value: 'qr test' }], { days: 1, keySize: 2048, algorithm: 'sha256' });
   const lines = [];
-  const server = await createServer({ port: 0, cert: { key: pems.private, cert: pems.cert }, name: 'rangertrak-board.local', log: (l) => lines.push(String(l)) });
+  const server = await createServer({ port: 0, cert: { key: pems.private, cert: pems.cert }, name: 'rangerview.local', log: (l) => lines.push(String(l)) });
   const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: false });
   const get = (path) => new Promise((resolve, reject) => {
     https.get({ host: '127.0.0.1', port: server.port, path, agent }, (res) => {
@@ -85,7 +85,7 @@ test('against a real server: /qr from loopback is 200 and tracks the claim', asy
     assert.strictEqual(after.status, 200);
     assert.ok(after.body.includes('<svg'));
     await new Promise((r) => setTimeout(r, 200)); // the terminal QR is drawn after the reply
-    assert.ok(lines.some((l) => l.includes('Scan to open the Board')), 'the console shows a QR after a claim');
+    assert.ok(lines.some((l) => l.includes('Scan to open the mini web server')), 'the console shows a QR after a claim');
     assert.ok(!lines.join('\n').includes('code=pw'), 'the password is never printed as text');
   } finally {
     await server.close();

@@ -1,37 +1,37 @@
 <mat-card appearance="outlined" class="rt-mission-card" [rtAdvanced]="'board'">
   <mat-card-header>
-    <mat-card-title>RangerTrak Board</mat-card-title>
-    <mat-card-subtitle>Let nearby devices read the live comms log over this Wi-Fi, from the computer running the Board.</mat-card-subtitle>
+    <mat-card-title>RangerView (remote view)</mat-card-title>
+    <mat-card-subtitle>A remote view of the radio log: nearby devices read it over this Wi-Fi, from the computer running the mini web server.</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     <!-- Simplified 2026-08-31 ("that server section explanation is long and technical.
          simplify it & move anything long to the guide") - the detailed walkthrough (why a
          phone can't host, the router-warning analogy, step-by-step setup) already lives in
-         full in the Guide drawer (guide-content.ts's own "RangerTrak Board" entry) and is
+         full in the Guide drawer (guide-content.ts's own "RangerView" entry) and is
          not duplicated here - this stays just long enough to act on, not to explain. -->
     @if (isPhone()) {
       <div class="warn mission-command-post__phone-note">
-        <!-- 2026-09-28, John: AAR note - the switch does not start the Board (nothing in
+        <!-- 2026-09-28, John: AAR note - the switch does not start the mini web server (nothing in
              the app can); it sends this device's log to one already running on a laptop,
              and that works from a phone too. Don't imply phones are shut out. -->
-        This phone can send to a Board running on a laptop. It can't run the Board itself.
+        This phone can send to a mini web server running on a laptop. It can't run the mini web server itself.
       </div>
     }
     <p class="mission__note">
       <!-- 2026-09-28, John: AAR note - same correction as the phone note and the switch
-           label below: this device only ever sends to the Board, never runs it. -->
-      The Board runs on a laptop or desktop at the command post, which can be this one (see Help).
+           label below: this device only ever sends to RangerView, never runs it. -->
+      The mini web server runs on a laptop or desktop at the command post, which can be this one (see Help).
       This switch only sends this log to it. Off by default; your own copy of the mission is unaffected either way.
     </p>
     <!-- John, 2026-10-28: "unclear how to set up the current computer as the board server", and running it
-         locally is the likelier case. The app can't start the Board itself; E-255's kit is the one download. -->
+         locally is the likelier case. The app can't start the mini web server itself; E-255's kit is the one download. -->
     @if (!isPhone()) {
       <p class="mission__note" data-testid="board-run-here">
-        <strong>To run the Board on this computer:</strong> follow the
-        <a [href]="boardGuideUrl" target="_blank" rel="noopener noreferrer">step-by-step Board setup</a>
+        <strong>To run the mini web server on this computer:</strong> follow the
+        <a [href]="boardGuideUrl" target="_blank" rel="noopener noreferrer">step-by-step RangerView setup</a>
         (install Node.js, download and unzip the
-        <a [href]="boardKitUrl" target="_blank" rel="noopener noreferrer">Board kit</a>, double-click
-        <em>Start RangerTrak Board</em>). Then paste the address it prints below.
+        <a [href]="boardKitUrl" target="_blank" rel="noopener noreferrer">RangerView kit</a>, double-click
+        <em>Start RangerView</em>). Then paste the address it prints below.
       </p>
     }
     <div class="warn">
@@ -40,14 +40,14 @@
       turning this on (Help has why).
     </div>
 
-    <!-- E-289: the address and Test connection come BEFORE the switch, so the scribe can check the Board is
+    <!-- E-289: the address and Test connection come BEFORE the switch, so the scribe can check the mini web server is
          reachable without sending anything. The switch is what sends the log. -->
     <mat-form-field class="mission-command-post__url" floatLabel="always">
       <mat-label>Server address</mat-label>
       <input matInput type="text" [formField]="form.commandPostServerUrl"
-        placeholder="Paste the address the Board printed" (blur)="tidyAddress()" />
+        placeholder="Paste the address the mini web server printed" (blur)="tidyAddress()" />
       <!-- Not an example address: John read the old "https://192.168.1.5:8080" placeholder
-           as the Board's real one and lost an hour to it (2026-10-21, E-216). -->
+           as the mini web server's real one and lost an hour to it (2026-10-21, E-216). -->
 
       <!-- Raised live 2026-08-31: "display it so it can be copy/pasted elsewhere in the
            future" - once typed in here, this was the ONLY other place the address lived
@@ -62,7 +62,7 @@
         [title]="clipboardAvailable ? 'Copy to clipboard' : 'Not available in this browser - select and copy the text instead'">
         <mat-icon>{{ copiedField() === 'address' ? 'check' : 'content_copy' }}</mat-icon>
       </button>
-      <mat-hint>The Board prints it when it starts (and copies it on its own computer). Copy it again from here later.</mat-hint>
+      <mat-hint>The mini web server prints it when it starts (and copies it on its own computer). Copy it again from here later.</mat-hint>
     </mat-form-field>
 
     <!-- E-216 slice 2: Test connection works from whatever address is typed above, with publishing on or off. -->
@@ -76,7 +76,7 @@
       <div class="mission-command-post__diagnosis" data-testid="board-diagnosis">
         <p role="status" [class.mission-command-post__status--stopped]="!d.ok">{{ d.message }}
           @if (d.ok && !form.commandPostEnabled().value()) {
-            Turn on <em>Send this log to a RangerTrak Board</em> below to start sending.
+            Turn on <em>Send this log to a remote view (RangerView)</em> below to start sending.
           }
         </p>
         @if (d.detail) {
@@ -89,7 +89,7 @@
     }
     @if (publisher.unreachable() === 'quick' || publisher.diagnosis()?.cause === 'certificate-not-accepted') {
       <p class="mission-command-post__certificate">
-        <a matButton="outlined" [href]="helloUrl()" target="_blank" rel="noopener">Open the Board</a>
+        <a matButton="outlined" [href]="helloUrl()" target="_blank" rel="noopener">Open RangerView</a>
       </p>
     }
     <!-- Catches the one mistake this codebase now knows is silently fatal - see
@@ -109,13 +109,13 @@
          checkbox/toggle (angular/components#32072). -->
     <mat-slide-toggle [checked]="form.commandPostEnabled().value()"
       (change)="form.commandPostEnabled().value.set($event.checked)">
-      Send this log to a RangerTrak Board
+      Send this log to a remote view (RangerView)
     </mat-slide-toggle>
 
     @if (form.commandPostEnabled().value()) {
-      <!-- D-61: where publishing stands. Four states only (E-216): Connected, Trying, Can't reach the Board plus the
-           cause in a sentence, and Another device has the Board (`replaced`, which offers Take over, which claims
-           the Board back with the password below). -->
+      <!-- D-61: where publishing stands. Four states only (E-216): Connected, Trying, Can't reach RangerView plus the
+           cause in a sentence, and Another device has RangerView (`replaced`, which offers Take over, which claims
+           the mini web server back with the password below). -->
       @if (boardStatus() || statusMessage()) {
         <p class="mission-command-post__status" role="status" data-testid="board-status"
           [class.mission-command-post__status--stopped]="publisher.state() === 'replaced' || publisher.state() === 'error'">
@@ -129,16 +129,16 @@
       <!-- D-61: the viewers' password. A text field, not a masked one: the scribe reads it out or
            shows the QR code to the people who need it. Blank = open to the Wi-Fi. -->
       <mat-form-field class="mission-command-post__url" floatLabel="always">
-        <mat-label>Board password</mat-label>
+        <mat-label>RangerView password</mat-label>
         <input matInput type="text" [formField]="form.boardPassword" autocomplete="off"
           autocapitalize="off" spellcheck="false" />
-        <mat-hint>Blank: anyone on this Wi-Fi can read the Board.</mat-hint>
+        <mat-hint>Blank: anyone on this Wi-Fi can read the mini web server.</mat-hint>
       </mat-form-field>
 
       <!-- D-60 item 6: off by default. Off sends only a count of attachments per report. -->
       <mat-slide-toggle class="mission-command-post__attachments" [checked]="form.boardShowAttachments().value()"
         (change)="form.boardShowAttachments().value.set($event.checked)">
-        Show attachments on the Board
+        Show attachments on RangerView
       </mat-slide-toggle>
 
       <!-- Raised live 2026-08-31: "a URL to click" to confirm /view actually works, without

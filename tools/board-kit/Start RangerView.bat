@@ -1,22 +1,22 @@
 @echo off
-REM RangerTrak Board kit - double-click launcher (Windows). E-255.
+REM RangerView kit - double-click launcher (Windows). E-255.
 REM
-REM The kit's own launcher, built into rangertrak-board-<version>.zip by tools\board-kit\build.js.
+REM The kit's own launcher, built into rangerview-<version>.zip by tools\board-kit\build.js.
 REM Unlike "Start Command Post Server.bat" at the repo root, nothing here needs npm or a build:
-REM rangertrak-board.js carries the Board and its packages, and app\ the built app. Node.js 24 is
+REM rangerview.js carries the mini web server and its packages, and app\ the built app. Node.js 24 is
 REM the one thing to install.
 REM
 REM %~dp0 is this file's own folder, with a trailing backslash; a double-click does not
 REM guarantee the starting folder.
 cd /d "%~dp0"
-title RangerTrak Board
+title RangerView mini web server
 REM Plain white on black, whatever colours this console was set to (John 2026-11-13: dark-on-dark).
 color 0F
 
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
-  echo The RangerTrak Board needs Node.js, and this computer doesn't have it
+  echo RangerView needs Node.js, and this computer doesn't have it
   echo ^(or it isn't on the PATH^).
   echo.
   echo Install the LTS version from https://nodejs.org ^(it needs the Internet, so do it
@@ -52,8 +52,8 @@ if not exist "app\index.html" (
   exit /b 1
 )
 
-node rangertrak-board.js %*
+node rangerview.js %*
 
 echo.
-echo The Board stopped. Close this window, or double-click this file again to restart it.
+echo The RangerView mini web server stopped. Close this window, or double-click this file again to restart it.
 pause

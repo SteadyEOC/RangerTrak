@@ -1,4 +1,4 @@
-// The Board's start-up update check (John, 2026-11-13): version order, and silence when offline.
+// The mini web server's start-up update check (John, 2026-11-13): version order, and silence when offline.
 const test = require('node:test');
 const assert = require('node:assert');
 const { isNewer, checkForUpdate, updateLine } = require('./update-check');
@@ -18,7 +18,7 @@ const reply = (status, body) => async () => ({ ok: status >= 200 && status < 300
 
 test('a newer release is reported with the guide link', async () => {
   const u = await checkForUpdate({ current: '1.0.0-beta.3', fetchImpl: reply(200, { tag_name: 'v1.0.0-beta.4' }) });
-  assert.deepStrictEqual(u, { version: '1.0.0-beta.4', url: 'https://rangertrak.org/board/' });
+  assert.deepStrictEqual(u, { version: '1.0.0-beta.4', url: 'https://rangertrak.org/view/' });
   assert.match(updateLine(u, '1.0.0-beta.3'), /1\.0\.0-beta\.4 \(this is 1\.0\.0-beta\.3\)/);
 });
 

@@ -1,12 +1,12 @@
-// E-255: build the ready-to-run Board kit from an existing app build.
+// E-255: build the ready-to-run RangerView kit from an existing app build.
 //
 //   npm run build            (first: the kit carries dist/rangertrak/browser)
-//   npm run build:board-kit  -> dist/board-kit/rangertrak-board-<version>/
+//   npm run build:board-kit  -> dist/board-kit/rangerview-<version>/
 //
 // Kit layout, instructions first:
 //   READ-ME-FIRST.txt
-//   Start RangerTrak Board.bat / .command   double-click launchers; they only check for Node.js 24
-//   rangertrak-board.js                     the Board and its npm dependencies, bundled by esbuild
+//   Start RangerView.bat / .command   double-click launchers; they only check for Node.js 24
+//   rangerview.js                     the mini web server and its npm dependencies, bundled by esbuild
 //   app/                                    the built app and the viewer, without assets/maps/
 //   LICENSE, THIRD-PARTY-NOTICES.txt        AGPL for RangerTrak; the bundled packages' own licences
 //
@@ -18,7 +18,7 @@ const { version } = require('../../package.json');
 
 const REPO = path.join(__dirname, '..', '..');
 const APP = path.join(REPO, 'dist', 'rangertrak', 'browser');
-const NAME = `rangertrak-board-${version}`;
+const NAME = `rangerview-${version}`;
 const OUT = path.join(REPO, 'dist', 'board-kit', NAME);
 
 async function main() {
@@ -31,13 +31,13 @@ async function main() {
 
   const result = await esbuild.build({
     entryPoints: [path.join(__dirname, 'entry.js')],
-    outfile: path.join(OUT, 'rangertrak-board.js'),
+    outfile: path.join(OUT, 'rangerview.js'),
     bundle: true,
     platform: 'node',
     target: 'node24',
     metafile: true,
     legalComments: 'none', // the full licence texts go in THIRD-PARTY-NOTICES.txt instead
-    banner: { js: `// RangerTrak Board ${version}. AGPL-3.0-or-later; see LICENSE and THIRD-PARTY-NOTICES.txt.` },
+    banner: { js: `// RangerView mini web server ${version}. AGPL-3.0-or-later; see LICENSE and THIRD-PARTY-NOTICES.txt.` },
     logLevel: 'warning',
   });
 
@@ -51,13 +51,13 @@ async function main() {
     fs.writeFileSync(path.join(OUT, f), text);
   };
   copyWithEol('READ-ME-FIRST.txt', '\r\n'); // Notepad on older Windows shows LF-only text as one line
-  copyWithEol('Start RangerTrak Board.bat', '\r\n');
-  copyWithEol('Start RangerTrak Board.command', '\n');
-  fs.chmodSync(path.join(OUT, 'Start RangerTrak Board.command'), 0o755);
+  copyWithEol('Start RangerView.bat', '\r\n');
+  copyWithEol('Start RangerView.command', '\n');
+  fs.chmodSync(path.join(OUT, 'Start RangerView.command'), 0o755);
   fs.copyFileSync(path.join(REPO, 'LICENSE'), path.join(OUT, 'LICENSE'));
   fs.writeFileSync(path.join(OUT, 'THIRD-PARTY-NOTICES.txt'), notices(result.metafile));
 
-  console.log(`Board kit: ${path.relative(REPO, OUT)}`);
+  console.log(`RangerView kit: ${path.relative(REPO, OUT)}`);
 }
 
 /** The licence of every npm package that ended up in the bundle, from its own folder. */
@@ -67,7 +67,7 @@ function notices(metafile) {
     const m = input.split(path.sep).join('/').match(/^(.*node_modules\/(@[^/]+\/)?[^/]+)\//);
     if (m) dirs.set(m[1], true);
   }
-  const parts = ['RangerTrak Board bundles these npm packages. Their licences follow.\n'];
+  const parts = ['RangerView mini web server bundles these npm packages. Their licences follow.\n'];
   for (const dir of [...dirs.keys()].sort()) {
     const abs = path.join(REPO, dir);
     const pkg = JSON.parse(fs.readFileSync(path.join(abs, 'package.json'), 'utf8'));

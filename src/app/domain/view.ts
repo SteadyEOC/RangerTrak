@@ -32,7 +32,7 @@ export type ViewContext = {
   recipientsCustomised: boolean,
   /** Tactical call signs on the mission. */
   tacticalCallCount: number,
-  /** The RangerTrak Board is switched on or has an address. */
+  /** The RangerView is switched on or has an address. */
   boardInUse: boolean,
   /** Live attachments on the mission's radio log entries. */
   attachmentCount: number,
@@ -82,7 +82,7 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'maps', label: 'Maps and geocoding', isInUse: ctx => ctx.mapSettingsCustomised },
   { id: 'recipients213', label: 'Listed message recipients', isInUse: ctx => ctx.recipientsCustomised },
   { id: 'tactical-calls', label: 'Tactical call signs', isInUse: ctx => ctx.tacticalCallCount > 0 },
-  { id: 'board', label: 'RangerTrak Board', isInUse: ctx => ctx.boardInUse },
+  { id: 'board', label: 'RangerView', isInUse: ctx => ctx.boardInUse },
   { id: 'attachments-budget', label: 'Attachments budget', isInUse: ctx => ctx.attachmentCount > 0 },
   { id: 'setup-file', label: 'Setup file', isInUse: ctx => ctx.setupFileAsked },
   { id: 'device-encryption', label: 'Device encryption', isInUse: ctx => ctx.encryptionOn },

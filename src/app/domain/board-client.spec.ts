@@ -78,7 +78,7 @@ describe('board-client state machine (D-61)', () => {
     expect(out.state).toBe('publishing')
   })
 
-  it('a re-claim answered 409 claimed means somebody else holds the Board: replaced', () => {
+  it('a re-claim answered 409 claimed means somebody else holds RangerView: replaced', () => {
     const out = run('publishing', [{ type: 'unclaimed' }, { type: 'heldByOther' }])
     expect(out.state).toBe('replaced')
     expect(out.nexts[1]).toBeUndefined()
@@ -187,7 +187,7 @@ describe('board-client replies', () => {
   })
 
   it('words the replaced notice, with the holder when the server sent one', () => {
-    expect(replacedMessage(undefined)).toBe('Another device publishes to this Board now.')
+    expect(replacedMessage(undefined)).toBe('Another device publishes to RangerView now.')
     const text = replacedMessage({
       by: { mission: 'M', opPeriod: '2', scribe: 'N7XYZ', agent: 'Firefox on Linux' },
     })
@@ -229,7 +229,7 @@ describe('describeAgent', () => {
   })
 })
 
-describe('Board snapshot attachments (D-60 item 6)', () => {
+describe('RangerView snapshot attachments (D-60 item 6)', () => {
   const thumbs = new Map([[SHA_A, 'data:image/jpeg;base64,AAAA']])
 
   it('switch off: a count of live references and no array', () => {
@@ -350,7 +350,7 @@ describe('Board snapshot attachments (D-60 item 6)', () => {
   })
 })
 
-describe('Board snapshot ICS-213 messages (E-228 phase 1)', () => {
+describe('RangerView snapshot ICS-213 messages (E-228 phase 1)', () => {
   it('sends nothing for an entry that is not a 213', () => {
     expect(ics213Fields({ subject213: 'left over', generates213: false })).toEqual({})
     expect(ics213Fields({})).toEqual({})
@@ -391,7 +391,7 @@ describe('Board snapshot ICS-213 messages (E-228 phase 1)', () => {
   })
 })
 
-describe('Board snapshot resource requests (E-283)', () => {
+describe('RangerView snapshot resource requests (E-283)', () => {
   it('sends nothing for an entry without a resource request', () => {
     expect(rr213Fields({})).toEqual({})
     expect(rr213Fields({ rr213: { lines: [], priority: 'incident-stabilization' } })).toEqual({})
@@ -411,8 +411,8 @@ describe('Board snapshot resource requests (E-283)', () => {
 
 describe('board-client request URL', () => {
   // John's laptop test 2026-11-13: through the service worker, a certificate failure came back as an empty 504.
-  it('marks every Board request to skip the service worker', () => {
-    expect(boardRequestUrl('https://rangertrak-board.local', '/api/hello')).toBe('https://rangertrak-board.local/api/hello?ngsw-bypass=1')
+  it('marks every RangerView request to skip the service worker', () => {
+    expect(boardRequestUrl('https://rangerview.local', '/api/hello')).toBe('https://rangerview.local/api/hello?ngsw-bypass=1')
     expect(boardRequestUrl('https://10.0.0.5:8443', '/api/attachments/ab12')).toBe('https://10.0.0.5:8443/api/attachments/ab12?ngsw-bypass=1')
   })
   it('keeps a query the path already has', () => {

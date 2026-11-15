@@ -1,6 +1,6 @@
 import { BoardRetry, retryDelayMs } from './board-retry'
 
-describe('Board retry back-off', () => {
+describe('RangerView retry back-off', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
   const tick = (ms: number) => vi.advanceTimersByTime(ms)

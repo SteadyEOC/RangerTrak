@@ -33,7 +33,7 @@ test('network profiles: one object or an array, enum as a number or a word', () 
   assert.strictEqual(s.parseNetProfiles(''), null);
 });
 
-test('a Public profile only matters on an adapter the Board is reachable through', () => {
+test('a Public profile only matters on an adapter the mini web server is reachable through', () => {
   const profiles = [{ alias: 'Wi-Fi', category: 'Private' }, { alias: 'Ethernet 2', category: 'Public' }];
   assert.deepStrictEqual(s.publicProfilesInUse(profiles, ['wi-fi']), []);
   assert.deepStrictEqual(s.publicProfilesInUse(profiles, ['Ethernet 2']).map((p) => p.alias), ['Ethernet 2']);
@@ -87,7 +87,7 @@ test('fix commands quote an adapter name safely and the elevated script survives
   assert.strictEqual(s.psQuote("Bob's Wi-Fi"), "'Bob''s Wi-Fi'");
   const cmds = s.fixCommands({ publicAliases: ["Wi-Fi 'x'; calc"], addRule: true, port: 8080 });
   assert.strictEqual(cmds[0], "Set-NetConnectionProfile -InterfaceAlias 'Wi-Fi ''x''; calc' -NetworkCategory Private");
-  assert.strictEqual(cmds[1], "New-NetFirewallRule -DisplayName 'RangerTrak Board' -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow -Profile Private");
+  assert.strictEqual(cmds[1], "New-NetFirewallRule -DisplayName 'RangerView mini web server' -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow -Profile Private");
   const inv = s.elevatedInvocation(cmds);
   assert.match(inv, /^Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile','-EncodedCommand','[A-Za-z0-9+/=]+'$/);
   const encoded = /'-EncodedCommand','([^']+)'/.exec(inv)[1];
@@ -129,8 +129,8 @@ test('runSelfCheck on Windows: Public network, nothing lets devices in, on batte
   assert.match(text, /· Left out: vEthernet \(WSL\) 172\.28\.64\.1 \(a virtual adapter\)/);
   assert.match(text, /✖ Windows is treating this Wi-Fi as Public/);
   assert.match(text, /Set-NetConnectionProfile -InterfaceAlias 'Wi-Fi' -NetworkCategory Private/);
-  assert.match(text, /✖ Firewall: nothing lets other devices reach the Board on Private networks/);
-  assert.match(text, /New-NetFirewallRule -DisplayName 'RangerTrak Board' .* -LocalPort 8080 /);
+  assert.match(text, /✖ Firewall: nothing lets other devices reach RangerView on Private networks/);
+  assert.match(text, /New-NetFirewallRule -DisplayName 'RangerView mini web server' .* -LocalPort 8080 /);
   assert.match(text, /✖ This computer is running on battery\. Keep this computer plugged in/);
   assert.deepStrictEqual(s.offerableFixes(check), { publicAliases: ['Wi-Fi'], addRule: true, unblock: false, program: NODE });
 });
@@ -140,8 +140,8 @@ test('E-289 Yogurt: Private network, node.exe allowed only on Public -> not reac
   const check = await s.runSelfCheck({ port: 443, platform: 'win32', inUse: ['Wi-Fi'], program: NODE, run });
   const text = s.formatSelfCheck({ check, wifi: 'X', inUse: ['Wi-Fi'] }).join('\n');
   assert.match(text, /✔ Windows network type: Private\./);
-  assert.doesNotMatch(text, /so other devices can reach the Board/, 'the network type alone never promises a connection');
-  assert.match(text, /✖ Firewall: nothing lets other devices reach the Board on Private networks/);
+  assert.doesNotMatch(text, /so other devices can reach RangerView/, 'the network type alone never promises a connection');
+  assert.match(text, /✖ Firewall: nothing lets other devices reach RangerView on Private networks/);
 });
 
 test('E-289 BUDDHA: node.exe allowed on Private (blocked on Public) -> fine, no rule offered', async () => {
@@ -152,7 +152,7 @@ test('E-289 BUDDHA: node.exe allowed on Private (blocked on Public) -> fine, no 
   const check = await s.runSelfCheck({ port: 443, platform: 'win32', inUse: ['Wi-Fi'], program: NODE, run });
   const lines = s.formatSelfCheck({ check, wifi: 'X' });
   assert.ok(lines.includes('✔ Windows network type: Private.'));
-  assert.ok(lines.includes('✔ Firewall: Windows lets other devices reach the Board on Private networks.'));
+  assert.ok(lines.includes('✔ Firewall: Windows lets other devices reach RangerView on Private networks.'));
   assert.ok(lines.some((l) => l.startsWith('· Keep this computer plugged in')), 'the reminder, not the warning');
   assert.ok(!lines.some((l) => l.startsWith('✖')));
   assert.deepStrictEqual(s.offerableFixes(check), { publicAliases: [], addRule: false, unblock: false, program: NODE });
@@ -163,12 +163,12 @@ test('a node.exe Block rule on Private wins over any allow; the fix turns it off
   const check = await s.runSelfCheck({ port: 443, platform: 'win32', inUse: ['Wi-Fi'], program: NODE, run });
   assert.strictEqual(check.network.firewall.verdict, 'blocked');
   const text = s.formatSelfCheck({ check, wifi: 'X' }).join('\n');
-  assert.match(text, /✖ Firewall: a Windows Firewall rule blocks the Board on Private networks.*"Node\.js JavaScript Runtime"/);
+  assert.match(text, /✖ Firewall: a Windows Firewall rule blocks the mini web server on Private networks.*"Node\.js JavaScript Runtime"/);
   assert.match(text, /Get-NetFirewallApplicationFilter -Program 'C:\\Program Files\\nodejs\\node\.exe' .*Disable-NetFirewallRule/);
   assert.match(text, /New-NetFirewallRule/);
   assert.deepStrictEqual(s.offerableFixes(check), { publicAliases: [], addRule: true, unblock: true, program: NODE });
 
-  const boardRule = { name: 'RangerTrak Board', node: false, ports: '443', allow: true, profiles: 2 };
+  const boardRule = { name: 'RangerView', node: false, ports: '443', allow: true, profiles: 2 };
   const withAllow = fakeRun({ 'Get-NetConnectionProfile': { ok: true, out: fwOut('Private', [nodeRule(false, 2), boardRule]) } });
   const c2 = await s.runSelfCheck({ port: 443, platform: 'win32', inUse: ['Wi-Fi'], program: NODE, run: withAllow });
   assert.deepStrictEqual(s.offerableFixes(c2), { publicAliases: [], addRule: false, unblock: true, program: NODE });
@@ -244,10 +244,10 @@ test('readWifi picks the right command per platform', async () => {
 });
 
 test('the address box is padded with blank lines', () => {
-  const box = s.boxedAddress('https://rangertrak-board.local:8080/view');
+  const box = s.boxedAddress('https://rangerview.local:8080/view');
   assert.strictEqual(box[0], '');
   assert.strictEqual(box[box.length - 1], '');
-  assert.ok(box.some((l) => l.includes('https://rangertrak-board.local:8080/view')));
+  assert.ok(box.some((l) => l.includes('https://rangerview.local:8080/view')));
   assert.strictEqual(box[1].length, box[3].length);
 });
 

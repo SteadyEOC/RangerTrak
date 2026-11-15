@@ -1,7 +1,7 @@
 /**
- * E-216 slice 1: when the Board can't be reached, try again by itself - after 5 s, 10 s, 20 s,
+ * E-216 slice 1: when the mini web server can't be reached, try again by itself - after 5 s, 10 s, 20 s,
  * 40 s, then every 60 s - and start over from 5 s after a success. The caller decides what
- * "try again" does (and so never takes over a Board another device holds, D-61 section 6).
+ * "try again" does (and so never takes over a mini web server another device holds, D-61 section 6).
  */
 export const RETRY_STEPS_MS = [5000, 10000, 20000, 40000]
 export const RETRY_MAX_MS = 60000

@@ -1,4 +1,4 @@
-// E-290: the Board's log file.
+// E-290: the mini web server's log file.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -23,11 +23,11 @@ const fresh = () => path.join(RUN_DIR, `case-${++n}`);
 const read = (log) => fs.readFileSync(log.file, 'utf8');
 
 test('names the file by start time, writes the header, timestamps each line', () => {
-  const log = openLog({ dir: fresh(), header: ['RangerTrak Board 1.0.0-beta.3'], now: fixedNow });
+  const log = openLog({ dir: fresh(), header: ['RangerView 1.0.0-beta.3'], now: fixedNow });
   log.line('STEP 1 - SCRIBE');
   log.close();
   assert.strictEqual(path.basename(log.file), 'board-2026-11-14-110509.txt');
-  assert.strictEqual(read(log), '2026-11-14 11:05:09.042  RangerTrak Board 1.0.0-beta.3\n2026-11-14 11:05:09.042  STEP 1 - SCRIBE\n');
+  assert.strictEqual(read(log), '2026-11-14 11:05:09.042  RangerView 1.0.0-beta.3\n2026-11-14 11:05:09.042  STEP 1 - SCRIBE\n');
 });
 
 test('multi-line text gets a timestamp on every line; colour codes and carriage returns are dropped', () => {

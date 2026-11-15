@@ -1,6 +1,6 @@
 // E-87 Stage 1 (2026-08-31) - "Command Post Server: serving the mission to nearby devices".
 // See `E-87 Command Post Server.md` in the private docs for the full scoping this implements.
-// Revised for D-61 (the Board's name, port, local-network-only listening, viewer password and
+// Revised for D-61 (the mini web server's name, port, local-network-only listening, viewer password and
 // single publisher) and D-60 (full-size attachments on request).
 //
 // Read-only mirror, not a sync server: the PWA running on a scribe's own device POSTs a
@@ -12,7 +12,7 @@
 //
 // Where things live: this file starts the servers and serves the static viewer; tools/board/
 // holds the pieces with their own tests - net.js (which addresses may be listened on),
-// mdns.js (the rangertrak-board.local name) and protocol.js (the API, the claim, the secrets).
+// mdns.js (the rangerview.local name) and protocol.js (the API, the claim, the secrets).
 //
 // Forked from tools/serve-dist.js rather than extending it in place (the scoping doc's own
 // §5 flagged this as a five-minute call either way, not worth blocking on): that file is a
@@ -24,7 +24,7 @@
 //
 //   node tools/command-post-server.js [--port N] [--name label] [--allow-public]
 //     --port N        (or the PORT env var) use exactly this port, no fallback
-//     --name label    ask for <label>.local instead of rangertrak-board.local
+//     --name label    ask for <label>.local instead of rangerview.local
 //     --allow-public  also listen on public addresses (never the default - D-61 item 3)
 //     --log           keep a log file of this run (E-290; off by default since 2026-11-14, in logs/ beside the kit or
 //                     non-distributed/board-logs). --no-log is still accepted and keeps it off.
@@ -49,11 +49,11 @@ const { version: APP_VERSION } = require('../package.json');
 const { checkForUpdate, updateLine } = require('./board/update-check');
 const { openLog, teeConsole } = require('./board/logfile');
 
-// E-255: the Board kit (tools/board-kit/) runs this file bundled, from a folder with the built
+// E-255: the RangerView kit (tools/board-kit/) runs this file bundled, from a folder with the built
 // app in app/ and the certificate kept in certificate/. Its entry sets this before loading us.
 const KIT_DIR = process.env.RANGERTRAK_BOARD_KIT || '';
 const ROOT = KIT_DIR ? path.join(KIT_DIR, 'app') : path.join(__dirname, '..', 'dist', 'rangertrak', 'browser');
-const DEFAULT_LABEL = 'rangertrak-board';
+const DEFAULT_LABEL = 'rangerview';
 const PREFERRED_PORT = 443;
 const FALLBACK_PORT = 8080;
 // Never committed - see .gitignore's existing `/non-distributed` entry, reused here rather
@@ -98,14 +98,18 @@ function sendStatic(res, filePath, stats, range) {
 }
 
 function serveStaticFile(req, res) {
-  const urlPath = decodeURIComponent(req.url.split('?')[0]);
+  let urlPath = decodeURIComponent(req.url.split('?')[0]);
+  // E-305: the viewer is built to live/ (the rangertrak.org/view/ page is the setup guide), but the address
+  // viewers are given stays <laptop>/view.
+  if (urlPath === '/view' || urlPath === '/view/' || urlPath === '/view/index.html') urlPath = '/live/index.html';
   let filePath = path.join(ROOT, urlPath);
 
   fs.stat(filePath, (err, stats) => {
     // Found live testing this feature, 2026-08-31: a request for exactly `/view` (no
     // trailing slash - the natural, expected form for a typed/QR-coded URL, and what this
     // server's own startup message and the Settings UI both print) resolves to the
-    // DIRECTORY `view/`, not a file. `stats.isFile()` is false for a directory, `/view` has
+    // DIRECTORY `view/`, not a file (since E-305 `/view` is mapped to live/index.html above, so this branch
+    // is now only the general directory rule). `stats.isFile()` is false for a directory, `/view` has
     // no extension, so without this branch it fell straight into the SPA fallback below and
     // silently served the real Angular app's index.html instead of the hand-written viewer
     // page - confirmed live via curl before this fix (`data-beasties-container`, an Angular-
@@ -171,8 +175,8 @@ function fallbackToSpaShell(res) {
  * wildcarded (unlike DNS-name SANs), so "cover every possible LAN IP" is not an option -
  * this is why the check exists at all, not just an optimization.
  *
- * D-61: the SAN list also carries the `.local` name actually taken (rangertrak-board.local, or
- * -2 / -3 if another Board already held it). The same coverage rule applies: a cached cert that
+ * D-61: the SAN list also carries the `.local` name actually taken (rangerview.local, or
+ * -2 / -3 if another RangerView already held it). The same coverage rule applies: a cached cert that
  * lacks today's name is replaced. The cache file used to be a bare array of addresses; that
  * old shape reads as "addresses, no names", so the first run after upgrading regenerates once.
  */
@@ -190,7 +194,7 @@ async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
       if (stillCovered) {
         return { key: fs.readFileSync(keyPath, 'utf8'), cert: fs.readFileSync(certPath, 'utf8') };
       }
-      console.log('Network address or Board name changed since the last cached certificate - generating a new one (every device will need to accept it once more).');
+      console.log('Network address or RangerView name changed since the last cached certificate - generating a new one (every device will need to accept it once more).');
     } catch (e) {
       console.log(`Cached certificate unreadable (${e.message}) - generating a new one.`);
     }
@@ -224,7 +228,7 @@ async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
 
 /**
  * One https server per address, all sharing one handler and one certificate (D-61 item 3: the
- * Board listens on the addresses it chose, not on 0.0.0.0). If ANY address fails to bind, the
+ * RangerView listens on the addresses it chose, not on 0.0.0.0). If ANY address fails to bind, the
  * ones already open are closed and the error is thrown, so the caller can retry everything on
  * another port rather than run half-open. Exported so the protocol tests can start a real
  * instance on a random port with a throwaway certificate.
@@ -234,7 +238,7 @@ async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
  */
 async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', log = console.log, boardOptions = {}, logFile = null }) {
   const servers = [];
-  // D-61 item 7: the address a phone should open, and the password if the Board has one.
+  // D-61 item 7: the address a phone should open, and the password if the mini web server has one.
   // E-289: the numbered address, not the .local name: a QR code is scanned, never typed, and .local failed across
   // devices on a home router. The name is the fallback only when there is no numbered address.
   const qrState = () => ({ host: addresses[0] || name, port: servers[0].address().port, ...claimState() });
@@ -242,7 +246,7 @@ async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', 
     try {
       const s = qrState();
       log('');
-      log(`Scan to open the Board on a phone (${qr.plainUrl(s)}):`);
+      log(`Scan to open the mini web server on a phone (${qr.plainUrl(s)}):`);
       log(await qr.terminalQr(qr.viewUrl(s)));
       log(`To show it full screen on this computer, open https://localhost${s.port === 443 ? '' : ':' + s.port}/qr`);
     } catch (e) {
@@ -338,7 +342,7 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   const primaryUrl = nameUrl || `https://${hostPort(addresses[0] || 'localhost')}`;
 
   console.log('');
-  console.log('RangerTrak Board');
+  console.log('RangerView mini web server');
   console.log('================');
   console.log(`Serving ${ROOT}`);
   console.log('');
@@ -347,7 +351,7 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   if (checkLines.length) console.log('');
   if (boxed) for (const line of selfcheck.boxedAddress(`${primaryUrl}/view`)) console.log(line);
   if (skipped.length > 0) {
-    console.log(`Not listening on public address${skipped.length > 1 ? 'es' : ''} ${skipped.join(', ')} - the Board is for the local network only.`);
+    console.log(`Not listening on public address${skipped.length > 1 ? 'es' : ''} ${skipped.join(', ')} - the mini web server is for the local network only.`);
     console.log('');
   }
   if (!name) {
@@ -356,7 +360,7 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   }
   // John 2026-11-13: the old banner buried the one thing to do under paragraphs. Two steps, address first.
   if (name && name !== `${label}.local`) {
-    console.log(`Note: ${label}.local was already taken on this network, so this Board is ${name}.`);
+    console.log(`Note: ${label}.local was already taken on this network, so this server is ${name}.`);
     console.log('');
   }
   const copied = copyToClipboard(primaryUrl);
@@ -364,7 +368,7 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   // numbered address is printed beside it, just as large, not as a footnote.
   const numbered = addresses.map((addr) => `https://${hostPort(addr)}`);
   const width = Math.max(primaryUrl.length, ...numbered.map((u) => u.length)) + 4;
-  console.log('STEP 1 - SCRIBE: paste one of these into RangerTrak, Mission page, RangerTrak Board card:');
+  console.log('STEP 1 - SCRIBE: paste one of these into RangerTrak, Mission page, RangerView card:');
   console.log('');
   console.log(`    ${primaryUrl.padEnd(width)}${copied ? '(already copied on this computer)' : ''}`);
   if (nameUrl) for (const u of numbered) console.log(`    ${u.padEnd(width)}(use this one if the name does not work)`);
@@ -380,7 +384,7 @@ function printBoardUrls({ name, label, port, addresses, skipped, checkLines = []
   console.log('"Your connection is not private"? Expected the first time on each device: click');
   console.log('Advanced, then Proceed.');
   console.log('');
-  console.log('Keep this window open and this computer awake. Ctrl+C stops the Board.');
+  console.log('Keep this window open and this computer awake. Ctrl+C stops the mini web server.');
   console.log('Waiting for the scribe\'s device to publish...');
   console.log('');
 }
@@ -407,7 +411,7 @@ async function start() {
     dir: LOG_DIR,
     warn: console.log,
     header: [
-      `RangerTrak Board ${APP_VERSION}, Node.js ${process.version}, ${os.platform()} ${os.release()} ${os.arch()}, computer ${os.hostname()}`,
+      `RangerView mini web server ${APP_VERSION}, Node.js ${process.version}, ${os.platform()} ${os.release()} ${os.arch()}, computer ${os.hostname()}`,
       `Started with: ${process.argv.slice(2).join(' ') || '(no options)'}`,
       ...Object.entries(os.networkInterfaces()).map(([n, list]) => `Network adapter ${n}: ${(list || []).map((a) => `${a.address}${a.internal ? ' (internal)' : ''}`).join(', ')}`),
     ],
@@ -415,19 +419,19 @@ async function start() {
   if (logFile) {
     teeConsole(logFile);
     console.log(`Saving a log of this window and every request to ${logFile.file}`);
-    process.on('exit', () => { logFile.line('Board stopped.'); logFile.close(); });
+    process.on('exit', () => { logFile.line('RangerView mini web server stopped.'); logFile.close(); });
   }
   const found = privateAddresses(os.networkInterfaces());
 
   if (found.lan.length === 0 && !args.allowPublic) {
     console.log('No private network address found, so there is nothing safe to serve on.');
-    console.log('The Board only serves the local network (10.x, 172.16-31.x, 192.168.x or 169.254.x).');
+    console.log('The mini web server only serves the local network (10.x, 172.16-31.x, 192.168.x or 169.254.x).');
     console.log('Connect to the Wi-Fi or hotspot and start it again. To listen on a public address');
     console.log('anyway, start with --allow-public.');
     if (found.skipped.length > 0) console.log(`(Only public address${found.skipped.length > 1 ? 'es' : ''} found: ${found.skipped.join(', ')})`);
     process.exit(1);
   }
-  // The Wi-Fi name is told to viewers ("Still on <name>?"), so it is read before the Board starts. Never fatal.
+  // The Wi-Fi name is told to viewers ("Still on <name>?"), so it is read before the mini web server starts. Never fatal.
   const wifiPromise = selfcheck.readWifi();
   // Started now, read after the addresses are printed; offline it ends quietly within 5 s.
   let newerKit = null;
@@ -440,7 +444,7 @@ async function start() {
   // is not announced until it is actually listening, so mDNS is claimed first and announced last.
   const responder = createResponder({ label: args.label, addresses: reachable.length ? reachable : found.lan, log: console.log });
   const name = reachable.length ? await responder.claim() : null;
-  if (name && name !== `${args.label}.local`) console.log(`${args.label}.local was already taken on this network; this Board is ${name}.`);
+  if (name && name !== `${args.label}.local`) console.log(`${args.label}.local was already taken on this network; this server is ${name}.`);
 
   let running;
   try {
@@ -450,13 +454,13 @@ async function start() {
   } catch (e) {
     await responder.stop();
     const where = e.address ? ` on ${e.address}` : '';
-    console.log(`Could not start the Board${where}: ${e.code === 'EADDRINUSE' ? `port ${args.port || FALLBACK_PORT} is already in use` : e.code === 'EACCES' ? `not permitted to use port ${args.port || FALLBACK_PORT}` : e.message}`);
+    console.log(`Could not start the mini web server${where}: ${e.code === 'EADDRINUSE' ? `port ${args.port || FALLBACK_PORT} is already in use` : e.code === 'EACCES' ? `not permitted to use port ${args.port || FALLBACK_PORT}` : e.message}`);
     process.exit(1);
   }
 
   responder.announce();
 
-  // E-216: the start-up self-check. Every part is best-effort; none can stop the Board.
+  // E-216: the start-up self-check. Every part is best-effort; none can stop the mini web server.
   const wifi = await wifiPromise;
   const nets = os.networkInterfaces();
   const inUse = Object.keys(nets).filter((n) => !isVirtualAdapter(n) && (nets[n] || []).some((a) => reachable.includes(a.address)));

@@ -432,16 +432,20 @@ export default {
       return env.ASSETS.fetch(new Request(new URL('/self-hosting/index.html', url), request))
     }
 
-    // Setting up the RangerTrak Board, step by step (tools/board-guide, copied to /board/ by angular.json).
-    // Same URL handling as the tour: the trailing slash keeps board-guide.js relative.
-    if (url.pathname === '/board' || url.pathname === '/board/index.html') {
+    // Setting up RangerView, step by step (tools/board-guide, copied to /view/ by angular.json).
+    // Same URL handling as the tour: the trailing slash keeps board-guide.js relative. E-305: the guide
+    // moved from /board/ to /view/; /board, /rangerview and their longer forms go to the shorter /view/.
+    // (The live screen the mini web server shows viewers is built to /live; the laptop serves it at /view.)
+    if (url.pathname === '/view' || url.pathname === '/view/index.html'
+      || url.pathname === '/board' || url.pathname === '/board/' || url.pathname === '/board/index.html'
+      || url.pathname === '/rangerview' || url.pathname === '/rangerview/') {
       return new Response(null, {
-        status: 302,
-        headers: { Location: '/board/', 'Cache-Control': 'no-store' },
+        status: 301,
+        headers: { Location: '/view/', 'Cache-Control': 'no-store' },
       })
     }
-    if (url.pathname === '/board/') {
-      return env.ASSETS.fetch(new Request(new URL('/board/index.html', url), request))
+    if (url.pathname === '/view/') {
+      return env.ASSETS.fetch(new Request(new URL('/view/index.html', url), request))
     }
 
     if (!url.pathname.endsWith('.pmtiles')) {

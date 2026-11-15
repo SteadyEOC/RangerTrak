@@ -5574,7 +5574,7 @@ async function checkDeviceEncryption() {
 // ── runner ───────────────────────────────────────────────────────────────────
 
 /**
- * D-61 / D-60: the Board end to end. Starts the real Board server in this process on
+ * D-61 / D-60: the mini web server end to end. Starts the real mini web server in this process on
  * 127.0.0.1:8095 (never 8081) with a throwaway certificate, so Chrome must be started with
  * --ignore-certificate-errors: main() adds that flag whenever the board group runs (by name or
  * in a run with no --only), and only then. Nothing here touches the network beyond loopback, and nothing is announced over mDNS.
@@ -5583,10 +5583,10 @@ async function checkDeviceEncryption() {
  * removed); a thumbnail click ending in "Verified"; a wrong password asking for one; a second
  * browser context taking over and the first showing "Another device publishes..."; Take over
  * from the first; and a server restart re-claimed by the holder within ~10 s, without the
- * replaced device taking the Board back.
+ * replaced device taking the mini web server back.
  */
 async function checkBoard(downloads) {
-  console.log('\nD-61 / D-60: the Board - password, viewer, attachment fingerprint, takeover, restart')
+  console.log('\nD-61 / D-60: the mini web server - password, viewer, attachment fingerprint, takeover, restart')
   const https = require('https')
   const crypto = require('crypto')
   const selfsigned = require('selfsigned')
@@ -5630,7 +5630,7 @@ async function checkBoard(downloads) {
     return last
   }
 
-  // The settings a device needs to publish to this Board; the password goes where the app keeps it (the 'secrets' record).
+  // The settings a device needs to publish to RangerView; the password goes where the app keeps it (the 'secrets' record).
   const seedExpr = (o) => `(async () => {
     const s = JSON.parse(localStorage.getItem('appSettings') || 'null');
     if (!s) return 'no-settings';
@@ -5648,7 +5648,7 @@ async function checkBoard(downloads) {
   })()`
 
   // Each "device" is its own browser context (its own window, so every page counts as visible - the
-  // app pauses its Board polling while hidden - and its own storage). Contexts are made over a
+  // app pauses its RangerView polling while hidden - and its own storage). Contexts are made over a
   // browser-level connection; the page-level one then attaches to what they create.
   const version = await (await fetch(`http://localhost:${PORT}/json/version`)).json()
   const bws = new WebSocket(version.webSocketDebuggerUrl)
@@ -5680,7 +5680,7 @@ async function checkBoard(downloads) {
     // ── device A: password set, attachments shown ──────────────────────────────
     await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll(); await attachmentsWipe()
     await goto('/')
-    check('settings were written by the first load (precondition)', await evaluate(seedExpr({ mission: 'E2E Board', show: true })), 'ok')
+    check('settings were written by the first load (precondition)', await evaluate(seedExpr({ mission: 'E2E RangerView', show: true })), 'ok')
     await goto('/')
     // E-228: the same entry is an ICS-213, so the viewer's messages tab has one to show.
     await entrySaveWithAttachments('E2E-BRD', [pngPath], async () => {
@@ -5697,22 +5697,22 @@ async function checkBoard(downloads) {
     await sleep(1500)
 
     const first = await boardUntil(b => (b.reports || []).some(r => (r.attachments || []).length), 25)
-    check('the Board holds the report, claimed by device A with the password', [first?.board?.by?.mission, first?.board?.open], ['E2E Board', false])
+    check('the mini web server holds the report, claimed by device A with the password', [first?.board?.by?.mission, first?.board?.open], ['E2E RangerView', false])
     check('the snapshot carries the attachment reference and a JPEG thumbnail',
       [first?.reports?.[0]?.attachments?.[0]?.sha256, String(first?.reports?.[0]?.attachments?.[0]?.thumb || '').startsWith('data:image/jpeg;base64,')], [pngSha, true])
     check('a viewer with no password is refused', (await boardGet('/api/mission', '')).status, 401)
 
-    // John 10-28 / E-255: the card says how to run the Board on this computer, and device A's 127.0.0.1
+    // John 10-28 / E-255: the card says how to run the mini web server on this computer, and device A's 127.0.0.1
     // address gets the "only works on this computer" hint (publishing to it still works, as above).
     await goto('/mission', 3000)
-    check('the Board card links the Board kit and flags the loopback address',
-      await evaluate(`[!!document.querySelector('[data-testid=board-run-here] a[href$="/releases"]'), !!document.querySelector('[data-testid=board-localhost]'), !!document.querySelector('[data-testid=board-run-here] a[href="https://rangertrak.org/board/"]')]`), [true, true, true])
+    check('the mini web server card links the RangerView kit and flags the loopback address',
+      await evaluate(`[!!document.querySelector('[data-testid=board-run-here] a[href$="/releases"]'), !!document.querySelector('[data-testid=board-localhost]'), !!document.querySelector('[data-testid=board-run-here] a[href="https://rangertrak.org/view/"]')]`), [true, true, true])
     await goto('/')
 
     // ── the viewer, arriving by the QR link ────────────────────────────────────
     const v = await openDevice(`${BOARD}/view#code=${PASS}`)
     const claimLine = await evaluate(`document.getElementById('claimLine').textContent`, v.sessionId)
-    check('the viewer shows the claim line', /E2E Board, op period 2: published by .*\(.+ on .+\)/.test(claimLine) && /Password required/.test(claimLine), true)
+    check('the viewer shows the claim line', /E2E RangerView, op period 2: published by .*\(.+ on .+\)/.test(claimLine) && /Password required/.test(claimLine), true)
     check('...the password is gone from the address bar', await evaluate(`location.hash`, v.sessionId), '')
     // Rendered, not the attribute: an id rule's display:flex once kept the prompt on screen while
     // .hidden was true, and the attribute-only check below could not see it (2026-10-21).
@@ -5754,19 +5754,19 @@ async function checkBoard(downloads) {
     check('a wrong password shows the prompt and no rows', await evaluate(`!document.getElementById('pwForm').hidden && document.querySelectorAll('#rows tr').length === 0`, w.sessionId), true)
     await evaluate(`(() => { document.getElementById('pwInput').value = ${JSON.stringify(PASS)}; document.getElementById('pwForm').requestSubmit(); })()`, w.sessionId)
     const rowsAfter = await pollUntil(() => evaluate(`document.querySelectorAll('#rows tr').length`, w.sessionId), n => n > 0, 20, 300)
-    check('...and the right one opens the Board', rowsAfter > 0, true)
+    check('...and the right one opens the mini web server', rowsAfter > 0, true)
     await closeTarget(w.targetId)
 
     // ── device B, in its own browser context, takes over ──────────────────────
     const { sessionId } = await openDevice(BASE + '/')
-    check('device B settings seeded (precondition)', await evaluate(seedExpr({ mission: 'E2E Board B', show: false }), sessionId), 'ok')
+    check('device B settings seeded (precondition)', await evaluate(seedExpr({ mission: 'E2E RangerView B', show: false }), sessionId), 'ok')
     await send('Page.navigate', { url: BASE + '/' }, sessionId); await sleep(3500)
 
-    const taken = await boardUntil(b => b.board?.by?.mission === 'E2E Board B', 20)
-    check('device B takes the Board over with the password', [taken?.board?.by?.mission, taken?.board?.previous?.by?.mission], ['E2E Board B', 'E2E Board'])
+    const taken = await boardUntil(b => b.board?.by?.mission === 'E2E RangerView B', 20)
+    check('device B takes RangerView over with the password', [taken?.board?.by?.mission, taken?.board?.previous?.by?.mission], ['E2E RangerView B', 'E2E RangerView'])
 
     const seenReplaced = await pollUntil(
-      () => evaluate(`document.body.innerText.includes('Another device publishes to this Board now')`),
+      () => evaluate(`document.body.innerText.includes('Another device publishes to RangerView now')`),
       v2 => v2 === true, 30, 500)
     check('device A stops and says another device publishes now', seenReplaced, true)
     await navigateInApp('Mission', 3000)
@@ -5775,16 +5775,16 @@ async function checkBoard(downloads) {
     // ── the server restarts; the holder (B) re-claims, the replaced device (A) does not ──
     await server.close()
     server = await startBoard()
-    check('the restarted Board starts empty', (await boardNow())?.waiting, true)
-    const reclaimed = await boardUntil(b => b.board?.by?.mission === 'E2E Board B', 25)
-    check('device B re-claims the restarted Board by itself', [reclaimed?.board?.by?.mission, reclaimed?.board?.previous], ['E2E Board B', undefined])
+    check('the restarted RangerView starts empty', (await boardNow())?.waiting, true)
+    const reclaimed = await boardUntil(b => b.board?.by?.mission === 'E2E RangerView B', 25)
+    check('device B re-claims the restarted RangerView by itself', [reclaimed?.board?.by?.mission, reclaimed?.board?.previous], ['E2E RangerView B', undefined])
     await sleep(8000)
-    check('...and the replaced device A did not take it back', (await boardNow())?.board?.by?.mission, 'E2E Board B')
+    check('...and the replaced device A did not take it back', (await boardNow())?.board?.by?.mission, 'E2E RangerView B')
 
     // ── Take over from A ───────────────────────────────────────────────────────
     await evaluate(`[...document.querySelectorAll('button')].find(b => /^\\s*Take over\\s*$/.test(b.textContent))?.click()`)
-    const back = await boardUntil(b => b.board?.by?.mission === 'E2E Board', 20)
-    check('Take over on device A claims the Board back, naming who it took over from', [back?.board?.by?.mission, back?.board?.previous?.by?.mission], ['E2E Board', 'E2E Board B'])
+    const back = await boardUntil(b => b.board?.by?.mission === 'E2E RangerView', 20)
+    check('Take over on device A claims RangerView back, naming who it took over from', [back?.board?.by?.mission, back?.board?.previous?.by?.mission], ['E2E RangerView', 'E2E RangerView B'])
   } finally {
     for (const id of contexts) await browserSend('Target.disposeBrowserContext', { browserContextId: id }).catch(() => { })
     try { bws.close() } catch { }
@@ -6072,9 +6072,9 @@ async function main() {
   const chrome = spawn(findChrome(), [
     '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
     '--no-first-run', '--no-default-browser-check', '--window-size=1400,1000',
-    // The board group talks to a Board with a throwaway certificate, so whenever that group runs.
+    // The board group talks to a mini web server with a throwaway certificate, so whenever that group runs.
     // want(), not ONLY.includes(): a run with no --only runs every group but has an empty ONLY, so
-    // the flag was missing and device A could never publish - the "Board fails only in a full run"
+    // the flag was missing and device A could never publish - the "RangerView fails only in a full run"
     // that stood from 10-20 to 10-26 and was put down to harness state.
     ...(want('board') ? ['--ignore-certificate-errors'] : []),
     'about:blank',

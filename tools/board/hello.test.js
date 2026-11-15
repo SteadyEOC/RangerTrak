@@ -10,9 +10,9 @@ function fakeRes() {
   return r;
 }
 
-test('the page names the Board and says it is safe to go back', () => {
-  const html = helloPage('rangertrak-board.local');
-  assert.match(html, /This device can reach the RangerTrak Board <strong>rangertrak-board\.local<\/strong>/);
+test('the page names the mini web server and says it is safe to go back', () => {
+  const html = helloPage('rangerview.local');
+  assert.match(html, /This device can reach the mini web server <strong>rangerview.local<\/strong>/);
   assert.match(html, /go back to RangerTrak/);
   assert.doesNotMatch(html, /https?:\/\/|<script|<link/); // self-contained, no external assets
 });
@@ -25,8 +25,8 @@ test('the name is escaped', () => {
 
 test('answers 200 as HTML with no password and no claim', () => {
   const res = fakeRes();
-  handleHello({ method: 'GET', headers: {} }, res, 'rangertrak-board.local');
+  handleHello({ method: 'GET', headers: {} }, res, 'rangerview.local');
   assert.strictEqual(res.status, 200);
   assert.match(res.headers['Content-Type'], /text\/html/);
-  assert.match(res.body, /rangertrak-board\.local/);
+  assert.match(res.body, /rangerview.local/);
 });

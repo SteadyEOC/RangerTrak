@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## Unreleased
 
+### Features
+
+* **board:** E-305 the Board is now RangerView, a remote view of the radio log that viewers open on their own devices. It is run by a mini web server, a small program on the scribe's or a spare laptop. The Mission card and its switch ("Send this log to a remote view (RangerView)"), Help, the Guide, the viewer, the mini web server's window and the kit's READ-ME-FIRST all say so. The kit is `rangerview-<version>.zip`, its program is `rangerview.js` and its launchers are `Start RangerView.bat` and `Start RangerView.command`. The mini web server's default name on the network is `rangerview.local` (a second one on the same network is `rangerview-2.local`), so a laptop that had a certificate for the old name makes a new one, and every device accepts it once more. The setup guide moved from rangertrak.org/board/ to rangertrak.org/view/ (`/board`, `/rangerview` and their longer forms now go there). Viewers still open `https://<laptop>/view`. The update check finds the new kit name. The names inside (the `/api` addresses, the `/api/hello` signature, settings and stored keys) are unchanged, so nothing a device has saved is affected
+
 ### Bug Fixes
 
-* **board:** E-290 the Board's log is off by default again (it was on for the 2026-11-14 exercise); `node rangertrak-board.js --log` turns it on, `--no-log` is still accepted
+* **board:** E-290 the mini web server's log is off by default again (it was on for the 2026-11-14 exercise); `node rangerview.js --log` turns it on, `--no-log` is still accepted
 
 ## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-13)
 

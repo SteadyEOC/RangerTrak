@@ -238,17 +238,17 @@
   <rangertrak-expandable-section summary="Can other people see my data?">
     Only if they have this device — with two exceptions. Anything sent through the feedback
     form becomes a public issue, so keep mission data out of it. And if you turn on
-    <span class="ui">Send this log to a RangerTrak Board</span> yourself (on the Mission page,
+    <span class="ui">Send this log to a remote view (RangerView)</span> yourself (on the Mission page,
     off by default), report content — never
     the roster — goes to a server on your own WiFi/hotspot for others on that same network to
     read. See <strong>Your data</strong> and the Mission page's own <strong>Help</strong> button for the full detail.
   </rangertrak-expandable-section>
 
   <rangertrak-expandable-section id="rangertrak-board" summary="Can several people watch the same log at once?">
-    Yes — turn on publishing in the Mission page's RangerTrak Board card. Run the RangerTrak Board program on a laptop
-    at the command post, which can be the scribe's own (download the RangerTrak Board kit from the latest release on
-    GitHub, unzip it and double-click <span class="ui">Start RangerTrak Board</span>; step by step at
-    <a href="https://rangertrak.org/board/" target="_blank" rel="noopener">rangertrak.org/board</a>); it prints an address on startup. Anyone on the same WiFi/hotspot can
+    Yes — turn on publishing in the Mission page's RangerView card. Run the mini web server on a laptop
+    at the command post, which can be the scribe's own (download the RangerView kit from the latest release on
+    GitHub, unzip it and double-click <span class="ui">Start RangerView</span>; step by step at
+    <a href="https://rangertrak.org/view/" target="_blank" rel="noopener">rangertrak.org/view</a>); it prints an address on startup. Anyone on the same WiFi/hotspot can
     open that address (with /view added, or by scanning the QR code it shows) to see a live,
     read-only comms log, each with their own filter and sort. A second tab lists the ICS-213
     messages, with their To, Subject and Message, and opens each one to read or print. It's a separate view, not shared
@@ -257,19 +257,19 @@
     that on.
   </rangertrak-expandable-section>
 
-  <rangertrak-expandable-section id="board-wont-connect" summary="The Board won't connect. What do the messages mean?">
-    On the Mission page's RangerTrak Board card, press <span class="ui">Test connection</span>. It asks the Board to
+  <rangertrak-expandable-section id="board-wont-connect" summary="The mini web server won't connect. What do the messages mean?">
+    On the Mission page's RangerView card, press <span class="ui">Test connection</span>. It asks the mini web server to
     say hello and names the most likely reason in one sentence. These are best guesses, because a browser can't see
     exactly why a connection failed. The usual ones: this device isn't on a network; it is on a different Wi-Fi from
-    the Board laptop (check the Wi-Fi name in the Board laptop's window); the browser hasn't accepted the Board's
-    certificate yet (press <span class="ui">Open the Board</span>, choose Advanced, then Proceed, and come back); the
+    the laptop running the mini web server (check the Wi-Fi name in the mini web server's window); the browser hasn't accepted the mini web server's
+    certificate yet (press <span class="ui">Open RangerView</span>, choose Advanced, then Proceed, and come back); the
     browser is blocking access to devices on this network (allow local network access for this site in the
-    browser's site settings); or something answered that isn't a RangerTrak Board. <span class="ui">Details</span>
+    browser's site settings); or something answered that isn't a mini web server. <span class="ui">Details</span>
     holds the technical line for whoever is helping.
     <p>
-      On a viewer's screen, <strong>lost</strong> means that viewer can't reach the Board. The last reports stay on
-      screen, and it says when it lost the Board and asks whether the Board laptop is awake. <strong>Scribe
-      quiet</strong> means the Board is fine, but the scribe's device hasn't checked in for over 2 minutes, so the
+      On a viewer's screen, <strong>lost</strong> means that viewer can't reach RangerView. The last reports stay on
+      screen, and it says when it lost the mini web server and asks whether the laptop running the mini web server is awake. <strong>Scribe
+      quiet</strong> means RangerView is fine, but the scribe's device hasn't checked in for over 2 minutes, so the
       log may be out of date.
     </p>
   </rangertrak-expandable-section>

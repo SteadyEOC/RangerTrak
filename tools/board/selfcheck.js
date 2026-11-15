@@ -1,10 +1,10 @@
-// E-216 slice 2: the Board server's start-up self-check. Printed as a short list above the banner:
+// E-216 slice 2: the mini web server's start-up self-check. Printed as a short list above the banner:
 //   ✔ fine   ✖ will stop devices connecting   · worth knowing (or could not be checked)
 //
 // Two halves. The PARSERS and the FORMATTER are pure and tested with captured command output. The
 // RUNNERS (`runSelfCheck`, `readWifi`, `portOwner`, `offerFixes`) call the operating system's own tools
 // with a 10 s limit each (E-289: a cold PowerShell on a laptop ran past the old 3 s); any failure becomes
-// "unknown" and never stops the Board starting.
+// "unknown" and never stops the mini web server starting.
 //
 // Nothing here changes the computer except `offerFixes`, which does so only after the person types y,
 // and then only through Windows' own permission prompt.
@@ -14,7 +14,7 @@ const { boardCause } = require('./causes');
 
 const COMMAND_TIMEOUT_MS = 10000;
 const OFFER_TIMEOUT_MS = 20000;
-const RULE_NAME = 'RangerTrak Board';
+const RULE_NAME = 'RangerView mini web server';
 
 // ---- running commands ----
 // Resolves { ok, out }; never rejects. `ok` is false on a missing program, a non-zero exit or the timeout.
@@ -70,7 +70,7 @@ function parseNetProfiles(out) {
 // node.exe allowed on Private networks and was told to add a rule; the other had only Public allow rules for
 // node.exe (so Windows never asked) and was told it was fine while port 443 was blocked. Now the rules that
 // actually apply are read (Windows' own HNetCfg.FwPolicy2, about 1 s) and judged here: an enabled inbound
-// TCP rule for this node.exe, or for any program on the Board's port, on the network type in use. Block wins.
+// TCP rule for this node.exe, or for any program on the mini web server's port, on the network type in use. Block wins.
 const PROFILE_BIT = { Domain: 1, Private: 2, Public: 4 };
 
 // One PowerShell call for the network types, the firewall's on/off per type and the rules that could apply.
@@ -139,7 +139,7 @@ function profilesToJudge(profiles, inUse = []) {
   return types.size ? [...types] : ['Private'];
 }
 
-// The Public profiles that matter: on an adapter this Board is reachable through (all of them when that is not known).
+// The Public profiles that matter: on an adapter this server is reachable through (all of them when that is not known).
 function publicProfilesInUse(profiles, inUse = []) {
   const names = inUse.map((n) => n.toLowerCase());
   return (profiles || []).filter((p) => p.category === 'Public' && (names.length === 0 || names.includes(p.alias.toLowerCase())));
@@ -273,7 +273,7 @@ async function checkPower({ platform, run }) {
 }
 
 /**
- * Runs every check at once. `inUse` are the names of the adapters the Board is reachable through.
+ * Runs every check at once. `inUse` are the names of the adapters the mini web server is reachable through.
  * Resolves { platform, port, network: {profiles, publicAliases, rule} | null, power }.
  */
 async function runSelfCheck({ port, platform = process.platform, inUse = [], program = process.execPath, run = runCommand } = {}) {
@@ -284,7 +284,7 @@ async function runSelfCheck({ port, platform = process.platform, inUse = [], pro
   return { platform, port, network, power };
 }
 
-// Who holds `port` (the one the Board wanted and could not have), in words; '' when it could not be found.
+// Who holds `port` (the one the mini web server wanted and could not have), in words; '' when it could not be found.
 async function portOwner({ port, platform = process.platform, run = runCommand }) {
   try {
     if (platform === 'win32') {
@@ -326,7 +326,7 @@ function formatSelfCheck({ check, wifi = '', virtual = [], portLine = '', inUse 
       lines.push("· Windows network type: couldn't check it.");
     } else if (net.publicAliases.length) {
       lines.push(`✖ ${boardCause('firewall-public').message}`);
-      lines.push('    What the fix does: it changes this Wi-Fi from Public to Private, so Windows lets devices on it reach the Board. It needs administrator permission.');
+      lines.push('    What the fix does: it changes this Wi-Fi from Public to Private, so Windows lets devices on it reach RangerView. It needs administrator permission.');
       for (const c of fixCommands({ publicAliases: net.publicAliases })) lines.push(`    ${c}`);
     } else {
       lines.push(`✔ Windows network type: ${net.profiles.some((p) => p.category === 'Domain') ? 'Domain' : 'Private'}.`);
@@ -335,24 +335,24 @@ function formatSelfCheck({ check, wifi = '', virtual = [], portLine = '', inUse 
     const fw = (net && net.firewall) || { verdict: 'unknown', judged: [] };
     const types = `${(fw.judged.length ? fw.judged : ['Private']).join(' and ')} networks`;
     if (fw.verdict === 'allowed') {
-      lines.push(`✔ Firewall: Windows lets other devices reach the Board on ${types}.`);
+      lines.push(`✔ Firewall: Windows lets other devices reach RangerView on ${types}.`);
     } else if (fw.verdict === 'off') {
       lines.push(`✔ Firewall: Windows Firewall is off for ${types}.`);
     } else if (fw.verdict === 'blocked') {
-      lines.push(`✖ Firewall: a Windows Firewall rule blocks the Board on ${types}, so other devices cannot connect (${fw.blockers.map((n) => `"${n}"`).join(', ')}).`);
+      lines.push(`✖ Firewall: a Windows Firewall rule blocks the mini web server on ${types}, so other devices cannot connect (${fw.blockers.map((n) => `"${n}"`).join(', ')}).`);
       const fixes = offerableFixes(check);
       if (fixes.unblock) {
-        lines.push('    What the fix does: it turns that rule off (it is not deleted) and lets the Board in on Private networks. It needs administrator permission.');
+        lines.push('    What the fix does: it turns that rule off (it is not deleted) and lets the mini web server in on Private networks. It needs administrator permission.');
         for (const c of fixCommands({ unblock: true, addRule: fixes.addRule, program: fixes.program, port: check.port })) lines.push(`    ${c}`);
       } else {
         lines.push('    Turn that rule off in Windows Defender Firewall, Advanced settings, Inbound Rules.');
       }
     } else if (fw.verdict === 'none') {
-      lines.push(`✖ Firewall: nothing lets other devices reach the Board on ${types}, so they cannot connect. Windows asks only once per program, so it may not ask again.`);
-      lines.push('    What the fix does: it adds a rule letting devices on Private networks reach the Board. It needs administrator permission.');
+      lines.push(`✖ Firewall: nothing lets other devices reach RangerView on ${types}, so they cannot connect. Windows asks only once per program, so it may not ask again.`);
+      lines.push('    What the fix does: it adds a rule letting devices on Private networks reach RangerView. It needs administrator permission.');
       for (const c of fixCommands({ addRule: true, port: check.port })) lines.push(`    ${c}`);
     } else {
-      lines.push("· Firewall: couldn't check it. If other devices cannot connect, allow the Board through the Windows firewall (needs administrator permission):");
+      lines.push("· Firewall: couldn't check it. If other devices cannot connect, allow the mini web server through the Windows firewall (needs administrator permission):");
       for (const c of fixCommands({ addRule: true, port: check.port })) lines.push(`    ${c}`);
     }
   }

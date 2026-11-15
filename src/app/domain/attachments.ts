@@ -119,7 +119,7 @@ export function nameWithKind(ref: Pick<AttachmentRef, 'name' | 'compressed'>): s
 
 /**
  * The line that says which kind a file is, wherever it is shown (viewer, hover preview, prints,
- * Board). '' for an original. The sender's names whose phone made it; the receiver's says the
+ * RangerView). '' for an original. The sender's names whose phone made it; the receiver's says the
  * original was kept (or, when replaced, that it was not).
  */
 export function smallerCopyLabel(ref: Pick<AttachmentRef, 'compressed'>, originalKept = true): string {

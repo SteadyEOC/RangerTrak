@@ -452,16 +452,25 @@ test('/self-hosting and /self-hosting/index.html redirect to /self-hosting/, whi
   assert.equal(asked, '/self-hosting/index.html')
 })
 
-test('/board and /board/index.html redirect to /board/, which serves the Board setup guide', async () => {
+test('/view and /view/index.html redirect to /view/, which serves the RangerView setup guide', async () => {
   const env = { ASSETS: { fetch: async () => { throw new Error('asset store should not be called') } } }
-  for (const path of ['/board', '/board/index.html']) {
+  for (const path of ['/view', '/view/index.html']) {
     const res = await worker.fetch(new Request(`https://rangertrak.org${path}`), env)
-    assert.equal(res.status, 302)
-    assert.equal(res.headers.get('Location'), '/board/')
+    assert.equal(res.status, 301)
+    assert.equal(res.headers.get('Location'), '/view/')
   }
   let asked
-  const served = { ASSETS: { fetch: async (req) => { asked = new URL(req.url).pathname; return new Response('board guide') } } }
-  const res = await worker.fetch(new Request('https://rangertrak.org/board/'), served)
-  assert.equal(await res.text(), 'board guide')
-  assert.equal(asked, '/board/index.html')
+  const served = { ASSETS: { fetch: async (req) => { asked = new URL(req.url).pathname; return new Response('view guide') } } }
+  const res = await worker.fetch(new Request('https://rangertrak.org/view/'), served)
+  assert.equal(await res.text(), 'view guide')
+  assert.equal(asked, '/view/index.html')
+})
+
+test('/board, /board/, /board/index.html, /rangerview and /rangerview/ all redirect to /view/', async () => {
+  const env = { ASSETS: { fetch: async () => { throw new Error('asset store should not be called') } } }
+  for (const path of ['/board', '/board/', '/board/index.html', '/rangerview', '/rangerview/']) {
+    const res = await worker.fetch(new Request(`https://rangertrak.org${path}`), env)
+    assert.equal(res.status, 301, path)
+    assert.equal(res.headers.get('Location'), '/view/', path)
+  }
 })

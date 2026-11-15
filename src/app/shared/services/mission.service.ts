@@ -182,7 +182,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
     const stored = this.readSecrets()
     if (legacyKey && !stored.googleGeocodingApiKey) this.writeSecrets({ ...stored, googleGeocodingApiKey: legacyKey })
     this.settings.googleGeocodingApiKey = stored.googleGeocodingApiKey || legacyKey || ''
-    // D-61: the Board password lives in the same record, for the same reason.
+    // D-61: the RangerView password lives in the same record, for the same reason.
     this.settings.boardPassword = stored.boardPassword
 
     // Deliberately AFTER the localStorage load above: a loaded settings object carries
@@ -339,7 +339,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       extraCopies213: 1,
       // E-194 / D-60: half a gigabyte of attachments before the app starts asking.
       attachmentBudgetMB: 512,
-      // E-194 / D-61: no Board password, and no attachments on the Board, until the mission opts in.
+      // E-194 / D-61: no RangerView password, and no attachments on RangerView, until the mission opts in.
       boardPassword: '',
       boardShowAttachments: false,
     }
@@ -352,7 +352,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
     // Do any needed sanity/validation here
     //debugger
     // 2026-10-01, John: the geocoding key goes to the `secrets` record, never into appSettings.
-    // D-61: and so does the Board password.
+    // D-61: and so does the RangerView password.
     localStorage.setItem(this.storageLocalName, JSON.stringify({ ...newMission, googleGeocodingApiKey: '', boardPassword: '' }))
     this.writeSecrets({ googleGeocodingApiKey: newMission.googleGeocodingApiKey, boardPassword: newMission.boardPassword })
     this.setMission(newMission)

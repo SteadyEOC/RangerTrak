@@ -69,8 +69,8 @@ export class FooterComponent {
       ? 'This device is set up as a ranger\'s field phone (Radio Log Entry and Help only).'
       : 'This device runs the full app.'
     const board = this.publishingToBoard
-      ? 'It is sending this log to a RangerTrak Board.'
-      : 'It is not sending this log to a RangerTrak Board.'
+      ? 'It is sending this log to RangerView.'
+      : 'It is not sending this log to RangerView.'
     return `${device} ${board}`
   }
 

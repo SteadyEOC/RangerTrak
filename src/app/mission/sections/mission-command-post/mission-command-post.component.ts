@@ -56,16 +56,16 @@ export class MissionCommandPostComponent implements OnDestroy {
   private onPhoneMediaChange = (e: MediaQueryListEvent) => this.isPhone.set(e.matches)
 
   /**
-   * D-61 / E-216: what the Board is doing, in words, for the line under the switch. Four states only:
-   * Connected, Trying, Can't reach the Board (the cause follows, from `statusMessage()`), and Another device has it.
+   * D-61 / E-216: what the mini web server is doing, in words, for the line under the switch. Four states only:
+   * Connected, Trying, Can't reach RangerView (the cause follows, from `statusMessage()`), and Another device has it.
    */
   boardStatus(): string {
     switch (this.publisher.state()) {
-      case 'claiming': return this.publisher.unreachable() ? "Can't reach the Board." : 'Trying to reach the Board...'
-      // E-289: not said twice when Test connection's own "Connected to the Board at ..." is showing.
-      case 'publishing': return this.publisher.diagnosis()?.ok ? '' : 'Connected to the Board.'
+      case 'claiming': return this.publisher.unreachable() ? "Can't reach RangerView." : 'Trying to reach RangerView...'
+      // E-289: not said twice when Test connection's own "Connected to RangerView at ..." is showing.
+      case 'publishing': return this.publisher.diagnosis()?.ok ? '' : 'Connected to RangerView.'
       case 'replaced': return replacedMessage(this.publisher.holder())
-      default: return this.publisher.unreachable() ? "Can't reach the Board." : ''
+      default: return this.publisher.unreachable() ? "Can't reach RangerView." : ''
     }
   }
 
@@ -156,7 +156,7 @@ export class MissionCommandPostComponent implements OnDestroy {
     return normaliseBoardAddress(this.form.commandPostServerUrl().value())
   }
 
-  /** E-216: the Open the Board button's target - the page that holds no data. */
+  /** E-216: the Open RangerView button's target - the page that holds no data. */
   helloUrl(): string {
     const base = this.address().url
     return base ? `${base}/hello` : ''
@@ -180,16 +180,16 @@ export class MissionCommandPostComponent implements OnDestroy {
 
   readonly httpError = BOARD_HTTP_ERROR
 
-  /** John, 2026-10-28: with the Board on this computer, `localhost` publishes fine but makes a viewer link nobody else can open. */
+  /** John, 2026-10-28: with the mini web server on this computer, `localhost` publishes fine but makes a viewer link nobody else can open. */
   thisComputerOnly(): boolean {
     return !!this.address().thisComputerOnly
   }
 
   readonly localhostHint = BOARD_LOCALHOST_HINT
 
-  /** E-255: the Board kit is attached to each GitHub release, beside the web zip. Not
+  /** E-255: the RangerView kit is attached to each GitHub release, beside the web zip. Not
    *  /releases/latest: GitHub skips pre-releases there, and every beta is one. */
   readonly boardKitUrl = 'https://github.com/SteadyEOC/RangerTrak/releases'
   /** The guided setup page (tools/board-guide), absolute so it opens the same from a self-hosted copy. */
-  readonly boardGuideUrl = 'https://rangertrak.org/board/'
+  readonly boardGuideUrl = 'https://rangertrak.org/view/'
 }

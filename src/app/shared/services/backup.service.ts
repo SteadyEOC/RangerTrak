@@ -159,7 +159,7 @@ export class BackupService {
    * exportMission() so the actual export contents are easy to test.
    *
    * 2026-10-01, John: async because photos are read from their blobs. `includeSecrets` is true
-   * only for a passphrase-protected backup: the Google geocoding key and the Board password (D-61) are otherwise
+   * only for a passphrase-protected backup: the Google geocoding key and the RangerView password (D-61) are otherwise
    * written as '' so a plain file never carries them. (Setup files still carry it - mission-zip.ts.)
    */
   async buildExportPayload(includeSecrets = false): Promise<MissionExport> {
@@ -389,7 +389,7 @@ export class BackupService {
     // 2026-10-01, John: a plain backup carries no geocoding key. Restoring one must not wipe
     // the key this device already has.
     if (!incoming.googleGeocodingApiKey) incoming.googleGeocodingApiKey = this.missionService.settings.googleGeocodingApiKey
-    // D-61: the Board password travels the same way - only in a passphrase-protected backup.
+    // D-61: the RangerView password travels the same way - only in a passphrase-protected backup.
     if (!incoming.boardPassword) incoming.boardPassword = this.missionService.settings.boardPassword
     this.missionService.updateMission(incoming)
     // Same reasoning as the settings migration above, for the same reason it is easy to

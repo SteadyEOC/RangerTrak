@@ -34,14 +34,14 @@ test('main text uses plain words: no TLS, CORS, mDNS, port or HTTP', () => {
 
 test('boardCause fills placeholders and drops an optional clause whose value is missing', () => {
   assert.strictEqual(boardCause('board-lost', { time: '12:04', ssid: 'CERT-Net' }).message,
-    'Lost the Board at 12:04. Still on CERT-Net? Is the Board laptop awake?');
+    'Lost RangerView at 12:04. Still on CERT-Net? Is the laptop running the mini web server awake?');
   assert.strictEqual(boardCause('board-lost', { time: '12:04' }).message,
-    'Lost the Board at 12:04. Is the Board laptop awake?');
+    'Lost RangerView at 12:04. Is the laptop running the mini web server awake?');
   assert.strictEqual(boardCause('scribe-quiet', { minutes: 6 }).message,
-    "The Board is fine. The scribe's device last checked in 6 min ago.");
-  assert.match(boardCause('port-taken', { port: 443, other: 8080, name: 'a web server' }).message, /answers on 443 \(a web server\)\. The Board is using 8080 instead/);
+    "RangerView is fine. The scribe's device last checked in 6 min ago.");
+  assert.match(boardCause('port-taken', { port: 443, other: 8080, name: 'a web server' }).message, /answers on 443 \(a web server\)\. The mini web server is using 8080 instead/);
   assert.doesNotMatch(boardCause('port-taken', { port: 443, other: 8080 }).message, /\(\)|\{/);
-  assert.throws(() => boardCause('no-such-cause'), /Unknown Board cause/);
+  assert.throws(() => boardCause('no-such-cause'), /Unknown RangerView cause/);
   assert.strictEqual(fill('a {x} b', {}), 'a  b');
 });
 

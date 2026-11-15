@@ -1,4 +1,4 @@
-// D-61 / D-60: the Board's API, against a real server on a random port with a throwaway
+// D-61 / D-60: the mini web server's API, against a real server on a random port with a throwaway
 // self-signed certificate. Nothing here touches the network beyond 127.0.0.1.
 const test = require('node:test');
 const assert = require('node:assert');
@@ -22,7 +22,7 @@ const BY = { mission: 'Test Mission', opPeriod: '2', scribe: 'Pat', agent: 'Test
 
 async function start(boardOptions) {
   const lines = [];
-  const server = await createServer({ port: 0, cert, name: 'rangertrak-board.local', log: (l) => lines.push(l), boardOptions });
+  const server = await createServer({ port: 0, cert, name: 'rangerview.local', log: (l) => lines.push(l), boardOptions });
   const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: false });
   function call(method, urlPath, { headers = {}, json, body } = {}) {
     return new Promise((resolve, reject) => {
@@ -57,7 +57,7 @@ const snapshotWith = (...files) => ({
   reports: [{ id: 1, attachments: files.map((f) => ({ sha256: sha256(f.bytes), size: f.bytes.length, type: f.type || 'image/jpeg', ...(f.removed ? { removed: { at: 'x', by: 'y' } } : {}) })) }],
 });
 
-test('open Board: unclaimed, claim, publish, read', withBoard(async (b) => {
+test('open RangerView: unclaimed, claim, publish, read', withBoard(async (b) => {
   assert.deepStrictEqual((await b.call('GET', '/api/mission')).json, { waiting: true });
 
   const c = await b.call('POST', '/api/claim', { json: { by: BY } });
@@ -71,7 +71,7 @@ test('open Board: unclaimed, claim, publish, read', withBoard(async (b) => {
   assert.strictEqual(read.json.mission, 'Test Mission');
   assert.deepStrictEqual(read.json.board.by, BY);
   assert.strictEqual(read.json.board.open, true);
-  assert.strictEqual(read.json.board.name, 'rangertrak-board.local');
+  assert.strictEqual(read.json.board.name, 'rangerview.local');
   assert.strictEqual(read.json.board.previous, undefined);
   assert.match(read.json.board.at, /^\d{4}-\d\d-\d\dT/);
 }));
@@ -88,7 +88,7 @@ test('CORS allows the two new headers', withBoard(async (b) => {
   assert.strictEqual(r.headers['access-control-allow-origin'], '*');
 }));
 
-test('password Board: viewers need X-Board-Password', withBoard(async (b) => {
+test('password RangerView: viewers need X-Board-Password', withBoard(async (b) => {
   const key = await claim(b, 'correct horse');
   await publish(b, key, { mission: 'M', reports: [] });
   assert.deepStrictEqual((await b.call('GET', '/api/mission')).json, { needPassword: true });
@@ -157,7 +157,7 @@ test('takeover: needs the password, issues a new key, old key gets 403 replaced'
   assert.strictEqual(read.json.board.previous.by.scribe, 'Pat');
 }));
 
-test('replaced: details only for a superseded key or an open Board', withBoard(async (b) => {
+test('replaced: details only for a superseded key or an open RangerView', withBoard(async (b) => {
   const oldKey = await claim(b, 'pw');
   await publish(b, oldKey, { mission: 'M', reports: [] });
   // Protected, current key: a wrong or missing key learns nothing.
@@ -175,14 +175,14 @@ test('replaced: details only for a superseded key or an open Board', withBoard(a
   assert.deepStrictEqual((await publish(b, 'still-not-a-key', {})).json, { state: 'replaced' });
 }));
 
-test('replaced on an open Board still names the holder', withBoard(async (b) => {
+test('replaced on an open RangerView still names the holder', withBoard(async (b) => {
   await claim(b);
   const r = await publish(b, 'not-a-key', {});
   assert.strictEqual(r.status, 403);
   assert.deepStrictEqual(r.json.by, BY);
 }));
 
-test('takeover of an open Board needs nothing; a new password in the body is adopted', withBoard(async (b) => {
+test('takeover of an open RangerView needs nothing; a new password in the body is adopted', withBoard(async (b) => {
   const oldKey = await claim(b);
   const took = await b.call('POST', '/api/claim', { json: { password: 'now-protected', by: BY } });
   assert.strictEqual(took.status, 200);
@@ -214,19 +214,19 @@ test('a restart forgets everything: keyed calls get 409 unclaimed, then a re-cla
   }
 });
 
-test('after a restart two devices re-claim: the first gets the Board, the second is refused, not given it', withBoard(async (b) => {
+test('after a restart two devices re-claim: the first gets the mini web server, the second is refused, not given it', withBoard(async (b) => {
   const first = await b.call('POST', '/api/claim', { json: { reclaim: true, by: BY } });
   assert.strictEqual(first.status, 200);
   const second = await b.call('POST', '/api/claim', { json: { reclaim: true, by: { ...BY, scribe: 'Sam' } } });
   assert.strictEqual(second.status, 409);
   assert.strictEqual(second.json.error, 'claimed');
-  assert.strictEqual(second.json.by.scribe, 'Pat'); // open Board: details are fine
+  assert.strictEqual(second.json.by.scribe, 'Pat'); // open RangerView: details are fine
   assert.strictEqual((await publish(b, first.json.key, { mission: 'M', reports: [] })).status, 204, 'first key still works');
   // A person's takeover (no reclaim) still works.
   assert.strictEqual((await b.call('POST', '/api/claim', { json: { by: { ...BY, scribe: 'Sam' } } })).status, 200);
 }));
 
-test('a refused reclaim on a protected Board hides the holder unless the password matches', withBoard(async (b) => {
+test('a refused reclaim on a protected RangerView hides the holder unless the password matches', withBoard(async (b) => {
   await b.call('POST', '/api/claim', { json: { reclaim: true, password: 'pw', by: BY } });
   const blind = await b.call('POST', '/api/claim', { json: { reclaim: true, by: BY } });
   assert.strictEqual(blind.status, 409);
@@ -353,7 +353,7 @@ test('neither the password nor the key is ever logged', async () => {
     await b.call('POST', '/api/password', { headers: { 'X-Board-Key': key }, json: { password: 'another-secret' } });
     await b.call('POST', '/api/claim', { json: { password: 'another-secret', by: BY } });
     const output = b.lines.join('\n');
-    assert.ok(output.includes('Board claimed: Test Mission, op period 2, by Pat (Test Browser)'));
+    assert.ok(output.includes('RangerView claimed: Test Mission, op period 2, by Pat (Test Browser)'));
     assert.ok(output.includes('Publisher changed to'));
     assert.ok(output.includes('Password required'));
     for (const secret of ['hunter2-secret', 'another-secret', key]) assert.ok(!output.includes(secret));
@@ -367,21 +367,36 @@ test('getOrCreateCert: names go in the SAN list, and a cert lacking today\'s nam
   const dir = run.dir;
   try {
     const san = (c) => new crypto.X509Certificate(c.cert).subjectAltName;
-    const first = await getOrCreateCert(['192.168.1.7'], ['rangertrak-board.local'], dir);
-    assert.match(san(first), /DNS:rangertrak-board\.local/);
+    const first = await getOrCreateCert(['192.168.1.7'], ['rangerview.local'], dir);
+    assert.match(san(first), /DNS:rangerview.local/);
     assert.match(san(first), /IP Address:192\.168\.1\.7/);
 
-    const reused = await getOrCreateCert(['192.168.1.7'], ['rangertrak-board.local'], dir);
+    const reused = await getOrCreateCert(['192.168.1.7'], ['rangerview.local'], dir);
     assert.strictEqual(reused.cert, first.cert, 'covered: reused');
 
-    const second = await getOrCreateCert(['192.168.1.7'], ['rangertrak-board-2.local'], dir);
+    const second = await getOrCreateCert(['192.168.1.7'], ['rangerview-2.local'], dir);
     assert.notStrictEqual(second.cert, first.cert, 'new name: regenerated');
-    assert.match(san(second), /DNS:rangertrak-board-2\.local/);
+    assert.match(san(second), /DNS:rangerview-2\.local/);
 
     // The pre-D-61 cache was a bare array of addresses: it has no names, so it is replaced once.
     fs.writeFileSync(path.join(dir, 'addresses.json'), JSON.stringify(['192.168.1.7']));
-    const upgraded = await getOrCreateCert(['192.168.1.7'], ['rangertrak-board-2.local'], dir);
+    const upgraded = await getOrCreateCert(['192.168.1.7'], ['rangerview-2.local'], dir);
     assert.notStrictEqual(upgraded.cert, second.cert);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test('getOrCreateCert: a kit whose saved certificate names rangertrak-board.local gets a new one for rangerview.local (E-305)', async () => {
+  const run = makeTempRun('board-cert-');
+  const dir = run.dir;
+  try {
+    const san = (c) => new crypto.X509Certificate(c.cert).subjectAltName;
+    const old = await getOrCreateCert(['192.168.1.7'], ['rangertrak-board.local'], dir);
+    assert.match(san(old), /DNS:rangertrak-board.local/);
+    const renamed = await getOrCreateCert(['192.168.1.7'], ['rangerview.local'], dir);
+    assert.notStrictEqual(renamed.cert, old.cert, 'the old name does not cover the new one: regenerated');
+    assert.match(san(renamed), /DNS:rangerview.local/);
   } finally {
     run.cleanup();
   }
@@ -389,11 +404,11 @@ test('getOrCreateCert: names go in the SAN list, and a cert lacking today\'s nam
 
 // ---- E-216 slice 2: /api/hello, the scribe's heartbeat, the viewer count, the Wi-Fi name ----
 
-test('GET /api/hello names the Board with no password, even on a protected Board, and says nothing else', withBoard(async (b) => {
+test('GET /api/hello names the mini web server with no password, even on a protected RangerView, and says nothing else', withBoard(async (b) => {
   await claim(b, 'hunter2');
   const r = await b.call('GET', '/api/hello');
   assert.strictEqual(r.status, 200);
-  assert.deepStrictEqual(r.json, { app: 'rangertrak-board', name: 'rangertrak-board.local', version: '9.9.9' });
+  assert.deepStrictEqual(r.json, { app: 'rangertrak-board', name: 'rangerview.local', version: '9.9.9' });
   assert.strictEqual(r.headers['access-control-allow-origin'], '*');
   assert.strictEqual((await b.call('POST', '/api/hello', { json: {} })).status, 405);
 }, { version: '9.9.9' }));
@@ -433,7 +448,7 @@ test('scribeSeenAt moves on a keyed call and not on a viewer call; wifi is told 
   assert.strictEqual((await call('GET', '/api/mission', {})).json.board.scribeSeenAt, after.scribeSeenAt, 'a refused key does not');
 });
 
-test('the Board has no wifi field when the name is unknown', async () => {
+test('the mini web server has no wifi field when the name is unknown', async () => {
   const b = createBoard({});
   assert.strictEqual(b.status().scribeSeenAt, 0);
   assert.strictEqual(b.status().claimed, false);

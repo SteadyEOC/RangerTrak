@@ -12,7 +12,7 @@ import { boardCause } from './board-causes'
 /** The browser's local network permission for this site: the Chrome prompt for public sites reaching private addresses. */
 export type LocalNetworkPermission = 'granted' | 'denied' | 'prompt' | 'unknown'
 
-/** What asking the Board `GET /api/hello` came to. */
+/** What asking the mini web server `GET /api/hello` came to. */
 export type HelloResult =
   | { kind: 'ok', name: string }
   | { kind: 'not-board' }
@@ -27,7 +27,7 @@ export type BoardDiagnosis = {
   message: string
   /** The technical line for whoever is helping (shown under "Details"). */
   detail: string
-  /** The Board's name, when it answered. */
+  /** The mini web server's name, when it answered. */
   name?: string
 }
 
@@ -35,8 +35,8 @@ export type BoardDiagnosis = {
 export const QUICK_FAIL_MS = 3000
 
 /**
- * `host` is the host the scribe typed (`rangertrak-board.local`, `10.0.0.156`, `10.0.0.156:8080`), when known.
- * E-289: the success sentence names that, not the Board's .local name, which the scribe may not have used; and a
+ * `host` is the host the scribe typed (`rangerview.local`, `10.0.0.156`, `10.0.0.156:8080`), when known.
+ * E-289: the success sentence names that, not the mini web server's .local name, which the scribe may not have used; and a
  * failure at a .local name says the name itself may be the problem (it failed between a wired and a Wi-Fi computer
  * on the same home router), since a name that is not found fails as fast as an unaccepted certificate.
  */
@@ -49,8 +49,8 @@ export function diagnoseBoard(f: { online: boolean, localNetwork: LocalNetworkPe
     case 'ok':
       return {
         ok: true,
-        message: `Connected to the Board at ${f.host || f.hello.name || 'that address'}.`,
-        detail: `The Board answered and identified itself as a RangerTrak Board${f.hello.name ? ` (${f.hello.name})` : ''}.`,
+        message: `Connected to RangerView at ${f.host || f.hello.name || 'that address'}.`,
+        detail: `The mini web server answered and identified itself as a RangerView mini web server${f.hello.name ? ` (${f.hello.name})` : ''}.`,
         name: f.hello.name,
       }
     case 'not-board':

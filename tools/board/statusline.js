@@ -1,4 +1,4 @@
-// E-216 slice 2: the one status line the Board server prints while it runs, only when it changes:
+// E-216 slice 2: the one status line the mini web server prints while it runs, only when it changes:
 //   Scribe: connected (K7ABC, 12:04) · Viewers: 3 · Last report 12:03
 // It answers "is it working?" at a glance. Counts and times only: the same scribe name the claim already
 // printed, and never an address or an identity for a viewer.

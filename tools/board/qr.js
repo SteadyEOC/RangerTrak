@@ -1,7 +1,7 @@
 // D-61 item 7 - the viewer QR code. For phone users, who would otherwise type the address.
 //
 // With a password set, the QR link carries it after a `#`: the browser never sends that part to
-// the server, and the Board page reads it, keeps it for the tab and removes it from the address bar.
+// the server, and the mini web server page reads it, keeps it for the tab and removes it from the address bar.
 //
 // Two places show it. After a claim the terminal prints a small one. And `/qr` serves a page with
 // a large one plus the address in big type, for the laptop's user to open full screen. That page
@@ -35,11 +35,11 @@ async function qrPage({ host, port, password, claimed }) {
   const address = escapeHtml(plainUrl({ host, port }));
   const body = claimed
     ? `<div class="qr">${await QRCode.toString(viewUrl({ host, port, password }), { type: 'svg', margin: 1 })}</div>
-<p class="note">${password ? 'The code includes the Board password.' : 'Open to anyone on this network.'}</p>`
+<p class="note">${password ? 'The code includes the RangerView password.' : 'Open to anyone on this network.'}</p>`
     : '<p class="wait">Waiting for the scribe to turn on publishing.</p>';
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RangerTrak Board address</title>
+<title>RangerView address</title>
 <style>
   body { margin: 0; padding: 2rem 1rem; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; background: #fff; color: #111; }
   .address { font-size: clamp(1.5rem, 5vw, 3rem); font-weight: 700; word-break: break-all; margin: 0 0 1.5rem; }

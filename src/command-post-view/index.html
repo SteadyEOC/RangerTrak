@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RangerTrak Board</title>
-<!-- Same files as the app's own icons: the Board server serves the built app's root, so these
+<title>RangerView</title>
+<!-- Same files as the app's own icons: the mini web server serves the built app's root, so these
      load from the scribe's laptop with no Internet. -->
 <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -163,7 +163,7 @@
   .notice--warn { border-inline-start-color: var(--warn); }
   #pwForm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
   /* The id rule's display beats the browser's own [hidden] rule, so without this the prompt
-     showed on every Board, password or not (John, 2026-10-21). Same guard as #overlay's. */
+     showed on every RangerView, password or not (John, 2026-10-21). Same guard as #overlay's. */
   #pwForm[hidden] { display: none; }
   #pwForm input { padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: 1rem; }
   #pwForm button { padding: 0.5rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--surface); color: var(--accent); font-size: 0.95rem; cursor: pointer; }
@@ -220,18 +220,18 @@
 <body>
 
 <header>
-  <h1><img src="/assets/icons/rangertrak-mark.svg" alt="" width="29" height="29">RangerTrak Board</h1>
+  <h1><img src="/assets/icons/rangertrak-mark.svg" alt="" width="29" height="29">RangerView</h1>
   <span id="missionMeta" class="meta">No log yet</span>
   <span id="statusBadge" class="badge badge--none">no data yet</span>
   <span id="clock" class="clock" title="The time on this device"></span>
-  <a class="help-link" href="https://rangertrak.org/board/" target="_blank" rel="noopener">Help</a>
+  <a class="help-link" href="https://rangertrak.org/view/" target="_blank" rel="noopener">Help</a>
   <button id="themeToggle" type="button" title="Colours: follow this device, light, or dark">◐ Auto</button>
 </header>
 <p id="opLine" class="meta" hidden></p>
 <p id="claimLine" class="meta" hidden></p>
 
 <form id="pwForm" class="notice" hidden>
-  <label for="pwInput">Password for this Board (ask the scribe):</label>
+  <label for="pwInput">Password for RangerView (ask the scribe):</label>
   <input id="pwInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
   <button type="submit">Open</button>
   <span id="pwNote" role="status"></span>
@@ -261,8 +261,8 @@
 <p id="emptyState" class="empty" hidden>No reports match.</p>
 
 <footer class="board-foot meta meta--small">
-  RangerTrak Board <span id="kitVersion"></span><span id="newerKit" class="newer"></span> ·
-  <a href="https://rangertrak.org/board/" target="_blank" rel="noopener">Setting up the Board</a> ·
+  RangerView <span id="kitVersion"></span><span id="newerKit" class="newer"></span> ·
+  <a href="https://rangertrak.org/view/" target="_blank" rel="noopener">Setting up the mini web server</a> ·
   <a href="https://github.com/SteadyEOC/RangerTrak/releases/latest" target="_blank" rel="noopener">Newest version</a>
   (these links need the Internet)
 </footer>
@@ -618,7 +618,7 @@
     if (!latest) {
       rowsEl.innerHTML = '';
       emptyEl.hidden = false;
-      emptyEl.textContent = 'Nothing yet. The log appears here once the scribe turns on sending to this Board.';
+      emptyEl.textContent = 'Nothing yet. The log appears here once the scribe turns on sending to RangerView.';
       return;
     }
 
@@ -683,7 +683,7 @@
   }
 
   // ---- one ICS-213, laid out like the form, with Print (E-228 phase 1) ----
-  // The scribe's device still prints the official FEMA form; this is the Board's readable copy.
+  // The scribe's device still prints the official FEMA form; this is the mini web server's readable copy.
   function open213(r) {
     closeOverlay();
     var m = r.ics213;
@@ -731,7 +731,7 @@
     badgeEl.textContent = text;
   }
 
-  // E-216: when the Board last answered, and the Wi-Fi name it gave, for the "lost" message below.
+  // E-216: when the mini web server last answered, and the Wi-Fi name it gave, for the "lost" message below.
   var lastGoodAt = 0;
   var lastWifi = '';
   var firstFailAt = 0;
@@ -740,12 +740,12 @@
   // src/app/domain/board-causes.json. This page cannot import it, so the words are copied here;
   // tools/board/causes.test.js fails if they drift apart.
   function boardLostHtml(atMs, ssid) {
-    return 'Lost the Board at ' + esc(fmtClock(atMs)) + '.' +
+    return 'Lost RangerView at ' + esc(fmtClock(atMs)) + '.' +
       (ssid ? ' Still on <strong>' + esc(ssid) + '</strong>?' : '') +
-      ' Is the Board laptop awake?';
+      ' Is the laptop running the mini web server awake?';
   }
   function scribeQuietText(minutes) {
-    return "The Board is fine. The scribe's device last checked in " + minutes + ' min ago.';
+    return "RangerView is fine. The scribe's device last checked in " + minutes + ' min ago.';
   }
   function fmtClock(ms) {
     try { return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
@@ -850,7 +850,7 @@
           return res.arrayBuffer().then(function (bytes) { show(bytes, type); });
         }
         if (res.status === 202) { again(); return; }
-        if (res.status === 401 || res.status === 429) { fail('The Board needs its password again. Close this and try once more.'); return; }
+        if (res.status === 401 || res.status === 429) { fail('The mini web server needs its password again. Close this and try once more.'); return; }
         fail('The scribe’s device no longer has this file.');
       }).catch(function () { again(); });
     }
@@ -897,9 +897,9 @@
     api('/api/request/' + att.sha256, { method: 'POST' }).then(function (res) {
       if (token !== ovToken) { return; }
       if (res.status === 200 || res.status === 202) { fetchOnce(); return; }
-      if (res.status === 404) { fail('That file is no longer on the Board.'); return; }
-      fail('The Board could not ask for that file (HTTP ' + res.status + ').');
-    }).catch(function () { fail('The Board could not be reached.'); });
+      if (res.status === 404) { fail('That file is no longer on RangerView.'); return; }
+      fail('The mini web server could not ask for that file (HTTP ' + res.status + ').');
+    }).catch(function () { fail('The mini web server could not be reached.'); });
   }
 
   setView(view);
@@ -945,7 +945,7 @@
   drawTimes();
   setInterval(drawTimes, 5000);
 
-  // The Board's version, and a newer kit if the Board found one when it started (it checks GitHub once).
+  // The mini web server's version, and a newer kit if the mini web server found one when it started (it checks GitHub once).
   fetch('/api/hello').then(function (r) { return r.json(); }).then(function (h) {
     if (h && h.version) { document.getElementById('kitVersion').textContent = h.version; }
     if (h && h.newer) { document.getElementById('newerKit').textContent = ' (version ' + h.newer + ' is out)'; }
