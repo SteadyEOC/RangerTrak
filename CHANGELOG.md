@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+* **rangers:** E-295 Import photos also takes a zip of pictures, and a new Import a photo folder button takes a whole folder; the confirmation lists every file it left out and why (not a picture, too large, a zip that would not open, a repeated name)
 * **board:** E-290 the RangerView web server's log is off by default again (it was on for the 2026-11-14 exercise); `node rangerview.js --log` turns it on, `--no-log` is still accepted
 
 ## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-13)

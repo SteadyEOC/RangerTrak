@@ -23,6 +23,7 @@ import { FilterChipsComponent } from '../shared/filter-chips/filter-chips.compon
 import { describeGridFilters, FilterChip } from '../domain/grid-filter-chips';
 import { zipSync, Zippable } from 'fflate';
 import { photoEntryName } from '../domain/ranger-photo-export';
+import { describeSkipped, intakePhotoFiles } from '../domain/photo-intake'
 
 import { Utility } from '../shared'
 import { ensureAgGridRegistered } from '../shared/ag-grid-setup'
@@ -837,16 +838,21 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   async onPhotoFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement
-    const files = [...(input.files ?? [])]
+    const picked = [...(input.files ?? [])]
     input.value = ''
-    if (!files.length) {
+    if (!picked.length) {
       return
     }
 
+    // E-295: pictures, a zip of pictures, or a folder; whatever is left out is listed with the reason.
+    const { images: files, skipped } = await intakePhotoFiles(picked)
     const { stored, unmatched } = await this.photos.importFiles(files, this.rangerService.rangers)
-    if (stored.length) this.journal.record('photos-imported', `Stored ${stored.length} ranger photos on this device (${unmatched.length} unmatched).`)
+    if (stored.length) this.journal.record('photos-imported', `Stored ${stored.length} ranger photos on this device (${unmatched.length} unmatched, ${skipped.length} skipped).`)
 
     const lines = [`Stored ${stored.length} photo${stored.length === 1 ? '' : 's'} on this device.`]
+    if (skipped.length) {
+      lines.push('', `${skipped.length} file${skipped.length === 1 ? ' was' : 's were'} left out:`, ...describeSkipped(skipped))
+    }
     if (unmatched.length) {
       lines.push('',
         `${unmatched.length} did not match a ranger's id or callsign in the roster and were skipped:`,

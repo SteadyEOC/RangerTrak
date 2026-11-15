@@ -170,11 +170,19 @@
               accept=".csv,.xlsx,.xls,.json,.zip" (change)="onImportFileSelected($event)" hidden />
 
             <button matButton="outlined" type="button" (click)="importPhotoFiles.click()"
-              title="Store photographs on this device. Name each file after its ID or callsign, e.g. K7VMI.jpg">
+              title="Store photographs on this device: pictures, or a zip of pictures. Name each file after its ID or callsign, e.g. K7VMI.jpg">
               <mat-icon>image</mat-icon>
               Import photos
             </button>
-            <input #importPhotoFiles id="importPhotoFiles" type="file" accept="image/*" multiple
+            <input #importPhotoFiles id="importPhotoFiles" type="file" accept="image/*,.zip,application/zip" multiple
+              (change)="onPhotoFilesSelected($event)" hidden />
+            <!-- E-295: a whole folder of pictures (subfolders included). A file picker cannot take files and a folder at once. -->
+            <button matButton="outlined" type="button" (click)="importPhotoFolder.click()"
+              title="Pick a folder of photographs. Name each file after its ID or callsign, e.g. K7VMI.jpg">
+              <mat-icon>folder_open</mat-icon>
+              Import a photo folder
+            </button>
+            <input #importPhotoFolder id="importPhotoFolder" type="file" webkitdirectory
               (change)="onPhotoFilesSelected($event)" hidden />
           </div>
           <p class="rangers__io-links">
