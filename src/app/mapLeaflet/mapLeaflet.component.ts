@@ -208,9 +208,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private fullscreen?: L.FullscreenControl
 
   /**
-   * E-207 / D-62: in Simple view the layers box shows its extras (USNG/MGRS grid, satellite,
+   * E-207 / D-62: in Easy menus the layers box shows its extras (USNG/MGRS grid, satellite,
    * hiking trails) only while one of them is on, so a layer in use can always be switched off. Rows are
-   * hidden, never removed from the control, so nothing is switched on or off by the view. In Full view each
+   * hidden, never removed from the control, so nothing is switched on or off by the view. In Full menus each
    * row carries the plum left-edge rule (styles/_patterns.scss).
    */
   private syncLayerExtras(): void {
@@ -235,7 +235,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   readonly heatShown = signal(false)
   /**
    * E-277: Heat map and Range rings moved from the layers box to the Show on map box, and keep the
-   * layers box's E-207 / D-62 rule: in Simple view they show only while one of them is on.
+   * layers box's E-207 / D-62 rule: in Easy menus they show only while one of them is on.
    */
   readonly showMapExtras = computed(() =>
     this.view.isShown('map-layers-extra', { mapExtraLayersOn: this.heatShown() || this.ringsOn() }))
@@ -653,7 +653,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'Roads and place names (for Satellite)': roadsLabelsOverlay,
     }
     const layersControl = new L.LayersControl(baseLayers, overlayLayers, { position: 'topright', title: 'Map layers' }).addTo(this.lMap)
-    // E-207 / D-62: the layers box extras that Simple view hides while none is on (see syncLayerExtras()).
+    // E-207 / D-62: the layers box extras that Easy menus hides while none is on (see syncLayerExtras()).
     this.layerExtras = [
       ['USNG / MGRS grid', this.usngGridLayer],
       ['Satellite (Esri World Imagery)', satelliteTiles], ['Roads and place names (for Satellite)', roadsLabelsOverlay],

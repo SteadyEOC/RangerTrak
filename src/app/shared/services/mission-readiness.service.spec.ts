@@ -78,7 +78,7 @@ describe('MissionReadinessService', () => {
     expect(service.level()).toBe('amber')
   })
 
-  it('leaves the bundled map out in Simple view, where the alternative map is hidden', () => {
+  it('leaves the bundled map out in Easy menus, where the alternative map is hidden', () => {
     TestBed.inject(ViewService).setView('simple')
     setAll(true)
     service.bundledMapWarmed.set(false)
@@ -86,7 +86,7 @@ describe('MissionReadinessService', () => {
     expect(service.level()).toBe('green')
   })
 
-  it('counts the bundled map in Simple view once MapLibre is the engine in use', () => {
+  it('counts the bundled map in Easy menus once MapLibre is the engine in use', () => {
     TestBed.inject(ViewService).setView('simple')
     TestBed.inject(MapEngineService).setEngine('maplibre')
     setAll(true)

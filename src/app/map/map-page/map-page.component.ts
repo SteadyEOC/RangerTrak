@@ -1,6 +1,6 @@
 import { AsyncPipe, DatePipe, NgComponentOutlet, NgTemplateOutlet } from '@angular/common'
 import {
-  ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, Type, ViewChild, computed, inject, signal
+  ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Type, ViewChild, computed, inject, signal
 } from '@angular/core'
 import { MatCheckboxModule } from '@angular/material/checkbox'
 
@@ -9,6 +9,7 @@ import { PageComponent } from '../../shared/page/page.component'
 import { MissionService } from '../../shared/services'
 import { OperatorNameService } from '../../shared/services/operator-name.service'
 import { ViewService } from '../../shared/services/view.service'
+import { FullscreenService } from '../../shared/services/fullscreen.service'
 import { UsageStateService } from '../../shared/services/usage-state.service'
 import { AdvancedDirective } from '../../shared/view/advanced.directive'
 import type { ViewContext } from '../../domain/view'
@@ -50,17 +51,10 @@ export class MapPageComponent implements OnInit, OnDestroy {
   // keeps the loading logic simple either way).
   maplibreComponentType = signal<Type<unknown> | null>(null)
 
-  // E-78: one control in the shared shell rather than one per engine - it targets this
-  // page's own wrapper div (map + switch + whichever engine is mounted), not either
-  // engine's internals, so it works identically for both without touching LmapComponent or
-  // MapLibreComponent (keeps E-64's "should not be merged without reason" intact). Native
-  // Fullscreen API rather than a plugin (leaflet.fullscreen has no MapLibre equivalent, and
-  // this app already avoids a per-engine control here for the same reason it avoids one for
-  // the engine switch itself). Verified live that neither engine needs a manual resize
-  // nudge: Leaflet's default `trackResize` listens for the window resize event fullscreen
-  // entry/exit fires, and MapLibre's container uses a ResizeObserver - both pick up the new
-  // size on their own.
-  isFullscreen = signal(false)
+  // E-78 / E-315: the Full screen button is one of the header's page tools now (every page has it).
+  // This page registers its map area (map + switch + whichever engine is mounted) as the element
+  // that fills the screen, so Full screen here behaves as it did when the button sat in the map.
+  private readonly fullscreen = inject(FullscreenService)
 
   // Prepared by: pre-filled from the Entry page's operator name (in-memory OperatorNameService,
   // never persisted). Once the user types here, their text wins and is never overwritten.
@@ -72,7 +66,9 @@ export class MapPageComponent implements OnInit, OnDestroy {
     this.typedPreparedBy.set((event.target as HTMLInputElement).value)
   }
 
-  @ViewChild('fullscreenArea') private fullscreenArea!: ElementRef<HTMLElement>
+  @ViewChild('fullscreenArea') private set fullscreenArea(el: ElementRef<HTMLElement> | undefined) {
+    this.fullscreen.setTarget(el?.nativeElement ?? null)
+  }
 
   // E-item 13 (2026-08-27), raised comparing against a real IMT wildfire ops map: a
   // print-only header showing the mission name and a timestamp, same as that map's own
@@ -89,7 +85,7 @@ export class MapPageComponent implements OnInit, OnDestroy {
   constructor(private engineService: MapEngineService, private missionService: MissionService, public view: ViewService,
     protected usage: UsageStateService) { }
 
-  /** E-207: the advanced controls on this page that Simple view can hide. */
+  /** E-207: the advanced controls on this page that Easy menus can hide. */
   protected readonly advancedIds = ['maplibre', 'places-import'] as const
 
   /** E-207 / D-62 item 3: the page's own facts for ViewService (the Alternative map is the one showing). */
@@ -119,6 +115,7 @@ export class MapPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     window.removeEventListener('beforeprint', this.onBeforePrint)
+    this.fullscreen.setTarget(null)
   }
 
   private async loadMaplibre(): Promise<void> {
@@ -137,20 +134,5 @@ export class MapPageComponent implements OnInit, OnDestroy {
     }
 
     this.engineService.setEngine(useMaplibre ? 'maplibre' : 'leaflet')
-  }
-
-  async toggleFullscreen(): Promise<void> {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen()
-    } else {
-      await this.fullscreenArea.nativeElement.requestFullscreen()
-    }
-  }
-
-  // Keyed off the document's own state, not the click handler, so it also catches the
-  // browser's native exit paths (Esc key, the browser's own "exit full screen" affordance).
-  @HostListener('document:fullscreenchange')
-  onFullscreenChange(): void {
-    this.isFullscreen.set(document.fullscreenElement === this.fullscreenArea?.nativeElement)
   }
 }

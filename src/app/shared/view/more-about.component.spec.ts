@@ -5,7 +5,7 @@ import { HelpDataComponent } from '../../lazy/help/tabs/help-data.component'
 import { ViewService } from '../services/view.service'
 import { MoreAboutComponent } from './more-about.component'
 
-// E-207 / ADR D-62 phase 3: Simple view folds the long help text; Full view opens it. Never removed.
+// E-207 / ADR D-62 phase 3: Easy menus folds the long help text; Full menus opens it. Never removed.
 describe('MoreAboutComponent', () => {
   beforeEach(async () => {
     localStorage.removeItem('rt-view')
@@ -28,13 +28,13 @@ describe('MoreAboutComponent', () => {
     return fixture.nativeElement.querySelector('details')
   }
 
-  it('starts folded in Simple view, with the "More about this" label', () => {
+  it('starts folded in Easy menus, with the "More about this" label', () => {
     const d = details('simple')
     expect(d.open).toBe(false)
     expect(d.querySelector('summary')?.textContent).toContain('More about this')
   })
 
-  it('starts open in Full view', () => {
+  it('starts open in Full menus', () => {
     expect(details('full').open).toBe(true)
   })
 
@@ -49,21 +49,21 @@ describe('MoreAboutComponent', () => {
   })
 
   // AAR 2026-10-19 obs 9: "Where do I attach a file?" Help says, in either view.
-  it('Help > Data says Attach is in Full view when Simple view hides it', () => {
+  it('Help > Data says Attach is in Full menus when Easy menus hides it', () => {
     TestBed.inject(ViewService).setView('simple')
     const fixture = TestBed.createComponent(HelpDataComponent)
     fixture.detectChanges()
     const line: string = fixture.nativeElement.querySelector(
       '[data-testid="help-where-attach"]'
     ).textContent
-    expect(line).toContain('Full view')
+    expect(line).toContain('Full menus')
     // The long attachments detail is still on the page, folded.
     expect(fixture.nativeElement.textContent).toContain(
       'Originals keep their hidden details'
     )
   })
 
-  it('Help > Data says where Attach is on Entry in Full view', () => {
+  it('Help > Data says where Attach is on Entry in Full menus', () => {
     TestBed.inject(ViewService).setView('full')
     const fixture = TestBed.createComponent(HelpDataComponent)
     fixture.detectChanges()

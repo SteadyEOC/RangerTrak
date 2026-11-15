@@ -26,7 +26,7 @@ import {
 })
 export class BackToTopComponent {
 
-  /** Show once the user is a full viewport-height down - i.e. the top is genuinely gone. */
+  /** Show once the user is a full menusport-height down - i.e. the top is genuinely gone. */
   private static readonly SHOW_AFTER_PX = 600
 
   /**

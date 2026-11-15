@@ -246,7 +246,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
         link: '/map', linkText: 'Save an area on the Map page',
       })
     }
-    // E-298: Simple view hides the MapLibre switch, so it must not be listed as a gap there (`mapWarmedCounts`).
+    // E-298: Easy menus hides the MapLibre switch, so it must not be listed as a gap there (`mapWarmedCounts`).
     if (r.mapWarmedCounts() && !r.bundledMapWarmed()) {
       gaps.push({
         label: 'Backup (MapLibre) map has not been opened on this device yet.', severity: 'amber',
@@ -266,7 +266,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   protected scenarioNowLabel(): string { return this.usage.scenarioLabelAt(Date.now()) }
   protected onSetScenarioClock(): void { this.usage.setScenarioClock(this.scenarioPicked()) }
 
-  /** E-207: the advanced cards on this page, for the header Full view switch. */
+  /** E-207: the advanced cards on this page, for the header Full menus switch. */
   protected readonly advancedIds = ['statuses', 'location-categories', 'locations-list', 'maps', 'recipients213',
     'tactical-calls', 'board', 'attachments-budget', 'setup-file', 'device-encryption', 'advanced-debug'] as const
 

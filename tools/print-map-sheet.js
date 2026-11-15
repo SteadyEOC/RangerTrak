@@ -107,7 +107,7 @@ async function main() {
       }
     }
     await send('Page.enable'); await send('Runtime.enable')
-    // E-207 / D-62: a clean profile is a new install, which opens in Simple view and hides Print map.
+    // E-207 / D-62: a clean profile is a new install, which opens in Easy menus and hides Print map.
     await send('Page.addScriptToEvaluateOnNewDocument', { source: `try { if (!localStorage.getItem('rt-view')) {
       localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user') } } catch { }` })
 

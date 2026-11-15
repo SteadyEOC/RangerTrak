@@ -24,7 +24,7 @@
          the page even got a chance to fit. mat-button-toggle-group does not wrap its own
          options by default; .enter__Where-switcher (below) adds flex-wrap as a defensive
          floor on top of the shorter labels, not instead of them. -->
-    <!-- E-207 / D-62: Simple view shows the mission's (or last used) format only; Full view has the picker. -->
+    <!-- E-207 / D-62: Easy menus shows the mission's (or last used) format only; Full menus has the picker. -->
     @if (view.isShown('coord-format')) {
     <mat-button-toggle-group class="enter__Where-switcher" aria-label="Coordinate format" [rtAdvanced]="'coord-format'"
       [value]="activeSystem()" (change)="setActiveSystem($event.value)">

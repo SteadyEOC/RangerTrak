@@ -164,4 +164,24 @@ describe('ViewService (E-207)', () => {
       expect(view.isShown('statuses')).toBe(true)
     })
   })
+  // E-303: the "+N" on the Full menus switch says how many of the page's options Easy menus hides.
+  describe('hiddenCount (E-303)', () => {
+    it('counts the ids on a page that Easy menus hides, and is 0 in Full menus', () => {
+      const view = TestBed.inject(ViewService)
+      const ids = ['maplibre', 'places-import', 'layers-panel']
+      const hidden = ids.filter(id => !view.isShown(id)).length
+      expect(hidden).toBeGreaterThan(0)
+      expect(view.hiddenCount(ids)).toBe(hidden)
+      expect(view.hiddenCount([])).toBe(0)
+      view.setView('full')
+      expect(view.hiddenCount(ids)).toBe(0)
+    })
+
+    it('does not count an option the mission already uses', () => {
+      const view = TestBed.inject(ViewService)
+      expect(view.isShown('maplibre')).toBe(false)
+      expect(view.hiddenCount(['maplibre'])).toBe(1)
+      expect(view.isShown('maplibre', { mapEngineIsAlternative: true })).toBe(true)
+    })
+  })
 })

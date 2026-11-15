@@ -108,7 +108,7 @@ async function openChrome(profile, run) {
     return r.result.value
   }
   await send('Page.enable'); await send('Runtime.enable')
-  // E-207 / D-62: a clean profile is a new install, which opens in Simple view and hides the
+  // E-207 / D-62: a clean profile is a new install, which opens in Easy menus and hides the
   // Alternative map switch this test flips.
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `try { if (!localStorage.getItem('rt-view')) {
     localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user') } } catch { }` })

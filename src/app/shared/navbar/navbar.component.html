@@ -208,7 +208,7 @@
     <li><a [routerLink]="['/mission']" routerLinkActive="active" (click)="closeNav()"
         title="Mission settings, statuses, Places and backups">Mission</a></li>
     <!-- E-04 / D-63 item 7: the ICS-214 log lives on the After Action page, which is otherwise off the
-         menu (see the 2026-09-27 note below). Simple view lists it once the mission has a line; Full
+         menu (see the 2026-09-27 note below). Easy menus lists it once the mission has a line; Full
          view keeps the menu as it was, and reaches it from the AAR/214 box. The rule is
          ADVANCED_FEATURES' 'after-action' in domain/view.ts. -->
     @if (view.isSimple() && view.isShown('after-action')) {

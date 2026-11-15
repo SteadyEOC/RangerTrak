@@ -28,7 +28,7 @@
 .layers__name { overflow-wrap: anywhere; }
 .layers__meta { color: var(--rt-ink-2); font-size: 0.875rem; }
 
-// The Full view marker (rtAdvanced) lands on this host, which is now the grid item and carries
+// The Full menus marker (rtAdvanced) lands on this host, which is now the grid item and carries
 // the card's row gap: draw the plum edge on the card inside it instead (styles/_patterns.scss).
 :host(.rt-advanced.rt-advanced) {
   box-shadow: none;

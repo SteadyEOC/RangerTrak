@@ -3,8 +3,8 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { ViewService } from '../services/view.service'
 
 /**
- * E-207 / ADR D-62 phase 3: the longer half of a piece of help text. Simple view shows the one-line
- * version and folds the rest behind "More about this"; Full view starts it open. Nothing is ever
+ * E-207 / ADR D-62 phase 3: the longer half of a piece of help text. Easy menus shows the one-line
+ * version and folds the rest behind "More about this"; Full menus starts it open. Nothing is ever
  * removed: the fold is always there to open, in either view. Help itself is never hidden.
  *
  * A native <details>, not ExpandableSectionComponent: that one is a whole titled section, this is

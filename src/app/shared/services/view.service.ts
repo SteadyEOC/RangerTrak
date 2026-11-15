@@ -23,7 +23,7 @@ const VIEW_SOURCE_KEY = 'rt-view-source'
 const FALLBACK_SOURCE: ViewSource = 'user'
 
 /**
- * E-207 / ADR D-62 (2026-10-19, John): Simple view and Full view. A per-device setting kept in
+ * E-207 / ADR D-62 (2026-10-19, John): Easy menus and Full menus. A per-device setting kept in
  * localStorage like `FieldModeService`, deliberately NOT in the mission settings, backup,
  * hand-over or Report Packet - a scribe's laptop and a volunteer's phone in the same mission want
  * different views. Storage goes through a try/catch (it can throw in private browsing or with
@@ -143,7 +143,7 @@ export class ViewService {
     return this.usage.state() !== 'empty' || this.recordStore.isEncryptionEnabled()
   }
 
-  /** The person's own switch (the Full view switch in the page header). */
+  /** The person's own switch (the Full menus switch in the page header). */
   setView(view: AppView): void {
     if (view === 'full' && this.viewSignal() === 'simple') {
       this.justSwitchedSignal.set(true)
@@ -180,6 +180,15 @@ export class ViewService {
       else if (typeof v === 'boolean') (ctx as Record<string, number | boolean>)[k] = v || (base[k] as boolean)
     }
     return domainIsShown(id, this.viewSignal(), ctx)
+  }
+
+  /**
+   * E-303: how many of a page's options Easy menus is hiding right now (the "+N" on the Full menus
+   * switch), so the page says that things are hidden. Always 0 in Full menus.
+   */
+  hiddenCount(ids: readonly string[]): number {
+    if (this.viewSignal() === 'full') return 0
+    return ids.filter(id => !this.isShown(id)).length
   }
 
   /** Whether a control wears the "Advanced" marker (see domain isAdvanced). */

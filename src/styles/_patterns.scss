@@ -228,10 +228,10 @@
 }
 
 // ── Advanced marker (E-207, ADR D-62 item 7; E-214) ──────────────────────────
-// In Full view, every card or control that Simple view can hide carries a thin plum rule on its
+// In Full menus, every card or control that Easy menus can hide carries a thin plum rule on its
 // left edge, so core and extra read apart at a glance. Left edge only (John, 2026-10-20): the
-// "Full view" text pill is gone. Applied by [rtAdvanced] (shared/view/advanced.directive.ts), never
-// by hand; the directive also adds the title and aria-description "Full view option". The rule is
+// "Full menus" text pill is gone. Applied by [rtAdvanced] (shared/view/advanced.directive.ts), never
+// by hand; the directive also adds the title and aria-description "Full menus option". The rule is
 // an inset shadow, so the marker takes no width. Theme tokens only. Not printed.
 // Doubled class: Material's card elevation rule (`.mat-mdc-card-outlined`, same weight, later in the
 // cascade) otherwise wins and the edge never shows on a card.
@@ -476,4 +476,22 @@ rangertrak-io-panel.rt-advanced.rt-advanced {
   display  : block;
   font-size: 0.8em;
   opacity  : 0.8;
+}
+
+// E-315: Full screen on a browser with no Fullscreen API (iPhone). FullscreenService pins the
+// registered element over the window, or, for a whole page, hides the navbar and footer. Neither
+// writes anything. 4-digit z-index so it sits above Leaflet's panes and controls (up to 1000).
+.rt-pseudo-fullscreen {
+  position  : fixed;
+  inset     : 0;
+  z-index   : 9000;
+  overflow  : auto;
+  background: var(--rt-surface);
+}
+
+html[data-fullscreen-fallback] {
+  .app-sticky-header,
+  rangertrak-footer {
+    display: none;
+  }
 }

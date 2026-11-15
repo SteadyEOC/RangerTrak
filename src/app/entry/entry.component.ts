@@ -558,12 +558,12 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     return e ? `Editing report from ${clock(e.date)}` : ''
   })
 
-  /** E-207: the advanced controls on this page (Simple view hides them while unused); also what shows the header Full view switch. The coordinate
+  /** E-207: the advanced controls on this page (Easy menus hides them while unused); also what shows the header Full menus switch. The coordinate
    *  format picker lives in LocationComponent. */
   protected readonly advancedIds = ['stations', 'source', 'attachments', 'evidence-location', 'resource-request', 'coord-format'] as const
 
   /**
-   * E-207 / D-62 item 3: what THIS form already holds, so Simple view never hides a control the
+   * E-207 / D-62 item 3: what THIS form already holds, so Easy menus never hides a control the
    * scribe has put something in. Added to the mission-wide facts ViewService already knows.
    */
   entryHere(): Partial<ViewContext> {

@@ -91,7 +91,7 @@ const PORT = 9444
 let runTempDir // this run's temp folder, set in main(); removed however the run ends
 
 /**
- * E-207 / D-62: a clean profile is a new install, and a new install starts in Simple view. Every group but
+ * E-207 / D-62: a clean profile is a new install, and a new install starts in Easy menus. Every group but
  * `view` was written against the whole app, so this stores rt-view=full / rt-view-source=user before the
  * app loads (on every navigation) whenever no view is stored yet. It only fills an empty slot, and this
  * profile is a throwaway one. checkSimpleView() takes it off for its own run.
@@ -1799,7 +1799,7 @@ async function checkMessagesPage() {
 }
 
 /**
- * E-283 phase 2 (2026-11-12): an ICS-213RR resource request, end to end. Full view (forced by default),
+ * E-283 phase 2 (2026-11-12): an ICS-213RR resource request, end to end. Full menus (forced by default),
  * tick the box on Entry, fill two order lines, save, then Messages: the Resource requests filter shows
  * exactly that row with the first line's text, All still lists it, and a second line keeps the Entry
  * tab chain unique and ascending. Field mode has no 213RR box. Not run by the brief's session; Opus
@@ -1813,7 +1813,7 @@ async function checkResourceRequest() {
   await sleep(1200)
 
   const hasToggle = await evaluate(`!!document.querySelector('[data-testid="rr213-toggle"]')`)
-  check('Entry (Full view) offers the 213RR box', hasToggle, true)
+  check('Entry (Full menus) offers the 213RR box', hasToggle, true)
   await evaluate(`document.querySelector('[data-testid="rr213-toggle"] input[type=checkbox]').click()`)
   await sleep(300)
 
@@ -2375,7 +2375,7 @@ const CONTROLS_COLLECTOR = `(() => {
 async function checkControls() {
   console.log('\nControls follow one rule: 8 px corner, 32 px (44 px on touch), 14 px text (E-209, D-64)')
   // Removed again at the end: left installed, it puts every later group (the view group's
-  // clean profile included) in Full view.
+  // clean profile included) in Full menus.
   const { identifier: controlsViewId } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `try { if (localStorage.getItem('rt-view') === null) { localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user') } } catch {}` })
   // E-209 leftover: every Help tab too (ids from HelpComponent.TAB_KEYS in src/app/lazy/help/help.component.ts).
   const helpTabs = ['start', 'about', 'faq', 'data', 'after', 'feedback']
@@ -2413,7 +2413,7 @@ async function checkControls() {
  * E-210 / ADR D-65: the card rule, read off the real layout.
  *
  * Mission, Radio Log, Rangers (Import, export & print open) and Map (the same panel open), at
- * 1280 and 1920 px, on the Grand Canyon demo in Full view. For every `.rt-card-grid` on the page:
+ * 1280 and 1920 px, on the Grand Canyon demo in Full menus. For every `.rt-card-grid` on the page:
  *   - no card is wider than one column unless it carries `.rt-mission-card--wide` (so the
  *     Statuses and Location categories cards stay one column),
  *   - no vertical gap taller than 2 rem sits between a card and the next one in its column
@@ -2448,7 +2448,7 @@ const CARDS_COLLECTOR = `(() => {
 
 async function checkCards() {
   console.log('\nCards sit in one grid: one column wide, no holes, one corner, long lists scroll inside (E-210, D-65)')
-  // Removed at the end: left installed, it puts every later group in Full view.
+  // Removed at the end: left installed, it puts every later group in Full menus.
   const { identifier: cardsViewId } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `try { if (localStorage.getItem('rt-view') === null) { localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user') } } catch {}` })
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
   await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
@@ -5807,26 +5807,26 @@ function findChrome() {
 }
 
 /**
- * E-207 / ADR D-62: Simple view and Full view.
+ * E-207 / ADR D-62: Easy menus and Full menus.
  *
- * A clean profile is a NEW install, and a new install starts in Simple view. Every other group in this
+ * A clean profile is a NEW install, and a new install starts in Easy menus. Every other group in this
  * suite was written against the whole app, so main() installs FORCE_FULL_VIEW_SCRIPT, which stores
  * rt-view=full / rt-view-source=user before the app loads whenever no view is stored yet. This group
  * takes that script off while it runs, so it sees a real first run, and puts it back at the end.
  *
  * What it proves, in order: a clean profile starts Simple (source default); each page hides its unused
- * advanced controls and keeps the everyday ones; Full view shows them with the plum left-edge marker
+ * advanced controls and keeps the everyday ones; Full menus shows them with the plum left-edge marker
  * (no text pill) and the header switch does not widen a phone; a tactical call added in Full still shows after switching back to Simple (and
  * Entry then offers To station); an entry with an attachment keeps Entry's attach button in Simple;
- * the header "Full view" switch (Entry, Map, Mission, Rangers; not Radio log or Summary) switches to Full; and a Setup file's suggested view is applied once, never over the
+ * the header "Full menus" switch (Entry, Map, Mission, Rangers; not Radio log or Summary) switches to Full; and a Setup file's suggested view is applied once, never over the
  * person's own choice.
  */
 async function checkSimpleView(fx) {
-  console.log('\nE-207 / D-62: Simple view hides unused advanced controls, never data')
+  console.log('\nE-207 / D-62: Easy menus hides unused advanced controls, never data')
   const viewState = () => evaluate(`[localStorage.getItem('rt-view'), localStorage.getItem('rt-view-source')]`)
   const has = sel => evaluate(`!!document.querySelector(${JSON.stringify(sel)})`)
   const hasText = (sel, pattern) => evaluate(`[...document.querySelectorAll(${JSON.stringify(sel)})].some(e => new RegExp(${JSON.stringify(pattern)}).test(e.textContent))`)
-  // The header Full view switch (E-214) is a slide toggle: click it only when it is not already in the wanted state.
+  // The header Full menus switch (E-214) is a slide toggle: click it only when it is not already in the wanted state.
   const setSwitch = on => evaluate(`(() => { const b = document.querySelector('[data-testid=view-switch-header] button'); if (b && (b.getAttribute('aria-checked') === 'true') !== ${on}) b.click() })()`)
   const wipe = async () => { await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll(); await attachmentsWipe() }
   const firstPresent = async sels => { for (const s of sels) if (await has(s)) return s; return null }
@@ -5836,7 +5836,7 @@ async function checkSimpleView(fx) {
     // ── a new install ──────────────────────────────────────────────────
     await wipe()
     await goto('/mission', 4500)
-    check('a clean profile starts in Simple view, source default', await viewState(), ['simple', 'default'])
+    check('a clean profile starts in Easy menus, source default', await viewState(), ['simple', 'default'])
     check('Mission hides Tactical call signs', await has('rangertrak-mission-tactical-calls'), false)
     check('Mission hides the other advanced cards too',
       await firstPresent(['rangertrak-mission-field-report-statuses', 'rangertrak-mission-location-types',
@@ -5852,9 +5852,9 @@ async function checkSimpleView(fx) {
     check('Storage protection and Mission backup still show',
       [await hasText('#readiness-storage-protection h3', 'Storage protection'), await hasText('#readiness-storage-protection h3', 'Mission backup')],
       [true, true])
-    check('Mission has the header Full view switch, and no Show all options or View card',
+    check('Mission has the header Full menus switch, and no Show all options or View card',
       [await has('[data-testid=view-switch-header]'), await has('[data-testid=show-all-options]'), await has('[data-testid=mission-view-card]')], [true, false, false])
-    check('nothing in Simple view is marked Advanced', await has('.rt-advanced'), false)
+    check('nothing in Easy menus is marked Advanced', await has('.rt-advanced'), false)
 
     await goto('/', 4500)
     check('Entry keeps Who, Where, When, Notes and Submit',
@@ -5865,7 +5865,7 @@ async function checkSimpleView(fx) {
         '[data-testid=evidence-toggle]', '.enter__Where-switcher']), null)
     // bc09a51 (0.99.78): the ICS-213 checkbox is core, shown in both views (D-62 item 8).
     check('Entry keeps the ICS-213 checkbox (core since 0.99.78)', await has('[data-testid=generates213-toggle]'), true)
-    check('Entry has the header Full view switch', await has('[data-testid=view-switch-header]'), true)
+    check('Entry has the header Full menus switch', await has('[data-testid=view-switch-header]'), true)
 
     await goto('/map', 5500)
     check('Map hides the Alternative map switch and the places panel',
@@ -5883,33 +5883,33 @@ async function checkSimpleView(fx) {
       [rows.extra > 0, rows.extraHidden, rows.coreShown], [true, true, true])
     check('the Show on map box hides Heat map and the Range rings slider (E-277)',
       await firstPresent(['[data-testid=map-show-heat]', '[data-testid=ring-spacing]']), null)
-    check('Map has the header Full view switch', await has('[data-testid=view-switch-header]'), true)
+    check('Map has the header Full menus switch', await has('[data-testid=view-switch-header]'), true)
 
     await goto('/rangers', 4000)
     check('Rangers keeps the grid, Add and Import, and hides the layers card and the Setup files link',
       [await has('ag-grid-angular'), await has('#importRosterFile'), await has('[data-testid=layersCard]'),
         await hasText('a', 'Setup files')], [true, true, false, false])
-    check('Rangers has the header Full view switch', await has('[data-testid=view-switch-header]'), true)
+    check('Rangers has the header Full menus switch', await has('[data-testid=view-switch-header]'), true)
 
     // Pages with nothing to hide carry no switch.
     for (const [route, name] of [['/radio-log', 'Radio log'], ['/summary', 'Summary']]) {
       await goto(route, 3500)
-      check(`${name} has no Full view switch`, await has('[data-testid=view-switch-header]'), false)
+      check(`${name} has no Full menus switch`, await has('[data-testid=view-switch-header]'), false)
     }
 
-    // A link to the Setup file (/prep, an EC's bookmark) must never land on nothing in Simple view.
+    // A link to the Setup file (/prep, an EC's bookmark) must never land on nothing in Easy menus.
     await goto('/prep', 4500)
-    check('/prep shows the Setup file in Simple view, and leaves the view alone',
+    check('/prep shows the Setup file in Easy menus, and leaves the view alone',
       [await has('rangertrak-setup-file'), ...(await viewState())], [true, 'simple', 'default'])
 
-    // ── Full view ──────────────────────────────────────────────────────
+    // ── Full menus ──────────────────────────────────────────────────────
     await goto('/mission', 4000)
     await setSwitch(true)
     await sleep(600)
     check('the person\'s switch to Full is stored with source user', await viewState(), ['full', 'user'])
     check('the header switch is on, with its hover hint', [await has('[data-testid=view-switch-header]'),
       await evaluate(`/plum edge/.test(document.querySelector('[data-testid=view-switch-header] button')?.title ?? '')`)], [true, true])
-    check('Full view shows the advanced Mission cards',
+    check('Full menus shows the advanced Mission cards',
       [await has('rangertrak-mission-tactical-calls'), await has('rangertrak-mission-maps-section'), await has('rangertrak-setup-file')],
       [true, true, true])
     const marker = await evaluate(`(() => {
@@ -5920,15 +5920,15 @@ async function checkSimpleView(fx) {
       return { cls: card?.classList.contains('rt-advanced') ?? false, title: card?.getAttribute('title') ?? '',
         desc: card?.getAttribute('aria-description') ?? '', noLabel: after === 'none' || after === 'normal' }
     })()`)
-    check('Full view marks them with the left edge, titled "Full view option" and no text label',
-      [marker.cls, marker.title, marker.desc, marker.noLabel], [true, 'Full view option', 'Full view option', true])
+    check('Full menus marks them with the left edge, titled "Full menus option" and no text label',
+      [marker.cls, marker.title, marker.desc, marker.noLabel], [true, 'Full menus option', 'Full menus option', true])
 
     // The header switch and its hint take no extra width: nothing widens a phone (360 px), on Mission or Entry.
     await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 800, deviceScaleFactor: 2, mobile: true })
     for (const route of ['/mission', '/']) {
       await goto(route, 4500)
       const w = await evaluate(`({ doc: Math.ceil(document.documentElement.scrollWidth), client: document.documentElement.clientWidth, inner: innerWidth })`)
-      check(`${route === '/' ? 'Entry' : 'Mission'} in Full view with the header switch fits a 360 px phone`, [w.doc <= w.client, w.inner <= w.client, await has('[data-testid=view-switch-header]')], [true, true, true])
+      check(`${route === '/' ? 'Entry' : 'Mission'} in Full menus with the header switch fits a 360 px phone`, [w.doc <= w.client, w.inner <= w.client, await has('[data-testid=view-switch-header]')], [true, true, true])
     }
     await send('Emulation.clearDeviceMetricsOverride')
 
@@ -5949,13 +5949,13 @@ async function checkSimpleView(fx) {
     await setSwitch(false)
     await sleep(600)
     check('switching back to Simple is stored with source user', await viewState(), ['simple', 'user'])
-    check('the tactical call card still shows in Simple view, because the mission uses it',
+    check('the tactical call card still shows in Easy menus, because the mission uses it',
       await has('rangertrak-mission-tactical-calls'), true)
     check('...while the unused cards stay hidden', await has('rangertrak-mission-recipients213'), false)
     check('...and nothing was changed: the call is still in the mission',
       await evaluate(`(localStorage.getItem('appSettings') || '').includes('E2E Tac 1')`), true)
     await goto('/', 4500)
-    check('Entry then shows To station in Simple view', await has('#enter__To-input'), true)
+    check('Entry then shows To station in Easy menus', await has('#enter__To-input'), true)
 
     // ── an attachment keeps its buttons in Simple ─────────────────────
     const png = path.join(path.dirname(fx.rosterPath), 'e2e-view-clue.png')
@@ -5963,27 +5963,27 @@ async function checkSimpleView(fx) {
     await goto('/mission', 3500)
     await setSwitch(true)
     await sleep(600)
-    check('Entry in Full view takes an attachment (setup for the next checks)',
+    check('Entry in Full menus takes an attachment (setup for the next checks)',
       (await entrySaveWithAttachments('E2E-VIEW', [png])) === 1, true)
     check('the attachment is stored', (await pollUntil(attachmentKeys, k => k.length === 1)).length, 1)
     await sleep(2500) // let the entry that holds it reach storage before leaving the page
     await goto('/mission', 3500)
     await setSwitch(false)
     await sleep(600)
-    check('Mission shows the Attachments budget in Simple view once a file is stored',
+    check('Mission shows the Attachments budget in Easy menus once a file is stored',
       await pollUntil(() => has('[data-testid=attachment-budget-line]'), v => v === true, 10, 500), true)
     await goto('/', 4500)
-    check('Entry keeps the attach button in Simple view once the mission has an attachment', await has('[data-testid=entry-attach]'), true)
+    check('Entry keeps the attach button in Easy menus once the mission has an attachment', await has('[data-testid=entry-attach]'), true)
 
     // ── the header switch on Map ──────────────────────────────────────
     await goto('/map', 5500)
-    check('Map shows Print map in Simple view (John 10-31)', await has('[data-testid=printMap]'), true)
+    check('Map shows Print map in Easy menus (John 10-31)', await has('[data-testid=printMap]'), true)
     await setSwitch(true)
     await sleep(800)
-    check('the header switch turns Full view on, source user', await viewState(), ['full', 'user'])
+    check('the header switch turns Full menus on, source user', await viewState(), ['full', 'user'])
     check('...and the page now shows the Alternative map switch (Print map in both views)',
       [await has('[data-testid=printMap]'), await has('[data-testid=mapEngineSwitch]')], [true, true])
-    check('...and Full view now marks controls with the left edge', await has('.rt-advanced'), true)
+    check('...and Full menus now marks controls with the left edge', await has('.rt-advanced'), true)
 
     // ── a Setup file's suggested view ─────────────────────────────────
     await wipe()

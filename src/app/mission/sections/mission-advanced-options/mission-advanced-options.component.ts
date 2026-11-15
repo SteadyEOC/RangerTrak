@@ -72,7 +72,7 @@ export class MissionAdvancedOptionsComponent {
   // new fragment.
   private host = inject(ElementRef<HTMLElement>)
   readonly openForDemo = signal(false)
-  /** E-207 / D-62: /prep and #setup-file links show the Setup file even in Simple view. */
+  /** E-207 / D-62: /prep and #setup-file links show the Setup file even in Easy menus. */
   readonly setupFileAsked = signal(false)
   private fragmentSub = inject(ActivatedRoute).fragment
     .pipe(takeUntilDestroyed())

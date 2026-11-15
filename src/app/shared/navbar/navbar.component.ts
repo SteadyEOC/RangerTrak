@@ -136,7 +136,7 @@ export class NavbarComponent implements OnInit {
     protected theme: ThemeService,
     protected skin: SkinService,
     protected fieldMode: FieldModeService,
-    /** E-04 / D-63: lists After action in Simple view once the mission has an ICS-214 line. */
+    /** E-04 / D-63: lists After action in Easy menus once the mission has an ICS-214 line. */
     protected view: ViewService,
     private radioLog: RadioLogService
   ) {

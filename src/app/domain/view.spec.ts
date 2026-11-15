@@ -7,7 +7,7 @@ import {
   isShown,
 } from './view'
 
-describe('Simple view and Full view (E-207, D-62)', () => {
+describe('Easy menus and Full menus (E-207, D-62)', () => {
   /** A blank mission: nothing in use. */
   const blank: ViewContext = {
     statusesCustomised: false,
@@ -49,7 +49,7 @@ describe('Simple view and Full view (E-207, D-62)', () => {
     })
   })
 
-  describe('isShown in Simple view: shown while the mission uses it', () => {
+  describe('isShown in Easy menus: shown while the mission uses it', () => {
     const cases: {
       id: string
       ctx: Partial<ViewContext>
@@ -107,7 +107,7 @@ describe('Simple view and Full view (E-207, D-62)', () => {
   })
 
   describe('isAdvanced (the marker)', () => {
-    it('marks an advanced feature in Full view only', () => {
+    it('marks an advanced feature in Full menus only', () => {
       expect(isAdvanced('tactical-calls', 'full')).toBe(true)
       expect(isAdvanced('tactical-calls', 'simple')).toBe(false)
     })

@@ -82,7 +82,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly layerService = inject(LayerService)
   readonly view = inject(ViewService)
 
-  /** E-207: the advanced controls on this page that Simple view can hide. */
+  /** E-207: the advanced controls on this page that Easy menus can hide. */
   protected readonly advancedIds = ['layers-panel', 'setup-file'] as const
 
   /** E-207 / D-62 item 3: how many lists of people are loaded here, for ViewService. */
@@ -800,7 +800,7 @@ export class RangersComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const summary = await this.applyImport(file.name, result, named)
     if (summary === null) return
-    // E-207 / D-62 item 6: a Setup file may suggest a view (a device in Simple view has no Setup file
+    // E-207 / D-62 item 6: a Setup file may suggest a view (a device in Easy menus has no Setup file
     // card to load it from). Applied once, and never over the person's own choice.
     this.view.suggest(manifest.suggestedView)
     const rosterNow = this.rangerService.rangers

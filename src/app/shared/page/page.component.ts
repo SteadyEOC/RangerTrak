@@ -25,8 +25,8 @@ import { ViewService } from '../services/view.service'
  *
  * `showHeader` exists for Help, which is the one page with no mission strip of its own.
  *
- * `viewIds` (E-214): the Simple/Full view ids this page can hide (ADVANCED_FEATURES). When there
- * are any, the shell shows the "Full view" switch in the header row (E-231), except in field mode (which
+ * `viewIds` (E-214): the Simple/Full menus ids this page can hide (ADVANCED_FEATURES). When there
+ * are any, the shell shows the "Full menus" switch in the header row (E-231), except in field mode (which
  * has no view choice). Pages without hideable controls pass nothing.
  */
 @Component({

@@ -335,7 +335,7 @@ Log, the ICS-309 and the CSV. Ask for the heading in degrees true; if they read 
 ### Resource requests (ICS-213RR)
 
 To ask Logistics for supplies, tick **Also generate an ICS-213RR (Resource Request)** on Entry
-(under the ICS-213 box; Full view only, never on a field phone). Fill in each item (quantity,
+(under the ICS-213 box; Full menus only, never on a field phone). Fill in each item (quantity,
 kind, description, type and when it is needed by; up to nine, with **Add another item**), then
 the priority, where to deliver it and the on-site contact (name and phone, which start as the
 reporting ranger from the roster; a radio contact such as "PCC 2 on the net" is fine). The priorities
@@ -392,7 +392,7 @@ Both pages work the same way:
 
 ### Attaching photos, video and audio
 
-The **Attach** button under Notes (in Full view, or in Simple view once the mission has an
+The **Attach** button under Notes (in Full menus, or in Easy menus once the mission has an
 attachment) adds files to the entry you are typing; on a phone or tablet, **Take photo /
 video** opens the camera. They wait as chips and are stored when you save the entry; a saved
 entry shows a **📎 N** chip that opens the viewer. In the viewer you can **Add** more, **Save**
@@ -596,12 +596,13 @@ the in-app **Help** page from the menu. It ships with the app, always matches th
 you're running, and works with no Internet. This guide covers what Help can't: getting a
 device ready before you no longer have a connection to fall back on.
 
-**Simple view and Full view.** A new install starts in **Simple view**, which shows the everyday
-controls. **Full view** shows every option, including **Attach**, From / To stations and the
-Alternative map. Press the **Full view** button at the top of Entry, Map, Mission or
-Rangers & Teams to switch (its dot is empty in Simple view, filled plum in Full view); each device
-keeps its own choice. Simple view never hides something your
-mission already uses: once an entry has an attachment, **Attach** shows in Simple view too.
+**Easy menus and Full menus.** A new install starts in **Easy menus**, which shows the everyday
+controls. **Full menus** shows every option, including **Attach**, From / To stations and the
+Alternative map. Press the **Full menus** button at the top of Entry, Map, Mission or
+Rangers & Teams to switch (its dot is empty in Easy menus, filled plum in Full menus); each device
+keeps its own choice. In Easy menus the button shows a small count (for example **+3**): how many
+options the page is holding back. Easy menus never hides something your
+mission already uses: once an entry has an attachment, **Attach** shows in Easy menus too.
 Switching changes only what is shown, never your data.
 
 **Demo, Exercise or Incident.** The icon at the left of the status pill in the header shows what

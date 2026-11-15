@@ -12,6 +12,7 @@ import {
   AarNoteService, ClockService, FieldModeService, LogService, MissionReadinessService, MissionService, MissionType, WelcomePanelService,
   OfflineBasemapService, RadioLogService, UsageStateService, MissionModeType
 } from '../services'
+import { FullscreenService } from '../services/fullscreen.service'
 import { Utility } from '../utility'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
 import { GuideService } from '../guide/guide.service'
@@ -40,8 +41,12 @@ import { ViewSwitchComponent } from '../view/view-switch.component'
 export class HeaderComponent implements OnInit, OnDestroy {
   @Input() parentTitle: string
   @Input() pageDescription: string
-  /** E-231: the page shell's say on whether this page has a Full view switch (it sits in this row). */
+  /** E-231: the page shell's say on whether this page has a Full menus switch (it sits in this row). */
   @Input() showViewSwitch = false
+  /** E-303: the ids this page can hide, so the Full menus switch can say how many Easy menus is hiding. */
+  @Input() viewIds: readonly string[] = []
+  /** E-315: the Full screen button's state and action. */
+  readonly fullscreen = inject(FullscreenService)
 
   /**
    * The one Guide affordance. Lives here rather than on each page because this header is

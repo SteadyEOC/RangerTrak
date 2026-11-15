@@ -53,7 +53,7 @@
   // (Angular interpolation), but now that emptiness reads as "a shorter pill", not as
   // debris floating in open space.
   // E-209 / D-64: an 8 px box at button height (was a 999px pill), so it lines up with the
-  // AAR/214, Guide and Full view controls beside it. The navbar's round icons stay as they are.
+  // AAR/214, Guide and Full menus controls beside it. The navbar's round icons stay as they are.
   .status-cluster {
     @include controls.control;
     position     : relative;
@@ -365,6 +365,33 @@
     margin-left: auto;
   }
 
-  .header__guide {
-    flex: none;
+  // E-315: the one group of page-tool buttons (Full menus, Full screen, AAR/214, Help). Every button
+  // in it carries .rt-header-action: one height, outlined, icon + label. Under 600px only the icon
+  // shows (the label lives on in aria-label and title) and each target stays at least 44px.
+  .rt-header-actions {
+    display    : flex;
+    align-items: center;
+    flex-wrap  : wrap;
+    gap        : var(--rt-space-sm);
+  }
+
+  .rt-header-actions .rt-header-action,
+  .rt-header-actions rangertrak-view-switch .rt-header-action {
+    flex      : none;
+    min-height: 40px;
+    height    : 40px;
+  }
+
+  @media (max-width: 599.98px) {
+    .rt-header-actions .rt-header-action {
+      min-width : 44px;
+      min-height: 44px;
+      height    : 44px;
+      padding   : 0 10px;
+    }
+    .rt-header-actions .rt-header-action__label {
+      // Visually hidden, still not in the accessibility tree twice: the button has aria-label.
+      position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+    .rt-header-actions .rt-header-action .mat-icon { margin: 0; }
   }

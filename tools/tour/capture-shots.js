@@ -48,7 +48,7 @@ const SHOTS = [
       const a = s.getBoundingClientRect(), b = t.getBoundingClientRect(); return { x: a.left, y: a.top, width: 330, height: b.bottom - a.top } })()`,
     alt: 'The Demo line on Entry’s welcome panel, with the Load a demo button' },
   { id: 'T1.6', file: 'view-switch', phase: 'demo', route: '/',
-    find: `document.querySelector('rangertrak-view-switch')`, alt: 'The Full view / Simple view switch at the top of Entry' },
+    find: `document.querySelector('rangertrak-view-switch')`, alt: 'The Full menus / Easy menus switch at the top of Entry' },
   { id: 'T1.7', file: 'aar-button', phase: 'demo', route: '/',
     find: `document.querySelector('[data-testid="aar-note"]')`, alt: 'The AAR/214 button in the page header' },
   { id: 'T2.1', file: 'ranger-id', phase: 'demo', route: '/',
@@ -169,7 +169,7 @@ async function openBrowser(port, { touch = false } = {}) {
       }
     }
     await b.send('Page.enable'); await b.send('Runtime.enable')
-    // A clean profile opens in Simple view and hides controls: pick Full view before the app loads.
+    // A clean profile opens in Easy menus and hides controls: pick Full menus before the app loads.
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `try { if (!localStorage.getItem('rt-view')) {
       localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user') } } catch { }` })
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: HELPERS })

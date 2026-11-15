@@ -83,7 +83,7 @@ describe('HeaderComponent', () => {
   // `items` getter, since its per-row hover tooltip merged into this component's
   // `.rt-mission-info-panel` - see that component's own updated spec/comment for why.
   describe('readinessItems() (ported from MissionReadinessComponent)', () => {
-    it('has six items in Full view, each linking to the specific page+section that fixes it', () => {
+    it('has six items in Full menus, each linking to the specific page+section that fixes it', () => {
       TestBed.inject(ViewService).setView('full')
       const items = component.readinessItems()
       expect(items.length).toBe(6)
@@ -112,7 +112,7 @@ describe('HeaderComponent', () => {
       expect(opPeriod?.fragment).toBe('readiness-mission-details')
     })
 
-    it('drops the alternative-map row in Simple view, which hides that map', () => {
+    it('drops the alternative-map row in Easy menus, which hides that map', () => {
       TestBed.inject(ViewService).setView('simple')
       const items = component.readinessItems()
       expect(items.length).toBe(5)

@@ -102,35 +102,48 @@
     </div>
     }
 
-    <!-- Material-M3 pass, 2026-08-25: the single entry point to this screen's reference
-         material, in the same place on every page. What it opens used to be
-         <rangertrak-section> blocks ("Instructions", "Tips", "Privacy & data handling",
-         "Grid Menu Keyboard interaction") sitting permanently below each page's grid or
-         form. Rendered only where there is something to read. -->
-    <!-- E-231 (John 2026-10-27): the Full view switch had a line of its own under this one. -->
+    <!-- E-315 (John 2026-11-15): one group of page-tool buttons, the same on every page, in one fixed
+         order: Full menus, Full screen, AAR/214, Help (E-314 adds Display after Full menus). Same
+         outlined button, one shared class, same height; under 600px icon only (the label moves to
+         aria-label and title). Only app-wide actions live here; page-specific toolbars stay on their
+         pages. Full menus only where the page has options to hide; Help only where there is something
+         to read (GuideService.available). -->
+    <div class="rt-header-actions" role="toolbar" aria-label="Page tools" data-testid="header-actions">
+    <!-- E-231 (John 2026-10-27): the Full menus switch had a line of its own under this one. -->
     @if (showViewSwitch) {
-    <rangertrak-view-switch></rangertrak-view-switch>
+    <rangertrak-view-switch [viewIds]="viewIds"></rangertrak-view-switch>
+    }
+    @if (!fieldMode.enabled()) {
+    <button matButton="outlined" type="button" class="rt-header-action" (click)="fullscreen.toggle()"
+      data-testid="fullscreen-toggle" [attr.aria-pressed]="fullscreen.isFullscreen()"
+      [attr.aria-label]="fullscreen.isFullscreen() ? 'Exit full screen' : 'Full screen'"
+      [title]="fullscreen.isFullscreen() ? 'Exit full screen' : 'Fill the whole screen with this page'">
+      <mat-icon>{{ fullscreen.isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      <span class="rt-header-action__label">{{ fullscreen.isFullscreen() ? 'Exit full screen' : 'Full screen' }}</span>
+    </button>
     }
     <!-- E-116: capture an After Action note from any page without leaving it. -->
-    <button matButton="outlined" type="button" class="header__guide" (click)="onAarNote()"
+    <button matButton="outlined" type="button" class="rt-header-action" (click)="onAarNote()"
       data-testid="aar-note"
+      [attr.aria-label]="fieldMode.enabled() ? 'AAR note' : 'AAR/214'"
       [attr.title]="fieldMode.enabled()
         ? 'AAR (after-action review) note: something to fix or improve later'
         : 'AAR note (something to fix or improve later) or ICS-214 line (an entry for your activity log)'">
       <mat-icon>edit_note</mat-icon>
       <!-- E-04 / D-63: AAR/214 names both uses of the one button; a field phone keeps "AAR note". -->
-      {{ fieldMode.enabled() ? 'AAR note' : 'AAR/214' }}
+      <span class="rt-header-action__label">{{ fieldMode.enabled() ? 'AAR note' : 'AAR/214' }}</span>
     </button>
     <!-- E-224 (John 2026-10-23): was "Guide". "Field Guide" is the rangertrak.com manual, so the
          in-app reference is one thing called Help: this per-screen drawer, which links to the
          full Help page. -->
     @if (guide.available()) {
-    <button matButton="outlined" type="button" class="header__guide" (click)="guide.toggle()"
-      [attr.aria-expanded]="guide.isOpen()"
+    <button matButton="outlined" type="button" class="rt-header-action" (click)="guide.toggle()"
+      [attr.aria-expanded]="guide.isOpen()" aria-label="Help"
       title="Help for this screen: instructions, tips and keyboard keys">
       <mat-icon>help_outline</mat-icon>
-      Help
+      <span class="rt-header-action__label">Help</span>
     </button>
     }
+    </div>
   </div>
 </div>

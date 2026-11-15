@@ -1,10 +1,9 @@
 @use "../../../styles/breakpoints" as bp;
-@use "../../../styles/controls";
 .map-engine-switch {
   margin: 0.5rem 0 1rem;
 
-  // Full view edge (_patterns.scss .rt-advanced): rounded, with a gap, so it reads as a bracket
-  // like the header's Full view button rather than a bar stuck to the switch (John 2026-10-27).
+  // Full menus edge (_patterns.scss .rt-advanced): rounded, with a gap, so it reads as a bracket
+  // like the header's Full menus button rather than a bar stuck to the switch (John 2026-10-27).
   &.rt-advanced {
     padding-inline-start: 10px;
     border-radius: var(--rt-control-radius);
@@ -175,30 +174,9 @@
   // was still printing on the map sheet - the screen `.fullscreen-toggle { display: block }`
   // further down has the same specificity and comes later, so it won. The parent selector
   // makes this rule the more specific one.
-  .map-engine-switch,
-  .map-fullscreen-area .fullscreen-toggle {
+  .map-engine-switch {
     display: none;
   }
-}
-
-// E-78: plain text button matching this app's own UI language (same border/radius/token
-// approach mapLeaflet.component.scss uses for the offline "save this area" control), not
-// borrowed browser/plugin chrome.
-.fullscreen-toggle {
-  @include controls.control;
-  display      : block;
-  margin       : 0 0 0.5rem auto;
-  padding      : 0 0.75rem;
-  border       : 1px solid var(--rt-ink-3);
-  background   : transparent;
-  color        : var(--rt-ink);
-  cursor       : pointer;
-}
-
-.fullscreen-toggle:hover,
-.fullscreen-toggle:focus-visible {
-  outline       : 2px solid var(--rt-ink);
-  outline-offset: 2px;
 }
 
 // 2026-09-27 (sticky navbar): `isolation: isolate` gives this element its own stacking

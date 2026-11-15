@@ -154,7 +154,7 @@
            it swaps in.
            E-271 (2026-11-10): was `on idle`. Leaflet's start-up was the longest task after first
            paint (~260 ms at 4x CPU throttle, the PageSpeed "long task"). On a desktop the map is
-           in view, so `on viewport` still loads it at once; on a phone in Simple view it sits
+           in view, so `on viewport` still loads it at once; on a phone in Easy menus it sits
            below the fold (top ~1230 px on an 823 px screen) and now loads when scrolled near,
            or after 8 s, whichever comes first, so it is ready in the usual case.
            John, 2026-11-13: on a phone his first tap on the map was lost and the map then zoomed in.
@@ -503,7 +503,7 @@
            named as the 213's initial-version requirement, not a full ICS-213 form - see the
            field's own doc comment in radio-log-entry.interface.ts for the "not confirmed
            against the real form" caveat this carries forward. -->
-      <!-- Core, not a Full view option (John, 2026-10-22): the checkbox shows in both views and
+      <!-- Core, not a Full menus option (John, 2026-10-22): the checkbox shows in both views and
            carries no Advanced marker; the 213 fields below still open only when it is ticked. -->
       <div class="enter__213">
         <!-- Material-M3 pass: manual WritableSignal binding, not [formField] - same
@@ -608,8 +608,8 @@
         </div>
       </div>
 
-      <!-- E-283 (ICS-213RR Resource Request, phase 1): a second opt-in, after the 213 box. A Full view
-           option that Simple view shows once the mission has a request; never on a field phone. Its tab
+      <!-- E-283 (ICS-213RR Resource Request, phase 1): a second opt-in, after the 213 box. A Full menus
+           option that Easy menus shows once the mission has a request; never on a field phone. Its tab
            stops are [hidden]-reserved like the 213's (entry.component.ts, rrToggleTabIndex). -->
       @if (view.isShown('resource-request', entryHere()) && !fieldMode.enabled()) {
       <div class="enter__213 enter__rr" [rtAdvanced]="'resource-request'" data-testid="rr213">

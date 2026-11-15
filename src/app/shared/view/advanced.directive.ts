@@ -4,12 +4,12 @@ import { ViewService } from '../services/view.service'
 
 /**
  * E-207 / ADR D-62 item 7: the one shared "Advanced" marker. Put `[rtAdvanced]="'some-id'"` on a
- * card or control that Simple view can hide, and in Full view it gets `.rt-advanced`
+ * card or control that Easy menus can hide, and in Full menus it gets `.rt-advanced`
  * (styles/_patterns.scss: a thin left rule), so core and extra are visible at a glance.
- * It also gets the title and aria-description "Full view option" (E-214). In Simple view nothing is added. It never hides anything itself; that is
+ * It also gets the title and aria-description "Full menus option" (E-214). In Easy menus nothing is added. It never hides anything itself; that is
  * `ViewService.isShown()`.
  */
-const HINT = 'Full view option'
+const HINT = 'Full menus option'
 
 @Directive({
   selector: '[rtAdvanced]',

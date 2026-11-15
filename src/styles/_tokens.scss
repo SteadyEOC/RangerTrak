@@ -117,7 +117,7 @@
   // Non-text contrast (3:1 needed): about 8:1 on white (light), about 8:1 on the dark skins' surfaces.
   --rt-current-period: #{light-dark(#3F3FA8, #A9AEF5)};
 
-  // ── Simple view / Full view (E-207, ADR D-62) ──────────────────────
+  // ── Easy menus / Full menus (E-207, ADR D-62) ──────────────────────
   // One plum that marks "Advanced" wherever it appears: the pill and rule on advanced cards and
   // controls, and the view switch. Plum because every nearer hue already means something here
   // (violet = Demo, blue = Exercise, teal = a status, brown = import/export, red/amber/green =

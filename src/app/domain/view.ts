@@ -1,5 +1,5 @@
 /**
- * E-207 / ADR D-62 (2026-10-19, John): Simple view and Full view. ONE list of what is advanced,
+ * E-207 / ADR D-62 (2026-10-19, John): Easy menus and Full menus. ONE list of what is advanced,
  * decided in one place. Pure rules - no Angular, Leaflet, DOM or storage imports (src/app/domain/
  * is for exactly that) - so the spec can run every case without a browser. The service
  * (shared/services/view.service.ts) gathers the context and keeps the view; components only ask
@@ -64,7 +64,7 @@ export type AdvancedFeature = {
   /** Stable kebab-case id. Docs, help and e2e read these. */
   id: string,
   label: string,
-  /** True when the mission uses this, so Simple view must show it. */
+  /** True when the mission uses this, so Easy menus must show it. */
   isInUse: (ctx: ViewContext) => boolean,
 }
 
@@ -100,7 +100,7 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'map-layers-extra', label: 'Extra map layers', isInUse: ctx => ctx.mapExtraLayersOn },
   { id: 'places-import', label: 'Places import and export', isInUse: ctx => ctx.locationCount > 0 },
   // Navigation (E-04 / D-63 item 7): After action, the page that holds the ICS-214 log. Not on the
-  // menu otherwise (reached from the AAR/214 box); Simple view lists it once the mission has a line.
+  // menu otherwise (reached from the AAR/214 box); Easy menus lists it once the mission has a line.
   { id: 'after-action', label: 'After action (ICS-214 log)', isInUse: ctx => ctx.activityLineCount > 0 },
   // Rangers & Teams
   { id: 'layers-panel', label: 'Import, export and print layers', isInUse: ctx => ctx.layerCount > 1 },
@@ -138,7 +138,7 @@ export function applySuggestedView(i: { suggested: unknown, source: ViewSource |
 }
 
 /**
- * Whether a control wears the "Advanced" marker: in Full view, every control Simple view can hide
+ * Whether a control wears the "Advanced" marker: in Full menus, every control Easy menus can hide
  * (whether or not this mission happens to use it), so core and extra stay visible at a glance.
  */
 export function isAdvanced(id: string, view: AppView): boolean {

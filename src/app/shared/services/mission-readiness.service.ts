@@ -35,7 +35,7 @@ export type ReadinessLevel = 'red' | 'amber' | 'green'
  * - **green** - all six signals pass. Prepared for the worst case (total network loss).
  *
  * The "Alternative map warmed" signal counts only where the alternative map is offered:
- * Simple view hides MapLibre unless it is the engine in use, so there the signal is left out
+ * Easy menus hides MapLibre unless it is the engine in use, so there the signal is left out
  * of the level and of the readiness lists (`mapWarmedCounts`), instead of pointing at a
  * switch the person cannot see.
  */
@@ -53,7 +53,7 @@ export class MissionReadinessService {
   private readonly view = inject(ViewService)
   private readonly mapEngine = inject(MapEngineService)
 
-  /** False in Simple view unless MapLibre is the engine in use (see the class comment). */
+  /** False in Easy menus unless MapLibre is the engine in use (see the class comment). */
   readonly mapWarmedCounts = computed(() =>
     this.view.isShown('maplibre', { mapEngineIsAlternative: this.mapEngine.engine() === 'maplibre' }))
 

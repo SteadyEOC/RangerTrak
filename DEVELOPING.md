@@ -111,7 +111,7 @@ the count (`728/728 passed` on 2026-10-27). Add `--verbose` to see every check. 
 `roster`, `mission` (Mission page, statuses, sample mission), `backup` (backups, report
 packets, old-release fixtures, device encryption), `attachments` (photos and files on
 entries, smaller copies), `board` (RangerView and viewer), `view` (Simple and
-Full view), `controls` (control sizes and corners), `cards` (the card grid layouts). Run the groups a change touches before an
+Full menus), `controls` (control sizes and corners), `cards` (the card grid layouts). Run the groups a change touches before an
 ordinary push, and the whole suite before a release.
 
 `e2e:offline` is separate on purpose: "offline" has to mean the server is actually gone, so

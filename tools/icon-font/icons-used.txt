@@ -45,6 +45,8 @@ fit_screen
 fitness_center
 folder
 folder_open
+fullscreen
+fullscreen_exit
 gif
 group
 groups

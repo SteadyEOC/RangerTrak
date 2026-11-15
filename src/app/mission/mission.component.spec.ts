@@ -173,17 +173,17 @@ describe('MissionComponent', () => {
     })
   })
 
-  // E-298: the MapLibre switch is hidden in Simple view, so the readiness list must not point at it there.
+  // E-298: the MapLibre switch is hidden in Easy menus, so the readiness list must not point at it there.
   describe('MapLibre readiness gap (E-298)', () => {
     const mapLibreGap = () => component.readinessGaps().filter(g => g.label.includes('MapLibre'))
 
-    it('is left out in Simple view', () => {
+    it('is left out in Easy menus', () => {
       TestBed.inject(ViewService).setView('simple')
       TestBed.inject(MissionReadinessService).bundledMapWarmed.set(false)
       expect(mapLibreGap().length).toBe(0)
     })
 
-    it('is listed in Full view when the backup map has not been opened', () => {
+    it('is listed in Full menus when the backup map has not been opened', () => {
       TestBed.inject(ViewService).setView('full')
       TestBed.inject(MissionReadinessService).bundledMapWarmed.set(false)
       expect(mapLibreGap().length).toBe(1)

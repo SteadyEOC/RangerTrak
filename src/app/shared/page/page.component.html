@@ -1,6 +1,6 @@
 @if (showHeader) {
 <pageHeader [parentTitle]="title" [pageDescription]="description"
-  [showViewSwitch]="viewIds.length > 0 && !fieldMode.enabled()"></pageHeader>
+  [showViewSwitch]="viewIds.length > 0 && !fieldMode.enabled()" [viewIds]="viewIds"></pageHeader>
 }
 <main class="main">
   <ng-content></ng-content>
