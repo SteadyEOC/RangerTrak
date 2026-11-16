@@ -53,7 +53,7 @@ Aside from initial setup (app install, local map downloads and optional place-na
 ### How the checks work
 
 Each module opens with its setup, goals and situation, then steps. Steps marked T are Tests: do the thing, and it should happen.
-Items marked Q are Questions: we want your opinion. Each has its own number, such as T3.4 (module 3, test 4). When something is wrong, odd or slow, write the number down with one line about it. That is the whole feedback form.
+Items marked Q are Questions: we want your opinion. Every item has its own number, such as T3.4 (module 3, test 4). When something is wrong, odd or slow, write the number down with one line about it. That is the whole feedback form.
 Like a paper script? Print the Tour Checklist (or save it as a PDF): every ID in one list, with Pass, Fail and Note columns.
 If something breaks, carry on: the next step rarely depends on it. Note the number, and if you can, press AAR/214 at the top of the page right then (module 1 shows you how) to record your observation.
 
@@ -208,7 +208,7 @@ Solo, you play every seat: read each card aloud, then log it. Each card is a who
 | C5.1 | {{call Hermit :: On foot at Hermits Rest, starting east.}} | Sam Okafor; the Hermits Rest end of the rim road |
 | C5.2 | {{call Mather :: At Mather Point, starting west.}} | Jo Whitecloud; at Mather Point |
 | C5.3 | Hermit: Village Base, THIS IS Hermit, OVER.<br>Base: Hermit, Village Base, go ahead, OVER.<br>Hermit: Lost hiker, male, about 70, confused, at the Abyss overlook. Request a carry-out team. OVER.<br>Base: SAY AGAIN the location, OVER.<br>Hermit: I SAY AGAIN, Abyss overlook. OVER.<br>Base: ROGER. WAIT.<br>(Net control starts C5.4, then:) Base: Hermit, carry-out team requested, OUT. | Sam Okafor; the Abyss overlook; a status that means needs attention. Notes: the call |
-| C5.4 | Base: Park Dispatch, THIS IS Village Base, formal message to Park Dispatch, OVER.<br>Base: BREAK. Request carry-out team to the Abyss overlook, one adult male, conscious, disoriented. BREAK. INITIALS Alpha Lima. OVER.<br>Dispatch: ROGER, OUT. | Scribe sends a formal message to Park Dispatch (log as an ICS-213) |
+| C5.4 | Base: Park Dispatch, THIS IS Village Base, formal message for you, OVER.<br>Dispatch: Village Base, Park Dispatch, go ahead, OVER.<br>Base: BREAK. Request carry-out team to the Abyss overlook, one adult male, conscious, disoriented. BREAK. INITIALS Alpha Lima. OVER.<br>Dispatch: ROGER, OUT. | Scribe sends a formal message to Park Dispatch (log as an ICS-213) |
 | C5.5 | Mather: Village Base, THIS IS Mather, radio check, OVER.<br>Base: Mather, WAIT. (a few seconds go by) Mather, Village Base, you are weak but readable, OVER.<br>Mather: ROGER, OUT. | Jo Whitecloud; a plain check-in at Mather Point |
 @swap Swap seats now: everyone moves one seat round, and the new scribe takes the cards from C5.6.
 | Card | The call | Log it as |
@@ -265,8 +265,8 @@ T11.2 On Mission, **Export Setup file**. Save it. It carries the mission name, p
 T11.3 On the second post, install RangerTrak, then **Import a Setup file…** on Mission. The mission name, period, roster and call signs arrive.
 T11.4 Each post needs its own letter, or two posts hand out the same message numbers. The first post stays **A**; on the second post, set **This station logs as** to **B**.
 T11.5 On Mission, under **Radio log statuses**, rename one status to your team’s word for it. The Radio Log uses the new name.
-T11.6 In **Tactical call signs** on Mission, add Village Base, Hermit, Mather and Desert View.
-T11.7 Back on Entry, picking Hermit in Ranger ID fills in the operator’s call sign.
+T11.6 In **Tactical call signs** on Mission, add Village Base, Hermit, Mather and Desert View. Assign Sam Okafor to Hermit and Jo Whitecloud to Mather.
+T11.7 Back on Entry, Ranger ID lists the tactical calls above the roster. Picking Hermit records Hermit, with Sam Okafor’s call sign.
 T11.8 On the second post, on Map, zoom to the area your teams will walk and press **Save this area for offline use**. Then turn off Wi-Fi and mobile data and check the map still shows it.
 T11.9 On Mission, **Data safety** shows the storage status; accept if it offers to protect your data.
 T11.10 *Optional.* Write down the battery level now. You’ll read it again in module 14.
@@ -292,7 +292,7 @@ Entry has a small switcher above the coordinate boxes: pick the format the calle
 | C12.5 | {{call Hermit :: CORRECTION, my last longitude should read one one two decimal one four four three west.}} | Fix that entry on the Radio Log; don’t add a new one |
 | C12.6 | Mather: Village Base, THIS IS Mather, OVER.<br>Base: Mather, Village Base, go ahead, OVER.<br>Mather: Formal message for the Ops chief. BREAK. Request a second radio battery at my location. BREAK. INITIALS Juliet Whiskey. OVER.<br>Base: ROGER, OUT. | Fill in the ICS-213 part of Entry, addressed to the Ops chief |
 | C12.7 | {{call Hermit :: Taking a photo of the trail washout for you.}} | Attach any photo (on a phone, Take photo / video) |
-| C12.8 | Base: Mather, Village Base, OVER. (the field team stays quiet once; the observer tells them to)<br>Base: Mather, Village Base, no answer, OUT. | Mark the last Mather entry ! on the Radio Log |
+| C12.8 | Base: Mather, Village Base, OVER.<br>(Silence: the Observer has asked Mather not to answer this once.)<br>Base: Mather, Village Base, nothing heard, OUT. | Mark the last Mather entry ! on the Radio Log |
 | C12.9 | {{call Mather :: Shift change. Jo is handing the radio to Riley.}} | On Mission, change who is operating Mather |
 T12.1-12.4 Each of C12.1 to C12.4 lands where the card table’s last column says.
 T12.5 After typing C12.2, the derived formats below the switcher show the same point (decimal degrees close to 36.0601, −112.2105).
@@ -340,7 +340,7 @@ T14.4 Each post: Mission → **Back up mission**, with a passphrase. Keep the fi
 T14.5 *Optional.* Read the battery again and note it beside the figure from T11.10.
 T14.6 Everyone with a device: **AAR/214**, one RangerTrak note per finding, ID first.
 Q14.1 Compare the paper 309 with the printed one. Which would you hand to the served agency for the after-action report?
-Q14.2 If it rained this hard during a real callout, would you run RangerTrak, paper only, or both? Why?
+Q14.2 In weather like today’s on a real callout, would you run RangerTrak, paper only, or both? Why?
 Q14.3 Which seat taught you the most: Scribe, Net control, Field team or Observer?
 Skills: Print ICS-309 log; Print map; Export ICS-214; Back up mission; AAR/214 notes.
 

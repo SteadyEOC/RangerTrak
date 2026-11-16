@@ -260,3 +260,5 @@ a.next { margin-left: auto; }
 @media print { .shot { max-width: 200px; break-inside: avoid; } }
 ul.checks li { position: relative; }
 ul.checks li > span[id] { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+/* Phones: tighter tables, so the phonetic alphabet's six columns fit 390 px without a sideways scroll. */
+@media (max-width: 30rem) { table { font-size: .85rem; } th, td { padding: .3rem .3rem; } }

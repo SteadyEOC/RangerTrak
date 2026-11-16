@@ -16,10 +16,14 @@ import re
 import sys
 
 # Module icons: 24px line drawings in the accent colour, one per module.
-BIKE = ('<circle cx="6.5" cy="15.5" r="3.5"/><circle cx="17.5" cy="15.5" r="3.5"/>'
-        '<path d="M10 15.5h4M5 12l2-7h3l1 5M19 12l-2-7h-3l-1 5"/>')
+# Binoculars: module 1, "First look".
+BINOCULARS = ('<circle cx="6.5" cy="15.5" r="3.5"/><circle cx="17.5" cy="15.5" r="3.5"/>'
+              '<path d="M10 15.5h4M5 12l2-7h3l1 5M19 12l-2-7h-3l-1 5"/>')
+# A bicycle, side on: two wheels, a diamond frame, saddle and handlebars (the tour's ride motif).
+BIKE = ('<circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/>'
+        '<path d="M5.5 16.5L9 9.5L11.5 16.5ZM9 9.5H16L11.5 16.5M16 9.5L18.5 16.5M9 9.5L8.5 7.5M7 7.5h3M16 9.5L15.5 6.5M14.5 6.5h2.5"/>')
 ICONS = {
-    1: BIKE,
+    1: BINOCULARS,
     2: '<rect x="7" y="7" width="10" height="15" rx="2"/><path d="M9 7V2M10 11h4M10 14h4M10 17h4"/>',
     3: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
     4: '<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4V2h6v2M8.5 10h7M8.5 14h7M8.5 18h4"/>',
@@ -329,7 +333,7 @@ def blocks_html(blocks, ctx, tour=None, module=None):
             else:
                 out.append(f'<p>{t}</p>')
         elif k == 'h1':
-            out.append(f'<h1><span class="bikeico" aria-hidden="true">{icon(1)}</span>{inline(b[1])}</h1>')
+            out.append(f'<h1><span class="bikeico" aria-hidden="true">{SVG.format(BIKE)}</span>{inline(b[1])}</h1>')
         elif k == 'h2':
             out.append(f'<h2>{inline(b[1])}</h2>')
         elif k == 'h3':
@@ -484,7 +488,7 @@ def tours_html(doc):
            '<div class="tours">']
     for t, T in doc['tours'].items():
         first = T['modules'][0]
-        mods = ''.join(f'<li><a href="#m{n}"><span class="n">{n}</span> {html.escape(doc["modules"][n]["title"])}</a>'
+        mods = ''.join(f'<li><a href="#m{n}"><span class="n">{n}</span>{html.escape(doc["modules"][n]["title"])}</a>'
                        f' <span class="who">{html.escape(doc["modules"][n]["who"])}</span></li>' for n in T['modules'])
         out.append(
             f'<article class="tour" id="tour{t}"><h3><span class="tnum">Tour {t}</span> {html.escape(T["title"])}</h3>'
