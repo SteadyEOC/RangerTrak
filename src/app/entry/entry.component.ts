@@ -731,6 +731,15 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     window.location.assign('/mission')
   }
 
+  /** E-319: the "operational period has ended" card's button. Chooses what to clear, clears, then goes to the
+   *  Mission page to name the next mission (a full load, so every service re-reads the cleared data). */
+  async onStartNextMission(): Promise<void> {
+    const clear = await this.usage.chooseWhatToClear('next', 'Start the next mission?', 'Start next mission')
+    if (!clear) return
+    await this.usage.startNextMission(clear)
+    window.location.assign('/mission')
+  }
+
   /**
    * E-114 §1a first-run prompt: the one place a device declares itself a ranger's own field
    * phone rather than a command-post/scribe device. Same empty-device gate (UsageStateService) as the demo

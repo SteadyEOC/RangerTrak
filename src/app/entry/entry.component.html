@@ -91,6 +91,20 @@
   </aside>
   }
 
+  <!-- E-319: after a real mission's op period has ended, the one action that clears the device for the next
+       mission. Same card as the demo card above. -->
+  @if (usage.nextMissionOffer()) {
+  <aside class="entry-welcome entry-demo-card" role="note" data-testid="next-mission-card">
+    <div class="entry-welcome__text">
+      <strong>This operational period has ended.</strong>
+    </div>
+    <button matButton="filled" type="button" (click)="onStartNextMission()" data-testid="next-mission-start"
+      title="Clear this mission's radio log and name for the next one; you choose what else goes">
+      Start the next mission
+    </button>
+  </aside>
+  }
+
   <!-- E-114 §2b (2026-08-31): "flag immediately if the connection is unavailable" - field
        mode only (isOnline's own comment in entry.component.ts explains why), and outside the
        welcome panel above so it stays visible after that panel is dismissed - a ranger needs

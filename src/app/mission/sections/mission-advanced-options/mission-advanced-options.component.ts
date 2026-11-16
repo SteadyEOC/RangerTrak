@@ -13,7 +13,7 @@ import { MatDialog } from '@angular/material/dialog'
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component'
 import {
   AarNoteService, BackupService, FieldModeService, LogService, MissionExport, MissionJournalService, MissionLocationService, MissionType,
-  RadioLogService, RangerPhotoService, RangerService, StoragePersistenceService
+  RadioLogService, RangerPhotoService, RangerService, StoragePersistenceService, UsageStateService
 } from '../../../shared/services/'
 import { DemoPickerComponent } from '../../../shared/demo-picker/demo-picker.component'
 import { SetupFileComponent } from '../setup-file/setup-file.component'
@@ -99,6 +99,8 @@ export class MissionAdvancedOptionsComponent {
 
   @Output() resetDefaults = new EventEmitter<void>()
 
+  readonly usage = inject(UsageStateService)
+
   constructor(
     private backupService: BackupService,
     public storagePersistence: StoragePersistenceService,
@@ -116,6 +118,14 @@ export class MissionAdvancedOptionsComponent {
     private journal: MissionJournalService,
     private dialog: MatDialog,
     private log: LogService) { }
+
+  /** E-319: Start the next mission - clears the radio log and the mission name, plus what the operator chooses. */
+  async onBtnStartNextMission(): Promise<void> {
+    const clear = await this.usage.chooseWhatToClear('next', 'Start the next mission?', 'Start next mission')
+    if (!clear) return
+    await this.usage.startNextMission(clear)
+    window.location.reload()
+  }
 
   // ── E-114 §1a: field phone, from a laptop/desktop ──────────────────────
   // 2026-09-29, John: the Entry welcome panel now asks "Is this a ranger's own field phone?"

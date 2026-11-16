@@ -221,6 +221,15 @@
     </p>
 
     <div class="rt-danger-zone__actions">
+      <!-- E-319: hidden while a demo is loaded; the demo has its own Start a real mission. -->
+      @if (usage.state() !== 'demo') {
+      <button matButton="outlined" type="button" class="mission__danger-button" data-testid="start-next-mission"
+        (click)="onBtnStartNextMission()"
+        title="Clear this mission's radio log and name for the next one; you choose what else goes">
+        Start the next mission
+      </button>
+      }
+
       <button matButton="outlined" type="button" class="mission__danger-button"
         (click)="resetDefaults.emit()"
         title="Return every setting above to its default value">
