@@ -10,6 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Install RangerView</title>
+<link rel="icon" type="image/svg+xml" href="/assets/icons/rangerview-mark.svg">
 <meta name="description" content="Step by step: let everyone at the command post watch the live radio log on their own phone, tablet or laptop.">
 <style>
   :root { --bg: #ffffff; --fg: #1b1f24; --muted: #57606a; --rule: #d0d7de; --code: #f3f4f6; --accent: #0b5cad; --ok: #1a7f37; --track: #e6e8eb; --warn: #fff4d6; --warn-rule: #e3b341; --card: #f6f8fa; }
@@ -19,7 +20,8 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   main { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-  h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .25rem; }
+  h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .25rem; display: flex; align-items: center; gap: .5rem; }
+  h1 img { width: 2.2rem; height: 2.2rem; flex: none; }
   .lede { color: var(--muted); margin: 0 0 1.25rem; }
   a { color: var(--accent); }
   code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .9em; background: var(--code); border-radius: 4px; padding: .1em .3em; overflow-wrap: anywhere; }
@@ -57,7 +59,7 @@
 <body class="os-windows">
 <main>
 
-<h1>Install RangerView (advanced)</h1>
+<h1><img src="/assets/icons/rangerview-mark.svg" alt="" width="35" height="35">Install RangerView (advanced)</h1>
 <p class="lede">RangerView is part of <a href="https://rangertrak.com/">RangerTrak</a>, the free radio log for field teams: the scribe logs radio calls in RangerTrak, and RangerView lets key staff watch that log, read-only.
 RangerView is a mini web server that runs on one laptop at the command post. Anyone on the same Wi-Fi can watch the radio log in a web browser, on their own phone, tablet or laptop. It needs no Internet once it is set up.
 Tick each step as you go.</p>

@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RangerView</title>
-<!-- Same files as the app's own icons: RangerView serves the built app's root, so these
-     load from the scribe's laptop with no Internet. -->
-<link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<!-- RangerView's own mark (E-305: folded map, orange route). RangerView serves the built app's
+     root, so it loads from the scribe's laptop with no Internet. No .ico fallback: the only
+     .ico is RangerTrak's, and a browser may prefer it over the SVG. -->
+<link rel="icon" type="image/svg+xml" href="/assets/icons/rangerview-mark.svg">
 <!--
   E-87 Stage 1 (2026-08-31). Deliberately a hand-written static page, NOT an Angular route -
   see `E-87 Command Post Server.md` §2.3/§5 for why: this is served from a LAN IP, a THIRD
@@ -248,7 +248,7 @@
 <body>
 
 <header>
-  <h1><img src="/assets/icons/rangertrak-mark.svg" alt="" width="29" height="29">RangerView</h1>
+  <h1><img src="/assets/icons/rangerview-mark.svg" alt="" width="29" height="29">RangerView</h1>
   <span id="missionMeta" class="meta">No log yet</span>
   <span id="statusBadge" class="badge badge--none">no data yet</span>
   <span id="clock" class="clock" title="The time on this device"></span>

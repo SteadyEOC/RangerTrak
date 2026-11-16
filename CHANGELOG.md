@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
+* **rangerview:** E-305 RangerView has its own mark: a folded map in teal with a dotted orange route and a pin. It is the browser-tab icon and the header picture on the live screen, and on the install page at rangertrak.org/view/.
 * **display:** E-314 a Display button on Map, Radio log, Messages, Rangers & Teams and Summary: bigger type and no editing controls, for a big screen or a second monitor. It applies to that window only (`?display=1` in the address, so a reload keeps it), never changes Easy or Full menus, never writes, keeps filters and warnings, and lets you select rows to point at them (cleared when you leave). Exit display or Esc comes back.
 * **view:** E-303 "Simple view" and "Full view" are now **Easy menus** and **Full menus** everywhere (the header button, Help, the Field Guide, the Tour). In Easy menus the button shows how many options the page is holding back, for example **Full menus +3**.
 * **header:** E-315 one group of page-tool buttons at the top of every page, in a fixed order: Full menus, Full screen, AAR/214, Help. They share one outlined style and height, and show only icons on a phone. Full screen, which lived inside the Map, is now on every page (the Map still fills the screen with just the map area).

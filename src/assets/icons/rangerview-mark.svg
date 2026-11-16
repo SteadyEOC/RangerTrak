@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 8 92 88" width="92" height="88" role="img" aria-label="RangerView">
+  <title>RangerView</title>
+  <!--
+    RangerView's mark (E-305, chosen by John 2026-11-15): a folded paper map in teal, a dotted
+    route in RangerTrak's orange, and a pin whose centre is the same orange. Studies:
+    non-dist-imgs/RangerView mark studies.html ("Folded map, brighter route").
+    Colours are plain attributes, as in rangertrak-mark.svg, so every renderer draws them.
+  -->
+  <g stroke="#0B5563" stroke-width="4.5" stroke-linejoin="round" fill="#DDF0F1">
+    <path d="M8 24 L36 14 L36 82 L8 92 Z"/>
+    <path d="M36 14 L64 24 L64 92 L36 82 Z"/>
+    <path d="M64 24 L92 14 L92 82 L64 92 Z"/>
+  </g>
+  <path d="M36 14 L64 24 L64 92 L36 82 Z" fill="#0B5563" fill-opacity=".12"/>
+  <path d="M15 77 Q28 56 42 64 T64 52" fill="none" stroke="#F0700A" stroke-width="8" stroke-linecap="round" stroke-dasharray="0.1 11"/>
+  <path d="M73 55 L61.74 35.5 A13 13 0 1 1 84.26 35.5 Z" fill="#0B5563"/>
+  <circle cx="73" cy="29" r="5.2" fill="#F0700A"/>
+</svg>
