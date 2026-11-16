@@ -20,8 +20,12 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   main { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-  h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .25rem; display: flex; align-items: center; gap: .5rem; }
-  h1 img { width: 2.2rem; height: 2.2rem; flex: none; }
+  /* RangerTrak first (its tile reads on light and dark); RangerView's mark smaller, beside the title (John 11-15). */
+  .brand { margin: 0 0 .9rem; }
+  .brand a { display: inline-flex; align-items: center; gap: .55rem; color: var(--fg); text-decoration: none; font-weight: 700; font-size: 1.15rem; }
+  .brand img { width: 2.4rem; height: 2.4rem; border-radius: 8px; flex: none; }
+  h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .25rem; display: flex; align-items: center; gap: .45rem; }
+  h1 img { width: 1.6rem; height: 1.6rem; flex: none; }
   .lede { color: var(--muted); margin: 0 0 1.25rem; }
   a { color: var(--accent); }
   code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .9em; background: var(--code); border-radius: 4px; padding: .1em .3em; overflow-wrap: anywhere; }
@@ -59,7 +63,8 @@
 <body class="os-windows">
 <main>
 
-<h1><img src="/assets/icons/rangerview-mark.svg" alt="" width="35" height="35">Install RangerView (advanced)</h1>
+<p class="brand"><a href="https://rangertrak.org/"><img src="/assets/icons/rangertrak-tile.svg" alt="" width="38" height="38">RangerTrak</a></p>
+<h1><img src="/assets/icons/rangerview-mark.svg" alt="" width="26" height="26">Install RangerView (advanced)</h1>
 <p class="lede">RangerView is part of <a href="https://rangertrak.com/">RangerTrak</a>, the free radio log for field teams: the scribe logs radio calls in RangerTrak, and RangerView lets key staff watch that log, read-only.
 RangerView is a mini web server that runs on one laptop at the command post. Anyone on the same Wi-Fi can watch the radio log in a web browser, on their own phone, tablet or laptop. It needs no Internet once it is set up.
 Tick each step as you go.</p>
