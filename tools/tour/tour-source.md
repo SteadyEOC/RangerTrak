@@ -163,11 +163,11 @@ Entry shows latitude and longitude in decimal degrees: whole degrees in the firs
 | 1 | {{call Hermit :: Position, FIGURES three six decimal zero five seven one north, one one two decimal one four three eight west.}} | Bright Angel trailhead |
 | 2 | {{call Mather :: Position, FIGURES three six decimal zero six one seven north, one one two decimal one zero nine zero west.}} | Mather Point |
 | 3 | {{call Hermit :: We are at Desert View Watchtower.}} (a place name: needs Internet; type it in the box that says Street address, +Code, or Maidenhead grid locator, and press Enter) | The far east end of the rim road, about 28 km east of the Village |
-A3.1-3 Each of cards 1 to 3 lands where the last column says.
-A3.4 Under the coordinate boxes, the **Derived** list shows the same point in other formats: degrees and minutes, MGRS, UTM and more. (Tour B lets you type in those formats too.)
-A3.5 On the Radio Log, click one of the three entries from this leg, then Ctrl-click (Cmd-click on a Mac) the other two. Open Map: its **Selected entries** switch shows just those.
-A3.6 On the Radio Log, double-click the notes of one of your entries, change them and press Enter. The change is kept; its message number and time logged stay as they were.
-A3.7 Turn off Wi-Fi (hint: try Airplane mode!) and look at Entry again. The word "Street address" in the box's label goes faint (hover it for the reason), the Derived list marks Address as (offline), and a place name moves nothing. Coordinates, +Code and Maidenhead still work.
+A3.1 Each of cards 1 to 3 lands where the last column says.
+A3.2 Under the coordinate boxes, the **Derived** list shows the same point in other formats: degrees and minutes, MGRS, UTM and more. (Tour B lets you type in those formats too.)
+A3.3 On the Radio Log, click one of the three entries from this leg, then Ctrl-click (Cmd-click on a Mac) the other two. Open Map: its **Selected entries** switch shows just those.
+A3.4 On the Radio Log, double-click the notes of one of your entries, change them and press Enter. The change is kept; its message number and time logged stay as they were.
+A3.5 Turn off Wi-Fi (hint: try Airplane mode!) and look at Entry again. The word "Street address" in the box's label goes faint (hover it for the reason), the Derived list marks Address as (offline), and a place name moves nothing. Coordinates, +Code and Maidenhead still work.
 A3.Q1 Which coordinate format does your team actually use on the air? Was it easy to read the digits aloud and type them?
 Skills: enter a location in decimal degrees or as a place name; read the Derived list; edit an entry; show selected Radio Log entries on Map; know what stops working offline.
 Note: Anything odd, slow or missing? Note the step ID and one line.
@@ -306,16 +306,16 @@ Entry has a small switcher above the coordinate boxes: pick the format the calle
 | 7 | {{call Hermit :: Taking a photo of the trail washout for you.}} | Attach any photo (on a phone, Take photo / video) |
 | 8 | Base: Mather, Village Base, OVER.<br>(Silence: the Observer has asked Mather not to answer this once.)<br>Base: Mather, Village Base, nothing heard, OUT. | Mark the last Mather entry ! on the Radio Log |
 | 9 | {{call Mather :: Shift change. Jo is handing the radio to Riley.}} | On Mission, change who is operating Mather |
-B4.1-4 Each of cards 1 to 4 lands where the card table's last column says.
-B4.5 After typing card 2, the derived formats below the switcher show the same point (decimal degrees close to 36.0601, −112.2105).
-B4.6 A "west" longitude lands west, not on the far side of the world. If one lands somewhere absurd, the Map makes it obvious: note how you spotted it.
-B4.7 Every entry's message number starts with this post's letter (A…).
-B4.8 Card 5: on the Radio Log, double-click the coordinates or notes of the earlier entry and fix them. The change is kept; the message number and time logged stay.
-B4.9 Card 6: the request appears on the Messages page with its message number, addressed to the Ops chief.
-B4.10 Card 7: **Attach** adds a 📎 1 chip to the entry; hovering it on the Radio Log shows the picture.
-B4.11 Card 8: the disposition box cycles ✓, →, ! and back to empty, and a tap lands on the box you meant (even with a wet finger).
-B4.12 Card 9: on Mission, change who is operating Mather. Earlier Mather entries keep their old operator.
-B4.13 Half-way through typing a call, go to Map to look at the spot, then come back to Entry. What you had typed is still there.
+B4.1 Each of cards 1 to 4 lands where the card table's last column says.
+B4.2 After typing card 2, the derived formats below the switcher show the same point (decimal degrees close to 36.0601, −112.2105).
+B4.3 A "west" longitude lands west, not on the far side of the world. If one lands somewhere absurd, the Map makes it obvious: note how you spotted it.
+B4.4 Every entry's message number starts with this post's letter (A…).
+B4.5 Card 5: on the Radio Log, double-click the coordinates or notes of the earlier entry and fix them. The change is kept; the message number and time logged stay.
+B4.6 Card 6: the request appears on the Messages page with its message number, addressed to the Ops chief.
+B4.7 Card 7: **Attach** adds a 📎 1 chip to the entry; hovering it on the Radio Log shows the picture.
+B4.8 Card 8: the disposition box cycles ✓, →, ! and back to empty, and a tap lands on the box you meant (even with a wet finger).
+B4.9 Card 9: on Mission, change who is operating Mather. Earlier Mather entries keep their old operator.
+B4.10 Half-way through typing a call, go to Map to look at the spot, then come back to Entry. What you had typed is still there.
 B4.Q1 RangerTrak has the ICS-213 and the ICS-213RR (Resource Request). Was the 213 good enough for card 6, or does anyone on your team need a 213RR?
 Skills: the coordinate format switcher in DD, DDM, MGRS, UTM and Maidenhead; fix an entry on the Radio Log; ICS-213 to a named recipient; Attach a photo; disposition marks; change who is operating a team.
 Note: Anything odd, slow or missing? Note the step ID and one line.

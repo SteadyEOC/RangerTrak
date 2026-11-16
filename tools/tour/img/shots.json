@@ -7,7 +7,7 @@
   },
   "A1.6": {
     "file": "view-switch.webp",
-    "alt": "The Full view / Simple view switch at the top of Entry",
+    "alt": "The Full menus / Easy menus button at the top of Entry",
     "width": 145,
     "height": 48
   },
@@ -71,7 +71,7 @@
     "width": 628,
     "height": 458
   },
-  "B4.5": {
+  "B4.2": {
     "file": "location-formats.webp",
     "alt": "Entry’s location format switcher with the derived formats below it",
     "width": 510,

@@ -62,7 +62,7 @@ const SHOTS = [
     find: `(() => { const h = document.querySelector('.ag-header-cell[col-id="handledMark"]')?.getBoundingClientRect(); const c = document.querySelector('.ag-row[row-index="3"] .ag-cell[col-id="callsign"]')?.getBoundingClientRect(); if (!h || !c) return null
       return { x: h.left, y: h.top, width: c.right - h.left, height: c.bottom - h.top } })()`,
     alt: 'The disposition box at the left of each Radio Log row, first column' },
-  { id: 'B4.5', file: 'location-formats', phase: 'demo', route: '/',
+  { id: 'B4.2', file: 'location-formats', phase: 'demo', route: '/',
     setup: `(async () => { const segs = (k) => [...document.querySelectorAll('.rt-coord-seg--' + k)].filter(e => e.getClientRects().length)
       const vals = [[segs('deg')[0], '36'], [segs('frac')[0], '0601'], [segs('deg')[1], '-112'], [segs('frac')[1], '2105']]
       for (const [i, v] of vals) { i.scrollIntoView({ block: 'center' }); i.focus(); i.select(); document.execCommand('insertText', false, v); i.dispatchEvent(new Event('change', { bubbles: true })); i.blur(); await new Promise(r => setTimeout(r, 300)) }
@@ -83,7 +83,7 @@ const SHOTS = [
     focus: `document.querySelector('.rt-io-trigger')`,
     find: union(`document.querySelector('.rt-io-trigger .mat-expansion-panel-header')`, `[...document.querySelectorAll('.rt-io-trigger mat-card')].find(c => /Export roster/.test(c.textContent))`),
     alt: 'Rangers’ Import, export & print panel, opened' },
-  { id: 'B4.10', file: 'attachment-chip', phase: 'demo', route: '/radio-log',
+  { id: 'B4.7', file: 'attachment-chip', phase: 'demo', route: '/radio-log',
     find: `[...document.querySelectorAll('.ag-cell')].find(c => /\u{1F4CE}/u.test(c.textContent))`,
     alt: 'A Radio Log entry’s paperclip attachment chip' },
   { id: 'A5.2', file: 'offline-save', phase: 'demo', route: '/map', vw: 760,
