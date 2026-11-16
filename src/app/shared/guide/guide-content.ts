@@ -355,7 +355,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
         blocks: [
           {
             heading: 'What the journal records',
-            text: 'The Journal tab lists what was done to the mission data on this device: loading a demo, starting a real mission, restoring, importing, backing up, exporting, printing, clearing and turning encryption on or off. It records that something happened and how many, never what a report or note said. It stays when you load a demo, start a real mission or clear the radio log.'
+            text: 'The Journal tab lists what was done to the mission data on this device: loading a demo, starting a real mission, starting the next mission, restoring, importing, backing up, exporting, printing, clearing and turning encryption on or off. It records that something happened and how many, never what a report or note said. It stays when you load a demo, start a real mission, start the next mission or clear the radio log.'
           },
           {
             heading: 'Intact or broken',
