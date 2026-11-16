@@ -1,0 +1,175 @@
+<!-- RangerView mark studies (E-305), round 4: folded map. Live copy: https://claude.ai/artifact/3SsKDMHDX1ffEAZGmChHso (private; earlier rounds are in its version history). Open this file in a browser to view. -->
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RangerView Mark Studies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: palette switcher on top, then one card per concept: light strip, dark strip, tab + header mock. */
+:root {
+  --bg: #EDF1F5; --surface: #FFFFFF; --ink: #12263F; --ink-2: #4A5B70; --line: #CBD5E1;
+  --chip: #E3E9F0; --chip-on: #12263F; --chip-on-ink: #FFFFFF;
+  --ok: #1F7A4D; --warn: #B4540A;
+  --display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0B1320; --surface: #121D2E; --ink: #E6ECF3; --ink-2: #9AA9BC; --line: #26364D;
+  --chip: #1C2A3F; --chip-on: #E6ECF3; --chip-on-ink: #0B1320; --ok: #5CC28E; --warn: #F2A35E; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0B1320; --surface: #121D2E; --ink: #E6ECF3; --ink-2: #9AA9BC; --line: #26364D;
+  --chip: #1C2A3F; --chip-on: #E6ECF3; --chip-on-ink: #0B1320; --ok: #5CC28E; --warn: #F2A35E; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 32px 64px; display: grid; gap: 24px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 19px; margin: 0; }
+p { margin: 0; max-width: 70ch; }
+.intro { display: grid; gap: 10px; }
+.intro p { color: var(--ink-2); }
+.tag { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+
+.palettes { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1px solid var(--line); }
+.palettes .label { font-size: 13px; color: var(--ink-2); margin-right: 4px; }
+.palettes button { font: 500 13px var(--body); border: 1px solid var(--line); background: var(--chip); color: var(--ink);
+  border-radius: 999px; padding: 6px 12px 6px 8px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.palettes button[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-ink); border-color: var(--chip-on); }
+.palettes button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.dots { display: inline-flex; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); margin-right: -3px; }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; width: 100%; }
+.pass { color: var(--ok); font-weight: 600; } .fail { color: var(--warn); font-weight: 600; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.study { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.study header { display: flex; align-items: baseline; gap: 10px; }
+.study .why { color: var(--ink-2); font-size: 14px; }
+.ramps { display: grid; gap: 8px; }
+.ramp { border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.ramp.light { background: #FFFFFF; border: 1px solid var(--line); }
+.ramp.dark { background: #0E1726; }
+.size { display: grid; justify-items: center; gap: 4px; }
+.size small { font-family: var(--mono); font-size: 10.5px; color: #6B7A8C; }
+.ramp svg { display: block; }
+.mock { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tab { display: flex; align-items: center; gap: 7px; background: #DEE3EA; border-radius: 7px 7px 0 0; padding: 6px 10px; width: fit-content;
+  font: 500 12px var(--body); color: #12263F; }
+.tab.dark { background: #2A3446; color: #E6ECF3; }
+.hdr { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 0 7px 7px 7px; font: 700 16px var(--display); }
+.hdr.light { background: #FFFFFF; color: #12263F; border: 1px solid #CBD5E1; }
+.hdr.dark { background: #0E1726; color: #E6ECF3; }
+@media (max-width: 760px) { .grid, .mock { grid-template-columns: 1fr; } h1 { font-size: 24px; } }
+</style>
+
+<div class="wrap">
+  <section class="intro">
+    <div class="tag">E-305 · RangerView identity · round 4: folded map</div>
+    <h1>RangerView mark studies</h1>
+    <p>Round 4 follows the folded map in teal. Four versions: round 3's for reference, one with bigger and brighter route dots, and two with a simplified RangerTrak mark (the pin that is also a radio) standing on the map instead of a plain pin. The colour buttons try the route dots and waves in amber, a brighter orange, and RangerTrak's own orange. Each card shows 16 px (browser tab), 29 px (page header), 64 px and 128 px, on white and on a dark screen. RangerTrak's mark is the last card, for comparison.</p>
+  </section>
+  <div class="palettes" id="palettes"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const PALETTES = [
+  { id: 'teal-amber', name: 'Teal and amber (round 3)', body: '#0B5563', accent: '#F2A900', screen: '#FFF1C7' },
+  { id: 'teal-bright', name: 'Teal and bright orange', body: '#0B5563', accent: '#FF8A00', screen: '#DDF0F1' },
+  { id: 'teal-rt', name: 'Teal and RangerTrak orange', body: '#0B5563', accent: '#F0700A', screen: '#DDF0F1' },
+]
+const RT = { body: '#12263F', accent: '#F0700A' }
+
+// Small map pin: tip at (cx, tipY), head radius r.
+const pin = (cx, tipY, r, fill, dot = '#fff') => { const hy = tipY - 2 * r, dx = (0.866 * r).toFixed(2), y = (hy + 0.5 * r).toFixed(2)
+  return `<path d="M${cx} ${tipY} L${(cx - dx).toFixed(2)} ${y} A${r} ${r} 0 1 1 ${(cx + +dx).toFixed(2)} ${y} Z" fill="${fill}"/>${dot ? `<circle cx="${cx}" cy="${hy}" r="${(r * 0.4).toFixed(2)}" fill="${dot}"/>` : ''}` }
+const tile = p => `<rect x="8" y="8" width="84" height="84" rx="14" fill="${p.screen}" stroke="${p.body}" stroke-width="5"/>`
+let uid = 0
+
+// Arc around (cx, cy), radius R, from angle a1 to a2 in degrees (0 = right, negative = up), clockwise.
+const arc = (cx, cy, R, a1, a2) => { const k = Math.PI / 180, pt = a => `${(cx + R * Math.cos(a * k)).toFixed(2)} ${(cy + R * Math.sin(a * k)).toFixed(2)}`
+  return `M${pt(a1)} A${R} ${R} 0 0 1 ${pt(a2)}` }
+const map3 = p => `<g stroke="${p.body}" stroke-width="4.5" stroke-linejoin="round">
+    <path d="M8 24 L36 14 L36 82 L8 92 Z" fill="${p.screen}"/><path d="M36 14 L64 24 L64 92 L36 82 Z" fill="${p.screen}"/><path d="M64 24 L92 14 L92 82 L64 92 Z" fill="${p.screen}"/></g>
+  <path d="M36 14 L64 24 L64 92 L36 82 Z" fill="${p.body}" fill-opacity=".12"/>`
+// Simplified RangerTrak mark: pin with the radio inside, antenna out of the top, two waves.
+const rtPin = (p, cx, tip, r, solid) => { const hy = tip - 2 * r, top = hy - r, ant = top - 18
+  const shape = pin(cx, tip, r, solid ? p.body : '#fff', '').replace(/fill="[^"]+"/, solid ? `fill="${p.body}"` : `fill="#fff" stroke="${p.body}" stroke-width="5" stroke-linejoin="round"`)
+  const ink = solid ? '#fff' : p.body
+  return `<path d="M${cx} ${ant} V${top + 3}" stroke="${p.body}" stroke-width="3.5" stroke-linecap="round"/>${shape}
+    <path d="M${cx} ${top + 2} V${hy}" stroke="${ink}" stroke-width="3" stroke-linecap="round"/>
+    <rect x="${cx - 5}" y="${hy - 4}" width="10" height="${r + 5}" rx="3" fill="${ink}"/>
+    <circle cx="${cx}" cy="${ant}" r="4" fill="${p.body}"/>
+    <g fill="none" stroke="${p.accent}" stroke-width="4.5" stroke-linecap="round"><path d="${arc(cx, ant, 9, -75, 15)}"/><path d="${arc(cx, ant, 16, -75, 15)}"/></g>` }
+
+const CONCEPTS = [
+  { id: 'folded', name: 'Folded map (round 3)', why: 'As round 3, for reference: three folds, a dotted route, a plain pin.',
+    draw: p => `${map3(p)}
+      <path d="M15 76 Q28 56 42 64 T66 50" fill="none" stroke="${p.accent}" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 9"/>
+      ${pin(72, 54, 12, p.body)}` },
+  { id: 'folded-bright', name: 'Folded map, brighter route', why: 'Bigger route dots, set further apart so each one shows at header size, and the pin\'s centre in the same colour so the route and the pin read as one trip.',
+    draw: p => `${map3(p)}
+      <path d="M15 77 Q28 56 42 64 T64 52" fill="none" stroke="${p.accent}" stroke-width="8" stroke-linecap="round" stroke-dasharray="0.1 11"/>
+      ${pin(73, 55, 13, p.body, p.accent)}` },
+  { id: 'folded-rt', name: 'Folded map, RangerTrak mark', why: 'RangerTrak\'s pin-and-radio, simplified (one radio, two waves), standing on the map at the end of the route. Says "RangerTrak, seen on a map".',
+    draw: p => `${map3(p)}
+      <path d="M14 80 Q26 60 38 68 T56 66" fill="none" stroke="${p.accent}" stroke-width="7" stroke-linecap="round" stroke-dasharray="0.1 10"/>
+      ${rtPin(p, 68, 90, 14, false)}` },
+  { id: 'folded-rt-solid', name: 'Folded map, solid RangerTrak mark', why: 'The same, with the pin filled in teal and the radio in white. Heavier, so it holds up better at 16 px.',
+    draw: p => `${map3(p)}
+      <path d="M14 80 Q26 60 38 68 T56 66" fill="none" stroke="${p.accent}" stroke-width="7" stroke-linecap="round" stroke-dasharray="0.1 10"/>
+      ${rtPin(p, 68, 90, 14, true)}` },
+]
+
+const RT_MARK = {
+  id: 'rt', name: 'RangerTrak today', why: 'For comparison: the pin that is also a handheld radio, waves going out.', fixed: true,
+  vb: '-40 40 236 236',
+  draw: () => `<g fill="none" stroke="${RT.body}" stroke-linejoin="round"><path d="M 52 239 L 18.4 175.8 A 38 38 0 1 1 85.6 175.8 Z" stroke-width="12"/><path d="M 52 96 L 52 150" stroke-width="5" stroke-linecap="round"/></g>
+    <rect x="44" y="142" width="16" height="58" rx="6" fill="${RT.body}"/><circle cx="52" cy="88" r="8" fill="${RT.body}"/>
+    <g fill="#fff"><rect x="47.5" y="158" width="9" height="4" rx="2"/><rect x="47.5" y="170" width="9" height="4" rx="2"/><rect x="47.5" y="182" width="9" height="4" rx="2"/></g>
+    <g fill="none" stroke="${RT.accent}" stroke-width="7" stroke-linecap="round">${[0.8, 1.3, 1.85].map(s => `<path transform="translate(52,88) scale(${s}) translate(-52,-88)" d="M 74.94 55.23 A 40 40 0 0 1 82.64 113.71"/>`).join('')}</g>`,
+}
+
+const svg = (c, p, h) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${c.vb || '0 0 100 100'}" width="${h}" height="${h}" role="img" aria-label="${c.name}, ${h} pixels">${c.draw(p)}</svg>`
+
+function lum(hex) { const v = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(c => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2] }
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05) }
+const chk = (label, a, b) => { const r = ratio(a, b); return `<span>${label}: <span class="${r >= 3 ? 'pass' : 'fail'}">${r.toFixed(1)}:1</span></span>` }
+
+let current = PALETTES[2]
+try { const saved = localStorage.getItem('rv-palette-4'); current = PALETTES.find(p => p.id === saved) || current } catch {}
+
+function card(c, p) {
+  const sizes = [16, 29, 64, 128]
+  const name = c.fixed ? 'RangerTrak' : 'RangerView'
+  return `<section class="study" id="concept-${c.id}">
+    <header><h2>${c.name}</h2>${c.fixed ? '<span class="tag">comparison</span>' : ''}</header>
+    <p class="why">${c.why}</p>
+    <div class="ramps">
+      <div class="ramp light">${sizes.map(h => `<div class="size">${svg(c, p, h)}<small>${h}px</small></div>`).join('')}</div>
+      <div class="ramp dark">${sizes.map(h => `<div class="size">${svg(c, p, h)}<small>${h}px</small></div>`).join('')}</div>
+    </div>
+    <div class="mock">
+      <div><div class="tab">${svg(c, p, 16)}${name}</div><div class="hdr light">${svg(c, p, 29)}${name}</div></div>
+      <div><div class="tab dark">${svg(c, p, 16)}${name}</div><div class="hdr dark">${svg(c, p, 29)}${name}</div></div>
+    </div>
+  </section>`
+}
+
+function render() {
+  document.getElementById('palettes').innerHTML = `<span class="label">Colours:</span>` + PALETTES.map(p =>
+    `<button type="button" id="pal-${p.id}" data-id="${p.id}" aria-pressed="${p === current}"><span class="dots"><i style="background:${p.body}"></i><i style="background:${p.accent}"></i></span>${p.name}</button>`).join('') +
+    `<div class="checks">${chk('Accent on white', current.accent, '#FFFFFF')}${chk('Accent on dark', current.accent, '#0E1726')}${chk('Body on white', current.body, '#FFFFFF')}${chk('Body vs RangerTrak navy', current.body, RT.body)}</div>`
+  document.getElementById('grid').innerHTML = CONCEPTS.map(c => card(c, current)).join('') + card(RT_MARK, RT)
+}
+document.getElementById('palettes').addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return
+  current = PALETTES.find(p => p.id === b.dataset.id)
+  try { localStorage.setItem('rv-palette-4', current.id) } catch {}
+  render()
+})
+render()
+</script>
