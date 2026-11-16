@@ -2269,16 +2269,23 @@ async function checkUsageModes() {
   // John 10-27: the demo bar links to the Tour Guide, and /tour/ is served beside the app.
   check('blank device: the demo bar links to the Tour Guide', await evaluate(`document.querySelector('[data-testid="welcome-tour-link"] a')?.getAttribute('href') ?? 'none'`), '/tour/')
   check('the Tour Guide page loads', await evaluate(`fetch('/tour/').then(r => r.ok && r.text()).then(t => !!t && t.includes('RangerTrak Tour Guide'))`), true)
-  // E-317: three tours on one page. A plain /tour/ opens Start; #T21.1 opens Tour 3; an old ID redirects.
+  // E-317 round 2: three tours of legs on one page. A plain /tour/ opens Start; #a3 opens leg A3 under Tour A;
+  // an old #m9 lands on #c2; #tours is Start. These navigate away, so they come back to the app at the end:
+  // the pill and demo checks below read the app's own page.
   await goto('/tour/')
   check('E-317: /tour/ opens Start', await evaluate(`!document.getElementById('start').hidden`), true)
   check('E-317: the Start page offers three tours', await evaluate(`document.querySelectorAll('.tour').length`), 3)
-  await goto('/tour/#T21.1')
-  check('E-317: /tour/#T21.1 opens Tour 3 (module 21)', await evaluate(`!document.querySelector('[data-view="m21"]').hidden && document.querySelector('.side li:not([hidden]) a')?.dataset.m`), '21')
-  await goto('/tour/#T8.3')
-  check('E-317: the old #T8.3 redirects to T21.3', await evaluate(`location.hash`), '#T21.3')
-  await goto('/tour/#tour2')
-  check('E-317: /tour/#tour2 shows Tour 2 in the side nav', await evaluate(`document.querySelector('.side li:not([hidden]) a')?.dataset.m`), '11')
+  check('E-317: the tabs are Start, Tour A, B, C, Reference, Feedback (no Tours tab)', await evaluate(`[...document.querySelectorAll('.tabs a')].map(a => a.textContent.trim()).join(',')`), 'Start,Tour A,Tour B,Tour C,Reference,Feedback')
+  await goto('/tour/#a3')
+  check('E-317: /tour/#a3 opens leg A3 under Tour A', await evaluate(`!document.querySelector('[data-view="a3"]').hidden && document.getElementById('tab-A').getAttribute('aria-current')`), 'page')
+  check('E-317: the side list shows all three tours legs', await evaluate(`document.querySelectorAll('.side a[data-m]').length`), 15)
+  await goto('/tour/#c1')
+  check('E-317: /tour/#c1 opens the RangerView leg', await evaluate(`!document.querySelector('[data-view="c1"]').hidden && !document.querySelector('.view:not([hidden]) .mark, .view:not([hidden]) svg.rangerview-mark')`), true)
+  await goto('/tour/#m9')
+  check('E-317: the old #m9 lands on #c2', await evaluate(`location.hash`), '#c2')
+  await goto('/tour/#tours')
+  check('E-317: #tours lands on Start', await evaluate(`!document.getElementById('start').hidden`), true)
+  await goto('/')
   check('blank device: the pill shows the default mode, Incident (2026-10-05: one mode is always active)', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'incident')
 
   // 2026-10-02, John: picking a demo loads it, no button (except Mission > Danger zone).
