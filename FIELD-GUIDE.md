@@ -611,6 +611,13 @@ sort stay, and you can click rows to point at them (they clear when you leave). 
 change Easy or Full menus, and never changes your data. **Exit display** (top right; it fades when idle) or **Esc**
 brings the page back.
 
+**Pop out.** Next to Display, **Pop out** opens a look-only copy of the page in its own window, for a second monitor or
+a projector. You can open several, such as Rangers & Teams and the Map side by side. Each has a coloured frame and a
+**Read-only** label, keeps up with your main window by itself (and says so if the main window is closed), and never
+saves anything: you keep working in the main window. **Close window** closes it. If RangerTrak says it is already open
+in another tab, **Open a read-only view here** gives you the same kind of window in that tab. On an encrypted device
+the pop-out opens already unlocked; you are not asked for the passphrase again.
+
 **Demo, Exercise or Incident.** The icon at the left of the status pill in the header shows what
 the mission is (hover it to change it). An exercise stamps **EXERCISE** on the printed radio
 messages (ICS-213), the communications log (ICS-309), the After Action report and the map sheet.

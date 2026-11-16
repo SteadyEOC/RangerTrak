@@ -553,7 +553,47 @@ focus is not in a field. `shared/display/display-bar.component.ts` is the one sm
 fades after 3 s idle. The grids (Radio log, Rangers) set `suppressClickEdit`, cancel a keyboard edit
 (`onCellEditingStarted`), scale row and header heights, and register their row selection as the marks
 (`DisplayService.setMarks`), which `exit()` clears. Messages shows text for the mark and hides Edit, Print and
-Attachments. Pop-out windows (E-313) are not built yet; they need a look-only boot that takes no tab lock.
+Attachments. Pop-out windows are in the next section.
+
+## Pop-out windows: the read-only boot path (E-313, ADR D-71)
+
+A window opened with `?popout=1` (the Pop out button adds `display=1&popout=1` to the page on screen; the blocked-tab
+gate's "Open a read-only view here" does the same to its own address and reloads) is a **read-only window**: always in
+Display, never writing, no tab lock. `main.ts` decides before anything else:
+
+1. `installReadOnlyGuard()` (`shared/storage/read-only-window.ts`) sets the one `isReadOnlyWindow()` flag and replaces,
+   at the platform layer, every write: `Storage` (setItem, removeItem, clear: no-op plus a console warning),
+   `IDBObjectStore` (put, add, delete, clear, createIndex, deleteIndex), `IDBCursor` (update, delete), `IDBDatabase`
+   (createObjectStore, deleteObjectStore) and `IDBFactory.deleteDatabase` (throw `ReadOnlyError`), `Cache` (put, add,
+   addAll, delete) and `CacheStorage.delete` (resolve without writing). One list, one comment per entry. It is the safety
+   net: the services below also check the flag.
+2. `recordStore.useReadOnly()` turns RecordStore's writes off and keeps it from creating the database;
+   `recordStore.load({ readOnly: true })` reads only (no `migrateOne`, no stale-copy delete: a key that still lives only
+   in the legacy place is served from there, in memory).
+3. No `acquireTabLock()`. The main window instead calls `installKeyHandover()`; on an encrypted device a pop-out asks
+   its opener for the unlocked `CryptoKey` (`shared/storage/popout-key.ts`: postMessage, same origin, answered only to a
+   window the main window opened, in memory only). A read-only window with no opener (the gate's) shows the passphrase
+   form, without its erase button.
+4. Boot-time writers skip themselves: `MissionService` (publishes without stamping `appSettings` or rewriting `secrets`),
+   `UpdateService.init()` (no update check, install or reload), `FieldModeService` (migrates in memory), and
+   `AppComponent` (no storage-persistence request). The survey that found these, and the ones the guard would otherwise
+   have caught (each service persisted what it had just read), is `tools/e2e.js` `checkPopOut`.
+
+**Following the main window.** After each flush RecordStore posts `{ key }` (the key name, never the value) on the
+`rangertrak-data` BroadcastChannel (`shared/storage/data-channel.ts`). `PopOutSyncService` (started by
+`AppComponent` in a read-only window) debounces per key (250 ms), re-reads it with `recordStore.reloadKey()`, and calls
+the owning service's `reloadFromStore()` (roster, radio log, places, notes, ICS-214 header, journal, layers, settings),
+which republishes through the signals and observables the pages already follow. The mission settings are in
+localStorage, so the browser's `storage` event tells it. Because a pop-out holds no lock,
+`navigator.locks.query()` (every 5 s and on `visibilitychange`, `isMainWindowOpen()` in `tab-lock.ts`) says whether a
+main window is there; if not, the Display bar says "Not updating: the main RangerTrak window is closed", and when one
+returns everything is re-read once. Not followed live: the theme and skin.
+
+**The look.** `html[data-readonly]` (set by the guard) draws the frame (`--rt-readonly`, `styles/_display.scss`);
+the Display bar carries a "Read-only" label and "Close window"; the title starts "Pop out - "; Esc does not leave; a
+non-displayable route is replaced by the Map. `PopOutService` (the button) opens `window.open` with a unique name per
+click, placed on another screen through the Window Management API when the browser offers it and there are several
+screens, else a plain pop-up.
 
 ## One active tab per browser
 
