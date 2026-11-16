@@ -6,7 +6,7 @@
  *
  *   node tools/serve-dist.js                      (serves dist on :8080; an old build gives old pictures)
  *   node tools/tour/capture-shots.js [--base=http://localhost:8080] [--only=T1.6,T2.4] [--probe="js"]
- *   py -3.14 -I tools/tour/build-from-doc.py tools/tour/tour-source.xml
+ *   py -3 tools/tour/build-from-doc.py tools/tour/tour-source.md
  *
  * Headless Chrome in a throwaway profile (tools/temp-run.js), driven over CDP like tools/print-map-sheet.js.
  * Phase "clean" shots are taken first, before the Grand Canyon demo is loaded; "demo" shots after it;
@@ -62,7 +62,7 @@ const SHOTS = [
     find: `(() => { const h = document.querySelector('.ag-header-cell[col-id="handledMark"]')?.getBoundingClientRect(); const c = document.querySelector('.ag-row[row-index="3"] .ag-cell[col-id="callsign"]')?.getBoundingClientRect(); if (!h || !c) return null
       return { x: h.left, y: h.top, width: c.right - h.left, height: c.bottom - h.top } })()`,
     alt: 'The disposition box at the left of each Radio Log row, first column' },
-  { id: 'T3.7', file: 'location-formats', phase: 'demo', route: '/',
+  { id: 'T12.5', file: 'location-formats', phase: 'demo', route: '/',
     setup: `(async () => { const segs = (k) => [...document.querySelectorAll('.rt-coord-seg--' + k)].filter(e => e.getClientRects().length)
       const vals = [[segs('deg')[0], '36'], [segs('frac')[0], '0601'], [segs('deg')[1], '-112'], [segs('frac')[1], '2105']]
       for (const [i, v] of vals) { i.scrollIntoView({ block: 'center' }); i.focus(); i.select(); document.execCommand('insertText', false, v); i.dispatchEvent(new Event('change', { bubbles: true })); i.blur(); await new Promise(r => setTimeout(r, 300)) }
@@ -76,29 +76,29 @@ const SHOTS = [
   { id: 'T4.4', file: 'status-pill', phase: 'demo', route: '/mission', hover: `document.querySelector('.status-cluster')`,
     find: union(`document.querySelector('.status-cluster')`, `document.querySelector('.rt-mission-info-panel__mode')`),
     alt: 'The status pill in the header, with its mode icon, and the panel that opens under it with the mode buttons' },
-  { id: 'T4.9', file: 'tactical-calls', phase: 'demo', route: '/mission', find: card('Tactical call signs'),
+  { id: 'T11.6', file: 'tactical-calls', phase: 'demo', route: '/mission', find: card('Tactical call signs'),
     alt: 'Mission’s Tactical call signs card' },
-  { id: 'T4.10', file: 'import-export-print', phase: 'demo', route: '/rangers', vw: 760,
+  { id: 'T4.8', file: 'import-export-print', phase: 'demo', route: '/rangers', vw: 760,
     setup: `(async () => { document.querySelector('.rt-io-trigger .mat-expansion-panel-header').click(); await new Promise(r => setTimeout(r, 900)) })()`,
     focus: `document.querySelector('.rt-io-trigger')`,
     find: union(`document.querySelector('.rt-io-trigger .mat-expansion-panel-header')`, `[...document.querySelectorAll('.rt-io-trigger mat-card')].find(c => /Export roster/.test(c.textContent))`),
     alt: 'Rangers’ Import, export & print panel, opened' },
-  { id: 'T5.3', file: 'attachment-chip', phase: 'demo', route: '/radio-log',
+  { id: 'T12.10', file: 'attachment-chip', phase: 'demo', route: '/radio-log',
     find: `[...document.querySelectorAll('.ag-cell')].find(c => /\u{1F4CE}/u.test(c.textContent))`,
     alt: 'A Radio Log entry’s paperclip attachment chip' },
   { id: 'T6.1', file: 'offline-save', phase: 'demo', route: '/map', vw: 760,
     find: `document.querySelector('#readiness-offline-tiles')?.closest('mat-card')`,
     alt: 'The Map’s Offline maps card, with Save this area for offline use' },
-  { id: 'T6.2', file: 'map-engine-switch', phase: 'demo', route: '/map', vw: 760,
+  { id: 'T12.15', file: 'map-engine-switch', phase: 'demo', route: '/map', vw: 760,
     find: `document.querySelector('.map-engine-switch mat-checkbox')`, alt: 'The switch to the Alternative map (MapLibre + PMTiles) on the Map page' },
-  { id: 'T6.6', file: 'data-safety', phase: 'demo', route: '/mission', focus: card('Data safety'),
+  { id: 'T6.5', file: 'data-safety', phase: 'demo', route: '/mission', focus: card('Data safety'),
     find: `(() => { const c = ${card('Data safety')}.getBoundingClientRect(); return { x: c.left, y: c.top, width: c.width, height: 300 } })()`,
     alt: 'Mission’s Data safety card showing the storage status' },
   { id: 'T7.1', file: 'print-ics309', phase: 'demo', route: '/radio-log', find: card('Print ICS-309 log'),
     alt: 'Radio Log’s Print ICS-309 log card' },
-  { id: 'T8.2', file: 'board-card', phase: 'demo', route: '/mission', find: card('RangerView (advanced)'),
+  { id: 'T21.2', file: 'board-card', phase: 'demo', route: '/mission', find: card('RangerView (advanced)'),
     alt: 'Mission’s RangerView card' },
-  { id: 'T9.2', file: 'send-my-reports', phase: 'field', pad: 14, route: '/', mobile: true,
+  { id: 'T22.2', file: 'send-my-reports', phase: 'field', pad: 14, route: '/', mobile: true,
     setupReloads: true,
     setup: `(async () => { window.__click('.entry-welcome button', /my field phone/i); await new Promise(r => setTimeout(r, 2500)) })()`,
     // A new field phone has no reports, so the button reads "Nothing new to send" (disabled): file one

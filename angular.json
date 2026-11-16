@@ -69,7 +69,7 @@
                 "output": "./exercise"
               },
               {
-                "glob": "{index.html,tour.css,tour.js}",
+                "glob": "{index.html,tour.css,tour.js,img/*}",
                 "input": "./tools/tour",
                 "output": "./tour"
               },

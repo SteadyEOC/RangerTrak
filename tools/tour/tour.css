@@ -67,6 +67,15 @@ footer { max-width: 46rem; margin: 0 auto; padding: 1rem 16px 2rem; color: var(-
   li, tr { break-inside: avoid; }
   body.print-all .view[hidden] { display: block; }
   body.print-all .view + .view { break-before: page; }
+  /* E-317: print one tour (modules only), or one tour's part of the checklist */
+  body[data-print-tour] .view { display: none; }
+  body[data-print-tour="1"] .view[data-tour="1"], body[data-print-tour="2"] .view[data-tour="2"],
+  body[data-print-tour="3"] .view[data-tour="3"] { display: block; }
+  body[data-print-tour] .view[data-tour] + .view[data-tour] { break-before: page; }
+  body[data-print-sheet="1"] tr[data-tour]:not([data-tour="1"]), body[data-print-sheet="2"] tr[data-tour]:not([data-tour="2"]),
+  body[data-print-sheet="3"] tr[data-tour]:not([data-tour="3"]) { display: none; }
+  .tours .trail, aside.rest .restico { display: none; }
+  details.oldids:not([open]) { display: none; }
 }
 
 /* Module header: icon + title, then Setup / Goals / Situation boxes; Skills learned closes it */
@@ -88,20 +97,54 @@ p.skills { background: var(--tint); border-radius: 6px; padding: .5rem .8rem; }
 h3 { font-size: 1.05rem; margin: 1.5rem 0 .4rem; }
 blockquote { margin: .75rem 0; padding: .5rem .9rem; border-left: 3px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; }
 blockquote p { margin: .4rem 0; }
-svg.trail { display: block; width: 100%; min-width: 560px; margin: .5rem 0 1rem; font: 16px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-.trail .stage { fill: none; stroke: var(--rule); stroke-width: 1.25; stroke-dasharray: 6 4; }
-.trail .slabel { fill: var(--muted); font-size: 14px; font-weight: 600; }
-.trail .path { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 2 5; stroke-linecap: round; }
-.trail .stop { fill: var(--tint); stroke: var(--accent); stroke-width: 1.5; }
-.trail .stop.main { stroke-width: 2.5; }
-.trail .stop.opt { stroke: var(--muted); stroke-dasharray: 4 3; }
+svg.trail { display: block; width: 100%; margin: .25rem 0 .5rem; font: 14px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+.trail .path { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
+.trail .stop { fill: var(--tint); stroke: var(--accent); stroke-width: 1.75; }
 .trail .flag { fill: var(--tint); stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
 .trail text { text-anchor: middle; fill: var(--fg); }
-.trail .slabel { text-anchor: start; }
 .trail .num, .trail .name { font-weight: 600; }
-.trail .note { fill: var(--muted); font-size: 14px; }
+.trail .name { font-size: 13px; }
+.trail .restmark { color: var(--muted); }
+.trail .viewmark { color: var(--q); }
+.trail .bike { color: var(--signal); }
 .trail a:hover .stop, .trail a:focus .stop { fill: var(--accent); }
 .trail a:hover .num, .trail a:focus .num { fill: var(--bg); }
+@media (max-width: 640px) { .trail .name { display: none; } }
+
+/* E-317: three tours, as cards on Start; seats; call cards with prowords; rest stops */
+h1 .bikeico { display: inline-flex; vertical-align: -4px; margin-right: .5rem; color: var(--signal); }
+h1 .bikeico svg { width: 34px; height: 34px; }
+.tours { display: grid; gap: 1rem; margin: .75rem 0 1.5rem; }
+.tour { border: 1px solid var(--rule); border-radius: 10px; padding: .25rem 1rem .75rem; background: var(--bg); }
+.tour h3 { margin: .8rem 0 .2rem; font-size: 1.15rem; }
+.tour .tnum { display: inline-block; font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); margin-right: .4rem; }
+.tour p { margin: .25rem 0; }
+.tour .time { color: var(--muted); font-size: .9rem; }
+.tour ol.mods { list-style: none; padding: 0; margin: .4rem 0; display: grid; gap: .1rem .75rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.tour ol.mods .n { display: inline-block; min-width: 1.6rem; font-weight: 600; color: var(--muted); }
+.tour ol.mods .who { color: var(--muted); font-size: .85rem; }
+a.go { display: inline-block; padding: .4rem .8rem; border: 1px solid var(--accent); border-radius: 8px; text-decoration: none; font-weight: 600; margin-right: .5rem; }
+a.go:hover { background: var(--tint); }
+.legend { display: block; margin-top: .3rem; color: var(--muted); font-size: .9rem; }
+.legend .lg { display: inline-block; margin-right: 1rem; }
+.legend svg { vertical-align: -3px; margin-right: .2rem; }
+aside.rest { display: flex; gap: .7rem; align-items: center; margin: 1.5rem 0 0; padding: .6rem .9rem; border: 1px dashed var(--rule);
+  border-radius: 10px; background: var(--tint); }
+aside.rest p { margin: 0; }
+aside.rest .restico { flex: none; color: var(--accent); display: inline-flex; }
+table.cards td:nth-child(2) { min-width: 15rem; }
+.exch { font-size: .92rem; line-height: 1.5; }
+b.pw { font-weight: 700; color: var(--accent); }
+p.radio { border-left: 3px solid var(--signal); padding-left: .7rem; }
+details.oldids { margin: 1.5rem 0; border: 1px solid var(--rule); border-radius: 8px; padding: .4rem .9rem; }
+details.oldids summary { cursor: pointer; font-weight: 600; padding: .3rem 0; }
+table.old td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.side li[hidden] { display: none; }
+.side li.tourhead { padding: .9rem .5rem .3rem; font-weight: 600; color: var(--muted); font-size: .85rem; }
+.side li.tourhead .tnum { text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; margin-right: .3rem; }
+table.sheet tr.tgrp th { background: var(--tint); }
+@media (max-width: 860px) { .side li.tourhead { display: none; } }
 
 /* E-244: the app's own bar on top (its chrome colours, mark and page links), the tour's tabs under it,
    a module side nav, one view at a time, and tick boxes. */
@@ -215,3 +258,5 @@ a.next { margin-left: auto; }
 .shot { display: block; max-width: 100%; height: auto; max-width: min(100%, 420px); margin-top: 6px;
   border: 1px solid var(--rule); border-radius: 4px; background: #fff; }
 @media print { .shot { max-width: 200px; break-inside: avoid; } }
+ul.checks li { position: relative; }
+ul.checks li > span[id] { position: absolute; left: 0; top: 0; width: 0; height: 0; }
