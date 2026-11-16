@@ -12,6 +12,8 @@
   --chrome-ink: #f7f2ee;
   --signal: #f0700a;
   --done: #2e7d4f;
+  --tree: #3f7d4e; --tree2: #5e9a69; --trunk: #8a6a4a; --water: #8fbfe6; --rock: #9a97a3; --rock2: #b3b0bb;
+  --snow: #ffffff; --hillc: #b9d6b0; --bloomc: #d9577b; --bloom2c: #e8a317; --stemc: #4f8a58;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -24,6 +26,8 @@
     --tint: #222027;
     --chrome: #1a1210;
     --done: #6cc391;
+    --tree: #5aa86b; --tree2: #79c088; --trunk: #a98a68; --water: #4a7fb0; --rock: #6d6a78; --rock2: #858291;
+    --snow: #e7e4ea; --hillc: #3f5f3f; --bloomc: #e57a9a; --bloom2c: #f0b840; --stemc: #6cc391;
   }
 }
 * { box-sizing: border-box; }
@@ -58,24 +62,17 @@ button { font: inherit; padding: .3rem .8rem; cursor: pointer; }
 footer { max-width: 46rem; margin: 0 auto; padding: 1rem 16px 2rem; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule); }
 
 @media print {
-  :root { --bg: #fff; --fg: #000; --muted: #444; --rule: #999; --accent: #000; --q: #000; --tint: #eee; }
+  :root { --bg: #fff; --fg: #000; --muted: #444; --rule: #999; --accent: #000; --q: #000; --tint: #eee;
+    --tree: #555; --tree2: #777; --trunk: #666; --water: #bbb; --rock: #999; --rock2: #aaa; --snow: #fff; --hillc: #ccc; --bloomc: #777; --bloom2c: #999; --stemc: #555; }
   .top, .side, .pager, .mprog, footer, .noprint, .self { display: none; }
   .layout { display: block; }
   main { max-width: none; padding: 0; }
   a { text-decoration: none; }
   h2 { break-after: avoid; }
   li, tr { break-inside: avoid; }
-  body.print-all .view[hidden] { display: block; }
-  body.print-all .view + .view { break-before: page; }
-  /* E-317: print one tour (modules only), or one tour's part of the checklist */
-  body[data-print-tour] .view { display: none; }
-  body[data-print-tour="1"] .view[data-tour="1"], body[data-print-tour="2"] .view[data-tour="2"],
-  body[data-print-tour="3"] .view[data-tour="3"] { display: block; }
-  body[data-print-tour] .view[data-tour] + .view[data-tour] { break-before: page; }
-  body[data-print-sheet="1"] tr[data-tour]:not([data-tour="1"]), body[data-print-sheet="2"] tr[data-tour]:not([data-tour="2"]),
-  body[data-print-sheet="3"] tr[data-tour]:not([data-tour="3"]) { display: none; }
-  .tours .trail, aside.rest .restico { display: none; }
-  details.oldids:not([open]) { display: none; }
+  /* Feedback's one Print button prints the checklist alone */
+  body.print-sheet .view:not(#feedback) { display: none; }
+  body.print-sheet .fb-text { display: none; }
 }
 
 /* Module header: icon + title, then Setup / Goals / Situation boxes; Skills learned closes it */
@@ -97,23 +94,28 @@ p.skills { background: var(--tint); border-radius: 6px; padding: .5rem .8rem; }
 h3 { font-size: 1.05rem; margin: 1.5rem 0 .4rem; }
 blockquote { margin: .75rem 0; padding: .5rem .9rem; border-left: 3px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; }
 blockquote p { margin: .4rem 0; }
-svg.trail { display: block; width: 100%; margin: .25rem 0 .5rem; font: 14px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+svg.trail { display: block; width: 100%; margin: .25rem 0 .5rem; font: 17px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 .trail .path { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
 .trail .stop { fill: var(--tint); stroke: var(--accent); stroke-width: 1.75; }
 .trail .flag { fill: var(--tint); stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
 .trail text { text-anchor: middle; fill: var(--fg); }
-.trail .num, .trail .name { font-weight: 600; }
-.trail .name { font-size: 13px; }
+.trail .num { font-weight: 700; }
 .trail .restmark { color: var(--muted); }
-.trail .viewmark { color: var(--q); }
 .trail .bike { color: var(--signal); }
+.trail .picnic { color: var(--trunk); }
+.trail .sc-tree { fill: var(--tree); } .trail .sc-tree2 { fill: var(--tree2); } .trail .sc-trunk { fill: var(--trunk); }
+.trail .sc-water { fill: var(--water); opacity: .75; } .trail .sc-wave { fill: none; stroke: var(--bg); stroke-width: 1.4; stroke-linecap: round; }
+.trail .sc-rock { fill: var(--rock); } .trail .sc-rock2 { fill: var(--rock2); } .trail .sc-snow { fill: var(--snow); }
+.trail .sc-hill { fill: var(--hillc); } .trail .sc-stem { fill: none; stroke: var(--stemc); stroke-width: 1.5; stroke-linecap: round; }
+.trail .sc-bloom { fill: var(--bloomc); } .trail .sc-bloom2 { fill: var(--bloom2c); }
+.trail .scenery { pointer-events: none; }
 .trail a:hover .stop, .trail a:focus .stop { fill: var(--accent); }
 .trail a:hover .num, .trail a:focus .num { fill: var(--bg); }
-@media (max-width: 640px) { .trail .name { display: none; } }
 
 /* E-317: three tours, as cards on Start; seats; call cards with prowords; rest stops */
 h1 .bikeico { display: inline-flex; vertical-align: -4px; margin-right: .5rem; color: var(--signal); }
 h1 .bikeico svg { width: 34px; height: 34px; }
+aside.rest .restico svg { color: var(--accent); }
 .tours { display: grid; gap: 1rem; margin: .75rem 0 1.5rem; }
 .tour { border: 1px solid var(--rule); border-radius: 10px; padding: .25rem 1rem .75rem; background: var(--bg); }
 .tour h3 { margin: .8rem 0 .2rem; font-size: 1.15rem; }
@@ -126,9 +128,6 @@ h1 .bikeico svg { width: 34px; height: 34px; }
 .tour ol.mods .who { color: var(--muted); font-size: .85rem; }
 a.go { display: inline-block; padding: .4rem .8rem; border: 1px solid var(--accent); border-radius: 8px; text-decoration: none; font-weight: 600; margin-right: .5rem; }
 a.go:hover { background: var(--tint); }
-.legend { display: block; margin-top: .3rem; color: var(--muted); font-size: .9rem; }
-.legend .lg { display: inline-block; margin-right: 1rem; }
-.legend svg { vertical-align: -3px; margin-right: .2rem; }
 aside.rest { display: flex; gap: .7rem; align-items: center; margin: 1.5rem 0 0; padding: .6rem .9rem; border: 1px dashed var(--rule);
   border-radius: 10px; background: var(--tint); }
 aside.rest p { margin: 0; }
@@ -137,14 +136,12 @@ table.cards td:nth-child(2) { min-width: 15rem; }
 .exch { font-size: .92rem; line-height: 1.5; }
 b.pw { font-weight: 700; color: var(--accent); }
 p.radio { border-left: 3px solid var(--signal); padding-left: .7rem; }
-details.oldids { margin: 1.5rem 0; border: 1px solid var(--rule); border-radius: 8px; padding: .4rem .9rem; }
-details.oldids summary { cursor: pointer; font-weight: 600; padding: .3rem 0; }
-table.old td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.side li[hidden] { display: none; }
 .side li.tourhead { padding: .9rem .5rem .3rem; font-weight: 600; color: var(--muted); font-size: .85rem; }
 .side li.tourhead .tnum { text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; margin-right: .3rem; }
 table.sheet tr.tgrp th { background: var(--tint); }
 @media (max-width: 860px) { .side li.tourhead { display: none; } }
+.oddnote { color: var(--muted); font-size: .92rem; border-top: 1px dashed var(--rule); padding-top: .6rem; margin-top: 1.2rem; }
+.tabs a svg { flex: none; }
 
 /* E-244: the app's own bar on top (its chrome colours, mark and page links), the tour's tabs under it,
    a module side nav, one view at a time, and tick boxes. */
@@ -262,3 +259,5 @@ ul.checks li { position: relative; }
 ul.checks li > span[id] { position: absolute; left: 0; top: 0; width: 0; height: 0; }
 /* Phones: tighter tables, so the phonetic alphabet's six columns fit 390 px without a sideways scroll. */
 @media (max-width: 30rem) { table { font-size: .85rem; } th, td { padding: .3rem .3rem; } }
+/* Phones: six tabs fit 390 px without their icons */
+@media (max-width: 560px) { .tabs a svg { display: none; } .tabs a { padding: .65rem .5rem; } .tabs { padding: 0 6px; } }

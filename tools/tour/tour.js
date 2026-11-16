@@ -2,44 +2,40 @@
 // The Tour page's one script. A file of its own, not an inline onclick: the site's
 // Content-Security-Policy (script-src 'self') blocks inline handlers (John 2026-10-27).
 //
-// E-244: shows one view at a time (Start, a module, Telling us, the Checklist), picked by the
-// URL's #anchor so the IDs (#m3, #T3.4, #sheet) still land; and keeps the tester's ticks.
-// E-317: three tours (Easy menus, Full menus, RangerView and field phones). The side nav and the
-// Modules tab follow the current tour; an old ID that no longer exists (#T8.3, #m9) redirects to
-// its new place through the Old IDs table on Start. Ticks live in this browser's localStorage only.
-// Without this script the page is one long read.
+// Shows one view at a time (Start, a leg, Reference, Feedback), picked by the URL's #anchor so the
+// IDs (#a3, #A3.2, #sheet) still land; and keeps the tester's ticks in this browser's localStorage only.
+// E-317 round 2: three tours of legs (A Basics, B Advanced, C Enthusiasts). The side list shows every
+// leg; a Tour tab opens that tour's first leg or the last one you visited in it. A few old anchors
+// that rangertrak.com links to (#m1 to #m9) redirect silently. Without this script the page is one long read.
 
-const TICKS = 'rt-tour-ticks-v2' // the earlier nine-module guide used rt-tour-ticks; those ticks start fresh
-const VIEW = 'rt-tour-view'
-const TOUR = 'rt-tour-current'
+const TICKS = 'rt-tour-ticks-v3' // earlier guides used v2 and before; those ticks start fresh
+const LAST = 'rt-tour-last' // {A: 'a3', B: 'b1'}: the last leg visited in each tour
 const get = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 const set = (k, v) => { try { localStorage.setItem(k, v) } catch { /* private window: ticks last the visit */ } }
 
+// The nine-module guide's anchors (published links), and round 1's tour anchors, to their new legs.
+const REDIRECTS = {
+  m1: 'a1', m2: 'a2', m3: 'a3', m5: 'a4', m6: 'a5', m7: 'a6',
+  m4: 'b1', m9: 'c2', m8: 'c1', tour1: 'a1', tour2: 'b1', tour3: 'c1'
+}
+
 let ticks
 try { ticks = new Set(JSON.parse(get(TICKS) || '[]')) } catch { ticks = new Set() }
+let last
+try { last = JSON.parse(get(LAST) || '{}') || {} } catch { last = {} }
 
 const views = [...document.querySelectorAll('.view')]
 const viewKey = (v) => v.dataset.view || v.id
 const boxes = [...document.querySelectorAll('input.tick')]
 const ids = (box) => box.dataset.ids.split(' ')
-const sideItems = [...document.querySelectorAll('.side li')]
-const moduleTour = new Map(sideItems.filter((li) => li.querySelector('a')).map((li) => [li.querySelector('a').dataset.m, li.dataset.tour]))
-const firstOf = (t) => [...moduleTour].find(([, tt]) => tt === String(t))?.[0]
-const redirects = new Map([...document.querySelectorAll('#old-ids tr[data-old]')].map((r) => [r.dataset.old, r.dataset.new]))
-
-let currentTour = Number(get(TOUR)) || 1
-function setTour (t) {
-  currentTour = t
-  set(TOUR, String(t))
-  for (const li of sideItems) li.hidden = li.dataset.tour !== String(t)
-}
+const legs = [...document.querySelectorAll('.side a[data-m]')].map((a) => a.dataset.m)
 
 function syncTicks () {
   for (const b of boxes) b.checked = ids(b).every((x) => ticks.has(x))
   const all = new Set(boxes.flatMap(ids))
   document.getElementById('done-count').textContent = [...all].filter((x) => ticks.has(x)).length
-  for (const m of moduleTour.keys()) {
-    const mine = [...all].filter((x) => x.slice(1).split('.')[0] === m)
+  for (const m of legs) {
+    const mine = [...all].filter((x) => x.split('.')[0] === m)
     const done = mine.filter((x) => ticks.has(x)).length
     const whole = done === mine.length && done > 0
     const a = document.querySelector(`.side a[data-m="${m}"]`)
@@ -48,7 +44,7 @@ function syncTicks () {
     const p = document.querySelector(`.mprog[data-m="${m}"]`)
     p.textContent = whole
       ? `All ${mine.length} done. Nice work.`
-      : `${done} of ${mine.length} ticked. Tick each step as you go; your ticks stay in this browser.`
+      : `${done} of ${mine.length} passed. Tick each step as you go; your ticks stay in this browser.`
     p.classList.toggle('done', whole)
   }
 }
@@ -63,39 +59,36 @@ document.addEventListener('change', (e) => {
 
 function route () {
   let hash = decodeURIComponent(location.hash.slice(1))
-  // An old ID that no longer exists (the nine-module guide's #T8.3, #m9, the Advanced Tour's #T14.7)
-  // goes to its new place. An ID that still exists wins, even if it now means something else.
-  if (hash && !document.getElementById(hash) && redirects.has(hash)) {
-    hash = redirects.get(hash)
+  // An old anchor (#m3) goes to its new leg. An anchor that still exists wins.
+  if (hash && !document.getElementById(hash) && REDIRECTS[hash]) {
+    hash = REDIRECTS[hash]
     history.replaceState(null, '', '#' + hash)
   }
+  // Step IDs are capitalised (A3.2); a lower-case link to one still lands.
+  if (hash && !document.getElementById(hash) && document.getElementById(hash.toUpperCase())) hash = hash.toUpperCase()
   let target = hash ? document.getElementById(hash) : null
   let view = target?.closest('.view')
-  // John 2026-11-15: a plain /tour/ (every link from the app, Help included) always opens Start,
-  // not the view last open in this browser. The last module is still kept: the Modules tab points
-  // at it, so picking up where you left off is one click.
+  // A plain /tour/ (every link from the app, Help included) always opens Start.
   if (!view) {
     view = views[0]
     target = null
   }
   const key = viewKey(view)
   for (const v of views) v.hidden = v !== view
-  if (view.dataset.tour) setTour(Number(view.dataset.tour))
-  else if (target?.closest('.tour')) setTour(Number(target.closest('.tour').id.slice(4)))
-  else setTour(currentTour)
-  if (key.startsWith('m')) set(VIEW, key)
-  const last = get(VIEW)
-  document.getElementById('tab-modules').href = '#m' + (last && moduleTour.get(last.slice(1)) === String(currentTour) ? last.slice(1) : firstOf(currentTour))
-  const inTours = key === 'start' && !!target?.closest('#tours, .tours, .tour')
+  const tour = view.dataset.tour || null
+  if (tour) {
+    last[tour] = key
+    set(LAST, JSON.stringify(last))
+  }
+  for (const t of ['A', 'B', 'C']) document.getElementById('tab-' + t).href = '#' + (last[t] || t.toLowerCase() + '1')
+  const tab = tour ? 'tab-' + tour : { start: 'tab-start', reference: 'tab-reference', feedback: 'tab-feedback' }[key]
   for (const a of document.querySelectorAll('.tabs a')) {
-    const on = { 'tab-modules': key.startsWith('m'), 'tab-tours': inTours, 'tab-start': key === 'start' && !inTours,
-      'tab-finish': key === 'finish', 'tab-sheet': key === 'sheet' }[a.id]
-    on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')
+    a.id === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')
   }
   for (const a of document.querySelectorAll('.side a')) {
     a.getAttribute('href') === '#' + key ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')
   }
-  document.body.classList.toggle('in-module', key.startsWith('m'))
+  document.body.classList.toggle('in-module', !!tour)
   // A view's own heading (or the view itself) opens at the top; a step or section scrolls to it.
   target?.closest('details')?.setAttribute('open', '')
   const first = view.querySelector('h1, h2')
@@ -116,11 +109,11 @@ const q = document.getElementById('tour-q')
 const panel = document.getElementById('tour-hits')
 const where = (view) => {
   const key = viewKey(view)
-  if (key.startsWith('m')) {
-    const a = document.querySelector(`.side a[data-m="${key.slice(1)}"]`)
+  if (view.dataset.tour) {
+    const a = document.querySelector(`.side a[data-m="${key.toUpperCase()}"]`)
     return `Tour ${view.dataset.tour} · ${a.querySelector('.mnum').textContent} · ${a.querySelector('.t').lastChild.textContent}`
   }
-  return { start: 'Start', finish: 'Telling us' }[key] || key
+  return { start: 'Start', reference: 'Reference', feedback: 'Feedback' }[key] || key
 }
 const plain = (el) => el.textContent.replace(/\s*#\s*$/, '').replace(/\s+/g, ' ').trim()
 const index = []
@@ -145,7 +138,7 @@ function find (query) {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   // A typed ID (T3.4) comes first, even when it shares a line with others (<span id="T3.4"> in T3.1's step)
   const id = query.trim().toUpperCase()
-  const byId = /^[TQ]\d+\.\d+$/.test(id) && document.getElementById(id)?.closest('ul.checks > li')
+  const byId = /^[ABC]\d+\.Q?\d+$/.test(id) && document.getElementById(id)?.closest('ul.checks > li')
   return index
     .map((h, i) => byId && h.el === byId ? { h: { ...h, heading: id, anchor: id }, i, s: 10 } : { h, i, s: h.score })
     .filter((x) => x.s === 10 || words.every((w) => x.h.low.includes(w)))
@@ -192,7 +185,7 @@ function showHits () {
     const w = document.createElement('span')
     w.className = 'w'
     w.textContent = h.where
-    a.append(head, w, snippet(h.text.replace(/^[TQ]\d+\.\d+\S*\s+/, ''), words))
+    a.append(head, w, snippet(h.text.replace(/^[ABC]\d+\.Q?\d+\S*\s+/, ''), words))
     panel.append(a)
   })
   panel.hidden = false
@@ -236,24 +229,15 @@ if (search && q && panel) {
   })
 }
 
-document.querySelectorAll('[data-print-sheet]').forEach((b) => b.addEventListener('click', () => printWith('printSheet', b.dataset.printSheet)))
-document.querySelectorAll('[data-print-tour]').forEach((b) => b.addEventListener('click', () => printWith('printTour', b.dataset.printTour)))
 document.getElementById('clear-ticks')?.addEventListener('click', () => {
   if (!confirm('Clear every tick on this device?')) return
   ticks.clear()
   set(TICKS, '[]')
   syncTicks()
 })
-document.getElementById('print-all')?.addEventListener('click', () => {
-  document.body.classList.add('print-all')
-  addEventListener('afterprint', () => document.body.classList.remove('print-all'), { once: true })
+// The one Print button: the checklist on Feedback. The print CSS hides everything else while this is set.
+document.getElementById('print-sheet')?.addEventListener('click', () => {
+  document.body.classList.add('print-sheet')
+  addEventListener('afterprint', () => document.body.classList.remove('print-sheet'), { once: true })
   setTimeout(print, 50)
 })
-
-// Print one tour's modules, or one tour's part of the checklist, by a data attribute the print CSS reads.
-function printWith (attr, value) {
-  if (value === 'all') { print(); return }
-  document.body.dataset[attr] = value
-  addEventListener('afterprint', () => { delete document.body.dataset[attr] }, { once: true })
-  setTimeout(print, 50)
-}

@@ -5,7 +5,7 @@
  * build-from-doc.py puts each one beside its step (it reads img/shots.json).
  *
  *   node tools/serve-dist.js                      (serves dist on :8080; an old build gives old pictures)
- *   node tools/tour/capture-shots.js [--base=http://localhost:8080] [--only=T1.6,T2.4] [--probe="js"]
+ *   node tools/tour/capture-shots.js [--base=http://localhost:8080] [--only=A1.6,A2.4] [--probe="js"]
  *   py -3 tools/tour/build-from-doc.py tools/tour/tour-source.md
  *
  * Headless Chrome in a throwaway profile (tools/temp-run.js), driven over CDP like tools/print-map-sheet.js.
@@ -42,63 +42,63 @@ const union = (a, b) => `(() => { const a = ${a}?.getBoundingClientRect(), b = $
   const x = Math.min(a.left, b.left), y = Math.min(a.top, b.top);
   return { x, y, width: Math.max(a.right, b.right) - x, height: Math.max(a.bottom, b.bottom) - y } })()`
 const SHOTS = [
-  { id: 'T1.2', file: 'demo-offer', phase: 'clean', route: '/', pad: 3,
+  { id: 'A1.2', file: 'demo-offer', phase: 'clean', route: '/', pad: 3,
     vw: 700,
     find: `(() => { const s = document.querySelector('.entry-welcome__demo-line strong'), t = document.querySelector('[data-testid="welcome-tour-link"]'); if (!s || !t) return null
       const a = s.getBoundingClientRect(), b = t.getBoundingClientRect(); return { x: a.left, y: a.top, width: 330, height: b.bottom - a.top } })()`,
     alt: 'The Demo line on Entry’s welcome panel, with the Load a demo button' },
-  { id: 'T1.6', file: 'view-switch', phase: 'demo', route: '/',
+  { id: 'A1.6', file: 'view-switch', phase: 'demo', route: '/',
     find: `document.querySelector('rangertrak-view-switch')`, alt: 'The Full menus / Easy menus switch at the top of Entry' },
-  { id: 'T1.7', file: 'aar-button', phase: 'demo', route: '/',
+  { id: 'A1.7', file: 'aar-button', phase: 'demo', route: '/',
     find: `document.querySelector('[data-testid="aar-note"]')`, alt: 'The AAR/214 button in the page header' },
-  { id: 'T2.1', file: 'ranger-id', phase: 'demo', route: '/',
+  { id: 'A2.1', file: 'ranger-id', phase: 'demo', route: '/',
     setup: `(async () => { const i = [...document.querySelectorAll('input')].find(e => /Ranger ID/.test(e.closest('mat-form-field')?.textContent || '') && e.getClientRects().length);
       i.scrollIntoView({ block: 'center' }); i.focus(); document.execCommand('insertText', false, 'wren'); await new Promise(r => setTimeout(r, 900)) })()`,
     find: `(() => { const f = [...document.querySelectorAll('mat-form-field')].find(e => /Ranger ID/.test(e.textContent) && e.getClientRects().length)
       const i = f.getBoundingClientRect(), p = document.querySelector('.mat-mdc-autocomplete-panel')?.getBoundingClientRect(); if (!p) return null
       const x = Math.min(i.left, p.left), y = i.top; return { x, y, width: Math.max(i.right, p.right) - x, height: p.bottom - y } })()`,
     alt: 'Ranger ID on Entry with matching rangers listed under it' },
-  { id: 'T2.4', file: 'disposition-box', phase: 'demo', route: '/radio-log',
+  { id: 'A2.4', file: 'disposition-box', phase: 'demo', route: '/radio-log',
     find: `(() => { const h = document.querySelector('.ag-header-cell[col-id="handledMark"]')?.getBoundingClientRect(); const c = document.querySelector('.ag-row[row-index="3"] .ag-cell[col-id="callsign"]')?.getBoundingClientRect(); if (!h || !c) return null
       return { x: h.left, y: h.top, width: c.right - h.left, height: c.bottom - h.top } })()`,
     alt: 'The disposition box at the left of each Radio Log row, first column' },
-  { id: 'T12.5', file: 'location-formats', phase: 'demo', route: '/',
+  { id: 'B4.5', file: 'location-formats', phase: 'demo', route: '/',
     setup: `(async () => { const segs = (k) => [...document.querySelectorAll('.rt-coord-seg--' + k)].filter(e => e.getClientRects().length)
       const vals = [[segs('deg')[0], '36'], [segs('frac')[0], '0601'], [segs('deg')[1], '-112'], [segs('frac')[1], '2105']]
       for (const [i, v] of vals) { i.scrollIntoView({ block: 'center' }); i.focus(); i.select(); document.execCommand('insertText', false, v); i.dispatchEvent(new Event('change', { bubbles: true })); i.blur(); await new Promise(r => setTimeout(r, 300)) }
       await new Promise(r => setTimeout(r, 900)) })()`,
     find: union(`document.querySelector('.enter__Where-switcher')`, `document.querySelector('.enter__Where-derived')`),
     alt: 'Entry’s location format switcher with the derived formats below it' },
-  { id: 'T4.3', file: 'danger-zone', phase: 'demo', route: '/mission', vw: 760,
+  { id: 'B1.3', file: 'danger-zone', phase: 'demo', route: '/mission', vw: 760,
     setup: `(async () => { window.__click('.mat-expansion-panel-header', /Danger zone/); await new Promise(r => setTimeout(r, 900)) })()`,
     find: `[...document.querySelectorAll('mat-expansion-panel')].find(p => /Danger zone/.test(p.querySelector('.mat-expansion-panel-header')?.textContent))`,
     alt: 'Mission’s Danger zone panel, opened' },
-  { id: 'T4.4', file: 'status-pill', phase: 'demo', route: '/mission', hover: `document.querySelector('.status-cluster')`,
+  { id: 'B1.4', file: 'status-pill', phase: 'demo', route: '/mission', hover: `document.querySelector('.status-cluster')`,
     find: union(`document.querySelector('.status-cluster')`, `document.querySelector('.rt-mission-info-panel__mode')`),
     alt: 'The status pill in the header, with its mode icon, and the panel that opens under it with the mode buttons' },
-  { id: 'T11.6', file: 'tactical-calls', phase: 'demo', route: '/mission', find: card('Tactical call signs'),
+  { id: 'B3.2', file: 'tactical-calls', phase: 'demo', route: '/mission', find: card('Tactical call signs'),
     alt: 'Mission’s Tactical call signs card' },
-  { id: 'T4.8', file: 'import-export-print', phase: 'demo', route: '/rangers', vw: 760,
+  { id: 'B2.1', file: 'import-export-print', phase: 'demo', route: '/rangers', vw: 760,
     setup: `(async () => { document.querySelector('.rt-io-trigger .mat-expansion-panel-header').click(); await new Promise(r => setTimeout(r, 900)) })()`,
     focus: `document.querySelector('.rt-io-trigger')`,
     find: union(`document.querySelector('.rt-io-trigger .mat-expansion-panel-header')`, `[...document.querySelectorAll('.rt-io-trigger mat-card')].find(c => /Export roster/.test(c.textContent))`),
     alt: 'Rangers’ Import, export & print panel, opened' },
-  { id: 'T12.10', file: 'attachment-chip', phase: 'demo', route: '/radio-log',
+  { id: 'B4.10', file: 'attachment-chip', phase: 'demo', route: '/radio-log',
     find: `[...document.querySelectorAll('.ag-cell')].find(c => /\u{1F4CE}/u.test(c.textContent))`,
     alt: 'A Radio Log entry’s paperclip attachment chip' },
-  { id: 'T6.1', file: 'offline-save', phase: 'demo', route: '/map', vw: 760,
+  { id: 'A5.2', file: 'offline-save', phase: 'demo', route: '/map', vw: 760,
     find: `document.querySelector('#readiness-offline-tiles')?.closest('mat-card')`,
     alt: 'The Map’s Offline maps card, with Save this area for offline use' },
-  { id: 'T12.15', file: 'map-engine-switch', phase: 'demo', route: '/map', vw: 760,
+  { id: 'C4.1', file: 'map-engine-switch', phase: 'demo', route: '/map', vw: 760,
     find: `document.querySelector('.map-engine-switch mat-checkbox')`, alt: 'The switch to the Alternative map (MapLibre + PMTiles) on the Map page' },
-  { id: 'T6.5', file: 'data-safety', phase: 'demo', route: '/mission', focus: card('Data safety'),
+  { id: 'A5.6', file: 'data-safety', phase: 'demo', route: '/mission', focus: card('Data safety'),
     find: `(() => { const c = ${card('Data safety')}.getBoundingClientRect(); return { x: c.left, y: c.top, width: c.width, height: 300 } })()`,
     alt: 'Mission’s Data safety card showing the storage status' },
-  { id: 'T7.1', file: 'print-ics309', phase: 'demo', route: '/radio-log', find: card('Print ICS-309 log'),
+  { id: 'A6.1', file: 'print-ics309', phase: 'demo', route: '/radio-log', find: card('Print ICS-309 log'),
     alt: 'Radio Log’s Print ICS-309 log card' },
-  { id: 'T21.2', file: 'board-card', phase: 'demo', route: '/mission', find: card('RangerView (advanced)'),
+  { id: 'C1.2', file: 'board-card', phase: 'demo', route: '/mission', find: card('RangerView (advanced)'),
     alt: 'Mission’s RangerView card' },
-  { id: 'T22.2', file: 'send-my-reports', phase: 'field', pad: 14, route: '/', mobile: true,
+  { id: 'C2.2', file: 'send-my-reports', phase: 'field', pad: 14, route: '/', mobile: true,
     setupReloads: true,
     setup: `(async () => { window.__click('.entry-welcome button', /my field phone/i); await new Promise(r => setTimeout(r, 2500)) })()`,
     // A new field phone has no reports, so the button reads "Nothing new to send" (disabled): file one
