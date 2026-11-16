@@ -1,5 +1,5 @@
 /**
- * Q14.4 (Advanced Tour, John 2026-11-11): a ranger's reported fact lives in the entry's Notes, so the
+ * Q13.1 (Tour 2, was Advanced Q14.4, John 2026-11-11): a ranger's reported fact lives in the entry's Notes, so the
  * Map popup shows it. Long notes start clamped to a few lines with a "More" button that expands them
  * in place (and "Less" to fold back), so the Ops chief reads the whole fact without leaving the Map.
  *

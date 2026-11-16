@@ -1,6 +1,6 @@
 import { noteIsLong, popupNotesBlock, POPUP_NOTE_CHARS } from './entry-popup-notes'
 
-describe('popupNotesBlock (Q14.4: Notes in the Map popup)', () => {
+describe('popupNotesBlock (Q13.1: Notes in the Map popup)', () => {
   it('returns null for missing or blank notes', () => {
     expect(popupNotesBlock(undefined)).toBeNull()
     expect(popupNotesBlock('   \n ')).toBeNull()

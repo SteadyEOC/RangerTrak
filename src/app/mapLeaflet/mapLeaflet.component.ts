@@ -1010,7 +1010,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
    * E-194: an entry's popup is its title plus, when it has live attachments, the 📎 N chip (on the title
    * line) and the first image's stored thumbnail (read once the popup opens). The chip opens the
    * viewer. Built when the popup opens, so no thumbnail is read for a marker nobody clicks. MapLibre
-   * (D-56, second-class) gets no chip in this phase. Q14.4 (2026-11-11): the entry's Notes follow the
+   * (D-56, second-class) gets no chip in this phase. Q13.1 (was Q14.4, 2026-11-11): the entry's Notes follow the
    * title, clamped with More when long (entry-popup-notes.ts).
    */
   private entryPopup(entry: RadioLogEntryType, title: string, marker: L.Layer): HTMLElement {
@@ -1025,7 +1025,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     const head = document.createElement('div')
     head.append(title)
     box.append(head)
-    // Q14.4: the ranger's reported fact, clamped with More when long.
+    // Q13.1: the ranger's reported fact, clamped with More when long.
     const notes = popupNotesBlock(entry.notes, () => marker.getPopup()?.update())
     const chip = attachmentChipHtml(entry)
     if (!chip) {

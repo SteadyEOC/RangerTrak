@@ -2269,6 +2269,16 @@ async function checkUsageModes() {
   // John 10-27: the demo bar links to the Tour Guide, and /tour/ is served beside the app.
   check('blank device: the demo bar links to the Tour Guide', await evaluate(`document.querySelector('[data-testid="welcome-tour-link"] a')?.getAttribute('href') ?? 'none'`), '/tour/')
   check('the Tour Guide page loads', await evaluate(`fetch('/tour/').then(r => r.ok && r.text()).then(t => !!t && t.includes('RangerTrak Tour Guide'))`), true)
+  // E-317: three tours on one page. A plain /tour/ opens Start; #T21.1 opens Tour 3; an old ID redirects.
+  await goto('/tour/')
+  check('E-317: /tour/ opens Start', await evaluate(`!document.getElementById('start').hidden`), true)
+  check('E-317: the Start page offers three tours', await evaluate(`document.querySelectorAll('.tour').length`), 3)
+  await goto('/tour/#T21.1')
+  check('E-317: /tour/#T21.1 opens Tour 3 (module 21)', await evaluate(`!document.querySelector('[data-view="m21"]').hidden && document.querySelector('.side li:not([hidden]) a')?.dataset.m`), '21')
+  await goto('/tour/#T8.3')
+  check('E-317: the old #T8.3 redirects to T21.3', await evaluate(`location.hash`), '#T21.3')
+  await goto('/tour/#tour2')
+  check('E-317: /tour/#tour2 shows Tour 2 in the side nav', await evaluate(`document.querySelector('.side li:not([hidden]) a')?.dataset.m`), '11')
   check('blank device: the pill shows the default mode, Incident (2026-10-05: one mode is always active)', await evaluate(`document.querySelector('.status-cluster')?.getAttribute('data-mode') ?? 'none'`), 'incident')
 
   // 2026-10-02, John: picking a demo loads it, no button (except Mission > Danger zone).
