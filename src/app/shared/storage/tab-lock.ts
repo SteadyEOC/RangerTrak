@@ -1,3 +1,4 @@
+import { POPOUT_PARAM } from './read-only-window'
 import { recordStore } from './record-store'
 
 /**
@@ -54,7 +55,7 @@ import { recordStore } from './record-store'
  * do that; only ONE of them may write, and switching which one is a single click away.
  */
 
-const LOCK_NAME = 'rangertrak-active-tab'
+export const LOCK_NAME = 'rangertrak-active-tab'
 const STYLE_ID = 'rt-tablock-styles'
 
 /** Set once the "stopped saving" notice has been shown, so a tab already showing it (or one
@@ -99,6 +100,21 @@ function holdLockForever(requestOptions: { ifAvailable?: boolean; steal?: boolea
       onLockLost()
     })
   })
+}
+
+/**
+ * E-313: whether some window of this browser holds the lock, i.e. a main RangerTrak window is open.
+ * A pop-out never holds it, so it asks. `true` when the browser cannot say (no Web Locks): a pop-out
+ * must not claim "the main window is closed" on a guess.
+ */
+export async function isMainWindowOpen(): Promise<boolean> {
+  if (!('locks' in navigator)) return true
+  try {
+    const state = await navigator.locks.query()
+    return (state.held ?? []).some(l => l.name === LOCK_NAME)
+  } catch {
+    return true
+  }
 }
 
 /**
@@ -166,9 +182,23 @@ export function showBlockedGate(): Promise<void> {
         <button class="rt-tablock__button" type="button" id="rt-tablock-use-here">
           Use this tab instead
         </button>
+        <button class="rt-tablock__button rt-tablock__button--secondary" type="button" id="rt-tablock-readonly"
+          data-testid="tablock-readonly">
+          Open a read-only view here
+        </button>
       </div>
     `
     document.body.appendChild(root)
+
+    // E-313 (Q78, John 2026-11-16): a read-only view of the same page in THIS tab, beside the window that
+    // is already open. It takes no lock and writes nothing (read-only-window.ts); a reload is the only way
+    // in, because the storage guard has to be in place before the app boots.
+    root.querySelector<HTMLButtonElement>('#rt-tablock-readonly')!.addEventListener('click', () => {
+      const url = new URL(location.href)
+      url.searchParams.set('display', '1')
+      url.searchParams.set(POPOUT_PARAM, '1')
+      location.assign(url.toString())
+    })
 
     const btn = root.querySelector<HTMLButtonElement>('#rt-tablock-use-here')!
     btn.addEventListener('click', async () => {
@@ -236,11 +266,15 @@ function injectStyles(): void {
       display: block; width: 100%; box-sizing: border-box; padding: 10px; font-size: 1rem;
       border-radius: 4px; cursor: pointer; background: #12263f; color: #fff; border: none;
     }
+    .rt-tablock__button--secondary {
+      margin-top: 10px; background: transparent; color: inherit; border: 1px solid currentColor;
+    }
     .rt-tablock__button:disabled { opacity: 0.6; cursor: default; }
     @media (prefers-color-scheme: dark) {
       .rt-tablock { background: #121212; color: #e8e8e8; }
       .rt-tablock__card { background: #1e1e1e; border-color: #444; }
       .rt-tablock__button { background: #6f9bd6; color: #0a0a0a; }
+      .rt-tablock__button--secondary { background: transparent; color: inherit; }
     }
   `
   document.head.appendChild(style)

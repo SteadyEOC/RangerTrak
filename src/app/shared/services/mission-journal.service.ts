@@ -55,6 +55,15 @@ export class MissionJournalService {
   }
 
   /**
+   * E-313: a read-only window (a pop-out) calls this when the main window has written the journal: re-reads
+   * it from RecordStore (already refreshed by `recordStore.reloadKey()`) and publishes it. Never writes.
+   */
+  public reloadFromStore(): void {
+    this.load()
+    this.entriesSignal.set([...this.list])
+  }
+
+  /**
    * Adds one entry (one plain sentence, past tense, no contents) and also writes it to the debug log.
    * Call it where the action actually happens, in place of that site's own info log.
    */

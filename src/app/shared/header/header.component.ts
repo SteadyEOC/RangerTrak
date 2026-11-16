@@ -14,6 +14,7 @@ import {
 } from '../services'
 import { DisplayService } from '../services/display.service'
 import { FullscreenService } from '../services/fullscreen.service'
+import { PopOutService } from '../services/pop-out.service'
 import { Utility } from '../utility'
 import { MissionReadinessComponent } from '../mission-readiness/mission-readiness.component'
 import { GuideService } from '../guide/guide.service'
@@ -50,6 +51,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly fullscreen = inject(FullscreenService)
   /** E-314: the Display button's state and action. */
   readonly display = inject(DisplayService)
+  /** E-313: the Pop out button's action. */
+  readonly popOut = inject(PopOutService)
 
   /**
    * The one Guide affordance. Lives here rather than on each page because this header is

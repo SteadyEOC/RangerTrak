@@ -64,6 +64,16 @@ export class MissionLocationService {
     }
   }
 
+  /**
+   * E-313: a read-only window (a pop-out) calls this when the main window has written the places: re-reads
+   * it from RecordStore (already refreshed by `recordStore.reloadKey()`) and publishes it. Never writes.
+   */
+  public reloadFromStore(): void {
+    this.loadFromLocalStorage()
+    this.locationsSignal.set([...this.locations])
+    this.locationsReplay$.next(this.locations)
+  }
+
   private updateLocalStorageAndPublish(): void {
     // E-122 Phase 2a: through RecordStore now - synchronous to this caller, so nothing else
     // in this method changes.

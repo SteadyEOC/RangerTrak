@@ -6,6 +6,20 @@
 // Help drawer are hidden by name below. The scale makes type, grid rows and map furniture larger
 // for a room across from the screen.
 
+// E-313 / D-71: every read-only window (a pop-out, or the blocked-tab gate's read-only view) wears a
+// coloured frame round the whole window, so it cannot be mistaken for the window that writes. The
+// "Read-only" label sits in the Display bar's own corner (display-bar.component.ts). Fixed, with a
+// four-digit z-index, so it is over the map and under nothing; clicks pass through it.
+html[data-readonly]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  border: 8px solid var(--rt-readonly);
+  pointer-events: none;
+  z-index: 8000;
+}
+
 // Only ever shown in Display (header.component.html).
 .display-mission {
   display: none;

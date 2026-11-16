@@ -58,6 +58,15 @@ export class AarNoteService {
     }
   }
 
+  /**
+   * E-313: a read-only window (a pop-out) calls this when the main window has written the notes: re-reads
+   * it from RecordStore (already refreshed by `recordStore.reloadKey()`) and publishes it. Never writes.
+   */
+  public reloadFromStore(): void {
+    this.load()
+    this.publish()
+  }
+
   private saveAndPublish(): void {
     recordStore.setItem(this.storageKey,
       JSON.stringify({ schemaVersion: AAR_NOTE_SCHEMA_VERSION, notes: this.list }))

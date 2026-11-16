@@ -287,6 +287,17 @@ export class RadioLogService {
   }
 
   /**
+   * E-313: a read-only window (a pop-out) calls this when the main window has written the radio log: re-reads
+   * it from RecordStore (already refreshed by `recordStore.reloadKey()`) and publishes it. Never writes.
+   */
+  public reloadFromStore(): void {
+    this.radioLog = this.loadRadioLogFromLocalStorage()
+    this.recalcRadioLogBounds(this.radioLog)
+    this.radioLogSignal.set({ ...this.radioLog })
+    this.radioLogReplay$.next(this.radioLog)
+  }
+
+  /**
    * User has submitted a new radio log entry: store it into localstorage and publish to any subscribers
    *
    * @param formData

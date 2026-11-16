@@ -47,6 +47,14 @@ export class ActivityLogHeaderService {
     }
   }
 
+  /**
+   * E-313: a read-only window (a pop-out) calls this when the main window has written the ICS-214 header: re-reads
+   * it from RecordStore (already refreshed by `recordStore.reloadKey()`) and publishes it. Never writes.
+   */
+  public reloadFromStore(): void {
+    this.load()
+  }
+
   getCurrentHeader(): ActivityLogHeader {
     return this.headerSignal()
   }

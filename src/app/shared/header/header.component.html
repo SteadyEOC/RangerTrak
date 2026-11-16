@@ -124,6 +124,16 @@
       <mat-icon>tv</mat-icon>
       <span class="rt-header-action__label">Display</span>
     </button>
+    <!-- E-313 (Q79): Pop out, right after Display, on the same five pages: a look-only copy in its own
+         window (a second monitor, a projector). It keeps up with this window by itself. Not in a pop-out. -->
+    @if (!display.readOnly) {
+    <button matButton="outlined" type="button" class="rt-header-action" (click)="popOut.open()"
+      data-testid="popout-open" aria-label="Pop out"
+      title="Open a look-only copy of this page in its own window, for a second monitor or a projector. It keeps up with this window by itself. You can open several.">
+      <mat-icon>open_in_new</mat-icon>
+      <span class="rt-header-action__label">Pop out</span>
+    </button>
+    }
     }
     @if (!fieldMode.enabled()) {
     <button matButton="outlined" type="button" class="rt-header-action" (click)="fullscreen.toggle()"

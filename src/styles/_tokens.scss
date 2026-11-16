@@ -126,6 +126,15 @@
   --rt-advanced: #{light-dark(#8E2470, #F08BC9)};
   --rt-advanced-tint: color-mix(in srgb, var(--rt-advanced) 10%, var(--rt-surface));
 
+  // ── Read-only window (E-313, ADR D-71) ─────────────────────────────
+  // The frame round a pop-out, and the colour of its "Read-only" label: the one cue that says "this
+  // window only looks". A deep cyan, apart from every colour that already means something here (not the
+  // error or Danger zone red, not the brand orange, not exercise blue, readiness green, demo violet or
+  // advanced plum). Not per-skin, same argument as readiness. Non-text contrast (3:1 needed): about
+  // 5.4:1 on white (light); the dark value is for dark surfaces, about 9:1. The ink is for text on it.
+  --rt-readonly: #{light-dark(#0B7285, #3CC7E0)};
+  --rt-readonly-ink: #{light-dark(#FFFFFF, #04222A)};
+
   // ── Overdue check-in escalation (E-118) ───────────────────────────
   // Band 0 is "not due yet" and has no background at all - see domain/overdue.ts for why
   // the normal state must not look like a warning. 1..7 run from just-due to fully overdue.

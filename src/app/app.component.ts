@@ -15,6 +15,8 @@ import { GuideService } from './shared/guide/guide.service'
 import { AttachmentHoverPreviewService } from './shared/attachments/attachment-hover-preview.service'
 import { InstallUpdateComponent } from './shared/install-update/install-update.component'
 import { DisplayBarComponent } from './shared/display/display-bar.component'
+import { DisplayService } from './shared/services/display.service'
+import { PopOutSyncService } from './shared/services/pop-out-sync.service'
 
 @Component({
   selector: 'rangertrak-root',
@@ -46,6 +48,8 @@ export class AppComponent implements OnInit {
 
   private id = "AppComponent"
   private readonly appRef = inject(ApplicationRef)
+  private readonly display = inject(DisplayService)
+  private readonly popOutSync = inject(PopOutSyncService)
   /** Read by the template's @defer trigger for the Guide drawer (E-269). */
   protected readonly guide = inject(GuideService)
 
@@ -88,7 +92,10 @@ export class AppComponent implements OnInit {
     // so there is nothing further to wait on here; the granted/denied
     // result is exposed via storagePersistence.persisted for any screen
     // (e.g. Settings) that wants to surface it.
-    this.storagePersistence.requestPersistence()
+    // E-313: a read-only window (a pop-out) asks the browser for nothing, and instead follows the
+    // main window (PopOutSyncService).
+    if (this.display.readOnly) this.popOutSync.start()
+    else this.storagePersistence.requestPersistence()
 
     // Service-worker update handling lives in UpdateService: detect a new build,
     // tell the user, and activate + reload only when they accept. What was here

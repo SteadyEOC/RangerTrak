@@ -160,6 +160,16 @@ export class RangerService implements OnInit {
   // never auto-replaced with anything, all three of those cases correctly land on the same
   // `this.rangers = []` outcome below - there's no longer a decision that depends on which
   // one it was.
+  /**
+   * E-313: a read-only window (a pop-out) calls this when the main window has written the roster: re-reads
+   * it from RecordStore (already refreshed by `recordStore.reloadKey()`) and publishes it. Never writes.
+   */
+  public reloadFromStore(): void {
+    this.LoadRangersFromLocalStorage()
+    this.rangersSignal.set([...this.rangers])
+    this.rangersReplay$.next(this.rangers)
+  }
+
   LoadRangersFromLocalStorage() { // WARN: Replaces any existing Rangers
     // E-122 Phase 2a: reads through RecordStore now (see updateLocalStorageAndPublish()'s own
     // comment) - synchronous, same as localStorage.getItem() was, so nothing below changes.

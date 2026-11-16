@@ -32,9 +32,14 @@ export class LayerService {
     this.layers.set(next)
   }
 
-  /** Re-reads storage (after a restore wrote it behind this service's back). */
+  /** Re-reads storage (after a restore wrote it behind this service's back, or, E-313, after the main window wrote it). */
   reload(): void {
     this.layers.set(this.read())
+  }
+
+  /** E-313: the same name every service a pop-out refreshes uses. Never writes. */
+  reloadFromStore(): void {
+    this.reload()
   }
 
   /** Raw list for a mission backup. */
