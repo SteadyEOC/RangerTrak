@@ -78,7 +78,7 @@
     "leaflet.markercluster": "2.0.0-beta.1",
     "leaflet.offline": "^3.2.0",
     "maplibre-gl": "^6.16.0",
-    "mediabunny": "^1.65.1",
+    "mediabunny": "^1.66.0",
     "mgrs": "^2.2.0",
     "pdf-lib": "^1.17.1",
     "pmtiles": "^4.5.0",
