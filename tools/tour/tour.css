@@ -260,4 +260,4 @@ ul.checks li > span[id] { position: absolute; left: 0; top: 0; width: 0; height:
 /* Phones: tighter tables, so the phonetic alphabet's six columns fit 390 px without a sideways scroll. */
 @media (max-width: 30rem) { table { font-size: .85rem; } th, td { padding: .3rem .3rem; } }
 /* Phones: six tabs fit 390 px without their icons */
-@media (max-width: 560px) { .tabs a svg { display: none; } .tabs a { padding: .65rem .5rem; } .tabs { padding: 0 6px; } }
+@media (max-width: 560px) { .tabs a svg { display: none; } .tabs a { padding: .65rem .38rem; font-size: .88rem; } .tabs { padding: 0 4px; gap: .05rem; } }
