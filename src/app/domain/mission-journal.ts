@@ -18,7 +18,7 @@ export const JOURNAL_MAX_ENTRIES = 5000
 /** Every action the journal records. kebab-case; the Log page and the ICS-214 suggestions key off these. */
 export type JournalAction =
   | 'journal-started'
-  | 'demo-loaded' | 'real-mission-started' | 'demo-left' | 'mode-changed' | 'scenario-clock-set'
+  | 'demo-loaded' | 'real-mission-started' | 'next-mission-started' | 'demo-left' | 'mode-changed' | 'scenario-clock-set'
   | 'mission-reset' | 'mission-restored' | 'import-undone' | 'encryption-on' | 'encryption-off'
   | 'radio-log-cleared' | 'report-deleted' | 'report-reassigned' | 'reports-merged' | 'handover-built' | 'handover-merged' | 'packet-exported' | 'radio-log-exported'
   | 'receipt-exported' | 'receipt-imported' | 'reports-marked-received' | 'reports-cleared'
@@ -64,7 +64,7 @@ export interface JournalCheck {
  * 213 print (the scribe already logs the message), and the journal's own bookkeeping.
  */
 export const SUGGEST_FOR_214: ReadonlySet<JournalAction> = new Set<JournalAction>([
-  'demo-loaded', 'real-mission-started', 'demo-left', 'mode-changed', 'mission-reset', 'mission-restored',
+  'demo-loaded', 'real-mission-started', 'next-mission-started', 'demo-left', 'mode-changed', 'mission-reset', 'mission-restored',
   'import-undone', 'encryption-on', 'encryption-off', 'radio-log-cleared', 'reports-merged', 'handover-built', 'handover-merged',
   'packet-exported', 'receipt-exported', 'radio-log-exported', 'print-309', 'roster-cleared', 'rangers-deleted', 'roster-imported', 'roster-exported',
   'print-roster', 'photos-exported', 'roster-changes-exported', 'photos-imported', 'photos-cleared',

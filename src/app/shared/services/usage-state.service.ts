@@ -96,6 +96,12 @@ export class UsageStateService {
     return clock ? scenarioOffsetExplanation(clock, real instanceof Date ? real.getTime() : real) : ''
   }
 
+  /** E-319: the op period has ended, the log has entries and this is not a demo: Entry offers "Start the next mission". */
+  readonly nextMissionOffer = computed(() => {
+    const i = this.inputs()
+    return this.state() !== 'demo' && i.reports.length > 0 && Number.isFinite(i.opPeriodEnd) && i.opPeriodEnd < this.now()
+  })
+
   /** True when the app should stay out of the way (first-run tips, install prompt, ...). */
   readonly quiet = computed(() => this.state() === 'live')
 
@@ -147,6 +153,8 @@ export class UsageStateService {
       photos: this.rangerPhotoService.count(),
       entries: this.radioLogService.getCurrentRadioLog().logEntries.length,
       places: this.locationService.getCurrentLocations().length,
+      tacticalCalls: this.missionService.settings.tacticalCalls?.length ?? 0,
+      missionMode: this.missionService.settings.missionMode,
       ...countNotes(this.aarNoteService.getCurrentNotes()),
     }
   }
@@ -192,6 +200,42 @@ export class UsageStateService {
     if (mode) this.applyMode(mode)
     this.journal.record('real-mission-started',
       `Started a real mission${mode ? ` in ${mode} mode` : ''}. ${clearedPlain('replace', clear, counts)}`)
+    await recordStore.flush()
+  }
+
+  /**
+   * E-319 "Start the next mission": after a real mission, clears what the operator chose so the device is
+   * ready for the next one. The radio log and the mission's name, event and op period always go; the roster
+   * (and so its photos), places, tactical call signs, mission mode, notes and 214 header go only when `clear`
+   * names them. Every other mission setting (map, coordinate formats, statuses, geocoding key, default
+   * position, station letter) stays: unlike startRealMission this never calls ResetDefaults(). The caller
+   * confirms first (chooseWhatToClear('next', ...)) and reloads after it resolves.
+   */
+  async startNextMission(clear: ReadonlySet<ClearId>): Promise<void> {
+    const counts = this.clearCounts()   // E-223: for the log, taken before anything goes
+    await this.radioLogService.deleteAllRadioLogEntries()
+    if (clear.has('roster')) {
+      this.rangerService.deleteAllRangers()
+      await this.rangerPhotoService.clear()   // keyed by call sign: photos never outlive the roster
+    }
+    if (clear.has('places')) this.locationService.deleteAllLocations()
+    this.aarNoteService.deleteWhere(noteMatcher(clear))
+    if (clear.has('header')) this.activityLogHeaderService.clear()
+    const fresh = this.missionService.initMission()
+    const next: MissionType = {
+      ...this.missionService.settings,
+      mission: fresh.mission,
+      event: fresh.event,
+      eventNotes: fresh.eventNotes,
+      opPeriod: fresh.opPeriod,
+      opPeriodStart: fresh.opPeriodStart,
+      opPeriodEnd: fresh.opPeriodEnd,
+    }
+    delete next.scenarioClock   // D-66: a new mission starts without a scenario clock
+    if (clear.has('tactical')) next.tacticalCalls = []
+    if (clear.has('mode')) next.missionMode = undefined
+    this.missionService.updateMission(next)
+    this.journal.record('next-mission-started', `Started the next mission. ${clearedPlain('next', clear, counts)}`)
     await recordStore.flush()
   }
 

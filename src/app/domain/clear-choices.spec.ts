@@ -1,6 +1,7 @@
 import type { AarNoteType } from '../shared/services/aar-note.interface'
 import type { ClearCounts } from './clear-choices'
 import {
+  applyTick,
   buildClearRows,
   chosenIds,
   clearedPlain,
@@ -9,6 +10,7 @@ import {
   countText,
   DEFAULT_REPLACE_CLEAR,
   noteMatcher,
+  photosFollowRoster,
 } from './clear-choices'
 
 const counts = (over: Partial<ClearCounts> = {}): ClearCounts => ({
@@ -19,6 +21,7 @@ const counts = (over: Partial<ClearCounts> = {}): ClearCounts => ({
   incidentNotes: 7,
   lines: 23,
   appNotes: 4,
+  tacticalCalls: 6,
   ...over,
 })
 const note = (
@@ -133,5 +136,72 @@ describe('clear-choices (E-221)', () => {
         incidentNotes: 0,
       })
     ).toBe('Cleared: 318 radio log entries.')
+  })
+})
+
+/** E-319: Start the next mission. */
+describe('clear-choices next (E-319)', () => {
+  const rows = () => buildClearRows('next', counts({ missionMode: 'exercise' }))
+  const byId = (id: string) => rows().find((r) => r.id === id)
+
+  it('lists the rows in order, with the locked and ticked defaults John chose (Q93-Q95)', () => {
+    expect(rows().map((r) => [r.id, r.locked, r.checked])).toEqual([
+      ['log', true, true],
+      ['identity', true, true],
+      ['roster', false, false],
+      ['photos', false, false],
+      ['places', false, false],
+      ['tactical', false, false],
+      ['mode', false, false],
+      ['incidentNotes', false, false],
+      ['lines', false, true],
+      ['header', false, true],
+      ['appNotes', false, false],
+    ])
+    expect(byId('mode')?.label).toBe('Mission mode (Exercise)')
+    expect(byId('tactical')?.count).toBe(6)
+  })
+
+  it('leaves out rows with a count of 0, and the mode row when no mode is set', () => {
+    const ids = buildClearRows(
+      'next',
+      counts({ rangers: 0, photos: 0, places: 0, tacticalCalls: 0, lines: 0, incidentNotes: 0, appNotes: 0 })
+    ).map((r) => r.id)
+    expect(ids).toEqual(['log', 'identity', 'header'])
+  })
+
+  it('ticking Roster ticks Photos and locks it; unticking Roster unticks it', () => {
+    const none = new Set<never>()
+    const on = applyTick(none, 'roster', true, 'next')
+    expect([...on].sort()).toEqual(['photos', 'roster'])
+    expect(photosFollowRoster('next', on)).toBe(true)
+    const off = applyTick(on, 'roster', false, 'next')
+    expect(off.size).toBe(0)
+    expect(photosFollowRoster('next', off)).toBe(false)
+    // photos alone can be ticked while Roster is not
+    expect([...applyTick(none, 'photos', true, 'next')]).toEqual(['photos'])
+    // the coupling is for 'next' only
+    expect([...applyTick(none, 'roster', true, 'log')]).toEqual(['roster'])
+  })
+
+  it('the ids a caller gets include Photos whenever Roster is chosen', () => {
+    const r = rows()
+    expect([...chosenIds(r, new Set(['roster']))].sort()).toEqual(['identity', 'log', 'photos', 'roster'])
+    expect([...chosenIds(r, new Set())].sort()).toEqual(['identity', 'log'])
+  })
+
+  it('the log summary and journal text name the always-cleared rows and what was kept', () => {
+    expect(clearedSummary('next', new Set(['lines', 'header']), counts())).toBe('log 318, identity, lines 23, header')
+    expect(clearedPlain('next', new Set(['lines', 'header']), counts())).toBe(
+      'Cleared: 318 radio log entries, the mission name, event and op period, 23 ICS-214 lines, the ICS-214 header. Kept: 42 rangers, 12 places, 6 tactical call signs, 7 incident notes, 4 notes about RangerTrak.'
+    )
+    expect(clearedPlain('next', new Set(['roster', 'tactical', 'mode']), counts({ missionMode: 'incident', appNotes: 0, incidentNotes: 0, lines: 0, places: 0 }))).toBe(
+      'Cleared: 318 radio log entries, the mission name, event and op period, 42 rangers, 5 photos, 6 tactical call signs, the mission mode.'
+    )
+  })
+
+  it('the replace and log contexts are unchanged', () => {
+    expect(buildClearRows('log', counts()).map((r) => r.id)).toEqual(['log', 'incidentNotes', 'lines', 'appNotes'])
+    expect(buildClearRows('replace', counts()).filter((r) => !r.locked).map((r) => r.id)).toEqual(['incidentNotes', 'lines', 'header', 'appNotes'])
   })
 })

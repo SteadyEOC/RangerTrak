@@ -210,6 +210,7 @@ export class SampleDataService {
       photos: this.rangerPhotoService.count(),
       entries: this.radioLogService.getCurrentRadioLog().logEntries.length,
       places: this.missionLocationService.getCurrentLocations().length,
+      tacticalCalls: this.missionService.settings.tacticalCalls?.length ?? 0,
       ...countNotes(this.aarNoteService.getCurrentNotes()),
     }
 

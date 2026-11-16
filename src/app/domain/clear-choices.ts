@@ -9,9 +9,13 @@ export type ClearId =
   | 'roster' | 'photos' | 'log' | 'places' | 'settings'
   | 'incidentNotes' | 'lines' | 'header'
   | 'appNotes'
+  | 'identity' | 'tactical' | 'mode'
 
-/** `replace`: a demo load / Start a real mission / leaving Demo. `log`: Clear radio log. */
-export type ClearContext = 'replace' | 'log'
+/**
+ * `replace`: a demo load / Start a real mission / leaving Demo. `log`: Clear radio log.
+ * `next` (E-319): Start the next mission after a real one; keeps the roster, places and settings unless chosen.
+ */
+export type ClearContext = 'replace' | 'log' | 'next'
 
 export interface ClearRow {
   id: ClearId
@@ -35,6 +39,10 @@ export interface ClearCounts {
   lines: number
   /** `kind === 'aar'` and `about === 'app'`. */
   appNotes: number
+  /** E-319: tactical call signs on the mission. */
+  tacticalCalls: number
+  /** E-319: the mission mode set now ('exercise', 'incident', ...), or undefined when none. */
+  missionMode?: string
 }
 
 const NOUNS: Partial<Record<ClearId, [string, string]>> = {
@@ -45,6 +53,7 @@ const NOUNS: Partial<Record<ClearId, [string, string]>> = {
   incidentNotes: ['note', 'notes'],
   lines: ['line', 'lines'],
   appNotes: ['note', 'notes'],
+  tactical: ['tactical call sign', 'tactical call signs'],
 }
 
 /** "42 rangers", "1 note"; '' for a row with no count. */
@@ -62,6 +71,8 @@ export function countText(id: ClearId, count: number | null): string {
  */
 export function buildClearRows(context: ClearContext, c: ClearCounts): ClearRow[] {
   const replace = context === 'replace'
+  const next = context === 'next'
+  // E-319: after a real mission the roster, places, tactical calls and mode stay unless chosen (John, Q93-Q95).
   const rows: ClearRow[] = replace
     ? [
       { id: 'roster', label: 'Roster', count: c.rangers, locked: true, checked: true },
@@ -70,21 +81,62 @@ export function buildClearRows(context: ClearContext, c: ClearCounts): ClearRow[
       { id: 'places', label: 'Places', count: c.places, locked: true, checked: true },
       { id: 'settings', label: 'Mission settings & tactical calls', count: null, locked: true, checked: true },
     ]
-    : [
-      { id: 'log', label: 'Radio log entries (+ attachments)', count: c.entries, locked: true, checked: true },
-    ]
+    : next
+      ? [
+        { id: 'log', label: 'Radio log entries (+ attachments)', count: c.entries, locked: true, checked: true },
+        { id: 'identity', label: 'Mission name, event, op period', count: null, locked: true, checked: true },
+        { id: 'roster', label: 'Roster', count: c.rangers, locked: false, checked: false },
+        { id: 'photos', label: 'Ranger photos', count: c.photos, locked: false, checked: false },
+        { id: 'places', label: 'Places', count: c.places, locked: false, checked: false },
+        { id: 'tactical', label: 'Tactical call signs', count: c.tacticalCalls, locked: false, checked: false },
+        ...(c.missionMode
+          ? [{ id: 'mode' as const, label: `Mission mode (${modeLabel(c.missionMode)})`, count: null, locked: false, checked: false }]
+          : []),
+      ]
+      : [
+        { id: 'log', label: 'Radio log entries (+ attachments)', count: c.entries, locked: true, checked: true },
+      ]
+  // After a real mission the 214 lines and header are that mission's, so they go by default; the incident notes stay.
   rows.push(
     { id: 'incidentNotes', label: 'After Action notes: this incident', count: c.incidentNotes, locked: false, checked: replace },
-    { id: 'lines', label: 'ICS-214 activity lines', count: c.lines, locked: false, checked: replace },
+    { id: 'lines', label: 'ICS-214 activity lines', count: c.lines, locked: false, checked: replace || next },
   )
-  if (replace) rows.push({ id: 'header', label: 'ICS-214 header (name, position, unit)', count: null, locked: false, checked: true })
+  if (replace || next) rows.push({ id: 'header', label: 'ICS-214 header (name, position, unit)', count: null, locked: false, checked: true })
   rows.push({ id: 'appNotes', label: 'After Action notes: about RangerTrak', count: c.appNotes, locked: false, checked: false })
   return rows.filter(r => r.count === null || r.count > 0)
 }
 
+/** "Exercise", "Incident", "Demo" from the stored mode code. */
+function modeLabel(mode: string): string {
+  return mode.charAt(0).toUpperCase() + mode.slice(1)
+}
+
+/**
+ * E-319: the roster and its photos go together (photos are keyed by call sign, so they must not outlive the
+ * roster). Ticking Roster ticks Photos; unticking Roster unticks them. Returns the new ticked set.
+ */
+export function applyTick(ticked: ReadonlySet<ClearId>, id: ClearId, on: boolean, context: ClearContext): Set<ClearId> {
+  const next = new Set(ticked)
+  if (on) next.add(id)
+  else next.delete(id)
+  if (context === 'next' && id === 'roster') {
+    if (on) next.add('photos')
+    else next.delete('photos')
+  }
+  return next
+}
+
+/** True when the Photos row is fixed (ticked and disabled) because Roster is ticked. */
+export function photosFollowRoster(context: ClearContext, ticked: ReadonlySet<ClearId>): boolean {
+  return context === 'next' && ticked.has('roster')
+}
+
 /** The ids a caller gets when the operator accepts the dialog as shown: locked rows plus ticked ones. */
 export function chosenIds(rows: readonly ClearRow[], ticked: ReadonlySet<ClearId>): Set<ClearId> {
-  return new Set(rows.filter(r => r.locked || ticked.has(r.id)).map(r => r.id))
+  const ids = new Set(rows.filter(r => r.locked || ticked.has(r.id)).map(r => r.id))
+  // E-319: photos never outlive the roster they are keyed by.
+  if (ids.has('roster') && rows.some(r => r.id === 'photos')) ids.add('photos')
+  return ids
 }
 
 /** What a service clears when its caller names nothing: the dialog's defaults for a replace. */
@@ -106,6 +158,13 @@ export function countNotes(notes: readonly AarNoteType[]): Pick<ClearCounts, 'in
   }
 }
 
+/** The rows an action always clears, whatever the operator ticks. */
+function alwaysCleared(context: ClearContext): ClearId[] {
+  return context === 'replace' ? ['roster', 'photos', 'log', 'places', 'settings']
+    : context === 'next' ? ['log', 'identity']
+      : ['log']
+}
+
 /**
  * E-223: what a clear removed, for the log: row ids and counts only, never the contents.
  * e.g. "roster 42, photos 3, log 118, places 9, settings, incidentNotes 2". `counts` are the
@@ -113,11 +172,11 @@ export function countNotes(notes: readonly AarNoteType[]): Pick<ClearCounts, 'in
  * the rest (and, for a log clear, the log row is always included).
  */
 export function clearedSummary(context: ClearContext, clear: ReadonlySet<ClearId>, counts: ClearCounts): string {
-  const always: ClearId[] = context === 'replace' ? ['roster', 'photos', 'log', 'places', 'settings'] : ['log']
-  const ids = [...new Set<ClearId>([...always, ...clear])]
+  const ids = [...new Set<ClearId>([...alwaysCleared(context), ...clear])]
   const countOf: Record<ClearId, number | null> = {
     roster: counts.rangers, photos: counts.photos, log: counts.entries, places: counts.places,
     settings: null, incidentNotes: counts.incidentNotes, lines: counts.lines, header: null, appNotes: counts.appNotes,
+    identity: null, tactical: counts.tacticalCalls, mode: null,
   }
   return ids.map(id => countOf[id] === null ? id : `${id} ${countOf[id]}`).join(', ')
 }
@@ -128,8 +187,9 @@ export function clearedSummary(context: ClearContext, clear: ReadonlySet<ClearId
  * Kept: 4 notes about RangerTrak." Rows with nothing to clear are left out.
  */
 export function clearedPlain(context: ClearContext, clear: ReadonlySet<ClearId>, counts: ClearCounts): string {
-  const always: ClearId[] = context === 'replace' ? ['roster', 'photos', 'log', 'places', 'settings'] : ['log']
-  const chosen = new Set<ClearId>([...always, ...clear])
+  // E-319: photos never outlive the roster, so they are listed right after it.
+  const withPhotos = context === 'next' ? [...clear].flatMap(id => id === 'roster' ? [id, 'photos' as const] : [id]) : [...clear]
+  const chosen = new Set<ClearId>([...alwaysCleared(context), ...withPhotos])
   const text = (id: ClearId): string => {
     switch (id) {
       case 'roster': return countText(id, counts.rangers)
@@ -141,13 +201,19 @@ export function clearedPlain(context: ClearContext, clear: ReadonlySet<ClearId>,
       case 'lines': return `${counts.lines} ICS-214 ${counts.lines === 1 ? 'line' : 'lines'}`
       case 'header': return 'the ICS-214 header'
       case 'appNotes': return `${counts.appNotes} ${counts.appNotes === 1 ? 'note' : 'notes'} about RangerTrak`
+      case 'identity': return 'the mission name, event and op period'
+      case 'tactical': return countText(id, counts.tacticalCalls)
+      case 'mode': return 'the mission mode'
     }
   }
   const empty = (id: ClearId) => (id === 'roster' && !counts.rangers) || (id === 'photos' && !counts.photos)
     || (id === 'places' && !counts.places) || (id === 'incidentNotes' && !counts.incidentNotes)
     || (id === 'lines' && !counts.lines) || (id === 'appNotes' && !counts.appNotes)
+    || (id === 'tactical' && !counts.tacticalCalls) || (id === 'mode' && !counts.missionMode)
   const cleared = [...chosen].filter(id => !empty(id)).map(text)
-  const keepable: ClearId[] = ['incidentNotes', 'lines', 'appNotes']
+  const keepable: ClearId[] = context === 'next'
+    ? ['roster', 'places', 'tactical', 'incidentNotes', 'lines', 'appNotes']
+    : ['incidentNotes', 'lines', 'appNotes']
   const kept = keepable.filter(id => !chosen.has(id) && !empty(id)).map(text)
   return `Cleared: ${cleared.join(', ') || 'nothing'}.${kept.length ? ` Kept: ${kept.join(', ')}.` : ''}`
 }

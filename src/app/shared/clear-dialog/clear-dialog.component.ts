@@ -7,7 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatIconModule } from '@angular/material/icon'
 import { MatInputModule } from '@angular/material/input'
 
-import { chosenIds, countText } from '../../domain/clear-choices'
+import { applyTick, chosenIds, countText, photosFollowRoster } from '../../domain/clear-choices'
 import type { ClearContext, ClearId, ClearRow } from '../../domain/clear-choices'
 
 export type ClearDialogData = {
@@ -45,7 +45,7 @@ export type ClearDialogResult = ReadonlySet<ClearId> | null
         <h3 class="cd__head">{{ data.context === 'replace' ? 'Replaced (can\\'t be kept)' : 'Deleted' }}</h3>
         @if (narrow() && !expanded()) {
           <button matButton type="button" class="cd__collapsed" data-testid="clear-locked-toggle" (click)="expanded.set(true)">
-            <mat-icon>lock</mat-icon> Replaces roster, photos, log, locations and settings
+            <mat-icon>lock</mat-icon> {{ data.context === 'next' ? 'Clears the radio log and the mission name' : 'Replaces roster, photos, log, locations and settings' }}
           </button>
         } @else {
           <ul class="cd__list" data-testid="clear-locked">
@@ -64,11 +64,12 @@ export type ClearDialogResult = ReadonlySet<ClearId> | null
       }
 
       @if (incident().length) {
-        <h3 class="cd__head">From the current incident</h3>
+        <h3 class="cd__head">{{ data.context === 'next' ? 'Also clear, if you choose' : 'From the current incident' }}</h3>
         <ul class="cd__list">
           @for (row of incident(); track row.id) {
             <li class="cd__row">
-              <mat-checkbox [checked]="ticked().has(row.id)" (change)="onTick(row.id, $event.checked)" [attr.data-testid]="'clear-' + row.id">
+              <mat-checkbox [checked]="ticked().has(row.id)" [disabled]="row.id === 'photos' && photosFixed()"
+                (change)="onTick(row.id, $event.checked)" [attr.data-testid]="'clear-' + row.id">
                 <span class="cd__label">{{ row.label }}</span>
               </mat-checkbox>
               <span class="cd__count">{{ text(row) }}</span>
@@ -93,12 +94,14 @@ export type ClearDialogResult = ReadonlySet<ClearId> | null
 
       <p class="cd__note">
         @if (data.context === 'replace') { Always kept: offline maps, device settings, view. }
+        @else if (data.context === 'next') { Always kept: offline maps, device settings, view, and the other mission settings (map, formats, statuses). }
         @else { Everything else on this device is kept. }
       </p>
       @if (unticked().length) {
         <p class="cd__warn" data-testid="clear-unticked">
           <mat-icon>warning</mat-icon>
           @if (data.context === 'replace') { Unchecked items stay and show alongside the new data. }
+          @else if (data.context === 'next') { Unchecked items stay for the next mission. }
           @else { Unchecked items stay. }
         </p>
       }
@@ -149,6 +152,8 @@ export class ClearDialogComponent {
   protected readonly app = computed(() => this.data.rows.filter(r => r.id === 'appNotes'))
 
   protected readonly ticked = signal<ReadonlySet<ClearId>>(new Set(this.data.rows.filter(r => r.checked).map(r => r.id)))
+  /** E-319: ticking Roster ticks and locks Photos (photos are keyed by call sign). */
+  protected readonly photosFixed = computed(() => photosFollowRoster(this.data.context, this.ticked()))
   protected readonly unticked = computed(() => this.data.rows.filter(r => !r.locked && !this.ticked().has(r.id)))
 
   /** Under 600 px the locked block is one line until tapped. */
@@ -166,10 +171,7 @@ export class ClearDialogComponent {
   protected text(row: ClearRow): string { return countText(row.id, row.count) }
 
   protected onTick(id: ClearId, on: boolean): void {
-    const next = new Set(this.ticked())
-    if (on) next.add(id)
-    else next.delete(id)
-    this.ticked.set(next)
+    this.ticked.set(applyTick(this.ticked(), id, on, this.data.context))
   }
 
   /** Stops here (nothing changed) and takes the operator to the Mission page's backup. */

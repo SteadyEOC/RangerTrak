@@ -16,6 +16,7 @@ const counts = {
   incidentNotes: 7,
   lines: 23,
   appNotes: 4,
+  tacticalCalls: 6,
 }
 
 /** E-221: the "What to clear" dialog. The row rules are tested in domain/clear-choices.spec.ts. */
@@ -134,5 +135,26 @@ describe('ClearDialogComponent (E-221)', () => {
     expect(text).not.toContain('ICS-214 activity lines')
     expect(text).not.toContain('about RangerTrak')
     expect(text).toContain('Mission settings')
+  })
+
+  it('E-319: in the next-mission context, ticking Roster ticks and disables Photos, and confirming returns both', async () => {
+    const results = await open({
+      context: 'next',
+      rows: buildClearRows('next', counts),
+    })
+    const photos = () => q('clear-photos')!.querySelector('input') as HTMLInputElement
+    const roster = () => q('clear-roster')!.querySelector('input') as HTMLInputElement
+    expect(photos().checked).toBe(false)
+    expect(roster().checked).toBe(false)
+
+    roster().click()
+    await settle()
+    expect(photos().checked).toBe(true)
+    expect(photos().disabled).toBe(true)
+
+    ;(q('clear-confirm') as HTMLButtonElement).click()
+    await settle()
+    const ids = [...(results[0] as Set<string>)].sort()
+    expect(ids).toEqual(['header', 'identity', 'lines', 'log', 'photos', 'roster'])
   })
 })
