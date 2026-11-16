@@ -32,7 +32,7 @@ import { RANGER_PHOTOS_DB_NAME } from '../services/ranger-photo.service'
 const STYLE_ID = 'rt-unlock-styles'
 
 /** Resolves once the app is safe to boot: either unlocked, or the operator chose to erase. */
-export function runUnlockGate(): Promise<void> {
+export function runUnlockGate(options?: { readOnly?: boolean }): Promise<void> {
   injectStyles()
 
   return new Promise<void>(resolve => {
@@ -69,6 +69,9 @@ export function runUnlockGate(): Promise<void> {
     input.focus()
 
     const finish = () => { root.remove(); resolve() }
+
+    // E-313: a read-only window can look but never erase anything.
+    if (options?.readOnly) forgotBtn.remove()
 
     form.addEventListener('submit', event => {
       event.preventDefault()

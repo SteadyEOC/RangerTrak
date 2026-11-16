@@ -62,7 +62,7 @@ const KEEP_OPEN = args.includes('--keep-open')
 // page or functionality, so all need not run." Quiet is the default: only failures print (each
 // under its section heading) plus the final count. --verbose prints every PASS and note again.
 // --only=map,entry runs just those groups (see want() at each call in main()); groups: shell,
-// entry, map, radiolog, roster, mission, backup, attachments, board, view, controls, cards. Combines with --full and --read-only.
+// entry, map, radiolog, roster, mission, backup, attachments, board, view, popout, controls, cards. Combines with --full and --read-only.
 const VERBOSE = args.includes('--verbose')
 const ONLY = arg('only', '').split(',').map(g => g.trim()).filter(Boolean)
 const want = group => !ONLY.length || ONLY.includes(group)
@@ -5880,7 +5880,7 @@ async function checkDisplay() {
     await evaluate(`localStorage.setItem('rt-view', 'simple'); localStorage.setItem('rt-view-source', 'user')`)
     await goto('/map', 4500)
     const order = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] > *')].map(e => e.matches('rangertrak-view-switch') ? 'full-menus' : (e.getAttribute('data-testid') || e.textContent.trim()))`)
-    check('Map header group, in order: Full menus, Display, Full screen, AAR/214, Help', order, ['full-menus', 'display-toggle', 'fullscreen-toggle', 'aar-note', 'help-toggle'])
+    check('Map header group, in order: Full menus, Display, Pop out, Full screen, AAR/214, Help', order, ['full-menus', 'display-toggle', 'popout-open', 'fullscreen-toggle', 'aar-note', 'help-toggle'])
     const heights = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] .rt-header-action')].map(b => Math.round(b.getBoundingClientRect().height))`)
     check('every button in the group has the same height', new Set(heights).size, 1)
     check('the in-map Full screen button is gone', await has('.fullscreen-toggle'), false)
@@ -5966,6 +5966,268 @@ async function checkDisplay() {
     // Display is only on pages that offer it: a link with ?display=1 to Entry does not turn it on.
     await goto('/?display=1', 4500)
     check('Entry with ?display=1 leaves Display (Entry does not offer it)', await inDisplay(), false)
+  } finally {
+    await send('Emulation.clearDeviceMetricsOverride').catch(() => { })
+    await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
+  }
+}
+
+/**
+ * E-313 / ADR D-71: pop-out windows (`?display=1&popout=1`) are read-only copies that boot beside the
+ * main window and must never write. This is the survey check, written before any feature code.
+ *
+ * It opens each displayable page as a second tab while the main window holds the lock, waits 5 s, and
+ * looks at two things: (1) every storage write the pop-out ATTEMPTS, recorded by wrappers on the
+ * Storage, IDBObjectStore, IDBFactory/IDBDatabase and Cache prototypes that go in before any app script
+ * (Page.addScriptToEvaluateOnNewDocument); (2) the stored data itself, dumped from the main window before
+ * and after, so a write the wrappers could not see still shows. A third check proves the pop-out really
+ * booted (a window that never started would pass "no writes" trivially).
+ *
+ * POPOUT_SKIP_LOCK=1 deletes navigator.locks in the new tab, so the tab boots without the lock gate. Run
+ * against a build that has no pop-out boot path, that is "the current build with the lock skipped": the
+ * proof that this check goes red (E-313 step 1). Against the finished build it must stay green either way.
+ */
+const POPOUT_RECORDER = `(() => {
+  window.__rtW = []
+  const rec = (what, k) => { try { window.__rtW.push(what + (k === undefined ? '' : ' ' + String(k))) } catch { } }
+  const wrap = (proto, name, label, keyAt = 0) => {
+    const orig = proto[name]
+    if (typeof orig !== 'function') return
+    proto[name] = function () { rec(label + '.' + name, arguments[keyAt]); return orig.apply(this, arguments) }
+  }
+  for (const m of ['setItem', 'removeItem', 'clear']) wrap(Storage.prototype, m, 'Storage')
+  wrap(IDBObjectStore.prototype, 'put', 'IDBObjectStore', 1)
+  wrap(IDBObjectStore.prototype, 'add', 'IDBObjectStore', 1)
+  wrap(IDBObjectStore.prototype, 'delete', 'IDBObjectStore')
+  wrap(IDBObjectStore.prototype, 'clear', 'IDBObjectStore')
+  wrap(IDBFactory.prototype, 'deleteDatabase', 'IDBFactory')
+  wrap(IDBDatabase.prototype, 'createObjectStore', 'IDBDatabase')
+  wrap(IDBDatabase.prototype, 'deleteObjectStore', 'IDBDatabase')
+  if (typeof Cache !== 'undefined') for (const m of ['put', 'add', 'addAll', 'delete']) wrap(Cache.prototype, m, 'Cache')
+  if (typeof CacheStorage !== 'undefined') wrap(CacheStorage.prototype, 'delete', 'CacheStorage')
+  // The read-only guard says so when it stops a write; those are attempts too.
+  window.__rtBlocked = []
+  const w = console.warn
+  console.warn = function () { const t = String(arguments[0]); if (t.startsWith('read-only window: blocked')) window.__rtBlocked.push(t); return w.apply(this, arguments) }
+  if (__SKIP__) delete Navigator.prototype.locks
+})()`
+
+/** Everything this origin stores, as one comparable string: localStorage, the 'kv' rows, and Cache Storage names with entry counts. */
+async function storageSnapshot(sessionId) {
+  return evaluate(`(async () => {
+    const out = { ls: {}, idb: {}, caches: {} }
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); out.ls[k] = localStorage.getItem(k) }
+    await new Promise(res => {
+      const req = indexedDB.open('rangertrak-records')
+      req.onupgradeneeded = () => req.transaction.abort()
+      req.onerror = () => res()
+      req.onsuccess = () => {
+        const db = req.result
+        if (!db.objectStoreNames.contains('kv')) { db.close(); return res() }
+        const r = db.transaction('kv', 'readonly').objectStore('kv').openCursor()
+        r.onsuccess = () => { const c = r.result; if (c) { out.idb[c.key] = c.value; c.continue() } else { db.close(); res() } }
+        r.onerror = () => { db.close(); res() }
+      }
+    })
+    for (const n of await caches.keys()) out.caches[n] = (await (await caches.open(n)).keys()).length
+    return JSON.stringify(out)
+  })()`, sessionId)
+}
+
+/** Names of the stored things that differ between two snapshots. */
+function snapshotDiff(a, b) {
+  const x = JSON.parse(a), y = JSON.parse(b), out = []
+  for (const part of ['ls', 'idb', 'caches']) {
+    for (const k of new Set([...Object.keys(x[part]), ...Object.keys(y[part])])) {
+      if (x[part][k] !== y[part][k]) out.push(`${part}:${k}`)
+    }
+  }
+  return out
+}
+
+/** Opens `url` as a second tab with the recorder in place before any app script. Returns once navigation is issued. */
+async function openPopOutTab(url, skipLock) {
+  // A window of its own, like a real pop-out: tabs behind another tab have their timers slowed to one a second.
+  const { targetId } = await send('Target.createTarget', { url: 'about:blank', newWindow: true })
+  const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true })
+  await send('Page.enable', {}, sessionId)
+  await send('Runtime.enable', {}, sessionId)
+  await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, sessionId)
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: POPOUT_RECORDER.replace('__SKIP__', skipLock ? 'true' : 'false') }, sessionId)
+  await send('Page.navigate', { url }, sessionId)
+  return { targetId, sessionId }
+}
+
+async function checkPopOut() {
+  console.log('\nE-313: a pop-out window (?display=1&popout=1) boots beside the main window and writes nothing')
+  const skipLock = process.env.POPOUT_SKIP_LOCK === '1'
+  const pages = [['/map', 'Map', '.leaflet-container, .maplibregl-map'],
+    ['/radio-log', 'Radio log', '.ag-root-wrapper'], ['/messages', 'Messages', 'main'],
+    ['/rangers', 'Rangers & Teams', '.ag-root-wrapper'], ['/summary', 'Summary', 'main']]
+  await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false })
+  try {
+    await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
+    await goto('/')
+    await evaluate(`document.querySelector('rangertrak-demo-picker mat-select')?.click()`)
+    await sleep(600)
+    await evaluate(`[...document.querySelectorAll('mat-option')].find(o => /Grand Canyon/.test(o.textContent))?.click()`)
+    await sleep(4000)
+    await goto('/radio-log', 4000) // the main window stays here, holding the lock, for the whole check
+
+    for (const [route, name, sel] of pages) {
+      const before = await storageSnapshot()
+      const tab = await openPopOutTab(`${BASE}${route}?display=1&popout=1`, skipLock)
+      await sleep(5500)
+      const booted = await evaluate(`({
+        gate: !!document.querySelector('.rt-tablock'),
+        display: document.documentElement.hasAttribute('data-display'),
+        content: !!document.querySelector(${JSON.stringify(sel)}),
+      })`, tab.sessionId)
+      const attempts = await evaluate(`window.__rtW || []`, tab.sessionId)
+      const blocked = await evaluate(`window.__rtBlocked || []`, tab.sessionId)
+      const after = await storageSnapshot()
+      const changed = snapshotDiff(before, after)
+      await closeTarget(tab.targetId)
+      await sleep(400)
+      check(`${name} pop-out: the window booted (no "already open" gate, Display on, the page drew)`, [booted.gate, booted.display, booted.content], [false, true, true])
+      check(`${name} pop-out: no storage write attempted (${attempts.slice(0, 6).join('; ')})`, attempts, [])
+      check(`${name} pop-out: no write was even attempted and blocked (${blocked.slice(0, 4).join('; ')})`, blocked, [])
+      // updateLastChecked is the MAIN window's update-check clock (UpdateService): the service worker tells every open window
+      // when a new page loads, and the main one stamps it. The pop-out's own attempts, checked above, are none.
+      const changedByPopOut = changed.filter(k => k !== 'ls:updateLastChecked')
+      check(`${name} pop-out: nothing stored changed (${changedByPopOut.slice(0, 6).join('; ')})`, changedByPopOut, [])
+    }
+
+    // ── the Pop out button, the read-only look, and "Close window" ──
+    const shotsDir = process.env.POPOUT_SHOTS_DIR
+    const shot = async (sessionId, name) => {
+      if (!shotsDir) return
+      await sleep(3800) // the Close window bar fades after 3 s idle
+      const { data } = await send('Page.captureScreenshot', { format: 'png' }, sessionId)
+      const file = path.join(shotsDir, `E-313-${name}.png`)
+      fs.writeFileSync(file, Buffer.from(data, 'base64'))
+      note(`pop-out screenshot: ${file}`)
+    }
+    const knownTargets = async () => (await send('Target.getTargets')).targetInfos.filter(t => t.type === 'page').map(t => t.targetId)
+    const attach = async targetId => {
+      const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true })
+      await send('Page.enable', {}, sessionId); await send('Runtime.enable', {}, sessionId)
+      await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, sessionId)
+      return sessionId
+    }
+    const clickWithGesture = (tid, sessionId) => send('Runtime.evaluate', { expression: `document.querySelector('[data-testid=${tid}]')?.click()`, userGesture: true }, sessionId)
+
+    await goto('/radio-log', 4000)
+    check('Radio log offers Pop out, right after Display', await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] > *')].map(e => e.getAttribute('data-testid')).filter(Boolean).slice(0, 2)`), ['display-toggle', 'popout-open'])
+    const before1 = await knownTargets()
+    await clickWithGesture('popout-open')
+    await sleep(5000)
+    const opened = (await knownTargets()).filter(t => !before1.includes(t))
+    check('Pop out opens one new window', opened.length, 1)
+    if (opened.length === 1) {
+      const sid = await attach(opened[0])
+      const s = await evaluate(`({
+        url: location.search, title: document.title,
+        display: document.documentElement.hasAttribute('data-display'), readonly: document.documentElement.hasAttribute('data-readonly'),
+        label: document.querySelector('[data-testid=readonly-label]')?.textContent.trim() ?? null,
+        close: document.querySelector('[data-testid=popout-close]')?.textContent.trim() ?? null,
+        exit: !!document.querySelector('[data-testid=display-exit]'),
+        navbar: (() => { const e = document.querySelector('rangertrak-navbar'); return !!e && getComputedStyle(e).display !== 'none' })(),
+        popout: !!document.querySelector('[data-testid=popout-open]'),
+        frame: (() => { const c = getComputedStyle(document.documentElement, '::after'); return [c.borderTopWidth, c.borderTopColor !== 'rgba(0, 0, 0, 0)' && c.borderTopStyle === 'solid'] })(),
+        gate: !!document.querySelector('.rt-tablock'),
+      })`, sid)
+      check('the pop-out is in Display and read-only (?display=1&popout=1)', [s.url.includes('display=1'), s.url.includes('popout=1'), s.display, s.readonly], [true, true, true, true])
+      check('the pop-out has a coloured frame (8px, a theme colour) and a "Read-only" label', [s.frame, s.label], [['8px', true], 'Read-only'])
+      check('the pop-out says "Close window", not "Exit display"', [/Close window$/.test(s.close ?? ''), s.exit], [true, false])
+      check('the pop-out has no navbar, no Pop out button and no "already open" gate', [s.navbar, s.popout, s.gate], [false, false, false])
+      check('the pop-out window title starts "Pop out - "', s.title.startsWith('Pop out - '), true)
+      await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`, sid)
+      await sleep(500)
+      check('Esc does not leave Display in a pop-out', await evaluate(`document.documentElement.hasAttribute('data-display')`, sid), true)
+      check('the main window did not lose the lock to the pop-out', await evaluate(`!document.querySelector('.rt-tablock')`), true)
+      // A second click opens another window (several at once).
+      const before2 = await knownTargets()
+      await clickWithGesture('popout-open')
+      await sleep(3000)
+      const second = (await knownTargets()).filter(t => !before2.includes(t))
+      check('a second click opens a second window', second.length, 1)
+      for (const t of second) await closeTarget(t)
+      await shot(sid, 'popout-radiolog')
+      await clickWithGesture('popout-close', sid).catch(() => { })
+      await sleep(1500)
+      check('Close window closes the pop-out', (await knownTargets()).includes(opened[0]), false)
+    }
+
+    // ── a pop-out follows the main window by itself, and writes nothing while it does ──
+    const radio = await openPopOutTab(`${BASE}/radio-log?display=1&popout=1`, skipLock)
+    const map = await openPopOutTab(`${BASE}/map?display=1&popout=1`, skipLock)
+    const rangers = await openPopOutTab(`${BASE}/rangers?display=1&popout=1`, skipLock)
+    await sleep(6000)
+    // Where every marker sits, so a report that moves one (or adds one) changes the string.
+    const markers = sid => evaluate(`[...document.querySelectorAll('.leaflet-marker-icon, .maplibregl-marker')].map(m => { const r = m.getBoundingClientRect(); return Math.round(r.left) + ',' + Math.round(r.top) + ':' + m.textContent.trim() }).sort().join(' ')`, sid)
+    const markersBefore = await markers(map.sessionId)
+    // The grid pages 13 rows at a time, so count entries from its own "1 to 13 of N" line.
+    const total = sid => evaluate(`Number((document.body.innerText.match(/of (\\d+)/) || [])[1] ?? -1)`, sid)
+    const rowsBefore = await total(radio.sessionId)
+    await shot(rangers.sessionId, 'popout-rangers')
+    await shot(map.sessionId, 'popout-map')
+    // A roster callsign: its new report, at the Entry page's default position, adds a marker or moves its own.
+    const free = await evaluate(`(async () => {
+      const get = k => new Promise(res => { const r = indexedDB.open('rangertrak-records'); r.onsuccess = () => { const g = r.result.transaction('kv').objectStore('kv').get(k); g.onsuccess = () => res(g.result ? JSON.parse(g.result) : null) } })
+      const roster = ((await get('rangers')) || {}).rangers || [], used = new Set((((await get('radioLog')) || {}).logEntries || []).map(x => x.callsign))
+      return (roster.find(r => r.callsign && !r.callsign.startsWith('!') && !used.has(r.callsign)) || roster.find(r => r.callsign && !r.callsign.startsWith('!')) || {}).callsign || null
+    })()`)
+    note(`callsign for the live check: ${free}`)
+    const callsign = free || 'E2E-POPOUT'
+    await goto('/', 3500) // the main window, on Entry
+    await evaluate(`(async () => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      const setInput = (el, v) => { setter.call(el, v); el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); };
+      setInput(document.getElementById('enter__Callsign-input'), ${JSON.stringify(callsign)});
+      await new Promise(r => setTimeout(r, 900));
+      document.querySelector('.enter__Submit-button')?.click();
+    })()`)
+    const t0 = Date.now()
+    const seen = await pollUntil(async () => (await total(radio.sessionId)) === rowsBefore + 1, v => v === true, 24, 250)
+    const took = Date.now() - t0
+    check('a report added in the main window shows in a Radio log pop-out within 2 s', seen === true && took <= 2500, true)
+    note(`pop-out took ${took} ms; entries ${rowsBefore} -> ${await total(radio.sessionId)}; markers ${markersBefore === await markers(map.sessionId) ? 'unchanged' : 'changed'}`)
+    const markerHit = await pollUntil(async () => (await markers(map.sessionId)) !== markersBefore, v => v === true, 8, 250)
+    check('...and on the Map in a Map pop-out (a marker added or moved) within 2 s of that', markerHit, true)
+    for (const [name, tab] of [['Radio log', radio], ['Map', map], ['Rangers & Teams', rangers]]) {
+      check(`${name} pop-out: no storage write attempted while following the main window`, await evaluate(`window.__rtW || []`, tab.sessionId), [])
+      check(`${name} pop-out: no write attempted and blocked`, await evaluate(`window.__rtBlocked || []`, tab.sessionId), [])
+    }
+
+    // ── the main window goes away: the pop-out says so, and clears when it is back ──
+    await send('Page.navigate', { url: 'about:blank' }) // the page unloads, which frees the lock
+    const stale = await pollUntil(() => evaluate(`!!document.querySelector('[data-testid=popout-stale]')`, radio.sessionId), v => v === true, 30, 400)
+    check('with the main window closed the pop-out says "Not updating: the main RangerTrak window is closed"', stale, true)
+    check('...and still shows the last data', await total(radio.sessionId), rowsBefore + 1)
+    await goto('/', 4000)
+    const cleared = await pollUntil(() => evaluate(`!document.querySelector('[data-testid=popout-stale]')`, radio.sessionId), v => v === true, 30, 400)
+    check('when a main window comes back the note clears', cleared, true)
+    for (const tab of [radio, map, rangers]) await closeTarget(tab.targetId)
+
+    // ── the blocked-tab gate's "Open a read-only view here" ──
+    await goto('/map?x=1', 3500)
+    const gateTab = await openPopOutTab(`${BASE}/map?x=1`, false)
+    await sleep(3500)
+    check('a second plain tab shows the gate with "Open a read-only view here"',
+      await evaluate(`document.querySelector('[data-testid=tablock-readonly]')?.textContent.trim() ?? null`, gateTab.sessionId), 'Open a read-only view here')
+    await evaluate(`document.querySelector('[data-testid=tablock-readonly]').click()`, gateTab.sessionId)
+    await sleep(5000)
+    const g = await evaluate(`({
+      url: location.pathname + location.search, readonly: document.documentElement.hasAttribute('data-readonly'),
+      label: document.querySelector('[data-testid=readonly-label]')?.textContent.trim() ?? null, gate: !!document.querySelector('.rt-tablock'),
+      booted: !!document.querySelector('.leaflet-container, .maplibregl-map'),
+    })`, gateTab.sessionId)
+    check('the gate button reloads the same page read-only (route and parameters kept)', [g.url.startsWith('/map'), g.url.includes('x=1'), g.url.includes('display=1'), g.url.includes('popout=1')], [true, true, true, true])
+    check('...with the frame, the "Read-only" label and the page drawn, no gate', [g.readonly, g.label, g.booted, g.gate], [true, 'Read-only', true, false])
+    check('...and the main window kept its lock and its saving', await evaluate(`!document.querySelector('.rt-tablock')`), true)
+    await shot(gateTab.sessionId, 'gate-readonly')
+    await closeTarget(gateTab.targetId)
   } finally {
     await send('Emulation.clearDeviceMetricsOverride').catch(() => { })
     await goto('/'); await evaluate(`localStorage.clear()`); await idbClearAll()
@@ -6333,6 +6595,7 @@ async function main() {
       const fx = makeFixtures(path.join(tmp, 'fixtures'))
       if (want('view') && !process.env.DISPLAY_ONLY_ROUTE) await checkSimpleView(fx) // E-207; starts from a wiped profile, wipes it again after
       if (want('view')) await checkDisplay() // E-314, E-315; loads the Grand Canyon demo, wipes the profile after
+      if (want('popout')) await checkPopOut() // E-313; opens pop-out tabs beside this one; loads the Grand Canyon demo, wipes the profile after
       if (want('entry')) await checkUsageModes() // E-168; wipes storage, so before checkRosterLifecycle creates the E2E-AA1 ranger
       if (want('roster')) await checkRangersFilterChips(fx)
       if (want('roster')) await checkRosterLayers(fx) // E-187 C

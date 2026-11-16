@@ -19,6 +19,10 @@ import { runUnlockGate } from './app/shared/storage/unlock-form'
 // yet - see acquireTabLock()'s own comment on why this ordering is safe for the encryption
 // gate too.
 import { acquireTabLock, showBlockedGate } from './app/shared/storage/tab-lock'
+// E-313 / D-71: a pop-out (?popout=1) takes no tab lock and boots read-only, behind a storage-layer
+// guard that goes in before anything touches storage. See read-only-window.ts.
+import { installReadOnlyGuard, wantsReadOnlyWindow } from './app/shared/storage/read-only-window'
+import { installKeyHandover, requestKeyFromOpener } from './app/shared/storage/popout-key'
 
 // NOTE: AG Grid's module registration deliberately does NOT happen here - importing
 // ag-grid-community from main.ts drags the whole grid bundle into the eager initial
@@ -32,6 +36,18 @@ if (environment.production) {
 /* eslint-disable no-console */
 
 async function bootstrap() {
+  // E-313 / D-71: a read-only window (a pop-out) skips the tab lock - it sits beside the main
+  // window, which keeps the lock - and must write nothing, so the guard goes in before ANYTHING
+  // below touches storage. The main window, in turn, answers a pop-out's request for the unlocked
+  // encryption key (Q77).
+  const readOnly = wantsReadOnlyWindow()
+  if (readOnly) {
+    installReadOnlyGuard()
+    recordStore.useReadOnly()
+  } else {
+    installKeyHandover()
+  }
+
   // Item 9 (2026-09-28, John): must run before anything else touches storage or renders the
   // app - a tab that has not won the single-active-tab lock must never load or write real
   // mission data at all (see tab-lock.ts's own header comment). 'blocked' shows a full-page
@@ -40,9 +56,11 @@ async function bootstrap() {
   // the lock outright. 'unsupported' (no navigator.locks - very old browsers) and 'active'
   // both fall straight through with no gate and no behavior change from before this feature.
   try {
-    const lockOutcome = await acquireTabLock()
-    if (lockOutcome === 'blocked') {
-      await showBlockedGate()
+    if (!readOnly) {
+      const lockOutcome = await acquireTabLock()
+      if (lockOutcome === 'blocked') {
+        await showBlockedGate()
+      }
     }
   } catch (err) {
     // Belt and braces, same reasoning as every other catch in this function: a storage-
@@ -56,7 +74,11 @@ async function bootstrap() {
     // itself never throws (see its own doc comment), so a device that was never encrypted, or
     // whose marker this session cannot read, falls through to load() exactly as before.
     if (await recordStore.checkEncryption()) {
-      await runUnlockGate()
+      // E-313 (Q77): a pop-out is handed the unlocked key by the window that opened it and never
+      // asks for the passphrase. One with no opener (the blocked-tab gate's read-only view) asks.
+      const handed = readOnly ? await requestKeyFromOpener() : null
+      if (handed) recordStore.adoptEncryptionKey(handed)
+      else await runUnlockGate({ readOnly })
     }
   } catch (err) {
     // Belt and braces, same reasoning as the load() catch below: an unlock gate must never be
@@ -64,7 +86,7 @@ async function bootstrap() {
     console.error('Encryption check/unlock failed; continuing to boot.', err)
   }
   try {
-    await recordStore.load()
+    await recordStore.load({ readOnly })
   } catch (err) {
     // Belt and braces: recordStore.load() is written to never throw (every per-key failure
     // is caught and logged internally, falling back to localStorage or an empty Map), but a

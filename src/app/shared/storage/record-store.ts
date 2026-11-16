@@ -5,6 +5,7 @@ import {
   decryptRecordValue, encryptRecordValue, isEncryptedEnvelope, isEncryptionMarker,
   unlockWithPassphrase,
 } from './record-encryption'
+import { announceWrite } from './data-channel'
 
 /**
  * E-122 Phase 2a: the async, IndexedDB-backed replacement for using `localStorage` directly
@@ -152,6 +153,19 @@ class RecordStoreImpl {
   }
 
   /**
+   * E-313 / D-71: this window is a read-only window (a pop-out). Writes are off for good, and
+   * everything that would create or change storage on the way up is off too: `load()` migrates
+   * and deletes nothing (a key that still lives only in the legacy place is served from there, in
+   * memory), and a database that does not exist yet is not created. Called by main.ts before anything
+   * else touches storage. Not a failure, so no console warning.
+   */
+  useReadOnly(): void {
+    this.writesEnabled = false
+    this.readOnly = true
+  }
+  private readOnly = false
+
+  /**
    * Set once `checkEncryption()` has read the plaintext marker record (E-122 Phase 2b).
    * `undefined` means "no marker" - either encryption was never enabled, or it hasn't been
    * checked yet this session.
@@ -212,6 +226,12 @@ class RecordStoreImpl {
 
   /** The session's derived key, or undefined if never unlocked (or encryption is off). */
   getEncryptionKey(): CryptoKey | undefined { return this.key }
+
+  /**
+   * E-313 (Q77): a pop-out on an encrypted device is handed the unlocked key by the main window
+   * (shared/storage/popout-key.ts), in memory only. Keeps it for this session, never stores it.
+   */
+  adoptEncryptionKey(key: CryptoKey): void { this.key = key }
 
   /**
    * Derives a key from `passphrase` against the cached marker and checks it via the verifier.
@@ -408,7 +428,10 @@ class RecordStoreImpl {
   }
 
   /** Resolves once `getItem()` is safe to trust for `MIGRATED_KEYS` - awaited by `main.ts`. */
-  async load(): Promise<void> {
+  async load(options?: { readOnly?: boolean }): Promise<void> {
+    // E-313: a read-only load only reads. No migration into IndexedDB, no removing a stale legacy
+    // copy: those are writes, and the main window does them when it next boots.
+    const readOnly = options?.readOnly === true || this.readOnly
     await this.ensureDb()
 
     for (const key of MIGRATED_KEYS) {
@@ -442,9 +465,9 @@ class RecordStoreImpl {
       if (value === null) {
         const legacy = localStorage.getItem(key)
         if (legacy !== null) {
-          value = await this.migrateOne(key, legacy)
+          value = readOnly ? legacy : await this.migrateOne(key, legacy)
         }
-      } else if (localStorage.getItem(key) !== null) {
+      } else if (!readOnly && localStorage.getItem(key) !== null) {
         // IndexedDB already holds this key, so it is the live copy (every write since goes
         // there), yet a plaintext localStorage copy survived - left behind by a migration
         // whose read-back check failed on an earlier load. Retire it now rather than never.
@@ -460,6 +483,35 @@ class RecordStoreImpl {
       if (value !== null) this.map.set(key, value)
       else this.map.delete(key)
     }
+  }
+
+  /**
+   * E-313: re-reads one key from storage into the in-memory Map, never writing. A pop-out calls
+   * this when the main window announces that key (shared/storage/data-channel.ts). A failed read or
+   * an undecryptable record keeps what the window already shows: a hiccup must not blank a screen.
+   * Resolves true when the Map now holds the stored value (or the key is really gone).
+   */
+  async reloadKey(key: string): Promise<boolean> {
+    await this.ensureDb()
+    let value: string | null
+    if (!this.dbAvailable) {
+      value = localStorage.getItem(key)
+    } else {
+      try {
+        value = await this.idbGet(key)
+      } catch (e) {
+        console.warn(`RecordStore: could not re-read "${key}" (${(e as Error)?.message ?? e}); keeping what is on screen.`)
+        return false
+      }
+      if (value !== null) {
+        const raw = value
+        value = await this.decryptIfNeeded(key, raw)
+        if (value === null) return false
+      }
+    }
+    if (value !== null) this.map.set(key, value)
+    else this.map.delete(key)
+    return true
   }
 
   /**
@@ -570,8 +622,9 @@ class RecordStoreImpl {
       // transient failure must not be the reason plaintext PII lands in localStorage.
       for (const [key, value] of entries) {
         try {
-          if (value === null) { localStorage.removeItem(key); continue }
+          if (value === null) { localStorage.removeItem(key); announceWrite(key); continue }
           localStorage.setItem(key, await this.encryptIfNeeded(key, value))
+          announceWrite(key)
         } catch (e: any) {
           console.error(`RecordStore: failed to persist "${key}" to localStorage: ${e?.message ?? e}`)
           failures?.add(key)
@@ -582,8 +635,9 @@ class RecordStoreImpl {
 
     for (const [key, value] of entries) {
       try {
-        if (value === null) { await this.idbDelete(key); continue }
+        if (value === null) { await this.idbDelete(key); announceWrite(key); continue }
         await this.idbPut(key, await this.encryptIfNeeded(key, value))
+        announceWrite(key) // E-313: key name only, so an open pop-out re-reads it
       } catch (e: any) {
         console.error(`RecordStore: failed to persist "${key}" to IndexedDB: ${e?.message ?? e}`)
         failures?.add(key)
@@ -646,6 +700,7 @@ class RecordStoreImpl {
     // own header comment) - a spec that exercises disableWrites() must not permanently break
     // persistence for every test that runs after it in the same unit-test run.
     this.writesEnabled = true
+    this.readOnly = false
     // close() lets any transaction already in flight finish; it does not abort one.
     this.db?.close()
     this.db = undefined
@@ -687,6 +742,9 @@ class RecordStoreImpl {
     // so a database the repair below has bumped still opens instead of failing a VersionError.
     const req = version === undefined ? indexedDB.open(DB_NAME) : indexedDB.open(DB_NAME, version)
     req.onupgradeneeded = () => {
+      // E-313: a read-only window never creates the database; aborting leaves nothing behind and
+      // lands in onerror below, i.e. "no IndexedDB this session", which reads localStorage.
+      if (this.readOnly) { req.transaction?.abort(); return }
       const db = req.result
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE)
     }
@@ -766,7 +824,7 @@ export class RecordStore {
   getItem(key: string): string | null { return recordStore.getItem(key) }
   setItem(key: string, value: string): void { recordStore.setItem(key, value) }
   removeItem(key: string): void { recordStore.removeItem(key) }
-  load(): Promise<void> { return recordStore.load() }
+  load(options?: { readOnly?: boolean }): Promise<void> { return recordStore.load(options) }
   flush(): Promise<void> { return recordStore.flush() }
 
   // E-122 Phase 2b: Mission > Data safety (mission-advanced-options.component.ts) is the one

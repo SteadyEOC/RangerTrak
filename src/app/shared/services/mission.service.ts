@@ -4,6 +4,7 @@ import { DEFAULT_CHECK_IN_INTERVAL_MIN } from '../../domain/overdue'
 import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 
 import { recordStore } from '../storage/record-store'
+import { isReadOnlyWindow } from '../storage/read-only-window'
 import * as packageJson from '../../../../package.json'
 import { RadioLogStatusType } from './radio-log-entry.interface'
 import { LogService } from './log.service'
@@ -164,7 +165,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
         // is kept under the -BAD key below for anyone who needs it.
         this.log.warn(`Could not read the saved settings from local storage; they were renamed out of the way. Error: ${error.name}; msg: ${error.message}`, this.id);
         // localStorage.removeItem(this.storageLocalName) /// will get overwritten anyway
-        localStorage.setItem(this.storageLocalName + '-BAD', localStorageMission!)
+        if (!isReadOnlyWindow()) localStorage.setItem(this.storageLocalName + '-BAD', localStorageMission!)
       }
     }
     if (needMission) {
@@ -196,8 +197,11 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
     // Routine startup information, not a fault. Logging it at error level put a red entry
     // at the top of the Log page on every single load and buried the real errors under it.
 
-    // publish settings to subscribers
-    this.updateMission(this.settings)
+    // publish settings to subscribers. E-313: a read-only window (a pop-out) only publishes: this
+    // call stamps appSettings and rewrites the secrets record on every boot, and the main window
+    // does that.
+    if (isReadOnlyWindow()) this.setMission(this.settings)
+    else this.updateMission(this.settings)
 
     // A no-op in practice - both locals go out of scope (and become GC-eligible) at the end
     // of the constructor regardless. Harmless either way, so left as a belt-and-suspenders
@@ -361,6 +365,26 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
 
     //! Is this proper?!
     //window.location.reload() creates endless cycle!
+  }
+
+  /**
+   * E-313: a read-only window (a pop-out) calls this when the main window has saved the settings
+   * (the browser's `storage` event for `appSettings`) or the secrets record. Re-reads both the way
+   * the constructor does and publishes, with the running version kept. Never writes.
+   */
+  public reloadFromStore(): void {
+    const raw = localStorage.getItem(this.storageLocalName)
+    if (raw == null || raw.indexOf('defLat') <= 0) return
+    try {
+      const next = migrateMission(JSON.parse(raw), this.initMission())
+      const secrets = this.readSecrets()
+      next.googleGeocodingApiKey = secrets.googleGeocodingApiKey
+      next.boardPassword = secrets.boardPassword
+      next.version = this.settings.version
+      this.setMission(next)
+    } catch (error) {
+      this.log.warn(`Could not re-read the saved settings: ${(error as Error).name}; msg: ${(error as Error).message}`, this.id)
+    }
   }
 
   private readSecrets(): SecretsType {

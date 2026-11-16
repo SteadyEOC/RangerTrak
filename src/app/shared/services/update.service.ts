@@ -6,6 +6,7 @@ import { SwUpdate, VersionReadyEvent } from "@angular/service-worker"
 
 import { LogService } from "./log.service"
 import { recordStore } from "../storage/record-store"
+import { isReadOnlyWindow } from "../storage/read-only-window"
 
 // Based on: https://angular.io/guide/service-worker-communications
 
@@ -49,6 +50,9 @@ export class UpdateService {
    * effect of construction makes the wiring invisible at the call site.
    */
   public init(): void {
+    // E-313: a read-only window (a pop-out) never checks for, installs or reloads for an update: that
+    // is the main window's job, and a reload here would drop the pop-out the operator arranged.
+    if (isReadOnlyWindow()) return
     if (!this.updates.isEnabled) {
       // Normal in `ng serve` and in any browser without service-worker support.
       this.log.verbose(`Service worker not enabled; no update checks will run.`, this.id)
@@ -139,6 +143,7 @@ export class UpdateService {
   }
 
   private recordCheck(): void {
+    if (isReadOnlyWindow()) return
     const now = new Date().toISOString()
     localStorage.setItem(LAST_CHECKED_KEY, now)
     this.lastChecked.set(now)

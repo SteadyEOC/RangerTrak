@@ -1,6 +1,7 @@
 import { Injectable, signal } from "@angular/core"
 
 import { LogService } from "./log.service"
+import { isReadOnlyWindow } from "../storage/read-only-window"
 import {
   FieldReportMap, FieldReportState, foldSentUids, newEntries, parseFieldReports, receivedEntries,
   stateOf, unconfirmedEntries, withoutReports, withReceived, withSent,
@@ -43,10 +44,13 @@ export class FieldModeService {
     let map = parseFieldReports(localStorage.getItem(REPORTS_KEY))
     const old = localStorage.getItem(SENT_UIDS_KEY)
     if (old !== null) {
+      // E-313: a read-only window folds the old list in memory only (the main window writes the result).
       map = foldSentUids(old, map)
       try {
-        localStorage.setItem(REPORTS_KEY, JSON.stringify(map))
-        localStorage.removeItem(SENT_UIDS_KEY)
+        if (!isReadOnlyWindow()) {
+          localStorage.setItem(REPORTS_KEY, JSON.stringify(map))
+          localStorage.removeItem(SENT_UIDS_KEY)
+        }
       } catch { /* storage full or blocked: the in-memory map still works this session */ }
     }
     return map
