@@ -57,11 +57,26 @@ export class DisplayService {
 
   private askedForFullscreen = false
 
+  /**
+   * 11-16, John: Display pins the mission name, op period and clock in a strip at the top of the window;
+   * this collapses it to one small button. In memory only (D-71: Display stores nothing), so a new window
+   * or a reload starts with the strip open.
+   */
+  private readonly stripCollapsedSignal = signal(false)
+  readonly stripCollapsed = this.stripCollapsedSignal.asReadonly()
+  toggleStrip(): void {
+    this.stripCollapsedSignal.update(v => !v)
+  }
+
   constructor() {
     // The one visible effect of Display on the document: pages and the shell key their CSS off it.
     effect(() => {
       if (this.activeSignal()) document.documentElement.setAttribute('data-display', '')
       else document.documentElement.removeAttribute('data-display')
+    })
+    effect(() => {
+      if (this.activeSignal() && this.stripCollapsedSignal()) document.documentElement.setAttribute('data-display-strip', 'collapsed')
+      else document.documentElement.removeAttribute('data-display-strip')
     })
     this.router.events.subscribe(e => {
       if (e instanceof NavigationEnd) this.onNavigated()

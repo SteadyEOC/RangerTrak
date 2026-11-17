@@ -736,6 +736,9 @@ async function checkMapPseudoFullscreen() {
     Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => false });
     window.scrollTo(0, 200);
     let btn = null;
+    // 11-16: on the look-at pages Full screen is in the Display menu.
+    for (let i = 0; i < 40 && !document.querySelector('[data-testid="display-menu"]'); i++) await new Promise(res => setTimeout(res, 200));
+    document.querySelector('[data-testid="display-menu"]')?.click();
     for (let i = 0; i < 40 && !(btn = document.querySelector('[data-testid="fullscreen-toggle"]')); i++) await new Promise(res => setTimeout(res, 200));
     if (!btn || !document.querySelector('#mapLeaflet-main')) return { button: false };
     const leafletButton = !!document.querySelector('#mapLeaflet-main .leaflet-control-fullscreen');
@@ -5846,6 +5849,8 @@ async function checkDisplay() {
   const has = sel => evaluate(`!!document.querySelector(${JSON.stringify(sel)})`)
   const shown = sel => evaluate(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); return !!e && getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0 })()`)
   const clickTid = tid => evaluate(`document.querySelector('[data-testid=${tid}]')?.click()`)
+  // 11-16: Display here, Pop out and Full screen sit in one Display menu on the look-at pages.
+  const openDisplayMenu = async () => { await clickTid('display-menu'); await sleep(400) }
   const view = () => evaluate(`[localStorage.getItem('rt-view'), localStorage.getItem('rt-view-source')]`)
   const inDisplay = () => evaluate(`document.documentElement.hasAttribute('data-display')`)
   const search = () => evaluate(`location.search`)
@@ -5879,8 +5884,13 @@ async function checkDisplay() {
     // ── the header group: same buttons, same order, Easy menus says how many it holds back ──
     await evaluate(`localStorage.setItem('rt-view', 'simple'); localStorage.setItem('rt-view-source', 'user')`)
     await goto('/map', 4500)
-    const order = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] > *')].map(e => e.matches('rangertrak-view-switch') ? 'full-menus' : (e.getAttribute('data-testid') || e.textContent.trim()))`)
-    check('Map header group, in order: Full menus, Display, Pop out, Full screen, AAR/214, Help', order, ['full-menus', 'display-toggle', 'popout-open', 'fullscreen-toggle', 'aar-note', 'help-toggle'])
+    const order = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] > :not(mat-menu)')].map(e => e.matches('rangertrak-view-switch') ? 'full-menus' : (e.getAttribute('data-testid') || e.textContent.trim()))`)
+    check('Map header group, in order: Full menus, Display (menu), AAR/214, Help', order, ['full-menus', 'display-menu', 'aar-note', 'help-toggle'])
+    await openDisplayMenu()
+    const menuItems = await evaluate(`[...document.querySelectorAll('.mat-mdc-menu-panel [data-testid]')].map(e => e.getAttribute('data-testid'))`)
+    check('the Display menu holds Display here, Pop out, Full screen', menuItems, ['display-toggle', 'popout-open', 'fullscreen-toggle'])
+    await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`)
+    await sleep(400)
     const heights = await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] .rt-header-action')].map(b => Math.round(b.getBoundingClientRect().height))`)
     check('every button in the group has the same height', new Set(heights).size, 1)
     check('the in-map Full screen button is gone', await has('.fullscreen-toggle'), false)
@@ -5901,7 +5911,7 @@ async function checkDisplay() {
     // ── Display is offered on five pages and not on the rest ──
     for (const [route, name] of [['/', 'Entry'], ['/mission', 'Mission'], ['/after-action', 'After action'], ['/help', 'Help']]) {
       await goto(route, 3500)
-      check(`${name} does not offer Display`, await has('[data-testid=display-toggle]'), false)
+      check(`${name} does not offer Display`, await has('[data-testid=display-menu]'), false)
     }
     await goto('/', 3500)
     check('Entry has Full screen in the header', await has('[data-testid=fullscreen-toggle]'), true)
@@ -5913,7 +5923,7 @@ async function checkDisplay() {
       if (process.env.DISPLAY_ONLY_ROUTE && process.env.DISPLAY_ONLY_ROUTE !== route) continue
       await evaluate(`localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user')`)
       await goto(route, 4500)
-      check(`${name} offers Display`, await has('[data-testid=display-toggle]'), true)
+      check(`${name} offers Display`, await has('[data-testid=display-menu]'), true)
       check(`${name}, before Display: the navbar shows`, await shown('rangertrak-navbar'), true)
       if (editCol) { // proves the read-only check below can go red: outside Display a double-click opens an editor
         await dblclick(editCol); await sleep(500)
@@ -5922,6 +5932,7 @@ async function checkDisplay() {
       }
       await evaluate(`window.__rtWrites = []; const o = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { window.__rtWrites.push(String(k)); return o.apply(this, arguments) }`)
       const viewBefore = await view()
+      await openDisplayMenu()
       await clickTid('display-toggle')
       await sleep(1200)
       check(`${name}: Display is on`, await inDisplay(), true)
@@ -5930,6 +5941,13 @@ async function checkDisplay() {
         [await shown('rangertrak-navbar'), await shown('rangertrak-footer'), await shown('[data-testid=header-actions]')], [false, false, false])
       check(`${name}: one small "Exit display" button`, await shown('[data-testid=display-exit]'), true)
       check(`${name}: the clock stays`, await shown('pageHeader .clock'), true)
+      // 11-16, John: a strip pinned at the top: mission name, op period, clock; it folds away and back.
+      check(`${name}: the strip shows the mission name and the op period`, [await shown('[data-testid=display-mission]'), await shown('pageHeader .opPeriod')], [true, true])
+      check(`${name}: the strip is pinned to the top`, await evaluate(`getComputedStyle(document.querySelector('pageHeader')).position`), 'sticky')
+      await clickTid('display-strip-toggle'); await sleep(300)
+      check(`${name}: the strip folds away to one button`, [await shown('pageHeader .status-cluster'), await shown('[data-testid=display-strip-toggle]')], [false, true])
+      await clickTid('display-strip-toggle'); await sleep(300)
+      check(`${name}: and comes back`, await shown('pageHeader .status-cluster'), true)
       check(`${name}: the type is larger (root 20px)`, await evaluate(`getComputedStyle(document.documentElement).fontSize`), '20px')
       check(`${name}: no add, import, export, delete, print or edit control shows`, await changers(), [])
       if (editCol) {
@@ -5955,6 +5973,7 @@ async function checkDisplay() {
       await clickTid('display-exit'); await sleep(800)
       check(`${name}: Exit display returns to the page, navbar and URL`, [await inDisplay(), await shown('rangertrak-navbar'), (await search()).includes('display=1')], [false, true, false])
       check(`${name}: the device's Easy/Full choice is the same after Display`, await view(), viewBefore)
+      await openDisplayMenu()
       await clickTid('display-toggle'); await sleep(1000)
       await evaluate(`(document.fullscreenElement ? document.exitFullscreen() : Promise.resolve())`).catch(() => { })
       await sleep(400)
@@ -6116,9 +6135,11 @@ async function checkPopOut() {
       return sessionId
     }
     const clickWithGesture = (tid, sessionId) => send('Runtime.evaluate', { expression: `document.querySelector('[data-testid=${tid}]')?.click()`, userGesture: true }, sessionId)
+    const clickTid = tid => evaluate(`document.querySelector('[data-testid=${tid}]')?.click()`)
 
     await goto('/radio-log', 4000)
-    check('Radio log offers Pop out, right after Display', await evaluate(`[...document.querySelectorAll('[data-testid=header-actions] > *')].map(e => e.getAttribute('data-testid')).filter(Boolean).slice(0, 2)`), ['display-toggle', 'popout-open'])
+    await clickTid('display-menu'); await sleep(400)
+    check('Radio log offers Pop out in the Display menu, right after Display here', await evaluate(`[...document.querySelectorAll('.mat-mdc-menu-panel [data-testid]')].map(e => e.getAttribute('data-testid')).slice(0, 2)`), ['display-toggle', 'popout-open'])
     const before1 = await knownTargets()
     await clickWithGesture('popout-open')
     await sleep(5000)
@@ -6133,7 +6154,7 @@ async function checkPopOut() {
         close: document.querySelector('[data-testid=popout-close]')?.textContent.trim() ?? null,
         exit: !!document.querySelector('[data-testid=display-exit]'),
         navbar: (() => { const e = document.querySelector('rangertrak-navbar'); return !!e && getComputedStyle(e).display !== 'none' })(),
-        popout: !!document.querySelector('[data-testid=popout-open]'),
+        popout: !!document.querySelector('[data-testid=popout-open]') || (document.querySelector('[data-testid=display-menu]')?.click(), false) || !!document.querySelector('[data-testid=popout-open]'),
         frame: (() => { const c = getComputedStyle(document.documentElement, '::after'); return [c.top, c.boxShadow.includes('40px') && !c.boxShadow.includes('rgba(0, 0, 0, 0)'), parseFloat(c.borderTopLeftRadius) > 0] })(),
         gate: !!document.querySelector('.rt-tablock'),
       })`, sid)
@@ -6148,6 +6169,7 @@ async function checkPopOut() {
       check('the main window did not lose the lock to the pop-out', await evaluate(`!document.querySelector('.rt-tablock')`), true)
       // A second click opens another window (several at once).
       const before2 = await knownTargets()
+      await clickTid('display-menu'); await sleep(400)
       await clickWithGesture('popout-open')
       await sleep(3000)
       const second = (await knownTargets()).filter(t => !before2.includes(t))

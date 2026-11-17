@@ -4,6 +4,7 @@ add
 add_location
 anchor
 archive
+arrow_drop_down
 assignment
 attach_file
 attachment
@@ -39,6 +40,8 @@ emergency
 emoji_people
 error
 event
+expand_less
+expand_more
 feedback
 filter
 fit_screen

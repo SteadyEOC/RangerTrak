@@ -110,32 +110,54 @@
          aria-label and title). Only app-wide actions live here; page-specific toolbars stay on their
          pages. Full menus only where the page has options to hide; Help only where there is something
          to read (GuideService.available). -->
+    <!-- 11-16, John: in Display the header is a strip pinned to the top (mission, op period, clock); this
+         folds it away to just this button and opens it again. Display only. -->
+    @if (display.active() && !fieldMode.enabled()) {
+    <button matIconButton type="button" class="display-strip-toggle" data-testid="display-strip-toggle"
+      [attr.aria-expanded]="!display.stripCollapsed()"
+      [attr.aria-label]="display.stripCollapsed() ? 'Show the mission strip' : 'Hide the mission strip'"
+      [title]="display.stripCollapsed() ? 'Show the mission name, op period and clock' : 'Hide the mission name, op period and clock'"
+      (click)="display.toggleStrip()">
+      <mat-icon>{{ display.stripCollapsed() ? 'expand_more' : 'expand_less' }}</mat-icon>
+    </button>
+    }
     <div class="rt-header-actions" role="toolbar" aria-label="Page tools" data-testid="header-actions">
     <!-- E-231 (John 2026-10-27): the Full menus switch had a line of its own under this one. -->
     @if (showViewSwitch) {
     <rangertrak-view-switch [viewIds]="viewIds"></rangertrak-view-switch>
     }
-    <!-- E-314 (D-71): Display, a look-only state of this window alone; only on the look-at pages. The
-         Full menus choice above is untouched by it. -->
+    <!-- 11-16, John: ONE Display button on the look-at pages, opening a short menu: Display here (E-314, D-71: a
+         look-only state of this window alone), Pop out (E-313: a look-only copy in its own window; not offered
+         inside a pop-out) and Full screen. Pages that don't offer Display keep a plain Full screen button. The
+         Full menus choice above is untouched by any of them. -->
     @if (display.offered()) {
-    <button matButton="outlined" type="button" class="rt-header-action" (click)="display.toggle()"
-      data-testid="display-toggle" [attr.aria-pressed]="display.active()" aria-label="Display"
-      title="Show this page for a big screen or a second monitor: bigger type, no editing controls. This window only; Esc comes back.">
+    <button matButton="outlined" type="button" class="rt-header-action" [matMenuTriggerFor]="displayMenu"
+      data-testid="display-menu" aria-label="Display options"
+      title="Show this page on a big screen: here (Display), in its own window (Pop out), or full screen">
       <mat-icon>tv</mat-icon>
       <span class="rt-header-action__label">Display</span>
+      <mat-icon class="rt-header-action__caret" aria-hidden="true">arrow_drop_down</mat-icon>
     </button>
-    <!-- E-313 (Q79): Pop out, right after Display, on the same five pages: a look-only copy in its own
-         window (a second monitor, a projector). It keeps up with this window by itself. Not in a pop-out. -->
-    @if (!display.readOnly) {
-    <button matButton="outlined" type="button" class="rt-header-action" (click)="popOut.open()"
-      data-testid="popout-open" aria-label="Pop out"
-      title="Open a look-only copy of this page in its own window, for a second monitor or a projector. It keeps up with this window by itself. You can open several.">
-      <mat-icon>open_in_new</mat-icon>
-      <span class="rt-header-action__label">Pop out</span>
-    </button>
-    }
-    }
-    @if (!fieldMode.enabled()) {
+    <mat-menu #displayMenu="matMenu" xPosition="before">
+      <button mat-menu-item type="button" (click)="display.toggle()" data-testid="display-toggle"
+        title="Bigger type, no editing controls, in this window only. Esc comes back.">
+        <mat-icon>tv</mat-icon>
+        <span>Display here</span>
+      </button>
+      @if (!display.readOnly) {
+      <button mat-menu-item type="button" (click)="popOut.open()" data-testid="popout-open"
+        title="A look-only copy of this page in its own window, for a second monitor or a projector. It keeps up with this window by itself. You can open several.">
+        <mat-icon>open_in_new</mat-icon>
+        <span>Pop out</span>
+      </button>
+      }
+      <button mat-menu-item type="button" (click)="fullscreen.toggle()" data-testid="fullscreen-toggle"
+        [attr.aria-pressed]="fullscreen.isFullscreen()">
+        <mat-icon>{{ fullscreen.isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        <span>{{ fullscreen.isFullscreen() ? 'Exit full screen' : 'Full screen' }}</span>
+      </button>
+    </mat-menu>
+    } @else if (!fieldMode.enabled()) {
     <button matButton="outlined" type="button" class="rt-header-action" (click)="fullscreen.toggle()"
       data-testid="fullscreen-toggle" [attr.aria-pressed]="fullscreen.isFullscreen()"
       [attr.aria-label]="fullscreen.isFullscreen() ? 'Exit full screen' : 'Full screen'"

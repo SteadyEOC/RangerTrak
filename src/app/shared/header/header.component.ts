@@ -5,6 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop'
 import { Router, RouterLink } from '@angular/router'
 import { MatButtonModule } from '@angular/material/button'
 import { MatIconModule } from '@angular/material/icon'
+import { MatMenuModule } from '@angular/material/menu'
 import { MatDialog } from '@angular/material/dialog'
 import { MatSnackBar } from '@angular/material/snack-bar'
 
@@ -35,7 +36,7 @@ import { ViewSwitchComponent } from '../view/view-switch.component'
 @Component({
   selector: 'pageHeader',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MissionReadinessComponent, ViewSwitchComponent],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, MissionReadinessComponent, ViewSwitchComponent],
   templateUrl: './header.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./header.component.scss']

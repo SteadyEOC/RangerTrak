@@ -41,17 +41,63 @@ html[data-display] {
   .rt-header-actions,
   .rt-mission-info-panel,
   .status-cluster > .rt-mode-icon,
-  .status-cluster > .opPeriod,
-  .status-cluster > .status-divider,
   .status-cluster > .clock--scenario {
     display: none !important;
   }
 
-  // The mission name and the clock stay; the readiness dot stays because it is a warning.
+  // 11-16, John: the header is a strip pinned to the top of every Display and pop-out window: the mission
+  // name first, then the op period (elapsed; left), then the clock. The readiness dot stays because it is
+  // a warning. The page title stays at the left.
+  pageHeader {
+    position: sticky;
+    top     : 0;
+    z-index : 4500;
+    display : block;
+  }
+
+  // The title and strip sat flush against the top edge, and a read-only window's frame (8px in) clipped
+  // the title's top (seen 11-16 on the Radio log pop-out).
+  pageHeader .header {
+    padding-top: var(--rt-space-sm);
+  }
+
+  &[data-readonly] pageHeader .header {
+    padding-top: 16px;
+  }
+
   .display-mission {
-    display: inline;
-    font-weight: 700;
+    display          : inline;
+    order            : -1;
+    font-weight      : 700;
     margin-inline-end: 0.75em;
+  }
+
+  .status-cluster > .opPeriod {
+    order: 0;
+  }
+
+  // Collapsed: only the toggle button shows, at the top right, over the page.
+  &[data-display-strip='collapsed'] {
+    pageHeader .header {
+      background   : transparent;
+      border-bottom: none;
+      padding      : 0;
+      height       : 0;
+      overflow     : visible;
+    }
+
+    pageHeader .title,
+    pageHeader .status-cluster {
+      display: none !important;
+    }
+
+    .display-strip-toggle {
+      position     : fixed;
+      top          : 12px;
+      right        : 12px;
+      background   : var(--rt-surface);
+      box-shadow   : 0 1px 6px rgb(0 0 0 / 0.3);
+    }
   }
 
   // The status cluster is a click target that opens Entry; it is only a readout here.

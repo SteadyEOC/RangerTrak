@@ -612,13 +612,15 @@ options the page is holding back. Easy menus never hides something your
 mission already uses: once an entry has an attachment, **Attach** shows in Easy menus too.
 Switching changes only what is shown, never your data.
 
-**Display.** On Map, Radio log, Messages, Rangers & Teams and Summary, the **Display** button at the top shows the
-page for a big screen or a second monitor: larger type, and none of the buttons that change things. Filters, search and
-sort stay, and you can click rows to point at them (they clear when you leave). It affects that window only, does not
-change Easy or Full menus, and never changes your data. **Exit display** (top right; it fades when idle) or **Esc**
-brings the page back.
+**Display.** On Map, Radio log, Messages, Rangers & Teams and Summary, the **Display** button at the top opens a short
+menu: **Display here**, **Pop out** and **Full screen**. **Display here** shows the page for a big screen or a second
+monitor: larger type, and none of the buttons that change things. A strip pinned to the top keeps the mission name, the
+operational period (time gone and time left) and the clock in view; the arrow at its right folds it away and back.
+Filters, search and sort stay, and you can click rows to point at them (they clear when you leave). It affects that
+window only, does not change Easy or Full menus, and never changes your data. **Exit display** (bottom centre; it fades
+when idle) or **Esc** brings the page back.
 
-**Pop out.** Next to Display, **Pop out** opens a look-only copy of the page in its own window, for a second monitor or
+**Pop out.** In the same menu, **Pop out** opens a look-only copy of the page in its own window, for a second monitor or
 a projector. You can open several, such as Rangers & Teams and the Map side by side. Each has a coloured frame and a
 **Read-only** label, keeps up with your main window by itself (and says so if the main window is closed), and never
 saves anything: you keep working in the main window. **Close window** closes it. If RangerTrak says it is already open

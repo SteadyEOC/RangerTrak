@@ -512,6 +512,11 @@ html[data-fullscreen-fallback] {
     height    : 40px;
   }
 
+  // The Display menu's down arrow (11-16): tight against the label.
+  .rt-header-action .rt-header-action__caret {
+    margin-inline: -4px -8px;
+  }
+
   @media (max-width: 599.98px) {
     .rt-header-action {
       min-width : 44px;
