@@ -443,6 +443,9 @@ numbered circle; zoom in to separate them. Click a marker for detail.
 - **Offline maps** (a box under the map) is green when tiles are saved on this device and amber
   when nothing is. **Save this area for offline use**, **Remove saved tiles** and **Zoom to
   offline tiles** (shows the areas you have saved) are all in it.
+- **Go to my location** (the target button under the zoom buttons) moves the map to where this
+  device is, with a dot and a circle showing how sure the fix is. It moves the view only; it never
+  sets a report's location (the laptop is often not where the incident is). Tap it again to remove the dot.
 - **Ranger paths.** Each ranger's trail runs thin and faint (older) to thick and bright (newest), and
   the newest leg slowly flows toward the latest position.
 - **Show on map** (the other box under the map) switches the mission's own overlays and

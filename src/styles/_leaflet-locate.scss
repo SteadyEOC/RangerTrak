@@ -1,0 +1,71 @@
+// E-297: Go to my location (LocateControl in app/mapLeaflet/leaflet-locate-control.ts). Global, not
+// component-scoped, because Leaflet builds the control outside Angular (any Leaflet map can add it).
+.rt-locate.leaflet-bar {
+  display    : flex;
+  align-items: center;
+  gap        : var(--rt-space-xs);
+  border     : none;
+  box-shadow : none;
+  background : transparent;
+}
+
+.rt-locate__btn {
+  display        : flex !important;
+  align-items    : center;
+  justify-content: center;
+  width          : 34px !important;
+  height         : 34px !important;
+  border         : 2px solid rgba(0, 0, 0, 0.2);
+  border-radius  : 4px;
+  background     : #fff;
+  color          : #333;
+
+  .material-icons {
+    font-size: 20px;
+  }
+
+  &--busy .material-icons {
+    animation: rt-locate-pulse 1s ease-in-out infinite;
+  }
+
+  &--on {
+    color: #1a73e8;
+  }
+}
+
+.rt-locate__status:empty {
+  display: none;
+}
+
+.rt-locate__status {
+  max-width    : min(16rem, 60vw);
+  padding      : 2px 8px;
+  border-radius: 4px;
+  background   : rgba(255, 255, 255, 0.92);
+  color        : #222;
+  font-size    : 0.8125rem;
+  line-height  : 1.3;
+}
+
+// Leaflet SVG paths take their class on the <path>.
+path.rt-locate__accuracy {
+  stroke: #1a73e8;
+  fill  : #1a73e8;
+}
+
+path.rt-locate__dot {
+  stroke: #fff;
+  fill  : #1a73e8;
+}
+
+@keyframes rt-locate-pulse {
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rt-locate__btn--busy .material-icons { animation: none; }
+}
+
+@media print {
+  .rt-locate { display: none !important; }
+}

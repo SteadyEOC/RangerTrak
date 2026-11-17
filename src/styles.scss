@@ -21,6 +21,7 @@
 // the --rt-* custom properties tokens.scss defines.
 @use './styles/patterns';
 @use './styles/display';
+@use './styles/leaflet-locate';
 
 // The real theme. `mat.theme()` emits the `--mat-sys-*` system custom properties, which is
 // the token layer 19a item 1 said was missing on the Material side, and gives light/dark as

@@ -16,6 +16,7 @@ import { HEAT_GRADIENT, HEAT_OPACITY, HEAT_OPTIONS, heatPoints, heatRadiusForZoo
 import { LeafletOverlays, RING_STEPS_MILES, formatRingMiles } from './leaflet-overlays'
 import { LeafletOfflineController } from './leaflet-offline-controller'
 import { LeafletPrintController } from './leaflet-print-controller'
+import { LocateControl } from './leaflet-locate-control'
 
 //import pc from 'picocolors' // https://github.com/alexeyraspopov/picocolors
 import { Subscription, throwError } from 'rxjs'
@@ -501,9 +502,7 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.zoom.set(this.settings ? this.settings.leaflet.defZoom : 15)
 
 
-    // TODO: Allow centering map on user's position (geolocation): https://leafletjs.com/reference.html#locate-options
-
-    // https://leafletjs.com/reference.html#map-locate
+    // E-297: centring on this device's position is LocateControl's button (added below).
     this.lMap = new L.Map(this.mapContainer.nativeElement, {
       center: [this.settings ? this.settings.defLat : 0, this.settings ? this.settings.defLng : 0],
       zoom: this.settings ? this.settings.leaflet.defZoom : 15,
@@ -740,6 +739,9 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     // think in, rather than this app guessing which one that is.
     // 2026-09-30, John: "Longer scale at bottom?" - 200 px rather than Leaflet's 100 px default.
     new L.ScaleControl({ position: 'bottomleft', maxWidth: 200 }).addTo(this.lMap)
+
+    // E-297: Go to my location, under the zoom buttons. Moves the view only (see LocateControl).
+    new LocateControl('topleft').addTo(this.lMap)
 
     // 2026-09-30, John: E-138 - the 2026-08-26 "zoom out to the saved extent when the layers-menu
     // checkbox goes on" behaviour moved to onBtnZoomToOfflineTiles() (the "Zoom to offline
@@ -1471,149 +1473,6 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
 */
 
 
-  /**
-   * from https://tomik23.github.io/leaflet-examples/#49.location-button
-   */
-  AddLocationButton() {
-    /*
-    // create custom button
-  const customControl = L.Control.extend({
-    // button position
-    options: {
-      position: "topleft",
-      className: "locate-button leaflet-bar",
-      html: '<svg viewBox="0 0 24 24" xmlns="https://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>',
-      style:
-        "margin-top: 0; left: 0; display: flex; cursor: pointer; justify-content: center; font-size: 2rem;",
-    },
-
-    // method
-    onAdd: function (map) {
-      this._map = map;
-      const button = L.DomUtil.create("div");
-      L.DomEvent.disableClickPropagation(button);
-
-      button.title = "locate";
-      button.innerHTML = this.options.html;
-      button.className = this.options.className;
-      button.setAttribute("style", this.options.style);
-
-      L.DomEvent.on(button, "click", this._clicked, this);
-
-      return button;
-    },
-    _clicked: function (e) {
-      L.DomEvent.stopPropagation(e);
-
-      // this.removeLocate();
-
-      this._checkLocate();
-
-      return;
-    },
-    _checkLocate: function () {
-      return this._locateMap();
-    },
-
-    _locateMap: function () {
-      const locateActive = document.querySelector(".locate-button");
-      const locate = locateActive.classList.contains("locate-active");
-      // add/remove class from locate button
-      locateActive.classList[locate ? "remove" : "add"]("locate-active");
-
-      // remove class from button
-      // and stop watching location
-      if (locate) {
-        this.removeLocate();
-        this._map.stopLocate();
-        return;
-      }
-
-      // location on found
-      this._map.on("locationfound", this.onLocationFound, this);
-      // locataion on error
-      this._map.on("locationerror", this.onLocationError, this);
-
-      // start locate
-      this._map.locate({ setView: true, enableHighAccuracy: true });
-    },
-    onLocationFound: function (e) {
-      // add circle
-      this.addCircle(e).addTo(this.featureGroup()).addTo(map);
-
-      // add marker
-      this.addMarker(e).addTo(this.featureGroup()).addTo(map);
-
-      // add legend
-    },
-    // on location error
-    onLocationError: function (e) {
-      this.addLegend("Location access denied.");
-    },
-    // feature group
-    featureGroup: function () {
-      return new L.FeatureGroup();
-    },
-    // add legend
-    addLegend: function (text) {
-      const checkIfDescriotnExist = document.querySelector(".description");
-
-      if (checkIfDescriotnExist) {
-        checkIfDescriotnExist.textContent = text;
-        return;
-      }
-
-      const legend = new L.Control({ position: "bottomleft" });
-
-      legend.onAdd = function () {
-        let div = L.DomUtil.create("div", "description");
-        L.DomEvent.disableClickPropagation(div);
-        const textInfo = text;
-        div.insertAdjacentHTML("beforeend", textInfo);
-        return div;
-      };
-      legend.addTo(this._map);
-    },
-    addCircle: function ({ accuracy, latitude, longitude }) {
-      return new L.Circle([latitude, longitude], accuracy / 2, {
-        className: "circle-test",
-        weight: 2,
-        stroke: false,
-        fillColor: "#136aec",
-        fillOpacity: 0.15,
-      });
-    },
-    addMarker: function ({ latitude, longitude }) {
-      return new L.Marker([latitude, longitude], {
-        title: 'You are here',
-        icon: new L.DivIcon({
-          className: "located-animation",
-          iconSize: new L.Point(17, 17),
-          popupAnchor: [0, -15],
-        }),
-      }).bindPopup("You are here");
-    },
-    removeLocate: function () {
-      this._map.eachLayer(function (layer) {
-        if (layer instanceof L.Marker) {
-          const { icon } = layer.options;
-          if (icon?.options.className === "located-animation") {
-            map.removeLayer(layer);
-          }
-        }
-        if (layer instanceof L.Circle) {
-          if (layer.options.className === "circle-test") {
-            map.removeLayer(layer);
-          }
-        }
-      });
-    },
-  });
-
-  // adding new button to map controll
-  map.addControl(new customControl());
-  */
-  }
 
   /**
    * E-64/E-70 blocker: this class declared `implements OnDestroy` but never defined one,
