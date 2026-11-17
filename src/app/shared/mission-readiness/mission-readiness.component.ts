@@ -69,19 +69,20 @@ export class MissionReadinessComponent implements OnInit {
   // against.
   get tooltip(): string {
     const r = this.readiness
-    const line = (ok: boolean, label: string) => `${ok ? '✓' : '✗'} ${label}`
+    // E-299: an ignored check reads "– ... (ignored)".
+    const line = (ok: boolean, label: string, ignored = false) => ok ? `✓ ${label}` : ignored ? `– ${label} (ignored)` : `✗ ${label}`
     return [
       `Mission readiness: ${r.level()}`,
       line(r.missionNamed(), 'Mission named'),
       line(r.rosterLoaded(), 'Real roster loaded'),
       line(r.opPeriodCurrent(), 'Operating period current'),
-      line(r.offlineTilesSaved(), 'Offline map tiles saved (Leaflet)'),
+      line(r.offlineTilesSaved(), 'Offline map tiles saved (Leaflet)', r.isIgnored('offlineTiles')),
       ...(r.mapWarmedCounts()
         ? [line(r.bundledMapWarmed(), this.offlineBasemap.downloadProgress() === null
           ? 'Alternative map warmed (MapLibre)'
-          : `Downloading offline world map… ${this.offlineBasemap.downloadProgress()}%`)]
+          : `Downloading offline world map… ${this.offlineBasemap.downloadProgress()}%`, r.isIgnored('mapWarmed'))]
         : []),
-      line(r.storagePersisted(), 'Storage protected from eviction'),
+      line(r.storagePersisted(), 'Storage protected from eviction', r.isIgnored('storage')),
     ].join('\n')
   }
 

@@ -95,8 +95,8 @@
         <a class="rt-mission-info-panel__readiness-row" [routerLink]="item.route" [fragment]="item.fragment">
           <span class="rt-mission-info-panel__readiness-mark"
             [class.rt-mission-info-panel__readiness-mark--ok]="item.ok"
-            [class.rt-mission-info-panel__readiness-mark--bad]="!item.ok">{{ item.ok ? '✓' : '✗' }}</span>
-          {{ item.label }}
+            [class.rt-mission-info-panel__readiness-mark--bad]="!item.ok && !item.ignored">{{ item.ok ? '✓' : item.ignored ? '–' : '✗' }}</span>
+          {{ item.label }}@if (item.ignored) { (ignored)}
         </a>
         }
       </div>

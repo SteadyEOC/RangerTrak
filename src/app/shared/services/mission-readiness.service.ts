@@ -12,6 +12,30 @@ import { StoragePersistenceService } from './storage-persistence.service'
 export type ReadinessLevel = 'red' | 'amber' | 'green'
 
 /**
+ * E-299 (John 11-14): the readiness items a person may ignore, because they may not apply or can't be fixed on
+ * this device (a browser that never grants persistent storage, a laptop that will never use the backup map). An
+ * ignored item stops pulling the level down but stays listed, marked ignored. The two red items (mission named,
+ * real roster) and the op period are never ignorable: they are always fixable and always matter.
+ */
+export type IgnorableReadiness = 'offlineTiles' | 'mapWarmed' | 'storage'
+export const IGNORABLE_READINESS: readonly IgnorableReadiness[] = ['offlineTiles', 'mapWarmed', 'storage']
+
+/** sessionStorage: JSON array of IgnorableReadiness ids. This tab only; gone when it closes (John: "for this session"). */
+export const READINESS_IGNORED_KEY = 'rt-readiness-ignored'
+
+/** Reads the stored ignore list defensively: anything unknown or malformed is dropped. */
+export function parseIgnored(raw: string | null): Set<IgnorableReadiness> {
+  if (!raw) return new Set()
+  try {
+    const v: unknown = JSON.parse(raw)
+    if (!Array.isArray(v)) return new Set()
+    return new Set(v.filter((x): x is IgnorableReadiness => IGNORABLE_READINESS.includes(x as IgnorableReadiness)))
+  } catch {
+    return new Set()
+  }
+}
+
+/**
  * ADR D-32: a persistent readiness indicator reporting whether *this device* is actually
  * prepared for an unattended, offline mission - not whether the app is technically usable.
  * All six signals were already measurable with nothing new to persist; this is the service
@@ -57,15 +81,45 @@ export class MissionReadinessService {
   readonly mapWarmedCounts = computed(() =>
     this.view.isShown('maplibre', { mapEngineIsAlternative: this.mapEngine.engine() === 'maplibre' }))
 
+  /** E-299: the items ignored in this tab. */
+  readonly ignored = signal<ReadonlySet<IgnorableReadiness>>(this.loadIgnored())
+
+  isIgnored(id: IgnorableReadiness): boolean {
+    return this.ignored().has(id)
+  }
+
+  ignore(id: IgnorableReadiness): void {
+    this.setIgnored(new Set([...this.ignored(), id]))
+  }
+
+  unignore(id: IgnorableReadiness): void {
+    const next = new Set(this.ignored())
+    next.delete(id)
+    this.setIgnored(next)
+  }
+
+  private loadIgnored(): Set<IgnorableReadiness> {
+    try { return parseIgnored(sessionStorage.getItem(READINESS_IGNORED_KEY)) } catch { return new Set() }
+  }
+
+  private setIgnored(next: Set<IgnorableReadiness>): void {
+    this.ignored.set(next)
+    try {
+      if (next.size) sessionStorage.setItem(READINESS_IGNORED_KEY, JSON.stringify([...next]))
+      else sessionStorage.removeItem(READINESS_IGNORED_KEY)
+    } catch { /* private mode or a read-only window: the ignore still holds until reload */ }
+  }
+
   readonly level = computed<ReadinessLevel>(() => {
     if (!this.missionNamed() || !this.rosterLoaded()) {
       return 'red'
     }
+    const ign = this.ignored()
     if (
       !this.opPeriodCurrent() ||
-      !this.offlineTilesSaved() ||
-      (this.mapWarmedCounts() && !this.bundledMapWarmed()) ||
-      !this.storagePersisted()
+      (!this.offlineTilesSaved() && !ign.has('offlineTiles')) ||
+      (this.mapWarmedCounts() && !this.bundledMapWarmed() && !ign.has('mapWarmed')) ||
+      (!this.storagePersisted() && !ign.has('storage'))
     ) {
       return 'amber'
     }

@@ -18,12 +18,17 @@
     <mat-icon class="mission__readiness-icon" aria-hidden="true">warning</mat-icon>
     <div class="rt-alert__body">
       <p class="mission__readiness-heading">
-        {{ readinessGaps().length }} of 6 readiness checks
-        {{ readinessGaps().length === 1 ? 'is' : 'are' }} failing on this device
+        @if (activeGaps().length > 0) {
+        {{ activeGaps().length }} of {{ readinessTotal() }} readiness checks
+        {{ activeGaps().length === 1 ? 'is' : 'are' }} failing on this device
+        } @else {
+        Every failing readiness check is ignored in this tab
+        }
       </p>
       <p class="mission__readiness-sub">This is what the dot in the page header is counting.</p>
+      @if (activeGaps().length > 0) {
       <ul class="mission__readiness-list">
-        @for (gap of readinessGaps(); track gap.label) {
+        @for (gap of activeGaps(); track gap.label) {
         <li class="mission__readiness-item"
           [class.mission__readiness-item--red]="gap.severity === 'red'"
           [class.mission__readiness-item--amber]="gap.severity === 'amber'">
@@ -31,9 +36,31 @@
           @if (gap.link) {
           <a [routerLink]="gap.link">{{ gap.linkText }}</a>
           }
+          <!-- E-299: some checks can't be fixed on some devices; ignoring one lasts until this tab closes. -->
+          @if (gap.ignorable) {
+          <button matButton type="button" class="mission__readiness-ignore" [attr.data-testid]="'readiness-ignore-' + gap.ignorable"
+            title="Stop counting this check until this tab is closed" (click)="readiness.ignore(gap.ignorable)">
+            Ignore for now
+          </button>
+          }
         </li>
         }
       </ul>
+      }
+      @if (ignoredGaps().length > 0) {
+      <p class="mission__readiness-sub">Ignored until this tab is closed:</p>
+      <ul class="mission__readiness-list mission__readiness-list--ignored" data-testid="readiness-ignored-list">
+        @for (gap of ignoredGaps(); track gap.label) {
+        <li class="mission__readiness-item mission__readiness-item--ignored">
+          {{ gap.label }}
+          <button matButton type="button" class="mission__readiness-ignore" [attr.data-testid]="'readiness-unignore-' + gap.ignorable"
+            (click)="readiness.unignore(gap.ignorable!)">
+            Count it again
+          </button>
+        </li>
+        }
+      </ul>
+      }
     </div>
   </div>
   }

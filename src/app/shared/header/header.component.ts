@@ -337,14 +337,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly readinessItems = () => {
     const r = this.readiness
     return [
-      { ok: r.missionNamed(), label: 'Mission named', route: '/mission', fragment: 'readiness-mission-details' },
-      { ok: r.rosterLoaded(), label: 'Real roster loaded', route: '/rangers', fragment: 'rangersgrid' },
-      { ok: r.opPeriodCurrent(), label: 'Operating period current', route: '/mission', fragment: 'readiness-mission-details' },
-      { ok: r.offlineTilesSaved(), label: 'Offline map tiles saved (Leaflet)', route: '/map', fragment: 'readiness-offline-tiles' },
+      { ok: r.missionNamed(), ignored: false, label: 'Mission named', route: '/mission', fragment: 'readiness-mission-details' },
+      { ok: r.rosterLoaded(), ignored: false, label: 'Real roster loaded', route: '/rangers', fragment: 'rangersgrid' },
+      { ok: r.opPeriodCurrent(), ignored: false, label: 'Operating period current', route: '/mission', fragment: 'readiness-mission-details' },
+      // E-299: an ignored check (Mission page, "Ignore for now") shows a dash and "(ignored)" instead of ✗.
+      { ok: r.offlineTilesSaved(), ignored: !r.offlineTilesSaved() && r.isIgnored('offlineTiles'), label: 'Offline map tiles saved (Leaflet)', route: '/map', fragment: 'readiness-offline-tiles' },
       ...(r.mapWarmedCounts()
-        ? [{ ok: r.bundledMapWarmed(), label: this.mapWarmedLabel(), route: '/map', fragment: 'readiness-map-engine-switch' }]
+        ? [{ ok: r.bundledMapWarmed(), ignored: !r.bundledMapWarmed() && r.isIgnored('mapWarmed'), label: this.mapWarmedLabel(), route: '/map', fragment: 'readiness-map-engine-switch' }]
         : []),
-      { ok: r.storagePersisted(), label: 'Storage protected from eviction', route: '/mission', fragment: 'readiness-storage-protection' },
+      { ok: r.storagePersisted(), ignored: !r.storagePersisted() && r.isIgnored('storage'), label: 'Storage protected from eviction', route: '/mission', fragment: 'readiness-storage-protection' },
     ]
   }
 

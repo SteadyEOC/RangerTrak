@@ -41,7 +41,7 @@ import { PageComponent } from '../shared/page/page.component'
 import { TimePickerComponent } from '../shared/time-picker/time-picker.component'
 import { localFromScenarioInstant, scenarioTimeAt } from '../domain/scenario'
 import {
-  RadioLogStatusType, LocationCategoryType, LogService, MissionJournalService, MissionReadinessService,
+  RadioLogStatusType, LocationCategoryType, LogService, MissionJournalService, MissionReadinessService, IgnorableReadiness,
   MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, MissionService, MissionType, TacticalCallType, UsageStateService
 } from '../shared/services/'
 import { confirmReplaceMission } from '../shared/demo-picker/replace-guard'
@@ -221,7 +221,8 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
    */
   readonly readinessGaps = computed(() => {
     const r = this.readiness
-    const gaps: { label: string, severity: 'red' | 'amber', link?: string, linkText?: string }[] = []
+    const gaps: { label: string, severity: 'red' | 'amber', link?: string, linkText?: string, ignorable?: IgnorableReadiness, ignored?: boolean }[] = []
+    const ign = r.ignored()
     // Mission name and op period are edited right below this panel on this very page - read
     // them from the live (unsaved) missionModel rather than r.missionNamed()/opPeriodCurrent(),
     // which only update once the form is saved (MissionReadinessService tracks persisted
@@ -244,6 +245,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
       gaps.push({
         label: 'No offline map tiles saved on this device yet.', severity: 'amber',
         link: '/map', linkText: 'Save an area on the Map page',
+        ignorable: 'offlineTiles', ignored: ign.has('offlineTiles'),
       })
     }
     // E-298: Easy menus hides the MapLibre switch, so it must not be listed as a gap there (`mapWarmedCounts`).
@@ -251,13 +253,23 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
       gaps.push({
         label: 'Backup (MapLibre) map has not been opened on this device yet.', severity: 'amber',
         link: '/map', linkText: 'Open the Map page',
+        ignorable: 'mapWarmed', ignored: ign.has('mapWarmed'),
       })
     }
     if (!r.storagePersisted()) {
-      gaps.push({ label: 'Storage is not protected from eviction by the browser.', severity: 'amber' })
+      gaps.push({
+        label: 'Storage is not protected from eviction by the browser.', severity: 'amber',
+        ignorable: 'storage', ignored: ign.has('storage'),
+      })
     }
     return gaps
   })
+
+  /** E-299: the failing checks still counted, and the ones ignored in this tab (listed apart, with Undo). */
+  readonly activeGaps = computed(() => this.readinessGaps().filter(g => !g.ignored))
+  readonly ignoredGaps = computed(() => this.readinessGaps().filter(g => g.ignored))
+  /** 6 checks, or 5 where Easy menus leaves the backup map out (E-298). */
+  readonly readinessTotal = computed(() => this.readiness.mapWarmedCounts() ? 6 : 5)
 
   /** E-196 (D-66): the "Scenario time now" picker. It starts at the scenario time now showing,
    *  else at the real time; Set saves { realAt: now, scenarioAt: what is picked }. */

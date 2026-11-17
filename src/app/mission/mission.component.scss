@@ -90,6 +90,16 @@
   color      : inherit;
 }
 
+// E-299: an ignored check keeps its line, in the muted ink, with "Count it again".
+.mission__readiness-item--ignored {
+  color: var(--rt-ink-2);
+}
+
+.mission__readiness-ignore {
+  margin-left: 0.5em;
+  min-height : 32px;
+}
+
 // ── Autosave status (2026-09-30, John: E-145) ──────────────────────────────────────────
 // Replaces the action bar and its Save/Cancel buttons. Deliberately quiet: small, muted text,
 // only turning to the error colour when a field's value is being refused.

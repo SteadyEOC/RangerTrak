@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http'
 import { TestBed } from '@angular/core/testing'
 
 import { MapEngineService } from '../../map/map-engine.service'
-import { MissionReadinessService } from './mission-readiness.service'
+import { MissionReadinessService, READINESS_IGNORED_KEY, parseIgnored } from './mission-readiness.service'
 import { ViewService } from './view.service'
 // E-122 Phase 2a: this service's constructor transitively constructs RangerService et al.,
 // whose keys now live behind RecordStore rather than localStorage - reset for isolation, same
@@ -41,6 +41,45 @@ describe('MissionReadinessService', () => {
     service.bundledMapWarmed.set(ready)
     service.storagePersisted.set(ready)
   }
+
+  describe('ignoring a check (E-299)', () => {
+    afterEach(() => sessionStorage.removeItem(READINESS_IGNORED_KEY))
+
+    it('an ignored offline-tiles or storage gap no longer makes the level amber', () => {
+      setAll(true)
+      service.offlineTilesSaved.set(false)
+      service.storagePersisted.set(false)
+      service.ignore('offlineTiles')
+      expect(service.level()).toBe('amber')
+      service.ignore('storage')
+      expect(service.level()).toBe('green')
+      service.unignore('storage')
+      expect(service.level()).toBe('amber')
+    })
+
+    it('never hides a red gap or an expired op period', () => {
+      setAll(true)
+      service.ignore('offlineTiles'); service.ignore('mapWarmed'); service.ignore('storage')
+      service.opPeriodCurrent.set(false)
+      expect(service.level()).toBe('amber')
+      service.missionNamed.set(false)
+      expect(service.level()).toBe('red')
+    })
+
+    it('keeps the list in sessionStorage for this tab, and clears the key when empty', () => {
+      service.ignore('storage')
+      expect(JSON.parse(sessionStorage.getItem(READINESS_IGNORED_KEY)!)).toEqual(['storage'])
+      service.unignore('storage')
+      expect(sessionStorage.getItem(READINESS_IGNORED_KEY)).toBeNull()
+    })
+
+    it('reads a stored list defensively', () => {
+      expect([...parseIgnored('["storage","bogus",3]')]).toEqual(['storage'])
+      expect(parseIgnored('{').size).toBe(0)
+      expect(parseIgnored('{"a":1}').size).toBe(0)
+      expect(parseIgnored(null).size).toBe(0)
+    })
+  })
 
   it('is green only when all six signals pass', () => {
     setAll(true)
