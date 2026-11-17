@@ -42,4 +42,27 @@ describe('LeafletOfflineController.nearestSavedArea', () => {
     expect(area.getWest()).toBeCloseTo(10, 5)
     expect(area.getEast()).toBeCloseTo(10.03, 5)
   })
+
+  // E-308 (11-14 drill): coarse saved tiles (z4) span hundreds of km and used to merge far-apart areas.
+  const zTile = (south: number, west: number, size: number, z: number) => {
+    const r = new L.Rectangle([[south, west], [south + size, west + size]]) as unknown as { feature?: unknown } & L.Rectangle
+    ;(r as { feature?: unknown }).feature = { type: 'Feature', properties: { z } }
+    return r
+  }
+
+  it('finds areas from the most detailed saved tiles, so one coarse tile cannot merge them', () => {
+    const layer = new L.FeatureGroup([
+      zTile(30, -125, 20, 4), // one huge z4 tile over both places
+      zTile(36.05, -112.15, 0.01, 16),
+      zTile(47.40, -122.46, 0.01, 16),
+    ])
+    const vashon = LeafletOfflineController.nearestSavedArea(layer, new L.LatLng(47.4, -122.4))
+    expect(vashon.getSouth()).toBeCloseTo(47.40, 5)
+    expect(vashon.getNorth()).toBeCloseTo(47.41, 5)
+  })
+
+  it('lists the zooms saved over an area, coarsest first', () => {
+    const layer = new L.FeatureGroup([zTile(30, -125, 20, 4), zTile(47.40, -122.46, 0.01, 16), zTile(47.40, -122.46, 0.02, 15)])
+    expect(LeafletOfflineController.savedZoomsIn(layer, new L.LatLngBounds([47.40, -122.46], [47.41, -122.45]))).toEqual([4, 15, 16])
+  })
 })

@@ -684,10 +684,16 @@ export class LeafletOfflineController {
     const center = this.lMap.getCenter()
     const area = LeafletOfflineController.nearestSavedArea(layer, center)
     const here = this.lMap.getBounds().intersects(area)
-    this.lMap.fitBounds(area, { padding: [24, 24] })
+    // E-308: fit the area, but never further out than its coarsest saved zoom, so the map has tiles to draw.
+    const zooms = LeafletOfflineController.savedZoomsIn(layer, area)
+    const fitZoom = this.lMap.getBoundsZoom(area, false, new L.Point(48, 48))
+    const zoom = zooms.length ? Math.min(Math.max(fitZoom, zooms[0]), zooms[zooms.length - 1]) : fitZoom
+    this.lMap.setView(area.getCenter(), zoom)
     if (!here) {
       const km = Math.round(center.distanceTo(area.getCenter()) / 1000)
       this.host.note(`Nothing saved here. Showing your nearest saved area, about ${km.toLocaleString()} km away.`)
+    } else if (!navigator.onLine && zooms.length && !zooms.includes(this.lMap.getZoom())) {
+      this.host.note(`No saved map at this zoom. Saved zooms here: ${zooms.join(', ')}. Zoom in or out to one of them.`)
     }
   }
 
@@ -697,7 +703,15 @@ export class LeafletOfflineController {
    */
   static nearestSavedArea(layer: L.FeatureGroup, from: L.LatLng): L.LatLngBounds {
     let areas: L.LatLngBounds[] = []
+    // E-308 (11-14 drill): a save keeps a few coarse zoom levels too, and one z4 tile spans hundreds of km, so it
+    // touched every area and merged Grand Canyon with Vashon into one box shown at zoom 4, where nothing was drawn.
+    // Areas are therefore found from the most detailed saved tiles only (outlines from leaflet.offline carry z).
+    const zoomOf = (l: L.Layer) => (l as L.Layer & { feature?: { properties?: { z?: number } } }).feature?.properties?.z
+    let maxZ = -Infinity
+    layer.eachLayer(l => { const z = zoomOf(l); if (typeof z === 'number' && z > maxZ) maxZ = z })
     layer.eachLayer(l => {
+      const z = zoomOf(l)
+      if (Number.isFinite(maxZ) && typeof z === 'number' && z !== maxZ) return
       const b = (l as L.Polygon).getBounds?.()
       if (b?.isValid()) {
         areas.push(new L.LatLngBounds(b.getSouthWest(), b.getNorthEast()))
@@ -722,6 +736,17 @@ export class LeafletOfflineController {
       return layer.getBounds()
     }
     return areas.reduce((best, a) => from.distanceTo(a.getCenter()) < from.distanceTo(best.getCenter()) ? a : best)
+  }
+
+  /** E-308: the zoom levels saved in the tiles that overlap `area`, coarsest first; empty when the outlines carry none. */
+  static savedZoomsIn(layer: L.FeatureGroup, area: L.LatLngBounds): number[] {
+    const zooms = new Set<number>()
+    layer.eachLayer(l => {
+      const z = (l as L.Layer & { feature?: { properties?: { z?: number } } }).feature?.properties?.z
+      const b = (l as L.Polygon).getBounds?.()
+      if (typeof z === 'number' && b?.isValid() && b.intersects(area)) zooms.add(z)
+    })
+    return [...zooms].sort((a, b) => a - b)
   }
 
   /** Removes the layer and map listeners (the component's ngOnDestroy). */
