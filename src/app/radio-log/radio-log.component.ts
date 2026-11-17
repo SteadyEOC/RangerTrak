@@ -60,7 +60,7 @@ import { mediaSummary, PHOTOS_LEFT_OUT_MESSAGE } from '../domain/report-packet-f
 import {
   RadioLogService, RadioLogStatusType, RadioLogType, RadioLogEntryType, LogService,
   RangerService, MissionService, MissionType, statusColorValue, statusInkValue,
-  MissionLocationService, FieldModeService, RangerPhotoService
+  MissionLocationService, FieldModeService, RangerPhotoService, OperatorNameService, ActivityLogHeaderService
 } from '../shared/services'
 import { MatDialog } from '@angular/material/dialog'
 import { MatSnackBar } from '@angular/material/snack-bar'
@@ -612,6 +612,17 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   /** E-196 (D-66): the mode decides the catch-up wording and the import warnings. */
   protected usage = inject(UsageStateService)
   private aarNoteService = inject(AarNoteService)
+  private operatorName = inject(OperatorNameService)
+  private activityLogHeader = inject(ActivityLogHeaderService)
+
+  /**
+   * 11-16, John: the 309's "Prepared by". The operator typed on Entry this session (in memory, D-44),
+   * else the name on the ICS-214 header (the person keeping this log). Blank when neither is set, so the
+   * recipient hand-fills it; nothing is invented.
+   */
+  private preparedBy309(): string {
+    return this.operatorName.name().trim() || this.activityLogHeader.header().name.trim()
+  }
   protected journal = inject(MissionJournalService)
   private snackBar = inject(MatSnackBar)
 
@@ -1448,7 +1459,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       opPeriod: this.settings.opPeriod,
       opPeriodStart: this.settings.opPeriodStart,
       opPeriodEnd: this.settings.opPeriodEnd,
-    })
+    }, new Date(), this.preparedBy309())
     // E-194: images print their stored thumbnail beside the list; read before the block renders.
     const thumbs: Record<string, string> = {}
     for (const row of log.rows) {

@@ -20,6 +20,7 @@ import { AttachmentStoreService } from './attachment-store.service'
 import { AarNoteService } from './aar-note.service'
 import { MissionJournalService } from './mission-journal.service'
 import { ActivityLogHeaderService } from './activity-log-header.service'
+import { DEFAULT_ICS_POSITION, ICS214_MAX_RESOURCES, type ActivityLogHeader } from '../../domain/activity-log'
 import { RangerPhotoService } from './ranger-photo.service'
 import { DevicePrefsService } from './device-prefs.service'
 import { numberEntries } from '../../domain/msg-no'
@@ -74,6 +75,36 @@ type ScenarioData = {
   /** E-195: the op period the mission is in when loaded, when it is not the first (the
    *  default is "Op 1", starting just before the oldest report). */
   opPeriod?: { name: string, startMinutesAgo: number }
+}
+
+/**
+ * 11-16, John: a demo's printed ICS-214 should look filled in, not blank. Each demo names an invented
+ * home agency; the 214's "Name" is the scribe who logged the most rows, and Resources Assigned are the
+ * Command team (people, not the net-control station). All demo names are invented.
+ */
+export const DEMO_HOME_AGENCY: Record<SampleScenarioId, string> = {
+  'grand-canyon': 'South Rim Volunteer SAR (demo)',
+  vashon: 'Island CERT (demo)',
+  'state-fair': 'Fairgrounds Emergency Communications (demo)',
+  montecito: 'Coastal County ACS (demo)',
+  oso: 'North County ACS (demo)',
+  'near-me': 'Neighborhood CERT (demo)',
+}
+
+export function demoActivityLogHeader(scenario: SampleScenarioId, rows: readonly { operator?: string }[],
+  rangers: readonly RangerType[]): ActivityLogHeader {
+  const counts = new Map<string, number>()
+  for (const r of rows) {
+    const name = r.operator?.trim()
+    if (name) counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  const scribe = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
+  const homeAgency = DEMO_HOME_AGENCY[scenario]
+  const resources = rangers
+    .filter(r => /command/i.test(r.team) && !r.callsign.startsWith('!') && r.fullName && r.fullName !== scribe)
+    .slice(0, ICS214_MAX_RESOURCES)
+    .map(r => ({ name: r.fullName, icsPosition: r.role || 'Responder', homeAgency }))
+  return { name: scribe, icsPosition: DEFAULT_ICS_POSITION, homeAgency, resources }
 }
 
 /**
@@ -255,6 +286,11 @@ export class SampleDataService {
     await this.rangerPhotoService.clear()
     this.aarNoteService.deleteWhere(noteMatcher(clear))
     if (clear.has('header')) this.activityLogHeaderService.clear()
+    // 11-16: a demo brings a filled-in 214 header, unless the scribe kept one of their own.
+    const keptHeader = this.activityLogHeaderService.header()
+    if (clear.has('header') || (!keptHeader.name && !keptHeader.homeAgency && !keptHeader.resources.length)) {
+      this.activityLogHeaderService.save(demoActivityLogHeader(scenario, data.rows, rangers))
+    }
 
     this.journal.record('demo-loaded',
       `Loaded the "${scenario}" demo: ${data.rangers.length} rangers, `

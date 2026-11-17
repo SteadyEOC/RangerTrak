@@ -12,6 +12,7 @@ import {
   DEFAULT_SAMPLE_SCENARIO,
   SAMPLE_SCENARIOS,
   SampleDataService,
+  demoActivityLogHeader,
   SampleScenarioId,
 } from './sample-data.service'
 // E-122 Phase 2a: rangers/radioLog/locations now live behind RecordStore, not localStorage
@@ -323,14 +324,22 @@ describe('SampleDataService', () => {
 
       await TestBed.inject(SampleDataService).loadSampleMission('vashon')
 
-      // Defaults: the incident notes, lines and header go; the RangerTrak note stays.
+      // Defaults: the incident notes, lines and header go (11-16: the demo's own filled-in header
+      // replaces it); the RangerTrak note stays.
       expect(notes.notes().map((n) => n.text)).toEqual(['app note'])
-      expect(header.getCurrentHeader().name).toBe('')
+      const demoHeader = header.getCurrentHeader()
+      expect(demoHeader.name).not.toBe('Pat')
+      expect(demoHeader.name).not.toBe('')
+      expect(demoHeader.homeAgency).toContain('(demo)')
+      expect(demoHeader.icsPosition).toBe('Radio Operator')
+      expect(demoHeader.resources.length).toBeGreaterThan(0)
       expect(clearPhotos).toHaveBeenCalledTimes(1)
 
-      // Told to clear nothing optional: the note stays; photos are cleared regardless.
+      // Told to clear nothing optional: the note stays, and a header the scribe kept is not overwritten.
+      header.save({ name: 'Pat', icsPosition: 'Scribe', homeAgency: 'CERT', resources: [] })
       notes.addNote('another incident note', 'incident', 'Map')
       await TestBed.inject(SampleDataService).loadSampleMission('vashon', new Set())
+      expect(header.getCurrentHeader().name).toBe('Pat')
       expect(notes.notes().map((n) => n.text)).toEqual([
         'app note',
         'another incident note',
@@ -364,5 +373,25 @@ describe('SampleDataService', () => {
         expect(e.location.derivedFromAddress).toBe(false)
       })
     })
+  })
+})
+
+describe('demoActivityLogHeader (11-16)', () => {
+  const ranger = (callsign: string, fullName: string, team: string, role: string) =>
+    ({ callsign, fullName, team, role, phone: '', image: '', note: '' })
+
+  it('names the busiest scribe, the demo agency, and the Command team as resources', () => {
+    const h = demoActivityLogHeader('grand-canyon',
+      [{ operator: 'A' }, { operator: 'B' }, { operator: 'B' }, {}],
+      [ranger('IC-Actual', 'Dusty', 'Command', 'Incident Commander'), ranger('!CmdPost', 'Command Post', 'Command', 'Command'),
+        ranger('Below1', 'Canyon', 'Below-Rim', 'Team Lead'), ranger('Ops', 'B', 'Command', 'Ops')])
+    expect(h.name).toBe('B')
+    expect(h.icsPosition).toBe('Radio Operator')
+    expect(h.homeAgency).toBe('South Rim Volunteer SAR (demo)')
+    expect(h.resources).toEqual([{ name: 'Dusty', icsPosition: 'Incident Commander', homeAgency: 'South Rim Volunteer SAR (demo)' }])
+  })
+
+  it('every demo has a home agency marked as a demo', () => {
+    for (const sc of SAMPLE_SCENARIOS) expect(demoActivityLogHeader(sc.id, [], []).homeAgency).toMatch(/\(demo\)$/)
   })
 })
