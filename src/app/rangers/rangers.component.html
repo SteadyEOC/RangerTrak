@@ -160,6 +160,9 @@
           <mat-card-subtitle>Adds to the roster. It never removes anyone without asking.</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
+          <!-- E-294 (John 11-14): the roster for a day prepared in advance belongs in a Setup file, with the settings and Places. -->
+          <p class="meta" data-testid="rangers-setup-file-hint">Setting up ahead of time? <a routerLink="/mission" fragment="setup-file">Mission &gt; Setup file</a> (in Full menus)
+            saves this roster with the mission settings and Places in one file to load on each device.</p>
           <div class="rt-action-bar__buttons">
             <button matButton="filled" type="button" (click)="importRosterFile.click()"
               title="Add people from a spreadsheet (Excel or CSV), or from a RangerTrak file. Radio log entries and settings are not affected.">
