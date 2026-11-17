@@ -894,6 +894,14 @@ mat-slide-toggle {
   }
 }
 
+// 2026-11-16, John (pop-out screenshot): the Full menus edge (_patterns.scss .rt-advanced) on Heat map
+// and Range rings ran into the checkbox and the "Range rings" label. Same gap and rounding as the
+// map-page engine switch, so it reads as a bracket beside the control, not a bar on top of it.
+.map-box__row.rt-advanced {
+  padding-inline-start: 10px;
+  border-radius       : var(--rt-control-radius);
+}
+
 :host ::ng-deep .map-ring-spacing .mat-mdc-slider .mdc-slider__thumb,
 :host ::ng-deep .map-ring-spacing .mat-mdc-slider .mdc-slider__track--active_fill {
   transition: transform 0.2s ease-out;

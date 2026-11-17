@@ -10,12 +10,14 @@
 // coloured frame round the whole window, so it cannot be mistaken for the window that writes. The
 // "Read-only" label sits in the Display bar's own corner (display-bar.component.ts). Fixed, with a
 // four-digit z-index, so it is over the map and under nothing; clicks pass through it.
+// 2026-11-16, John: rounded inside corners. The box sits 8px in with a rounded edge, and its shadow
+// fills out to the window edge (the spread is wide enough to cover the window's square corners).
 html[data-readonly]::after {
   content: '';
   position: fixed;
-  inset: 0;
-  box-sizing: border-box;
-  border: 8px solid var(--rt-readonly);
+  inset: 8px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 40px var(--rt-readonly);
   pointer-events: none;
   z-index: 8000;
 }

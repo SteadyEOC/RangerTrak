@@ -6134,11 +6134,11 @@ async function checkPopOut() {
         exit: !!document.querySelector('[data-testid=display-exit]'),
         navbar: (() => { const e = document.querySelector('rangertrak-navbar'); return !!e && getComputedStyle(e).display !== 'none' })(),
         popout: !!document.querySelector('[data-testid=popout-open]'),
-        frame: (() => { const c = getComputedStyle(document.documentElement, '::after'); return [c.borderTopWidth, c.borderTopColor !== 'rgba(0, 0, 0, 0)' && c.borderTopStyle === 'solid'] })(),
+        frame: (() => { const c = getComputedStyle(document.documentElement, '::after'); return [c.top, c.boxShadow.includes('40px') && !c.boxShadow.includes('rgba(0, 0, 0, 0)'), parseFloat(c.borderTopLeftRadius) > 0] })(),
         gate: !!document.querySelector('.rt-tablock'),
       })`, sid)
       check('the pop-out is in Display and read-only (?display=1&popout=1)', [s.url.includes('display=1'), s.url.includes('popout=1'), s.display, s.readonly], [true, true, true, true])
-      check('the pop-out has a coloured frame (8px, a theme colour) and a "Read-only" label', [s.frame, s.label], [['8px', true], 'Read-only'])
+      check('the pop-out has a coloured frame (8px in, a theme colour, rounded inside corners) and a "Read-only" label', [s.frame, s.label], [['8px', true, true], 'Read-only'])
       check('the pop-out says "Close window", not "Exit display"', [/Close window$/.test(s.close ?? ''), s.exit], [true, false])
       check('the pop-out has no navbar, no Pop out button and no "already open" gate', [s.navbar, s.popout, s.gate], [false, false, false])
       check('the pop-out window title starts "Pop out - "', s.title.startsWith('Pop out - '), true)
