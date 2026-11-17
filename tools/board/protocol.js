@@ -466,7 +466,8 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     const last = reports.reduce((m, r) => Math.max(m, Date.parse(r && r.date) || 0), 0);
     return {
       claimed: !!claim,
-      scribe: claim ? claim.by.scribe || '(unnamed)' : '',
+      // E-291 (c): the same words as the claim line, and no brackets (the status line adds its own).
+      scribe: claim ? claim.by.scribe || 'a scribe with no name set' : '',
       claimedAt: claim ? Date.parse(claim.at) : 0,
       scribeSeenAt,
       viewers: viewerCount(),

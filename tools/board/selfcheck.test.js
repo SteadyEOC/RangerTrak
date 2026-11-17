@@ -300,3 +300,10 @@ test('askYesNo: y and yes are yes; anything else, and silence, is no', async () 
   assert.strictEqual(await attempt('yep'), false);
   assert.strictEqual(await attempt(null, 50), false, 'the timeout is a no');
 });
+
+test('E-291 (h): the Wi-Fi name from nmcli when iwgetid is missing (Pi OS trixie)', async () => {
+  const { readWifi, parseWifiNmcli } = require('./selfcheck');
+  assert.strictEqual(parseWifiNmcli('no:Other\nyes:Home\:Net\n'), 'Home:Net');
+  const run = async (cmd) => { if (cmd === 'iwgetid') throw new Error('ENOENT'); return { out: 'yes:Village Green\n' }; };
+  assert.strictEqual(await readWifi({ platform: 'linux', run }), 'Village Green');
+});

@@ -44,3 +44,12 @@ test('startStatusLine prints only when the line changed, and its timer does not 
   assert.match(out[2], /quiet since/);
   s.stop();
 });
+
+test('E-291 (b): a last report from another day shows its date', () => {
+  const { statusLine } = require('./statusline');
+  const now = new Date(2026, 10, 14, 10, 1).getTime();
+  const yesterday = new Date(2026, 10, 13, 10, 17).getTime();
+  const line = statusLine({ claimed: false, viewers: 0, lastReportAt: yesterday }, now);
+  assert.match(line, /Last report Nov 13 /);
+  assert.doesNotMatch(statusLine({ claimed: false, viewers: 0, lastReportAt: now - 60000 }, now), /Nov/);
+});

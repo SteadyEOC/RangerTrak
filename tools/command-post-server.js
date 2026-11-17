@@ -301,15 +301,30 @@ async function createServer({ port, cert, addresses = ['127.0.0.1'], name = '', 
 // often taken on a laptop that also runs a web server. Either way the answer is 8080, and the
 // address printed afterwards is the one that actually worked (D-61 item 2). A port forced with
 // --port / PORT is never second-guessed: it fails plainly if busy.
+// E-291 (g): why 443 was given up, so the self-check says the true reason ('EACCES' = no permission, not another
+// program). Set by listenWithFallback().
+let fallbackReason = '';
+
 async function listenWithFallback(opts, forcedPort) {
   if (forcedPort) return createServer({ ...opts, port: forcedPort });
   try {
     return await createServer({ ...opts, port: PREFERRED_PORT });
   } catch (e) {
     if (e.code !== 'EADDRINUSE' && e.code !== 'EACCES') throw e;
-    console.log(`Port ${PREFERRED_PORT} is ${e.code === 'EACCES' ? 'not permitted' : 'already in use'} on ${e.address || 'this machine'} - using ${FALLBACK_PORT} instead.`);
+    fallbackReason = e.code;
+    // E-291 (g): it listens on every address, so name the computer, not the address in the error (127.0.0.1).
+    console.log(`Port ${PREFERRED_PORT} is ${e.code === 'EACCES' ? 'not permitted' : 'already in use'} on this computer - using ${FALLBACK_PORT} instead.`);
     return createServer({ ...opts, port: FALLBACK_PORT });
   }
+}
+
+// E-291 (g): the self-check line when 443 needed permission rather than being taken.
+function noPermissionLine(port, other, platform = process.platform) {
+  if (platform === 'linux') {
+    return `· Linux lets only administrators use port ${port}, so RangerView uses ${other}; devices just add :${other} to the address. `
+      + `To use ${port} instead, run once: sudo setcap cap_net_bind_service=+ep $(readlink -f $(which node))`;
+  }
+  return `· This computer lets only administrators use port ${port}, so RangerView uses ${other}; devices just add :${other} to the address.`;
 }
 
 /**
@@ -329,10 +344,12 @@ function copyToClipboard(text) {
     } else {
       // Linux: no single guaranteed-installed clipboard tool: try the two most common,
       // don't treat either's absence as an error.
+      // E-291 (i): over SSH (no display) or with neither tool, nothing was copied, so say nothing about copying.
+      if (!process.env.DISPLAY && !process.env.WAYLAND_DISPLAY) return false;
       const xclip = spawnSync('xclip', ['-selection', 'clipboard'], { input: text });
-      if (xclip.error) {
-        spawnSync('xsel', ['--clipboard', '--input'], { input: text });
-      }
+      if (!xclip.error && xclip.status === 0) return true;
+      const xsel = spawnSync('xsel', ['--clipboard', '--input'], { input: text });
+      return !xsel.error && xsel.status === 0;
     }
     return true;
   } catch {
@@ -470,10 +487,10 @@ async function start() {
   const nets = os.networkInterfaces();
   const inUse = Object.keys(nets).filter((n) => !isVirtualAdapter(n) && (nets[n] || []).some((a) => reachable.includes(a.address)));
   const fellBack = !args.port && running.port !== PREFERRED_PORT;
-  const owner = fellBack ? await selfcheck.portOwner({ port: PREFERRED_PORT }) : '';
-  const portLine = fellBack
-    ? `✖ ${boardCause('port-taken', { port: PREFERRED_PORT, other: running.port, name: owner }).message}`
-    : '';
+  const owner = fellBack && fallbackReason !== 'EACCES' ? await selfcheck.portOwner({ port: PREFERRED_PORT }) : '';
+  const portLine = !fellBack ? ''
+    : fallbackReason === 'EACCES' ? noPermissionLine(PREFERRED_PORT, running.port)
+      : `✖ ${boardCause('port-taken', { port: PREFERRED_PORT, other: running.port, name: owner }).message}`;
   const runChecks = () => selfcheck.runSelfCheck({ port: running.port, inUse, program: process.execPath });
   let check = await runChecks();
   const listFor = (c) => selfcheck.formatSelfCheck({ check: c, wifi, virtual: found.virtual, portLine, inUse });

@@ -15,7 +15,11 @@ function statusLine(st, nowMs = Date.now()) {
   // so the line only changes when something real changes.
   else if (nowMs - st.scribeSeenAt <= SCRIBE_CONNECTED_MS) scribe = `connected (${st.scribe}, ${clock(st.claimedAt || st.scribeSeenAt)})`;
   else scribe = `quiet since ${clock(st.scribeSeenAt)}`;
-  const report = st.lastReportAt ? `Last report ${clock(st.lastReportAt)}` : 'No reports yet';
+  // E-291 (b): a report from another day says which day ("Last report 10:17 AM" read as this morning).
+  const sameDay = st.lastReportAt && new Date(st.lastReportAt).toDateString() === new Date(nowMs).toDateString();
+  const report = !st.lastReportAt ? 'No reports yet'
+    : sameDay ? `Last report ${clock(st.lastReportAt)}`
+      : `Last report ${new Date(st.lastReportAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} ${clock(st.lastReportAt)}`;
   return `Scribe: ${scribe} · Viewers: ${st.viewers} · ${report}`;
 }
 

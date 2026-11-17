@@ -54,6 +54,13 @@ function parseWifiLinux(out) {
   return String(out || '').split(/\r?\n/)[0].trim();
 }
 
+// `nmcli -t -f active,ssid dev wifi`: lines like "yes:HomeNet" / "no:Other"; the active one's name.
+function parseWifiNmcli(out) {
+  const line = String(out || '').split(/\r?\n/).find((l) => /^yes:/i.test(l.trim()));
+  // nmcli -t writes a ':' inside a name as '\:'.
+  return line ? line.trim().slice(4).replace(/\:/g, ':') : '';
+}
+
 const CATEGORY = { 0: 'Public', 1: 'Private', 2: 'Domain', Public: 'Public', Private: 'Private', DomainAuthenticated: 'Domain' };
 
 // `Get-NetConnectionProfile | Select-Object InterfaceAlias,NetworkCategory | ConvertTo-Json`: one object or an array.
@@ -231,7 +238,12 @@ async function readWifi({ platform = process.platform, run = runCommand } = {}) 
   try {
     if (platform === 'win32') return parseWifiWindows((await run('netsh', ['wlan', 'show', 'interfaces'])).out);
     if (platform === 'darwin') return parseWifiMac((await run('ipconfig', ['getsummary', 'en0'])).out);
-    return parseWifiLinux((await run('iwgetid', ['-r'])).out);
+    // E-291 (h): Pi OS 13 (trixie) has no iwgetid; NetworkManager's nmcli is there instead.
+    try {
+      const name = parseWifiLinux((await run('iwgetid', ['-r'])).out);
+      if (name) return name;
+    } catch { /* no iwgetid: try nmcli */ }
+    return parseWifiNmcli((await run('nmcli', ['-t', '-f', 'active,ssid', 'dev', 'wifi'])).out);
   } catch { return ''; }
 }
 
@@ -420,7 +432,7 @@ async function offerFixes({ check, isTTY = !!process.stdin.isTTY, ask = askYesNo
 }
 
 module.exports = {
-  runCommand, readWifi, runSelfCheck, portOwner, formatSelfCheck, offerFixes, offerableFixes, boxedAddress, askYesNo,
+  runCommand, readWifi, parseWifiNmcli, runSelfCheck, portOwner, formatSelfCheck, offerFixes, offerableFixes, boxedAddress, askYesNo,
   RULE_NAME, RULE_NAMES, fixCommands, elevatedInvocation, psQuote, publicProfilesInUse, describeOwner,
   firewallScript, parseFirewall, portCovered, firewallVerdict, profilesToJudge, looksWireless,
   parseWifiWindows, parseWifiMac, parseWifiLinux, parseNetProfiles, parseCount, parseNetstatPid,

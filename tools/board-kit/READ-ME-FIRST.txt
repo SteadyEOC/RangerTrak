@@ -27,6 +27,9 @@ BEFORE YOU GO (needs the Internet, once)
      Mac:     run the .pkg installer.
      Linux:   use your distribution's package manager or the nodejs.org instructions. Check
               with "node --version": it must print v24 or higher.
+     Raspberry Pi (Pi OS 13): nodejs.org's "Linux ARM64" download, unpacked into your
+              home folder, needs no administrator password. If the Wi-Fi from Raspberry Pi
+              Imager doesn't come up, pick it once from the desktop's network icon.
 2. Unzip RangerView into a folder you can find again, for example Documents\RangerView.
    Don't run it from inside the zip.
      Windows: right-click the zip, Extract All, Extract.
