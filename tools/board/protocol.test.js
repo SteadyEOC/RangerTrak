@@ -374,13 +374,21 @@ test('getOrCreateCert: names go in the SAN list, and a cert lacking today\'s nam
     const reused = await getOrCreateCert(['192.168.1.7'], ['rangerview.local'], dir);
     assert.strictEqual(reused.cert, first.cert, 'covered: reused');
 
-    const second = await getOrCreateCert(['192.168.1.7'], ['rangerview-2.local'], dir);
+    // E-288: the fallback names come with it, and a new network address keeps the same certificate.
+    assert.match(san(first), /DNS:rangerview-2\.local/)
+    assert.match(san(first), /DNS:rangerview-9\.local/)
+    const sameName2 = await getOrCreateCert(['192.168.1.7'], ['rangerview-2.local'], dir);
+    assert.strictEqual(sameName2.cert, first.cert, 'a fallback name is already covered');
+    const newNetwork = await getOrCreateCert(['10.0.0.44'], ['rangerview.local'], dir);
+    assert.strictEqual(newNetwork.cert, first.cert, 'a new address alone does not make a new certificate');
+
+    const second = await getOrCreateCert(['192.168.1.7'], ['ops.local'], dir);
     assert.notStrictEqual(second.cert, first.cert, 'new name: regenerated');
-    assert.match(san(second), /DNS:rangerview-2\.local/);
+    assert.match(san(second), /DNS:ops-2\.local/);
 
     // The pre-D-61 cache was a bare array of addresses: it has no names, so it is replaced once.
     fs.writeFileSync(path.join(dir, 'addresses.json'), JSON.stringify(['192.168.1.7']));
-    const upgraded = await getOrCreateCert(['192.168.1.7'], ['rangerview-2.local'], dir);
+    const upgraded = await getOrCreateCert(['192.168.1.7'], ['ops.local'], dir);
     assert.notStrictEqual(upgraded.cert, second.cert);
   } finally {
     run.cleanup();

@@ -181,6 +181,19 @@ function fallbackToSpaShell(res) {
  * lacks today's name is replaced. The cache file used to be a bare array of addresses; that
  * old shape reads as "addresses, no names", so the first run after upgrading regenerates once.
  */
+// E-288 (John 11-13: keep self-signed, accept once per device): a certificate covers the name and the fallback names
+// mdns.js may take (label-2 to label-9.local), so a second RangerView or a renamed one on the same laptop needs no new
+// certificate either.
+function withFallbackNames(names) {
+  const out = new Set();
+  for (const n of names) {
+    out.add(n);
+    const m = /^(.+?)(?:-\d+)?\.local$/i.exec(n);
+    if (m) { out.add(`${m[1]}.local`); for (let i = 2; i <= 9; i++) out.add(`${m[1]}-${i}.local`); }
+  }
+  return [...out];
+}
+
 async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
   const keyPath = path.join(certDir, 'key.pem');
   const certPath = path.join(certDir, 'cert.pem');
@@ -191,16 +204,22 @@ async function getOrCreateCert(addresses, names = [], certDir = CERT_DIR) {
       const cached = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
       const cachedAddresses = Array.isArray(cached) ? cached : cached.addresses || [];
       const cachedNames = Array.isArray(cached) ? [] : cached.names || [];
-      const stillCovered = addresses.every((a) => cachedAddresses.includes(a)) && names.every((n) => cachedNames.includes(n));
-      if (stillCovered) {
+      // E-288: only a NAME the certificate lacks makes a new one. A new network, hotspot or DHCP lease used to make
+      // every device accept a fresh certificate; now the name keeps working with no new warning, and only the
+      // numbered address (not in the old certificate) shows one extra warning, the same click as before.
+      if (names.every((n) => cachedNames.includes(n))) {
+        if (!addresses.every((a) => cachedAddresses.includes(a))) {
+          console.log('This network address is not in the RangerView certificate (the network changed). The name needs no new click; devices using the numbered address see one extra warning (Advanced, then Proceed).');
+        }
         return { key: fs.readFileSync(keyPath, 'utf8'), cert: fs.readFileSync(certPath, 'utf8') };
       }
-      console.log('Network address or RangerView name changed since the last cached certificate - generating a new one (every device will need to accept it once more).');
+      console.log('RangerView name changed since the last cached certificate - generating a new one (every device will need to accept it once more).');
     } catch (e) {
       console.log(`Cached certificate unreadable (${e.message}) - generating a new one.`);
     }
   }
 
+  names = withFallbackNames(names);
   const altNames = [
     { type: 2, value: 'localhost' }, // type 2 = DNS name
     ...names.map((value) => ({ type: 2, value })),
