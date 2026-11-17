@@ -30,7 +30,7 @@ export type JournalAction =
   | 'custom-map-stored' | 'custom-map-cleared'
   | 'setup-file-built' | 'setup-file-applied' | 'backup-exported' | 'backup-attachments-exported'
   | 'export-214' | 'aar-notes-cleared' | 'print-aar' | 'aar-exported' | 'print-summary' | 'summary-exported'
-  | 'board-publishing-changed' | 'board-password-changed' | 'board-attachment-sent' | 'feedback-sent'
+  | 'board-publishing-changed' | 'board-password-changed' | 'board-attachment-sent' | 'board-map-sent' | 'feedback-sent'
   | 'journal-exported' | 'debug-log-exported'
 
 export interface JournalEntry {
@@ -70,7 +70,7 @@ export const SUGGEST_FOR_214: ReadonlySet<JournalAction> = new Set<JournalAction
   'print-roster', 'photos-exported', 'roster-changes-exported', 'photos-imported', 'photos-cleared',
   'places-imported', 'places-exported', 'print-places', 'print-map', 'setup-file-built', 'setup-file-applied',
   'backup-exported', 'backup-attachments-exported', 'aar-notes-cleared', 'print-aar', 'aar-exported',
-  'print-summary', 'summary-exported', 'board-attachment-sent',
+  'print-summary', 'summary-exported', 'board-attachment-sent', 'board-map-sent',
 ])
 
 /** The hashed text: the fields in a fixed order, so the hash does not depend on key order. */

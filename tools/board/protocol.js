@@ -17,11 +17,13 @@
 //     X-Board-Key. Only the current key may publish or upload, so a takeover cuts the old device
 //     off at once.
 const crypto = require('crypto');
+const { parseRange } = require('./viewer-lib');
 
 const SHA_RE = /^[0-9a-f]{64}$/;
 const SMALL_BODY_LIMIT = 64 * 1024;
 const MISSION_BODY_LIMIT = 25 * 1024 * 1024; // as before: generous for JSON, cheap insurance
 const MB500 = 500 * 1024 * 1024;
+const MB250 = 250 * 1024 * 1024; // E-293 phase B: the area map's own cap, separate from the attachments
 const RATE_MAX_FAILS = 5;
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_BLOCK_MS = 60 * 1000;
@@ -87,13 +89,18 @@ function safeContentType(type) {
  * @param {string}   [o.wifi]           the Wi-Fi network's name when the server could read it, told to viewers
  *                                      so "Lost RangerView" can ask "Still on <name>?" (E-216)
  */
-function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, name = '', onClaim = () => {}, version = '', wifi = '', update = () => null } = {}) {
+function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, mapCap = MB250, name = '', onClaim = () => {}, version = '', wifi = '', update = () => null } = {}) {
   let claim = null; // { key, password, by, at, previous? }
   let snapshot = null;
   let refs = new Map(); // sha -> { size, type }, the non-removed attachment refs in the snapshot
   const requests = new Set();
   const originals = new Map(); // sha -> Buffer; Map keeps insertion order, so the first key is the oldest
   let originalsBytes = 0;
+  // E-293 phase B: the scribe's area map (a .pmtiles file), one at a time, in memory like everything else
+  // (D-61 item 8: a restart forgets it and the scribe sends it again). `wantedMap` is what the snapshot's
+  // `maps` lists; `heldMap` is the bytes, once uploaded and fingerprint-checked.
+  let wantedMap = null; // { sha, bytes, name, bbox }
+  let heldMap = null; // { sha, buf }
   const retiredKeys = []; // SHA-256 hex of keys superseded by a takeover, newest last, capped
   const attempts = new Map(); // remote address -> { fails: number[], blockedUntil }
   const board = { name };
@@ -188,6 +195,18 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     return true;
   }
 
+  // The first valid entry of the snapshot's `maps` (v1 sends at most one: the custom map or the demo's detail).
+  function wantedMapOf(mission) {
+    for (const m of Array.isArray(mission.maps) ? mission.maps : []) {
+      const sha = m && typeof m.sha256 === 'string' ? m.sha256.toLowerCase() : '';
+      const bytes = Number(m && m.bytes);
+      if (!SHA_RE.test(sha) || !Number.isInteger(bytes) || bytes <= 0) continue;
+      const bbox = Array.isArray(m.bbox) && m.bbox.length === 4 && m.bbox.every((n) => Number.isFinite(n)) ? m.bbox.map(Number) : null;
+      return { sha, bytes, name: cleanText(m.name, 120), bbox };
+    }
+    return null;
+  }
+
   function collectRefs(mission) {
     const found = new Map();
     for (const report of Array.isArray(mission.reports) ? mission.reports : []) {
@@ -273,13 +292,16 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     for (const [sha, buf] of [...originals]) {
       if (!refs.has(sha)) { originals.delete(sha); originalsBytes -= buf.length; }
     }
+    wantedMap = wantedMapOf(body);
+    if (heldMap && (!wantedMap || wantedMap.sha !== heldMap.sha)) heldMap = null;
     log(`[${new Date(now()).toLocaleTimeString()}] Published: "${cleanText(body.mission) || '(unnamed)'}" - ${(Array.isArray(body.reports) ? body.reports : []).length} report(s).`);
     send(res, 204);
   }
 
   function getRequests(req, res) {
     if (!keyed(req, res)) return;
-    send(res, 200, { state: 'ok', requests: [...requests] });
+    // E-293 phase B: also whether the area map the snapshot lists is still to be sent.
+    send(res, 200, { state: 'ok', requests: [...requests], ...(wantedMap ? { map: { sha256: wantedMap.sha, held: !!heldMap } } : {}) });
   }
 
   // Counts each address that read the mission in the last minute. Nothing else is kept about it.
@@ -351,6 +373,41 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     send(res, 204);
   }
 
+  // ---- E-293 phase B: the area map ----
+  function getMap(req, res, sha) {
+    if (!viewerAllowed(req, res)) return;
+    if (!heldMap || heldMap.sha !== sha) { send(res, 404, { error: 'That map is not held.' }); return; }
+    const size = heldMap.buf.length;
+    const base = {
+      'Content-Type': 'application/octet-stream', 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': 'sandbox',
+    };
+    const range = parseRange(req.headers.range, size);
+    if (range === 'bad') { res.writeHead(416, { ...base, 'Content-Range': `bytes */${size}`, 'Content-Length': 0 }); res.end(); return; }
+    const part = range || { start: 0, end: size - 1 };
+    res.writeHead(range ? 206 : 200, {
+      ...base, 'Content-Length': part.end - part.start + 1,
+      ...(range ? { 'Content-Range': `bytes ${part.start}-${part.end}/${size}` } : {}),
+    });
+    if (req.method === 'HEAD') { res.end(); return; }
+    res.end(heldMap.buf.subarray(part.start, part.end + 1));
+  }
+
+  async function postMap(req, res, sha) {
+    if (!keyed(req, res)) return;
+    if (!wantedMap || wantedMap.sha !== sha) { send(res, 404, { error: 'That map is not in the current snapshot.' }); return; }
+    if (wantedMap.bytes > mapCap) { send(res, 413, { error: 'The map is over the RangerView map limit.', limit: mapCap }); return; }
+    if (heldMap && heldMap.sha === sha) { send(res, 204); return; }
+    const buf = await readBody(req, wantedMap.bytes);
+    if (!keyed(req, res)) return;
+    if (!wantedMap || wantedMap.sha !== sha) { send(res, 404, { error: 'That map is no longer in the snapshot.' }); return; }
+    if (buf.length !== wantedMap.bytes) { send(res, 400, { error: 'Size does not match the snapshot.', expected: wantedMap.bytes, received: buf.length }); return; }
+    if (crypto.createHash('sha256').update(buf).digest('hex') !== sha) { send(res, 422, { error: 'Fingerprint does not match.' }); return; }
+    heldMap = { sha, buf };
+    log(`[${new Date(now()).toLocaleTimeString()}] Area map received: ${wantedMap.name || 'map'} (${(buf.length / 1048576).toFixed(1)} MB).`);
+    send(res, 204);
+  }
+
   async function route(req, res, urlPath) {
     const m = req.method;
     const wrongMethod = () => send(res, 405, { error: 'Method not allowed' });
@@ -362,6 +419,12 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     if (urlPath === '/api/mission') {
       if (m === 'POST') return postMission(req, res);
       return m === 'GET' ? getMission(req, res) : wrongMethod();
+    }
+    const mapPath = /^\/api\/map\/([^/]*)$/.exec(urlPath);
+    if (mapPath) {
+      if (!SHA_RE.test(mapPath[1])) { send(res, 400, { error: 'Not a SHA-256 fingerprint (64 lower-case hex digits).' }); return; }
+      if (m === 'GET' || m === 'HEAD') return getMap(req, res, mapPath[1]);
+      return m === 'POST' ? postMap(req, res, mapPath[1]) : wrongMethod();
     }
     const sha = /^\/api\/(request|attachments)\/([^/]*)$/.exec(urlPath);
     if (sha) {
@@ -378,8 +441,9 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   // the simplest correct answer, not a shortcut.
   function handle(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Board-Key, X-Board-Password');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Board-Key, X-Board-Password, Range');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
     route(req, res, req.url.split('?')[0]).catch((e) => {
       if (res.headersSent) { res.destroy(); return; }

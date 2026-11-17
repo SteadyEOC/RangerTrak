@@ -485,3 +485,69 @@ test('a wrong viewer password is not counted as a viewer', withBoard(async (b) =
   assert.strictEqual((await b.call('GET', '/api/mission', { headers: { 'X-Board-Password': 'hunter2' } })).status, 200);
   assert.strictEqual(b.server.viewerCount(), 1);
 }));
+
+// ---- E-293 phase B: the area map ----
+const mapSnapshot = (bytes, extra = {}) => ({ mission: 'Test Mission', reports: [], maps: [{ sha256: sha256(bytes), bytes: bytes.length, name: 'Area', bbox: [-122.5, 47.3, -122.4, 47.5], ...extra }] });
+
+test('area map: wanted, uploaded once, then read in byte ranges', withBoard(async (b) => {
+  const map = crypto.randomBytes(5000);
+  const sha = sha256(map);
+  const key = await claim(b);
+  assert.strictEqual((await publish(b, key, mapSnapshot(map))).status, 204);
+  assert.deepStrictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': key } })).json.map, { sha256: sha, held: false });
+  assert.strictEqual((await b.call('GET', `/api/map/${sha}`)).status, 404, 'nothing to read before the upload');
+
+  assert.strictEqual((await b.call('POST', `/api/map/${sha}`, { body: map })).status, 403, 'no key, no upload');
+  assert.strictEqual((await b.call('POST', `/api/map/${sha}`, { headers: { 'X-Board-Key': key }, body: map })).status, 204);
+  assert.deepStrictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': key } })).json.map, { sha256: sha, held: true });
+  assert.strictEqual((await b.call('POST', `/api/map/${sha}`, { headers: { 'X-Board-Key': key }, body: map })).status, 204, 'a repeat is harmless');
+
+  const whole = await b.call('GET', `/api/map/${sha}`);
+  assert.strictEqual(whole.status, 200);
+  assert.ok(whole.raw.equals(map));
+  assert.strictEqual(whole.headers['accept-ranges'], 'bytes');
+  assert.strictEqual(whole.headers['content-security-policy'], 'sandbox');
+
+  const part = await b.call('GET', `/api/map/${sha}`, { headers: { Range: 'bytes=100-199' } });
+  assert.strictEqual(part.status, 206);
+  assert.strictEqual(part.headers['content-range'], 'bytes 100-199/5000');
+  assert.ok(part.raw.equals(map.subarray(100, 200)));
+
+  const tail = await b.call('GET', `/api/map/${sha}`, { headers: { Range: 'bytes=-10' } });
+  assert.ok(tail.raw.equals(map.subarray(4990)));
+  assert.strictEqual((await b.call('GET', `/api/map/${sha}`, { headers: { Range: 'bytes=6000-7000' } })).status, 416);
+}));
+
+test('area map: refused when not in the snapshot, the wrong size, the wrong fingerprint or over the cap', withBoard(async (b) => {
+  const map = crypto.randomBytes(3000);
+  const sha = sha256(map);
+  const key = await claim(b);
+  const up = (s, body) => b.call('POST', `/api/map/${s}`, { headers: { 'X-Board-Key': key }, body });
+  assert.strictEqual((await up(sha, map)).status, 404, 'no snapshot lists it yet');
+  await publish(b, key, mapSnapshot(map));
+  assert.strictEqual((await up(sha, map.subarray(0, 2999))).status, 400);
+  const other = Buffer.from(map); other[0] ^= 1;
+  await publish(b, key, { ...mapSnapshot(map), maps: [{ sha256: sha, bytes: other.length }] });
+  assert.strictEqual((await up(sha, other)).status, 422);
+  assert.strictEqual((await b.call('POST', '/api/map/not-a-sha', { headers: { 'X-Board-Key': key }, body: map })).status, 400);
+}, { mapCap: 4000 }));
+
+test('area map: over the cap is refused', withBoard(async (b) => {
+  const map = crypto.randomBytes(5000);
+  const key = await claim(b);
+  await publish(b, key, mapSnapshot(map));
+  assert.strictEqual((await b.call('POST', `/api/map/${sha256(map)}`, { headers: { 'X-Board-Key': key }, body: map })).status, 413);
+}, { mapCap: 4000 }));
+
+test('area map: a snapshot without it, or with another, drops the held one; viewers need the password', withBoard(async (b) => {
+  const map = crypto.randomBytes(2000);
+  const sha = sha256(map);
+  const key = await claim(b, 'pw');
+  await publish(b, key, mapSnapshot(map));
+  await b.call('POST', `/api/map/${sha}`, { headers: { 'X-Board-Key': key }, body: map });
+  assert.strictEqual((await b.call('GET', `/api/map/${sha}`)).status, 401);
+  assert.strictEqual((await b.call('GET', `/api/map/${sha}`, { headers: { 'X-Board-Password': 'pw' } })).status, 200);
+  await publish(b, key, { mission: 'Test Mission', reports: [] });
+  assert.strictEqual((await b.call('GET', `/api/map/${sha}`, { headers: { 'X-Board-Password': 'pw' } })).status, 404);
+  assert.strictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': key } })).json.map, undefined);
+}));

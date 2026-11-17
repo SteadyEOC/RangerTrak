@@ -15,6 +15,9 @@ import { QUICK_FAIL_MS, diagnoseBoard } from '../../domain/board-diagnosis'
 import type { BoardDiagnosis, HelloResult, LocalNetworkPermission } from '../../domain/board-diagnosis'
 import { liveRefs } from '../../domain/attachments'
 import { AttachmentStoreService } from './attachment-store.service'
+import { areaMapRef, currentAreaMap, type AreaMap, type AreaMapRef } from './board-area-map'
+import { CustomPmtilesService } from './custom-pmtiles.service'
+import { MissionLocationService } from './mission-location.service'
 import { DevicePrefsService } from './device-prefs.service'
 import { LogService } from './log.service'
 import { MissionJournalService } from './mission-journal.service'
@@ -89,6 +92,10 @@ export type CommandPostReport = {
 }
 
 export type CommandPostMission = {
+  /** E-293 phase B: the area map RangerView should hold for viewers (at most one); empty when none. */
+  maps?: AreaMapRef[]
+  /** E-293 phase C (Q70 yes): the mission's Places, drawn on the viewer's map. Name, kind and position only. */
+  places?: { name: string, type: string, lat: number, lng: number }[]
   publishedAt: string
   mission: string
   event: string
@@ -146,6 +153,11 @@ export class CommandPostPublishService implements OnDestroy {
   /** Originals being uploaded or waiting to be: a fingerprint is never queued twice. */
   private uploadQueue: string[] = []
   private uploading = false
+  // E-293 phase B: the area map listed in the last snapshot, and whether it is on its way up.
+  private customPmtiles = inject(CustomPmtilesService)
+  private places = inject(MissionLocationService)
+  private areaMap: AreaMap | null = null
+  private mapUploading = false
   private journal = inject(MissionJournalService)
 
   constructor(
@@ -444,6 +456,8 @@ export class CommandPostPublishService implements OnDestroy {
       if (read.kind === 'ok') {
         const asked = (reply.body as { requests?: unknown } | null)?.requests
         if (Array.isArray(asked)) this.queueUploads(asked, usedKey)
+        const map = (reply.body as { map?: { sha256?: unknown, held?: unknown } } | null)?.map
+        if (map && map.held === false && typeof map.sha256 === 'string') void this.uploadMap(map.sha256, usedKey)
         return
       }
       if (read.kind !== 'other') this.onKeyedRefusal(read, usedKey)
@@ -493,6 +507,30 @@ export class CommandPostPublishService implements OnDestroy {
     if (read.kind === 'ok') this.journal.record('board-attachment-sent', 'Sent 1 attachment to RangerView.')
     else if (read.kind === 'other') this.log.warn(`RangerView attachment refused (HTTP ${read.status}).`, this.id)
     else this.onKeyedRefusal(read, usedKey)
+  }
+
+  /**
+   * E-293 phase B: sends the area map once, when RangerView says the snapshot lists it and it is not held yet
+   * (after the first publish, after a RangerView restart, or when the map changed). One upload at a time.
+   */
+  private async uploadMap(sha: string, usedKey: string): Promise<void> {
+    const map = this.areaMap
+    const base = this.baseOf(this.settings)
+    if (this.mapUploading || !map || map.sha256 !== sha || !base) return
+    this.mapUploading = true
+    try {
+      const reply = await this.call(base, 'POST', `/api/map/${sha}`, {
+        headers: { 'Content-Type': 'application/octet-stream' }, key: usedKey, body: map.blob,
+      })
+      const read = readKeyedReply(reply.status, reply.body)
+      if (read.kind === 'ok') this.journal.record('board-map-sent', `Sent the area map (${map.name}) to RangerView.`)
+      else if (read.kind === 'other') this.log.warn(`RangerView refused the area map (HTTP ${read.status}).`, this.id)
+      else this.onKeyedRefusal(read, usedKey)
+    } catch (e) {
+      this.log.warn(`RangerView area map not sent (${e})`, this.id)
+    } finally {
+      this.mapUploading = false
+    }
   }
 
   /** The stored 240 px thumbnail as a data URL, read once per fingerprint. Images only; '' when none. */
@@ -653,7 +691,13 @@ export class CommandPostPublishService implements OnDestroy {
       for (const r of radioLog.logEntries) for (const a of liveRefs(r)) await this.thumbOf(a.sha256, a.type)
     }
     const thumbs = new Map([...this.thumbCache].filter(([, url]) => url))
+    await this.customPmtiles.whenReady()
+    this.areaMap = await currentAreaMap(this.customPmtiles.active())
     const payload: CommandPostMission = {
+      maps: this.areaMap ? [areaMapRef(this.areaMap)] : [],
+      places: this.places.getCurrentLocations()
+        .filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lng))
+        .map(p => ({ name: p.name ?? '', type: p.type ?? '', lat: p.lat, lng: p.lng })),
       publishedAt: new Date().toISOString(),
       mission: settings.mission,
       event: settings.event,

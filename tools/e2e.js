@@ -5728,6 +5728,30 @@ async function checkBoard(downloads) {
     check('RangerView holds the report, claimed by device A with the password', [first?.board?.by?.mission, first?.board?.open], ['E2E RangerView', false])
     check('the snapshot carries the attachment reference and a JPEG thumbnail',
       [first?.reports?.[0]?.attachments?.[0]?.sha256, String(first?.reports?.[0]?.attachments?.[0]?.thumb || '').startsWith('data:image/jpeg;base64,')], [pngSha, true])
+    check('E-293 phase C: the snapshot carries the Places list (an array)', Array.isArray(first?.places), true)
+
+    // ── E-293 phase B: the area map. With a demo marked as loaded, the app sends that demo's street-detail file
+    // once; RangerView holds it and serves it in byte ranges at /api/map/<fingerprint>. ──
+    {
+      const detail = fs.readdirSync(path.join(__dirname, '..', 'src', 'assets', 'maps')).find(f => /^demo-state-fair-.*\.pmtiles$/.test(f))
+      const detailSha = detail ? crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, '..', 'src', 'assets', 'maps', detail))).digest('hex') : ''
+      await evaluate(`localStorage.setItem('rangertrak-demo-scenario', 'state-fair')`)
+      await goto('/')
+      const withMap = await boardUntil(b => (b.maps || []).length > 0, 25)
+      check('E-293 B: the snapshot lists the demo area map, with its fingerprint and size',
+        [withMap?.maps?.[0]?.sha256, withMap?.maps?.[0]?.bytes > 0], [detailSha, true])
+      let held = 0
+      for (let i = 0; i < 40 && held !== 200; i++) { held = (await boardGet(`/api/map/${detailSha}`)).status; if (held !== 200) await sleep(500) }
+      check('E-293 B: RangerView receives the area map from the scribe (GET /api/map/<sha> answers 200)', held, 200)
+      const ranged = await new Promise(resolve => {
+        https.get({ host: '127.0.0.1', port: BOARD_PORT, path: `/api/map/${detailSha}`, agent, headers: { 'X-Board-Password': PASS, Range: 'bytes=0-6' } }, res => {
+          const chunks = []; res.on('data', c => chunks.push(c)); res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString('latin1') }))
+        }).on('error', () => resolve({ status: 0, body: '' }))
+      })
+      check('E-293 B: a byte range of the map comes back 206 and starts with the PMTiles magic', [ranged.status, ranged.body], [206, 'PMTiles'])
+      await evaluate(`localStorage.removeItem('rangertrak-demo-scenario')`)
+      await goto('/')
+    }
     check('a viewer with no password is refused', (await boardGet('/api/mission', '')).status, 401)
 
     // John 10-28 / E-255: the card says how to run RangerView on this computer, and device A's 127.0.0.1

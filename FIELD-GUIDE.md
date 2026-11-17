@@ -544,6 +544,11 @@ scribe, the number of viewers or the latest report changes. On a viewer's screen
 - **Scribe quiet** means RangerView is fine but the scribe's device has not checked in for over
   2 minutes.
 
+**The viewer's Map.** Viewers have a **Map** tab: a world map with a marker for each located report and
+the mission's Places. If you use your own map file, or a demo, RangerTrak sends that area's street
+detail to RangerView once (again only if RangerView restarts or the map changes). On a wide screen,
+**Log + map** shows both side by side, and **Follow newest** keeps the latest report in view.
+
 ### Handing over to another scribe
 
 There are two ways, depending on whether the other device is blank:

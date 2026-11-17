@@ -211,6 +211,26 @@
   #mapPanel[hidden] { display: none; }
   #mapNote { margin: 0 0 0.5rem; color: var(--ink-2); }
   #mapBox { height: 62vh; min-height: 20rem; border: 1px solid var(--line); border-radius: 6px; background: #e0e0e0; }
+  /* E-293 phase C: Log + map side by side, offered only where there is room (a TV, a laptop's second screen). */
+  #tabBoth { display: none; }
+  @media (min-width: 1100px) { #tabBoth { display: inline-block; } }
+  @media (min-width: 1100px) {
+    body.view-both .both-wrap { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
+    body.view-both #mapPanel { position: sticky; top: 0.5rem; }
+    body.view-both #mapBox { height: calc(100vh - 12rem); }
+  }
+  .map-tools { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0 0 0.5rem; }
+  .map-tools label { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 44px; cursor: pointer; }
+  .map-tools input { width: 20px; height: 20px; }
+  .place-pin { width: 44px; height: 44px; padding: 0; border: none; background: none; cursor: pointer; position: relative; }
+  .place-pin::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+    transform: rotate(45deg); background: #6a3d9a; border: 2px solid #fff; box-shadow: 0 0 0 1px #000;
+  }
+  .place-pin span {
+    position: absolute; left: 34px; top: 12px; white-space: nowrap; font: 600 0.75rem/1.2 system-ui, sans-serif;
+    color: #1a1a1a; background: rgba(255, 255, 255, 0.85); padding: 1px 4px; border-radius: 3px; pointer-events: none;
+  }
   .pin {
     --pin: light-dark(#55636F, #93A3B1);
     width: 44px; height: 44px; padding: 0; border: none; background: none; cursor: pointer; position: relative;
@@ -270,6 +290,7 @@
   <button id="tabLog" type="button" role="tab" aria-selected="true" aria-controls="logPanel" data-view="log">Radio log</button>
   <button id="tabMsgs" type="button" role="tab" aria-selected="false" aria-controls="logPanel" data-view="msgs">ICS-213 messages</button>
   <button id="tabMap" type="button" role="tab" aria-selected="false" aria-controls="mapPanel" data-view="map">Map</button>
+  <button id="tabBoth" type="button" role="tab" aria-selected="false" aria-controls="logPanel mapPanel" data-view="both">Log + map</button>
 </div>
 
 <div class="controls">
@@ -277,6 +298,7 @@
   <button id="markedOnly" type="button" aria-pressed="false" title="Show only the reports marked with ★ on this device">★ Marked only</button>
 </div>
 
+<div class="both-wrap">
 <div class="table-scroll" id="logPanel" role="tabpanel">
   <table>
     <caption>Read-only. Tap a heading to sort; tap ☆ to mark a report to come back to. Filter, sort and marks affect only this screen, and marks are kept on this device only - the scribe and other viewers never see them.</caption>
@@ -290,8 +312,13 @@
 <p id="emptyState" class="empty" hidden>No reports match.</p>
 
 <div id="mapPanel" role="tabpanel" aria-label="Map of the reports" hidden>
+  <div class="map-tools">
+    <label><input id="followNewest" type="checkbox"> Follow newest</label>
+    <label><input id="showPlaces" type="checkbox" checked> Places</label>
+  </div>
   <p id="mapNote" role="status"></p>
   <div id="mapBox"></div>
+</div>
 </div>
 
 <footer class="board-foot meta meta--small">
@@ -434,13 +461,14 @@
   function setView(v) {
     view = v;
     // The map is not remembered: opening RangerView again starts on the log and loads nothing extra.
-    if (v !== 'map') { try { localStorage.setItem('boardView', v); } catch (e) { /* kept for this visit only */ } }
+    if (v !== 'map' && v !== 'both') { try { localStorage.setItem('boardView', v); } catch (e) { /* kept for this visit only */ } }
+    document.body.classList.toggle('view-both', v === 'both');
     var keys = (COLUMNS[v] || COLUMNS.log).map(function (c) { return c[0]; });
     if (keys.indexOf(sortKey) === -1) { sortKey = 'time'; sortDir = -1; }
     filterEl.placeholder = v === 'msgs' ? 'Filter by number, station, To, subject, or message…'
       : 'Filter by number, callsign, status, or message…';
     render();
-    if (v === 'map') { openMap(); }
+    if (v === 'map' || v === 'both') { openMap(); }
   }
   for (var ti = 0; ti < tabButtons.length; ti++) {
     tabButtons[ti].addEventListener('click', function (ev) { setView(ev.currentTarget.getAttribute('data-view')); });
@@ -654,8 +682,9 @@
   function render() {
     drawHead();
     var onMap = view === 'map';
+    var both = view === 'both';
     logPanelEl.hidden = onMap;
-    mapPanelEl.hidden = !onMap;
+    mapPanelEl.hidden = !onMap && !both;
     if (onMap) { emptyEl.hidden = true; }
     if (!latest) {
       if (onMap) { updateMap([]); return; }
@@ -688,6 +717,7 @@
     }
     reports.sort(compareReports);
     if (onMap) { updateMap(reports); return; }
+    if (both) { updateMap(reports); }
 
     if (!reports.length) {
       rowsEl.innerHTML = '';
@@ -729,7 +759,8 @@
   // ---- the Map tab (E-293 phase A) ----
   // Nothing is fetched until the tab is first opened. The map code (MapLibre), the PMTiles reader and the
   // world base map all come from RangerView itself, at /view-lib/: there is no Internet at the command post.
-  // The scribe's own area maps are a later phase; for now this is the world map and a marker per located report.
+  // E-293 phase B: when the scribe's RangerTrak has sent its area map (a custom map, or a demo's street detail), it is
+  // drawn over the world base, read in byte ranges from /api/map/<fingerprint>.
   var LIB = '/view-lib/';
   var STATUS_KEYS = {
     'normal': 'normal', 'location report': 'location-report', 'evidence report': 'evidence-report',
@@ -743,6 +774,51 @@
   var pins = {};            // report id -> { marker, sig }
   var mapReports = [];      // the reports last drawn
   var mapNoteEl = document.getElementById('mapNote');
+  var mapProtocol = null;   // the PMTiles protocol, so the area map can be added to it later
+  var areaSha = null;       // the area map now drawn, if any
+  var areaChecking = false;
+  var AREA_LAYERS = ['area-earth', 'area-water', 'area-landuse', 'area-roads', 'area-buildings'];
+  // E-293 phase C: Follow newest (for a TV: the map keeps the latest report in view) and the scribe's Places.
+  // Both choices are this screen's own, kept in its localStorage like the theme.
+  var followEl = document.getElementById('followNewest');
+  var placesEl = document.getElementById('showPlaces');
+  var followedId = null;
+  var placePins = {};       // place key -> marker
+  try { followEl.checked = localStorage.getItem('boardFollow') === '1'; placesEl.checked = localStorage.getItem('boardPlaces') !== '0'; } catch (e) { /* defaults */ }
+  followEl.addEventListener('change', function () {
+    try { localStorage.setItem('boardFollow', followEl.checked ? '1' : '0'); } catch (e) { /* this visit only */ }
+    followedId = null;
+    updateMap(mapReports);
+  });
+  placesEl.addEventListener('change', function () {
+    try { localStorage.setItem('boardPlaces', placesEl.checked ? '1' : '0'); } catch (e) { /* this visit only */ }
+    updatePlaces();
+  });
+
+  // The scribe's Places (the snapshot's `places`), as small labelled diamonds under the report markers.
+  function updatePlaces() {
+    if (!map || !maplib) { return; }
+    var list = placesEl.checked && latest && Array.isArray(latest.places) ? latest.places.filter(function (p) {
+      return p && typeof p.lat === 'number' && typeof p.lng === 'number' && isFinite(p.lat) && isFinite(p.lng);
+    }) : [];
+    var keep = {};
+    list.forEach(function (p) {
+      var key = [p.name, p.lat, p.lng].join('|');
+      keep[key] = true;
+      if (placePins[key]) { return; }
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'place-pin';
+      el.setAttribute('aria-label', 'Place: ' + (p.name || 'unnamed') + (p.type ? ' (' + p.type + ')' : ''));
+      var label = document.createElement('span');
+      label.textContent = p.name || '';
+      el.appendChild(label);
+      placePins[key] = new maplib.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map);
+    });
+    Object.keys(placePins).forEach(function (key) {
+      if (!keep[key]) { placePins[key].remove(); delete placePins[key]; }
+    });
+  }
 
   function loadMapLibs() {
     if (mapLoading) { return mapLoading; }
@@ -760,20 +836,49 @@
     return mapLoading;
   }
 
+  // The same five layers for the world base and for an area map (both use the OpenStreetMap layer names).
+  function baseLayers(src, prefix) {
+    return [
+      { id: prefix + 'earth', type: 'fill', source: src, 'source-layer': 'earth', paint: { 'fill-color': '#f2e9d8' } },
+      { id: prefix + 'water', type: 'fill', source: src, 'source-layer': 'water', paint: { 'fill-color': '#8ec6ec' } },
+      { id: prefix + 'landuse', type: 'fill', source: src, 'source-layer': 'landuse', paint: { 'fill-color': '#c8e6c0' } },
+      { id: prefix + 'roads', type: 'line', source: src, 'source-layer': 'roads', paint: { 'line-color': '#888', 'line-width': 1 } },
+      { id: prefix + 'buildings', type: 'fill', source: src, 'source-layer': 'buildings', paint: { 'fill-color': '#c0a080' } }
+    ];
+  }
+
   function mapStyle() {
-    var src = 'basemap';
     return {
       version: 8,
       sources: { basemap: { type: 'vector', url: 'pmtiles://' + LIB + 'world.pmtiles', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' } },
-      layers: [
-        { id: 'bg', type: 'background', paint: { 'background-color': '#e0e0e0' } },
-        { id: 'earth', type: 'fill', source: src, 'source-layer': 'earth', paint: { 'fill-color': '#f2e9d8' } },
-        { id: 'water', type: 'fill', source: src, 'source-layer': 'water', paint: { 'fill-color': '#8ec6ec' } },
-        { id: 'landuse', type: 'fill', source: src, 'source-layer': 'landuse', paint: { 'fill-color': '#c8e6c0' } },
-        { id: 'roads', type: 'line', source: src, 'source-layer': 'roads', paint: { 'line-color': '#888', 'line-width': 1 } },
-        { id: 'buildings', type: 'fill', source: src, 'source-layer': 'buildings', paint: { 'fill-color': '#c0a080' } }
-      ]
+      layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#e0e0e0' } }].concat(baseLayers('basemap', ''))
     };
+  }
+
+  // E-293 phase B: adds (or swaps, or removes) the scribe's area map. It is listed in the snapshot before it has
+  // finished uploading, so it is added only once RangerView answers that it holds it; until then it is tried again
+  // on the next poll.
+  function syncAreaMap() {
+    if (!map || !maplib || !mapProtocol || areaChecking || !map.isStyleLoaded()) { return; }
+    var listed = latest && Array.isArray(latest.maps) ? latest.maps[0] : null;
+    var sha = listed && SHA_RE.test(listed.sha256 || '') ? listed.sha256 : null;
+    if (sha === areaSha) { return; }
+    AREA_LAYERS.forEach(function (id) { if (map.getLayer(id)) { map.removeLayer(id); } });
+    if (map.getSource('area')) { map.removeSource('area'); }
+    areaSha = null;
+    if (!sha) { return; }
+    var url = '/api/map/' + sha;
+    areaChecking = true;
+    api(url, { method: 'HEAD' }).then(function (res) {
+      areaChecking = false;
+      if (!res.ok || !map || areaSha) { return; }
+      var headers = new Headers();
+      if (password) { headers.set('X-Board-Password', password); }
+      mapProtocol.add(new pmtiles.PMTiles(new pmtiles.FetchSource(location.origin + url, headers), new pmtiles.ResolvedValueCache()));
+      map.addSource('area', { type: 'vector', url: 'pmtiles://' + location.origin + url });
+      baseLayers('area', 'area-').forEach(function (layer) { map.addLayer(layer); });
+      areaSha = sha;
+    }).catch(function () { areaChecking = false; });
   }
 
   function openMap() {
@@ -782,6 +887,7 @@
     loadMapLibs().then(function () {
       if (map) { return; }
       var protocol = new pmtiles.Protocol();
+      mapProtocol = protocol;
       // The same cache choice the app makes: a failed range read is never remembered as pending.
       protocol.add(new pmtiles.PMTiles(LIB + 'world.pmtiles', new pmtiles.ResolvedValueCache()));
       maplib.addProtocol('pmtiles', protocol.tile);
@@ -789,6 +895,7 @@
       map = new maplib.Map({ container: 'mapBox', style: mapStyle(), center: [0, 20], zoom: 1, maxZoom: 18, dragRotate: false });
       map.touchZoomRotate.disableRotation();
       map.addControl(new maplib.NavigationControl({ showCompass: false }), 'top-right');
+      map.on('load', syncAreaMap);
       updateMap(mapReports);
     }).catch(function (e) {
       if (window.console) { console.warn('RangerView map', e); }
@@ -855,6 +962,8 @@
       : latest && (latest.reports || []).some(located) ? 'No reports with a location match the filter.'
         : 'No reports with a location yet.';
     if (!map || !maplib) { return; }
+    syncAreaMap();
+    updatePlaces();
     var newest = null;
     pts.forEach(function (r) {
       if (!newest || (new Date(r.date).getTime() || 0) > (new Date(newest.date).getTime() || 0)) { newest = r; }
@@ -881,6 +990,13 @@
     Object.keys(pins).forEach(function (id) {
       if (!keep[id]) { pins[id].marker.remove(); delete pins[id]; }
     });
+    // Follow newest: when a newer located report arrives, the map glides to it (the zoom stays the viewer's).
+    if (followEl.checked && newest && followedId !== String(newest.id) + '@' + newest.date) {
+      followedId = String(newest.id) + '@' + newest.date;
+      mapFitted = true;
+      map.easeTo({ center: [newest.location.lng, newest.location.lat], zoom: Math.max(map.getZoom(), 13), duration: 800 });
+      return;
+    }
     // Fit once, when the first located reports are on the map; after that the viewer's pan and zoom are theirs.
     if (!mapFitted && pts.length) {
       mapFitted = true;
