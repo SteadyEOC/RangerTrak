@@ -73,6 +73,7 @@ map
 merge
 message
 mode
+my_location
 note
 notes
 offline_pin
@@ -122,6 +123,7 @@ terrain
 title
 today
 transform
+travel_explore
 tv
 undo
 update
