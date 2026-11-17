@@ -547,7 +547,15 @@ scribe, the number of viewers or the latest report changes. On a viewer's screen
 **The viewer's Map.** Viewers have a **Map** tab: a world map with a marker for each located report and
 the mission's Places. If you use your own map file, or a demo, RangerTrak sends that area's street
 detail to RangerView once (again only if RangerView restarts or the map changes). On a wide screen,
-**Log + map** shows both side by side, and **Follow newest** keeps the latest report in view.
+**Log + map** shows both side by side, **Follow newest** keeps the latest report in view, and
+**Full screen** gives a TV just the map.
+
+**Alerts on a viewer.** The bell on a viewer's screen sets what should get that screen's attention: a
+status such as Urgent, words in a message, call signs, a To station, or a resource request. Only reports
+that arrive from then on alert: the report is highlighted at the top of the log until acknowledged, with a
+banner, a tone (after one tap on the page), a vibration on a phone and the count in the tab's title. Rules
+and acknowledgements stay on that device; the scribe and other screens never see them. On a phone, alerts
+work only while the page is open and the screen is on.
 
 ### Handing over to another scribe
 

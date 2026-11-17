@@ -5799,6 +5799,29 @@ async function checkBoard(downloads) {
       document.querySelector('#ovDownload button')?.textContent]`, v.sessionId),
     [true, 'E2E-BOARD-213 water at Hermit', 'Print'])
     await evaluate(`document.getElementById('ovClose').click(); document.getElementById('tabLog').click()`, v.sessionId)
+
+    // ── E-310: alerts on this viewer. History never alerts; a new report that matches a rule does. ──
+    check('E-310: no alert for reports already there when the viewer opened', await evaluate(`document.getElementById('alertBanner').hidden`, v.sessionId), true)
+    await evaluate(`(() => { document.getElementById('alertsBtn').click();
+      document.getElementById('alCalls').value = 'E2E-ALRT';
+      document.getElementById('alSave').click(); })()`, v.sessionId)
+    await sleep(500)
+    check('E-310: the rule is kept on the viewer (localStorage) and the button says it is on', await evaluate(`[JSON.parse(localStorage.getItem('boardAlertRules')).calls, document.getElementById('alertsBtn').textContent]`, v.sessionId), ['E2E-ALRT', '🔔 Alerts (on)'])
+    await goto('/')
+    await evaluate(`(() => {
+      const input = document.getElementById('enter__Callsign-input');
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(input, 'E2E-ALRT');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    })()`)
+    await sleep(600)
+    await evaluate(`document.querySelector('.enter__Submit-button').click()`)
+    const banner = await pollUntil(() => evaluate(`document.getElementById('alertBanner').hidden ? '' : document.getElementById('alertText').textContent`, v.sessionId), t => !!t, 40, 500)
+    check('E-310: a new matching report shows the banner, naming it and why', /1 alert: E2E-ALRT \(from e2e-alrt\)/.test(banner || ''), true)
+    check('E-310: its row is pinned at the top, highlighted, with Acknowledge; the tab title counts it', await evaluate(`[
+      document.querySelector('#rows tr').classList.contains('alerted'), !!document.querySelector('#rows tr [data-ack]'), document.title.startsWith('(1) ')]`, v.sessionId), [true, true, true])
+    await evaluate(`document.querySelector('#rows [data-ack]').click()`, v.sessionId)
+    await sleep(300)
+    check('E-310: Acknowledge clears it on this viewer', await evaluate(`[document.getElementById('alertBanner').hidden, document.querySelectorAll('#rows tr.alerted').length, document.title.startsWith('(')]`, v.sessionId), [true, 0, false])
     await closeTarget(v.targetId)
 
     // ── a wrong password asks for one ──────────────────────────────────────────

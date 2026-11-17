@@ -253,6 +253,34 @@
   #mapBox .maplibregl-ctrl-group button { width: 44px; height: 44px; }
   .pop-notes { margin: 0.3rem 0 0.4rem; white-space: pre-wrap; word-break: break-word; }
   .pop-show { min-height: 44px; padding: 0 0.6rem; border: 1px solid #0b5fa8; border-radius: 6px; background: #fff; color: #0b5fa8; font: inherit; font-weight: 600; cursor: pointer; }
+  /* E-310: alerts, set on this screen only. */
+  .alert-banner {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0 0 0.75rem; padding: 0.6rem 0.8rem;
+    border-radius: 6px; background: light-dark(#B3261E, #8C1D18); color: #fff; font-weight: 600;
+  }
+  .alert-banner[hidden] { display: none; }
+  .alert-banner button, #soundHint button { min-height: 44px; padding: 0 0.8rem; border-radius: 6px; border: 2px solid #fff; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+  #soundHint button { border-color: var(--accent); color: var(--accent); }
+  tr.alerted td { background: light-dark(#FDE7E5, #3B1514); }
+  tr.alerted td:first-child { box-shadow: inset 4px 0 0 light-dark(#B3261E, #FF6B5E); }
+  .ack-btn { display: block; margin-top: 0.25rem; min-height: 32px; padding: 0 0.4rem; border: 1px solid currentColor; border-radius: 4px; background: none; color: light-dark(#B3261E, #FF6B5E); font: inherit; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+  .pin-alert::after {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
+    border: 3px solid #ff3b30; animation: pinpulse 1.2s ease-out infinite;
+  }
+  @keyframes pinpulse { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .pin-alert::after { animation: none; } }
+  #alertsDialog { max-width: 34rem; width: calc(100% - 2rem); border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); padding: 1rem 1.2rem; }
+  #alertsDialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+  #alertsDialog h2 { margin: 0 0 0.4rem; font-size: 1.2rem; }
+  #alertsDialog fieldset { border: 1px solid var(--line); border-radius: 6px; margin: 0.6rem 0; }
+  #alertsDialog .row { display: flex; align-items: center; gap: 0.5rem; min-height: 40px; }
+  #alertsDialog label.field { display: block; margin: 0.6rem 0; }
+  #alertsDialog label.field input { display: block; width: 100%; min-height: 40px; margin-top: 0.2rem; font: inherit; }
+  #alertsDialog .actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.8rem; }
+  #alertsDialog .actions button { min-height: 44px; padding: 0 1rem; font: inherit; }
+  #mapPanel:fullscreen { background: var(--bg); padding: 0.5rem; }
+  #mapPanel:fullscreen #mapBox { height: calc(100vh - 5rem); }
   tr.hit td { animation: hitrow 4s ease-out; }
   @keyframes hitrow { 0%, 60% { background: #ffe680; color: #1a1a1a; } 100% { background: transparent; } }
   /* Print from a 213: only the message prints, on a plain white page. */
@@ -272,6 +300,7 @@
   <span id="missionMeta" class="meta">No log yet</span>
   <span id="statusBadge" class="badge badge--none">no data yet</span>
   <span id="clock" class="clock" title="The time on this device"></span>
+  <button id="alertsBtn" type="button" aria-haspopup="dialog" title="Set alerts for new reports on this screen">🔔 Alerts</button>
   <a class="help-link" href="https://rangertrak.org/view/" target="_blank" rel="noopener">Help</a>
   <button id="themeToggle" type="button" title="Colours: follow this device, light, or dark">◐ Auto</button>
 </header>
@@ -285,6 +314,39 @@
   <span id="pwNote" role="status"></span>
 </form>
 <p id="notice" class="notice notice--warn" role="status" hidden></p>
+<div id="alertBanner" class="alert-banner" role="alert" hidden>
+  <span id="alertText"></span>
+  <button id="alertShow" type="button">Show</button>
+  <button id="alertAck" type="button">Acknowledge all</button>
+</div>
+<p id="soundHint" class="notice" hidden>Alerts are on. <button id="soundOn" type="button">Turn on sound</button> (a browser plays sound only after a tap).</p>
+
+<dialog id="alertsDialog" aria-labelledby="alertsTitle">
+  <form method="dialog" id="alertsForm">
+    <h2 id="alertsTitle">Alerts on this screen</h2>
+    <p class="meta meta--small">Only reports that arrive from now on alert. Your rules and what you acknowledge stay on this
+      device: the scribe and other screens never see them.</p>
+    <fieldset>
+      <legend>When the status is</legend>
+      <div id="alStatuses"></div>
+    </fieldset>
+    <label class="field">Words or phrases in the message (comma between them)
+      <input id="alWords" type="text" autocomplete="off" placeholder="e.g. injured, fire, Hermit Road"></label>
+    <label class="field">From these call signs or tactical calls (comma between them)
+      <input id="alCalls" type="text" autocomplete="off" placeholder="e.g. Medic1, K7ABC"></label>
+    <label class="field">Sent to these stations (comma between them)
+      <input id="alTo" type="text" autocomplete="off" placeholder="e.g. Logistics"></label>
+    <div class="row"><input id="alRr" type="checkbox"><label for="alRr">An ICS-213RR resource request arrives</label></div>
+    <div class="row"><input id="al213" type="checkbox"><label for="al213">Any ICS-213 message arrives</label></div>
+    <p class="meta meta--small">An alert highlights the report at the top of the log until you acknowledge it, shows a banner,
+      plays a tone, vibrates a phone and puts the count in the tab's title. On a phone it works only while this page is open
+      and the screen is on.</p>
+    <div class="actions">
+      <button type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="save" id="alSave">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <div class="tabs" role="tablist" aria-label="What to show">
   <button id="tabLog" type="button" role="tab" aria-selected="true" aria-controls="logPanel" data-view="log">Radio log</button>
@@ -315,6 +377,7 @@
   <div class="map-tools">
     <label><input id="followNewest" type="checkbox"> Follow newest</label>
     <label><input id="showPlaces" type="checkbox" checked> Places</label>
+    <button id="mapFull" type="button" title="Fill the screen with the map (Esc comes back)">Full screen</button>
   </div>
   <p id="mapNote" role="status"></p>
   <div id="mapBox"></div>
@@ -716,6 +779,9 @@
       });
     }
     reports.sort(compareReports);
+    // E-310: reports with an open alert sit at the top until acknowledged.
+    var alertedFirst = reports.filter(isAlerted);
+    if (alertedFirst.length) { reports = alertedFirst.concat(reports.filter(function (r) { return !isAlerted(r); })); }
     if (onMap) { updateMap(reports); return; }
     if (both) { updateMap(reports); }
 
@@ -733,8 +799,11 @@
       var marked = isMarked(r);
       var key = escAttr(markKey(r));
       var open = function (label) { return '<button type="button" class="link-btn" data-open213="' + key + '">' + label + '</button>'; };
+      var alerted = isAlerted(r);
       var cells = '<td><button type="button" class="mark-btn" data-mark="' + key + '" aria-pressed="' + marked
-        + '" aria-label="' + (marked ? 'Marked. Tap to unmark' : 'Mark this report') + '">' + (marked ? '★' : '☆') + '</button></td>'
+        + '" aria-label="' + (marked ? 'Marked. Tap to unmark' : 'Mark this report') + '">' + (marked ? '★' : '☆') + '</button>'
+        + (alerted ? '<button type="button" class="ack-btn" data-ack="' + key + '" title="' + escAttr(alertReasons(r)) + '">Acknowledge</button>' : '')
+        + '</td>'
         + '<td class="msgno" title="' + escAttr(r.msgNoFull || '') + '">' + esc(r.msgNo || '')
         + (view === 'log' && is213(r) ? '<button type="button" class="tag213" data-open213="' + key + '" title="Open the ICS-213 message">213</button>' : '')
         + '</td>'
@@ -752,9 +821,201 @@
           + '<td>' + esc(r.source) + '</td>'
           + '<td>' + esc(r.notes) + rrLine(r) + '</td>';
       }
-      return '<tr data-rid="' + escAttr(r.id) + '"' + (marked ? ' class="marked"' : '') + '>' + cells + '<td>' + filesCell(r) + '</td></tr>';
+      return '<tr data-rid="' + escAttr(r.id) + '"' + (marked || alerted ? ' class="' + (marked ? 'marked' : '') + (alerted ? ' alerted' : '') + '"' : '') + '>' + cells + '<td>' + filesCell(r) + '</td></tr>';
     }).join('');
   }
+
+  // ---- E-310: alerts, set on this screen and kept on this device only ----
+  // Nothing goes to RangerView or to other screens (rule 2): the rules, what has been seen and what is acknowledged
+  // are this browser's localStorage. Only reports that arrive after a screen first sees a mission can alert, so
+  // opening or reloading RangerView never sounds off for the whole history.
+  var ALERT_RULES_KEY = 'boardAlertRules';
+  var DEFAULT_STATUSES = ['Urgent', 'Need Rest/Food', 'Evidence Report', 'Location Report', 'Incident Check-in', 'Incident Check-out', 'Normal'];
+  var alertRules = { statuses: [], words: '', calls: '', to: '', rr: false, m213: false };
+  try { var storedRules = JSON.parse(localStorage.getItem(ALERT_RULES_KEY) || 'null'); if (storedRules && typeof storedRules === 'object') { alertRules = Object.assign(alertRules, storedRules); } } catch (e) { /* defaults */ }
+  var alertMission = null;     // which mission seen/open below belong to
+  var seenKeys = null;         // markKey -> true, for every report this screen has already looked at
+  var openAlerts = {};         // markKey -> reasons text, until acknowledged
+  var baseTitle = document.title;
+  var audioCtx = null;
+  var alertBanner = document.getElementById('alertBanner');
+  var alertTextEl = document.getElementById('alertText');
+  var soundHint = document.getElementById('soundHint');
+  var alertsDialog = document.getElementById('alertsDialog');
+
+  function splitList(text) {
+    return String(text || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+  }
+  function rulesSet() {
+    return (alertRules.statuses || []).length > 0 || splitList(alertRules.words).length > 0 || splitList(alertRules.calls).length > 0
+      || splitList(alertRules.to).length > 0 || !!alertRules.rr || !!alertRules.m213;
+  }
+  // Why a report alerts, or '' when it doesn't.
+  function alertWhy(r) {
+    var why = [];
+    var status = String(r.status || '').trim().toLowerCase();
+    if ((alertRules.statuses || []).some(function (s) { return String(s).toLowerCase() === status; })) { why.push('status ' + r.status); }
+    var m = is213(r) ? r.ics213 : {};
+    var text = [r.notes, r.rr213, m.subject, m.message].join(' ').toLowerCase();
+    splitList(alertRules.words).forEach(function (w) { if (text.indexOf(w) !== -1) { why.push('"' + w + '"'); } });
+    var from = [r.callsign, r.tacticalCall].map(function (x) { return String(x || '').toLowerCase(); });
+    splitList(alertRules.calls).forEach(function (c) { if (from.indexOf(c) !== -1) { why.push('from ' + c); } });
+    var to = [r.toCallsign, r.toTactical].concat(m.to || []).map(function (x) { return String(x || '').toLowerCase(); });
+    splitList(alertRules.to).forEach(function (c) { if (to.indexOf(c) !== -1) { why.push('to ' + c); } });
+    if (alertRules.rr && r.rr213) { why.push('resource request'); }
+    if (alertRules.m213 && is213(r)) { why.push('ICS-213 message'); }
+    return why.join(', ');
+  }
+  function isAlerted(r) { return Object.prototype.hasOwnProperty.call(openAlerts, markKey(r)); }
+  function alertReasons(r) { return openAlerts[markKey(r)] || ''; }
+
+  function loadAlertState(mission) {
+    alertMission = mission;
+    seenKeys = null;
+    openAlerts = {};
+    try {
+      var seen = JSON.parse(localStorage.getItem('boardSeen:' + mission) || 'null');
+      if (Array.isArray(seen)) { seenKeys = {}; seen.forEach(function (k) { seenKeys[k] = true; }); }
+      var open = JSON.parse(localStorage.getItem('boardOpenAlerts:' + mission) || '{}');
+      if (open && typeof open === 'object') { openAlerts = open; }
+    } catch (e) { /* start fresh */ }
+  }
+  function saveAlertState() {
+    try {
+      var keys = Object.keys(seenKeys || {});
+      if (keys.length > 5000) { keys = keys.slice(keys.length - 5000); }
+      localStorage.setItem('boardSeen:' + alertMission, JSON.stringify(keys));
+      localStorage.setItem('boardOpenAlerts:' + alertMission, JSON.stringify(openAlerts));
+    } catch (e) { /* kept for this visit only */ }
+  }
+
+  function checkAlerts(data) {
+    var mission = String(data.mission || '') + '|' + String(data.event || '');
+    if (mission !== alertMission) { loadAlertState(mission); }
+    var reports = data.reports || [];
+    var firstLook = seenKeys === null;
+    if (firstLook) { seenKeys = {}; }
+    var fresh = [];
+    reports.forEach(function (r) {
+      var k = markKey(r);
+      if (seenKeys[k]) { return; }
+      seenKeys[k] = true;
+      if (firstLook || !rulesSet()) { return; }
+      var why = alertWhy(r);
+      if (why) { openAlerts[k] = why; fresh.push(r); }
+    });
+    // An alert whose report is gone (deleted by the scribe) closes by itself.
+    var live = {};
+    reports.forEach(function (r) { live[markKey(r)] = true; });
+    Object.keys(openAlerts).forEach(function (k) { if (!live[k]) { delete openAlerts[k]; } });
+    saveAlertState();
+    if (fresh.length) { ring(); }
+    updateAlertUi();
+  }
+
+  function ring() {
+    try {
+      if (audioCtx && audioCtx.state === 'running') {
+        [0, 0.35].forEach(function (at) {
+          var o = audioCtx.createOscillator();
+          var g = audioCtx.createGain();
+          o.frequency.value = 880;
+          g.gain.setValueAtTime(0.0001, audioCtx.currentTime + at);
+          g.gain.exponentialRampToValueAtTime(0.4, audioCtx.currentTime + at + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + at + 0.25);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(audioCtx.currentTime + at); o.stop(audioCtx.currentTime + at + 0.3);
+        });
+      }
+    } catch (e) { /* no sound on this device */ }
+    try { if (navigator.vibrate) { navigator.vibrate([200, 100, 200]); } } catch (e) { /* no vibration */ }
+  }
+
+  // Sound needs one tap on the page first; the first tap anywhere quietly turns it on.
+  function unlockSound() {
+    try {
+      if (!audioCtx) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) { audioCtx = new AC(); } }
+      if (audioCtx && audioCtx.state !== 'running') { audioCtx.resume(); }
+    } catch (e) { /* no sound on this device */ }
+    setTimeout(updateAlertUi, 200);
+  }
+  document.addEventListener('pointerdown', unlockSound, { once: true });
+  document.getElementById('soundOn').addEventListener('click', unlockSound);
+
+  function updateAlertUi() {
+    var keys = Object.keys(openAlerts);
+    var reports = (latest && latest.reports) || [];
+    var first = reports.filter(isAlerted)[0];
+    alertBanner.hidden = keys.length === 0;
+    if (keys.length) {
+      alertTextEl.textContent = '⚠ ' + keys.length + (keys.length === 1 ? ' alert' : ' alerts')
+        + (first ? ': ' + (station(first.tacticalCall, first.callsign) || 'a report') + ' (' + alertReasons(first) + ')' : '');
+    }
+    document.title = (keys.length ? '(' + keys.length + ') ' : '') + baseTitle;
+    soundHint.hidden = !(rulesSet() && !(audioCtx && audioCtx.state === 'running'));
+  }
+
+  function acknowledge(key) {
+    if (key) { delete openAlerts[key]; } else { openAlerts = {}; }
+    saveAlertState();
+    updateAlertUi();
+    render();
+  }
+  document.getElementById('alertAck').addEventListener('click', function () { acknowledge(null); });
+  document.getElementById('alertShow').addEventListener('click', function () {
+    if (view !== 'log' && view !== 'both') { setView('log'); }
+    var row = rowsEl.querySelector('tr.alerted');
+    if (row) { row.scrollIntoView({ block: 'center' }); }
+  });
+  rowsEl.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-ack]');
+    if (b) { ev.stopPropagation(); acknowledge(b.getAttribute('data-ack')); }
+  });
+
+  document.getElementById('alertsBtn').addEventListener('click', function () {
+    var statuses = DEFAULT_STATUSES.slice();
+    ((latest && latest.reports) || []).forEach(function (r) {
+      var st = String(r.status || '').trim();
+      if (st && !statuses.some(function (x) { return x.toLowerCase() === st.toLowerCase(); })) { statuses.push(st); }
+    });
+    document.getElementById('alStatuses').innerHTML = statuses.map(function (st, i) {
+      var on = (alertRules.statuses || []).some(function (x) { return String(x).toLowerCase() === st.toLowerCase(); });
+      return '<div class="row"><input type="checkbox" id="alSt' + i + '" data-status="' + escAttr(st) + '"' + (on ? ' checked' : '')
+        + '><label for="alSt' + i + '">' + esc(st) + '</label></div>';
+    }).join('');
+    document.getElementById('alWords').value = alertRules.words || '';
+    document.getElementById('alCalls').value = alertRules.calls || '';
+    document.getElementById('alTo').value = alertRules.to || '';
+    document.getElementById('alRr').checked = !!alertRules.rr;
+    document.getElementById('al213').checked = !!alertRules.m213;
+    alertsDialog.showModal();
+  });
+  alertsDialog.addEventListener('close', function () {
+    if (alertsDialog.returnValue !== 'save') { return; }
+    alertRules = {
+      statuses: Array.prototype.map.call(document.querySelectorAll('#alStatuses input:checked'), function (i) { return i.getAttribute('data-status'); }),
+      words: document.getElementById('alWords').value,
+      calls: document.getElementById('alCalls').value,
+      to: document.getElementById('alTo').value,
+      rr: document.getElementById('alRr').checked,
+      m213: document.getElementById('al213').checked
+    };
+    try { localStorage.setItem(ALERT_RULES_KEY, JSON.stringify(alertRules)); } catch (e) { /* this visit only */ }
+    unlockSound(); // Save was a tap, so sound can start now
+    document.getElementById('alertsBtn').textContent = rulesSet() ? '🔔 Alerts (on)' : '🔔 Alerts';
+  });
+  document.getElementById('alertsBtn').textContent = rulesSet() ? '🔔 Alerts (on)' : '🔔 Alerts';
+
+  // Q68 (b): the map alone, full screen, for a TV.
+  document.getElementById('mapFull').addEventListener('click', function () {
+    var panel = document.getElementById('mapPanel');
+    if (document.fullscreenElement) { document.exitFullscreen(); return; }
+    if (panel.requestFullscreen) { panel.requestFullscreen().catch(function () { /* refused: stays as it is */ }); }
+  });
+  document.addEventListener('fullscreenchange', function () {
+    document.getElementById('mapFull').textContent = document.fullscreenElement ? 'Exit full screen' : 'Full screen';
+    if (map) { setTimeout(function () { map.resize(); }, 50); }
+  });
 
   // ---- the Map tab (E-293 phase A) ----
   // Nothing is fetched until the tab is first opened. The map code (MapLibre), the PMTiles reader and the
@@ -911,7 +1172,7 @@
 
   function pinClass(r, newest) {
     var key = STATUS_KEYS[String(r.status || '').trim().toLowerCase()] || 'normal';
-    return 'pin pin-' + key + (newest ? ' pin-newest' : '');
+    return 'pin pin-' + key + (newest ? ' pin-newest' : '') + (isAlerted(r) ? ' pin-alert' : '');
   }
 
   function popupFor(r) {
@@ -972,7 +1233,7 @@
     pts.forEach(function (r) {
       var id = String(r.id);
       var isNew = r === newest;
-      var sig = [r.location.lat, r.location.lng, r.status, r.date, r.notes, r.callsign, r.tacticalCall, isNew].join('|');
+      var sig = [r.location.lat, r.location.lng, r.status, r.date, r.notes, r.callsign, r.tacticalCall, isNew, isAlerted(r)].join('|');
       keep[id] = true;
       var have = pins[id];
       if (have && have.sig === sig) { return; }
@@ -1113,6 +1374,7 @@
           return;
         }
         latest = data;
+        checkAlerts(data);
         renderClaim(data.board);
         if (data.board && data.board.wifi) { lastWifi = String(data.board.wifi); }
         var seen = data.board && data.board.scribeSeenAt ? new Date(data.board.scribeSeenAt).getTime() : NaN;
