@@ -37,6 +37,7 @@ import { AdvancedDirective } from '../shared/view/advanced.directive'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
 import { MatButtonModule } from '@angular/material/button'
+import { MatIconModule } from '@angular/material/icon'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
 import { MatChipsModule } from '@angular/material/chips'
 
@@ -56,7 +57,7 @@ https://stackblitz.com/edit/angular-azzmhu?file=src/app/hello.component.ts
   //moduleId: module.id,
   selector: 'rangertrak-location',
   standalone: true,
-  imports: [CommonModule, FormField, MatFormFieldModule, MatInputModule, MatButtonModule, MatButtonToggleModule, MatChipsModule, AdvancedDirective],
+  imports: [CommonModule, FormField, MatFormFieldModule, MatInputModule, MatButtonModule, MatButtonToggleModule, MatChipsModule, MatIconModule, AdvancedDirective],
   templateUrl: './location.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./location.component.scss']
@@ -83,6 +84,17 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   // is what stops a fresh report from briefly showing the PREVIOUS report's derived
   // Address/+Codes text before its own position has resolved.
   showDerived = signal(false)
+
+  /**
+   * E-302 (John 11-14, approved): the Address box holds what was SAID ("NE corner of the cemetery"), and the
+   * scribe places the point on the map. `addressTyped` is true once the scribe has typed in the box for this
+   * report: their text is then kept as the report's address when the point moves, and a looked-up street address
+   * only shows underneath, labelled "(inferred)". Leaving the box never looks the text up (that could move the
+   * point); Enter or the search button does, on purpose.
+   */
+  addressTyped = false
+  /** True when the Address line underneath is a lookup from the position, not what was said. */
+  derivedAddressInferred = signal(false)
 
   // Raised live 2026-08-30: street-address geocoding (chkStreetAddress(), below) needs the
   // network - unlike +Code and Maidenhead, which are pure offline conversions - so the label
@@ -504,6 +516,7 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
     if (changes['formGeneration'] && !changes['formGeneration'].firstChange) {
       this.showDerived.set(false)
       this.clearDerivedText()
+      this.addressTyped = false // E-302: a new report; what was said for the last one no longer leads
     }
 
     if (!changes['location'] || changes['location'].firstChange) return
@@ -723,9 +736,16 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
     this.lastEmitted = { lat: newLocation.lat, lng: newLocation.lng }
 
     let address = ''
+    const said = this.addressTyped ? this.addressModel().trim() : ''
     if (newLocation.derivedFromAddress) {
       address = newLocation.address
       this.updateDerivedLocations(newLocation)
+    } else if (said) {
+      // E-302: the point moved (map click, typed coordinates) but the scribe's words stay the address; the
+      // lookup only labels the line underneath.
+      newLocation = { ...newLocation, address: said, derivedFromAddress: true }
+      address = said
+      this.DDToAddress(newLocation, true)
     } else {
       // Async routine to geocode from lat/lng & update location.address. Kicked off here
       // (not awaited) rather than blocking the emit below - a slow geocode isn't blocking
@@ -881,16 +901,16 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
    * @param location: locationType
    * @returns
    */
-  DDToAddress(location: LocationType) {
+  DDToAddress(location: LocationType, labelOnly = false) {
     // assert(!location.derivedFromAddress)
-    if (location.derivedFromAddress) {
+    if (location.derivedFromAddress && !labelOnly) {
       this.log.error(`DDToAddress got a primary address NOT needing derivation!`, this.id)
     }
 
     // Only show address in model during location emition
     // This control ONLY shows main address if user entered it there
     // for this control/widget: differentiate between derived & 'primary' or user entered addresses
-    this.addressModel.set("")
+    if (!labelOnly) this.addressModel.set("")
 
     this.geocodingProvider.reverseGeocode(location.lat, location.lng)
       .then((result) => {
@@ -901,35 +921,53 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
         }
 
 
+        // E-302: the line underneath is always marked "(inferred)" when it comes from this lookup.
+        this.derivedAddressInferred.set(true)
+        if (labelOnly) {
+          this.updateDerivedLocations({ ...location, address: result.address })
+          this.derivedAddressInferred.set(true)
+          return
+        }
         location.address = result.address
-        // Async update of DERIVED address fields...
         this.updateDerivedLocations(location)
+        this.derivedAddressInferred.set(true)
 
         this.locationChange.emit(location)
       })
     return ("No immediate address available: await the result!")
   }
 
-  onAddressChg() { //newAddress: string = "undefined address"
-    const newAddress = this.addressModel()
-    // Typed address text stays out of the log (it can be a home address; the log exports to CSV).
+  /**
+   * The Address box changed. A +Code or Maidenhead locator is an exact position, so it moves the point. Street
+   * text is what was said: leaving the box keeps it as the report's address and leaves the point alone (E-302);
+   * `lookUp` (Enter, or the search button) asks the geocoder and moves the point to its answer.
+   */
+  onAddressChg(lookUp = false) {
+    const newAddress = this.addressModel().trim()
 
-    if (!newAddress || !newAddress.length) {
-      this.log.error(`onAddressChggot null or undefined address`, this.id)
+    if (!newAddress.length) {
+      this.addressTyped = false
       return
     }
 
-    // Now see what kind/format of address we have and get DD
     if (newAddress.includes("+")) {
       this.chkPCodes(newAddress)
     } else if (isMaidenhead(newAddress)) {
       this.chkMaidenhead(newAddress)
-    } else {
-      // A what3words-shaped "a.b.c" address used to be routed to a check that could only
-      // ever say "Unable to verify" - removed 2026-09-26 with the unused what3words code;
-      // Help's FAQ explains it is shelved. Such text is tried as a street address now.
+    } else if (lookUp) {
       this.chkStreetAddress(newAddress)
+    } else {
+      this.keepSaidAddress(newAddress)
     }
+  }
+
+  /** E-302: the scribe's words become the report's address; the position stays exactly where it is. */
+  private keepSaidAddress(text: string): void {
+    this.addressTyped = true
+    const { lat, lng } = this.canonical()
+    const loc: LocationType = { lat, lng, address: text, derivedFromAddress: true }
+    this.lastEmitted = { lat, lng }
+    this.locationChange.emit(loc)
   }
 
   //----------------------------------------------------------------------------------------

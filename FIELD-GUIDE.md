@@ -301,6 +301,14 @@ If a position lands far from the mission's other reports (or, before there are s
 than 30 km from the mission's default location), a note under **Where** says how far, so you can catch a wrong
 digit, a lost minus sign or last mission's location. It's only a warning; you can still save.
 
+**What was said, and where it is.** The **Address** box holds what the ranger said, in their words. The
+position on the map is the record. For example, a ranger says "NE corner of the cemetery": type that in
+**Address**, then tap the spot on the small map. The report keeps "NE corner of the cemetery", and the line
+underneath shows something like **Address (inferred): 10019 SW Bank Rd**, a lookup from the position, not
+what was said. Leaving the box never moves the point. To look a street address up and move the point there,
+press **Enter** in the box or the search button (needs Internet). On the Radio Log, a looked-up address
+reads "(inferred)"; edit it and it becomes what was said.
+
 **Undo and Redo.** The two arrow buttons beside **Reset** step the whole report back and forward, one change
 at a time (up to 20), until you add it to the log: handy after a mistyped position or an overwritten message. Outside
 a text box, **Ctrl+Z** and **Ctrl+Y** do the same; inside a text box they undo your typing as usual.

@@ -369,8 +369,9 @@ describe('SampleDataService', () => {
       await sampleData.loadSampleMission('near-me')
 
       const entries = radioLogService.getCurrentRadioLog().logEntries
+      // E-302: a demo's addresses are written as said (derivedFromAddress true), never looked up.
       entries.forEach((e) => {
-        expect(e.location.derivedFromAddress).toBe(false)
+        expect(e.location.derivedFromAddress).toBe(true)
       })
     })
   })

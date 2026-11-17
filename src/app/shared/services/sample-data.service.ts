@@ -442,7 +442,8 @@ export class SampleDataService {
         ...(toThisStation
           ? { toTactical: rowTo.name, toCallsign: rowToOperator.callsign, toRangerUid: rowToOperator.uid }
           : {}),
-        location: { lat: row.lat, lng: row.lng, address: row.address, derivedFromAddress: false },
+        // E-302: a demo's addresses are written as a ranger would say them, not looked up.
+        location: { lat: row.lat, lng: row.lng, address: row.address, derivedFromAddress: true },
         date: new Date(now - row.minutesAgo * 60 * 1000),
         status: statuses[row.statusIndex] ?? statuses[0],
         notes: row.notes,

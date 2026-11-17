@@ -382,7 +382,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       {
         headerName: "Address", field: "location.address", singleClickEdit: true, minWidth: 180, maxWidth: 420,
         tooltipField: "location.address",
-        headerTooltip: 'Street address or place description for where the report came from. Free text, and it can be blank. Click to edit.'
+        // E-302: an address looked up from the position (not what was said) reads "(inferred)". Display only; an
+        // edit stores the scribe's words, which are then what was said.
+        valueFormatter: (p: { value?: string, data?: RadioLogEntryType }) =>
+          p.value ? p.value + (p.data?.location?.derivedFromAddress === false ? ' (inferred)' : '') : '',
+        valueSetter: (p: { newValue?: unknown, data: RadioLogEntryType }) => {
+          p.data.location.address = String(p.newValue ?? '').trim()
+          p.data.location.derivedFromAddress = true
+          return true
+        },
+        headerTooltip: 'Street address or place description for where the report came from: what was said. A street address looked up from the position says "(inferred)". Free text, and it can be blank. Click to edit.'
       },
       {
         // valueSetter, not just field: "lat" - the real value lives at location.lat,

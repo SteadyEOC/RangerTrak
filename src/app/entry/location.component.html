@@ -225,8 +225,16 @@
       </mat-label>
       <input matInput #address type="text" id="enter__Where-Address"
         title="Optionally enter www.Plus.Codes, a Maidenhead grid locator (e.g. CN87ux), or street address for geocoding."
-        [formField]="addressForm" data-lpignore="true" (change)="onAddressChg()"
-        (keydown.enter)="$event.preventDefault(); onAddressChg()" [attr.tabindex]="ti(25)" />
+        [formField]="addressForm" data-lpignore="true" (input)="addressTyped = true" (change)="onAddressChg()"
+        (keydown.enter)="$event.preventDefault(); onAddressChg(true)" [attr.tabindex]="ti(25)" />
+      <!-- E-302: looking a street address up is a deliberate act (it moves the point); leaving the box keeps the
+           words as what was said. Out of the tab order, which is fixed; Enter in the box does the same. -->
+      <button matSuffix matIconButton type="button" tabindex="-1" data-testid="address-lookup"
+        [disabled]="!isOnline()" (click)="onAddressChg(true)"
+        title="Look this street address up and move the point there (needs Internet). Or just leave the words: they are kept as what was said."
+        aria-label="Look up this address">
+        <mat-icon>search</mat-icon>
+      </button>
     </mat-form-field>
   </form>
 
@@ -285,7 +293,7 @@
     <div class="enter__Where-Results" [class.enter__Where-Results--hidden]="!showDerived()">
       <button type="button" class="rt-other-formats__row" tabindex="-1"
         (click)="copyCoordinate('Address', derivedAddress())"
-        title="Click to copy"><span class="rt-other-formats__system">Address:</span>
+        title="Click to copy"><span class="rt-other-formats__system">Address{{ derivedAddressInferred() ? ' (inferred)' : '' }}:</span>
         @if (!isOnline()) {
         <span class="rt-other-formats__offline-tag">(offline)</span>
         }
