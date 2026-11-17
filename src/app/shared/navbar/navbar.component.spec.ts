@@ -118,3 +118,13 @@ describe('NavbarComponent', () => {
     })
   })
 })
+
+describe('isChunkLoadFailure (E-309)', () => {
+  it('knows the browsers\' wordings for a lazy page that could not load', async () => {
+    const { isChunkLoadFailure } = await import('./navbar.component')
+    expect(isChunkLoadFailure('Failed to fetch dynamically imported module: https://x/chunk-ABC.js')).toBe(true)
+    expect(isChunkLoadFailure('Importing a module script failed.')).toBe(true)
+    expect(isChunkLoadFailure('error loading dynamically imported module')).toBe(true)
+    expect(isChunkLoadFailure('Cannot read properties of undefined')).toBe(false)
+  })
+})

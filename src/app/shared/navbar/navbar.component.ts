@@ -175,13 +175,28 @@ export class NavbarComponent implements OnInit {
         if (event instanceof NavigationError) {
           // https://angular.io/api/router/NavigationError
           this.log.error(`Navigation Error event: to "${event.target?.toString()}" got "${event.toString()}"`, this.id)
-          //this.isNavigating.set(false)
-
+          // E-309 part 2 (11-14 drill, installed app, offline): the Map page's code failed to load and the page sat
+          // on "Loading..." for good. A failed lazy import is often momentary (the service worker busy swapping
+          // versions), so try that page once more by itself; if it fails again, the Reload button (part 1) stays.
+          const msg = String((event.error as { message?: unknown } | undefined)?.message ?? event.error ?? '')
+          if (isChunkLoadFailure(msg) && this.chunkRetries.get(event.url) !== true) {
+            this.chunkRetries.set(event.url, true)
+            this.log.warn(`Page code for ${event.url} did not load; trying once more.`, this.id)
+            setTimeout(() => void this.router.navigateByUrl(event.url), 800)
+          }
         }
       }
     )
   }
 
+  /** E-309: pages already retried once after a failed code load, this session. */
+  private chunkRetries = new Map<string, boolean>()
+
   ngOnInit(): void {
   }
+}
+
+/** E-309: the browsers' wordings for a lazy route's code that could not be fetched. */
+export function isChunkLoadFailure(message: string): boolean {
+  return /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk \S+ failed|error loading dynamically imported/i.test(message)
 }
