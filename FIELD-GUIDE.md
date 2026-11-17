@@ -297,6 +297,10 @@ and that position is set immediately, no typing needed (it's also copied to your
 Clicking the big **Map** page does *not* set it; there, a click only copies the coordinate
 under your cursor, for you to paste into Entry.
 
+If a position lands far from the mission's other reports (or, before there are six reports, more
+than 30 km from the mission's default location), a note under **Where** says how far, so you can catch a wrong
+digit, a lost minus sign or last mission's location. It's only a warning; you can still save.
+
 You can also type coordinates, or an address for RangerTrak to look up. RangerTrak accepts a
 position in whichever format it was called in over the radio. A small switcher above the
 coordinate fields picks which one you type into; every other format updates underneath it,

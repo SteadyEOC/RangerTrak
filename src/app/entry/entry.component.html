@@ -310,6 +310,13 @@
 
             (newLocationEvent)="onNewLocationEvent($event)" -->
         </rangertrak-location>
+        @if (farNote(); as note) {
+        <!-- E-300: far from the other reports; never blocks Save. -->
+        <p class="enter__far-note" role="status" data-testid="entry-far-note">
+          <mat-icon aria-hidden="true">travel_explore</mat-icon>
+          <span>{{ note }}</span>
+        </p>
+        }
 
         <!-- span class="small" id="enter__where-debug">And meanwhile, back in the PARENT: lat:{{locationParent.lat}};
           lng:{{locationParent.lat}};

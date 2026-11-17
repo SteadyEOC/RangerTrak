@@ -44,6 +44,7 @@ import { SmallerCopyProgressComponent } from '../shared/attachments/smaller-copy
 import { AttachmentBudgetService } from '../shared/attachments/attachment-budget.service'
 import { TimePickerComponent } from '../shared/time-picker/time-picker.component'
 import { DDToDDM } from '../domain/coordinate'
+import { farLocation, farLocationText } from '../domain/far-location'
 import { matchRanger } from '../domain/ranger-match'
 import {
   RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
@@ -670,6 +671,20 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // patch entryForm's model - as THAT is what gets saved with on form submit
     this.entryModel.update(m => ({ ...m, location: newLocation }))
+    this.updateFarNote()
+  }
+
+  /**
+   * E-300: a note under Where when this position is far from the mission's other reports (or, with few
+   * reports, from the default location). A warning only; Save is never blocked. See domain/far-location.ts.
+   */
+  readonly farNote = signal<string | null>(null)
+
+  private updateFarNote(): void {
+    const others = this.radioLogService.getCurrentRadioLog()?.logEntries?.map(e => e.location) ?? []
+    const def = this.settings ? { lat: this.settings.defLat, lng: this.settings.defLng } : null
+    const far = farLocation(this.locationParent, others, def)
+    this.farNote.set(far ? farLocationText(far) : null)
   }
 
   /**
@@ -1315,6 +1330,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       generates213: false, replyRequested213: false, message213: '', recipients213: '',
       subject213: '',
     })
+    // E-300: the log just grew (or the form was cleared), so the carried-forward position is judged afresh.
+    this.updateFarNote()
     // D-44: operatorModel is deliberately NOT reset - it carries forward across entries in
     // the same session (see its own declaration). Only its EDITING state changes here: once
     // a name has actually been entered, later resets collapse it to the compact summary line

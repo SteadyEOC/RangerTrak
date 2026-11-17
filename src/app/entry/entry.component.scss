@@ -890,3 +890,22 @@ mat-chip-option.enter__status-selected {
     justify-self: end;
   }
 }
+
+// E-300: the far-away position note under Where. Notice colours, like the other in-form cautions.
+.enter__far-note {
+  display      : flex;
+  gap          : var(--rt-space-sm);
+  align-items  : flex-start;
+  margin       : var(--rt-space-sm) 0 0;
+  padding      : var(--rt-space-sm) var(--rt-space-md);
+  border-left  : 3px solid var(--rt-notice-line);
+  border-radius: var(--rt-radius);
+  background   : var(--rt-notice);
+  color        : var(--rt-notice-ink);
+  font-size    : var(--rt-type-body-sm-size);
+  line-height  : var(--rt-type-body-sm-line);
+
+  mat-icon {
+    flex: none;
+  }
+}
