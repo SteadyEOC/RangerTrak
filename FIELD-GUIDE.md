@@ -737,6 +737,20 @@ If you suspect you are running an old copy, reload the page while holding **Ctrl
 
 Everything lives **on your device only**, in this browser's storage. Nothing is uploaded.
 
+### What not to type
+
+Anything in a report can leave your device: a printed ICS-309 or 213, a Report Packet, RangerView, and
+messages sent over Winlink, FLDIGI or voice, where amateur radio traffic is not encrypted (and may not be). A
+backup passphrase doesn't protect a report once it has been sent. So keep these out of notes and messages:
+
+- names of patients and of the public you help, and their medical details;
+- dates of birth, ID or Social Security numbers;
+- home addresses and phone numbers of members of the public.
+
+Describe instead: "adult male, ankle injury, tag 14", or use a ranger number. RangerTrak can't stop anyone
+typing these; only you can. Notes and ICS-213 messages on Entry carry a one-line reminder. Your own team's
+roster is different: it stays on the device (below).
+
 ### What keeps your data, and what loses it
 
 **Each report is saved the moment you enter it.** It stays put through:

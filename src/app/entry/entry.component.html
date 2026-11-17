@@ -477,10 +477,12 @@
       <!-- floatLabel="always": with a placeholder set, an unfloated label would sit on top
            of it until focus - forcing the float keeps the embedded-in-the-border label
            always visible, matching every other field on this page. -->
-      <mat-form-field class="enter__What--area" floatLabel="always">
+      <mat-form-field class="enter__What--area" floatLabel="always" subscriptSizing="dynamic">
         <mat-label>Notes for radio log</mat-label>
         <textarea matInput [formField]="entryForm.notes" id="enter__What--area" rows="4"
           [attr.tabindex]="notesTabIndex"></textarea>
+        <!-- E-316 (John 11-15): guidance, not enforcement. What is typed here can leave by radio, unencrypted. -->
+        <mat-hint data-testid="entry-notes-pii-hint">Can go out by radio, unencrypted: no patient names, medical details or personal numbers. Use a tag or ranger number.</mat-hint>
       </mat-form-field>
 
       <!-- E-194 / D-60: photos, video and audio for this entry. Picked files wait here as chips and
@@ -587,13 +589,15 @@
                inside a box already headed "Also generate an ICS-213", so the prefix was
                restating its own container. The tooltip still spells out how it differs from
                the Notes field above, which is the distinction that actually confuses. -->
-          <mat-form-field class="enter__213-field enter__213-message" floatLabel="always">
+          <mat-form-field class="enter__213-field enter__213-message" floatLabel="always" subscriptSizing="dynamic">
             <mat-label>Message</mat-label>
             <textarea matInput [formField]="entryForm.message213" rows="3"
               [attr.tabindex]="message213TabIndex"></textarea>
             <span matSuffix class="field-help" tabindex="0" role="img"
               aria-label="Message: the text of a separate, addressed ICS-213 message to whoever's listed under To, above - often reworded from your Notes above, not just a copy of them. This is what prints on the actual 213 form."
               title="The text of a separate, addressed ICS-213 message to whoever's listed under To, above - often reworded from your Notes above, not just a copy of them. This is what prints on the actual 213 form.">ⓘ</span>
+            <!-- E-316: a 213 is exactly what goes over Winlink or voice. -->
+            <mat-hint>Sent as written, often by radio: no patient names, medical details or personal numbers.</mat-hint>
           </mat-form-field>
 
           <!-- F29-47 (2026-08-29): "4 Subject" - declared on the real ICS-213 AcroForm since
