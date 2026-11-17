@@ -60,8 +60,13 @@ function replace(target: object | undefined, name: string, fake: (...args: unkno
  * - `IDBObjectStore`: put, add, delete, clear, createIndex, deleteIndex. The roster, radio log,
  *   places, notes, photos and attachments. Throws `ReadOnlyError`.
  * - `IDBCursor`: update and delete write through a cursor. Throws.
- * - `IDBDatabase`: createObjectStore and deleteObjectStore. A first-time open would create the store.
- *   Throws, which aborts the upgrade, so nothing is created.
+ * - `IDBDatabase`: createObjectStore and deleteObjectStore. Throws, which aborts the upgrade. ONE exception
+ *   (bug found 11-16): a database that does not exist yet (`upgradeneeded` with oldVersion 0, a fresh
+ *   profile where the main window never opened that page) may create its empty stores, and indexes on
+ *   them, during that first upgrade. Refusing made every opener fail (~40 AbortErrors and a "Something
+ *   went wrong" notice); allowing it writes no mission data and makes exactly the schema the main
+ *   window's same code would make, so the window simply reads the store as empty. Writing records in
+ *   that upgrade, and upgrading a database that already exists, stay blocked.
  * - `IDBFactory`: deleteDatabase. "Erase this device" and the test helpers use it. Throws.
  * - `Cache` (Cache Storage): put, add, addAll, delete. Map tiles and offline map files. Resolves
  *   without writing: a tile cache is not mission data, but "never writes" is simpler to prove than
@@ -85,18 +90,42 @@ export function installReadOnlyGuard(): void {
     warnBlocked(`${what} ${String(args[1] ?? args[0] ?? '')}`.trim())
     throw readOnlyError()
   }
+
+  // Databases being created from nothing in this window (see the IDBDatabase line above).
+  const brandNew = new WeakSet<IDBDatabase>()
+  if (typeof IDBFactory !== 'undefined') {
+    const realOpen = IDBFactory.prototype.open
+    replace(IDBFactory.prototype, 'open', function (this: IDBFactory, ...args: unknown[]) {
+      const request = (realOpen as (...a: unknown[]) => IDBOpenDBRequest).apply(this, args)
+      // Added before the caller can set onupgradeneeded, so it runs first.
+      request.addEventListener('upgradeneeded', e => {
+        if ((e as IDBVersionChangeEvent).oldVersion === 0) brandNew.add(request.result)
+      })
+      return request
+    })
+  }
+  const schemaOnFirstOpen = (what: string, dbOf: (self: unknown) => IDBDatabase | undefined, original: unknown) =>
+    function (this: unknown, ...args: unknown[]): unknown {
+      const db = dbOf(this)
+      if (db && brandNew.has(db)) return (original as (...a: unknown[]) => unknown).apply(this, args)
+      warnBlocked(`${what} ${String(args[0] ?? '')}`.trim())
+      throw readOnlyError()
+    }
+
   if (typeof IDBObjectStore !== 'undefined') {
-    for (const name of ['put', 'add', 'delete', 'clear', 'createIndex', 'deleteIndex']) {
+    for (const name of ['put', 'add', 'delete', 'clear', 'deleteIndex']) {
       replace(IDBObjectStore.prototype, name, idbThrows(`IDBObjectStore.${name}`))
     }
+    replace(IDBObjectStore.prototype, 'createIndex', schemaOnFirstOpen('IDBObjectStore.createIndex',
+      self => (self as IDBObjectStore).transaction?.db, IDBObjectStore.prototype.createIndex))
   }
   if (typeof IDBCursor !== 'undefined') {
     for (const name of ['update', 'delete']) replace(IDBCursor.prototype, name, idbThrows(`IDBCursor.${name}`))
   }
   if (typeof IDBDatabase !== 'undefined') {
-    for (const name of ['createObjectStore', 'deleteObjectStore']) {
-      replace(IDBDatabase.prototype, name, idbThrows(`IDBDatabase.${name}`))
-    }
+    replace(IDBDatabase.prototype, 'createObjectStore', schemaOnFirstOpen('IDBDatabase.createObjectStore',
+      self => self as IDBDatabase, IDBDatabase.prototype.createObjectStore))
+    replace(IDBDatabase.prototype, 'deleteObjectStore', idbThrows('IDBDatabase.deleteObjectStore'))
   }
   if (typeof IDBFactory !== 'undefined') replace(IDBFactory.prototype, 'deleteDatabase', idbThrows('IDBFactory.deleteDatabase'))
 

@@ -81,6 +81,54 @@ describe('read-only window guard (E-313)', () => {
     db.close()
   })
 
+  it('lets a database that does not exist yet create its empty stores, but no records (11-16 bug)', async () => {
+    const name = 'rt-readonly-fresh-' + Math.random().toString(36).slice(2)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    installReadOnlyGuard()
+    let putError: unknown
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const open = indexedDB.open(name, 1)
+      open.onupgradeneeded = () => {
+        const store = open.result.createObjectStore('kv')
+        store.createIndex('byX', 'x')
+        try { store.put('v', 'k') } catch (e) { putError = e }
+      }
+      open.onsuccess = () => resolve(open.result)
+      open.onerror = () => reject(open.error)
+    })
+    expect(putError).toEqual(expect.objectContaining({ name: 'ReadOnlyError' }))
+    expect([...db.objectStoreNames]).toEqual(['kv'])
+    const count = await new Promise(resolve => {
+      const req = db.transaction('kv', 'readonly').objectStore('kv').count()
+      req.onsuccess = () => resolve(req.result)
+    })
+    expect(count).toBe(0)
+    db.close()
+    resetReadOnlyGuardForTests()
+    await new Promise(resolve => { const d = indexedDB.deleteDatabase(name); d.onsuccess = d.onerror = resolve })
+  })
+
+  it('still refuses to upgrade a database that already exists', async () => {
+    const name = 'rt-readonly-old-' + Math.random().toString(36).slice(2)
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open(name, 1)
+      open.onupgradeneeded = () => open.result.createObjectStore('a')
+      open.onsuccess = () => { open.result.close(); resolve() }
+      open.onerror = () => reject(open.error)
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    installReadOnlyGuard()
+    const outcome = await new Promise<string>(resolve => {
+      const open = indexedDB.open(name, 2)
+      open.onupgradeneeded = () => { try { open.result.createObjectStore('b'); resolve('created') } catch { resolve('blocked') } }
+      open.onsuccess = () => { open.result.close() }
+      open.onerror = () => undefined
+    })
+    expect(outcome).toBe('blocked')
+    resetReadOnlyGuardForTests()
+    await new Promise(resolve => { const d = indexedDB.deleteDatabase(name); d.onsuccess = d.onerror = d.onblocked = resolve })
+  })
+
   it('makes Cache Storage writes do nothing', async () => {
     const name = 'read-only-guard-spec'
     const cache = await caches.open(name)
