@@ -224,6 +224,20 @@ def parse(path):
 _SHOTS = None
 
 
+def h3_parts(raw):
+    """`### Heading {#id|Chip}` -> (heading, id, chip label). Both parts are optional; no id means no chip."""
+    m = re.match(r'^(.*?)\s*\{#([a-z0-9-]+)(?:\|([^}]*))?\}\s*$', raw)
+    if not m:
+        return raw, None, None
+    return m.group(1), m.group(2), (m.group(3) or m.group(1)).strip()
+
+
+def ref_chips(blocks):
+    """The Reference tab's second row: one chip per `### ... {#id}` heading on that page (E-317)."""
+    chips = [h3_parts(b[1]) for b in blocks if b[0] == 'h3']
+    return ''.join(f'<a href="#{hid}">{html.escape(chip)}</a>' for _, hid, chip in chips if hid)
+
+
 def shot_html(iid):
     """A small picture of the control a step names; made by tools/tour/capture-shots.js (img/shots.json)."""
     global _SHOTS
@@ -236,8 +250,11 @@ def shot_html(iid):
     if not s:
         return ''
     alt = s['alt'].replace('&', '&amp;').replace('"', '&quot;')
-    return (f'<img class="shot" src="img/{s["file"]}" alt="{alt}" width="{s["width"]}" '
-            f'height="{s["height"]}" loading="lazy">')
+    img = (f'<img class="shot{" shot--wide" if s.get("wide") else ""}" src="img/{s["file"]}" alt="{alt}" '
+           f'width="{s["width"]}" height="{s["height"]}" loading="lazy">')
+    # A whole-screen picture is shown smaller than life: a click opens it full size.
+    return (f'<a class="shotlink" href="img/{s["file"]}" target="_blank" title="Open full size">{img}</a>'
+            if s.get('wide') else img)
 
 
 class Ctx:
@@ -328,7 +345,8 @@ def blocks_html(blocks, ctx, tour=None, leg=None):
         elif k == 'h2':
             out.append(f'<h2>{inline(b[1])}</h2>')
         elif k == 'h3':
-            out.append(f'<h3>{inline(b[1])}</h3>')
+            text, hid, _ = h3_parts(b[1])
+            out.append(f'<h3 id="{hid}">{inline(text)}</h3>' if hid else f'<h3>{inline(text)}</h3>')
         elif k == 'quote':
             out.append(f'<blockquote><p>{inline(b[1])}</p></blockquote>')
         elif k == 'pre':
@@ -652,7 +670,7 @@ HEAD = '''<!doctype html>
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later
      RangerTrak Tour Guide, for beta testers. Free software under the GNU AGPL v3 or later.
      Built by build-from-doc.py from tour-source.md; edit that file, then rebuild.
-     Step IDs (A3.2, A3.Q1) and anchors (#a1-#a6, #b1-#b5, #c1-#c4, #reference, #last-stop, #telling-us, #sheet, #tours) are frozen:
+     Step IDs (A3.2, A3.Q1) and anchors (#a1-#a6, #b1-#b5, #c1-#c4, #reference, #prowords, #alphabet, #seats, #passes, #cast, #last-stop, #telling-us, #sheet, #tours) are frozen:
      testers and the rangertrak.com beta post quote them. Retire an ID; never reuse or renumber.
      (E-317 round 2, 2026-11-15: three tours of legs. The old #m1 to #m9 anchors redirect, see tour.js.) -->
 <html lang="en">
@@ -685,6 +703,7 @@ HEAD = '''<!doctype html>
   <div class="search" role="search" hidden>{i_search}<input type="search" id="tour-q" placeholder="Search the Tour"
     aria-label="Search the Tour" aria-controls="tour-hits" autocomplete="off"></div>
   </div>
+  <nav class="subtabs" id="ref-chips" aria-label="Reference charts" hidden>{ref_chips}</nav>
   <div class="hits" id="tour-hits" hidden></div>
 </header>
 <div class="layout">
@@ -709,7 +728,8 @@ if __name__ == '__main__':
             .replace('{applinks}', ''.join(f'<a href="{h}">{t}</a>' for h, t in APP_LINKS))
             .replace('{i_start}', glyph('start')).replace('{i_tour}', glyph('tour')).replace('{i_ref}', glyph('reference'))
             .replace('{i_tell}', glyph('tell')).replace('{i_search}', glyph('search'))
-            .replace('{total}', str(total)).replace('{side}', side))
+            .replace('{total}', str(total)).replace('{side}', side)
+            .replace('{ref_chips}', ref_chips(doc['reference'])))
     with open(dst, 'w', encoding='utf-8', newline='\n') as f:
         f.write(head + body + '\n' + TAIL)
     print('wrote', dst, f'({total} items)')

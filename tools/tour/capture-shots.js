@@ -41,7 +41,24 @@ const card = title => `[...document.querySelectorAll('mat-card')].find(c => c.qu
 const union = (a, b) => `(() => { const a = ${a}?.getBoundingClientRect(), b = ${b}?.getBoundingClientRect(); if (!a || !b) return null;
   const x = Math.min(a.left, b.left), y = Math.min(a.top, b.top);
   return { x, y, width: Math.max(a.right, b.right) - x, height: Math.max(a.bottom, b.bottom) - y } })()`
+// A whole screen from the top of the page (wide: shown larger in the tour, click for full size; 2026-11-16).
+const screen = h => `(() => { scrollTo(0, 0); return { x: 0, y: 0, width: innerWidth, height: Math.min(innerHeight, ${h}) } })()`
+const wait = ms => `(async () => { await new Promise(r => setTimeout(r, ${ms})) })()`
+const WIDE = [
+  { id: 'A1.3', file: 'screen-entry', route: '/', h: 700, alt: 'The Entry page with the Grand Canyon demo loaded: the form for logging a radio call, and its small map' },
+  { id: 'A1.4', file: 'screen-radio-log', route: '/radio-log', h: 600, vw: 1280, alt: 'The Radio Log page: every call in a table, newest first, with its message number, ranger, location and notes' },
+  { id: 'A2.5', file: 'screen-map', route: '/map', h: 640, setup: wait(5000), alt: 'The Map page showing the demo’s radio calls as markers along the South Rim' },
+  { id: 'A4.2', file: 'screen-messages', route: '/messages', h: 640, alt: 'The Messages page: formal messages and resource requests, each with its message number' },
+  { id: 'B1.5', file: 'screen-mission', route: '/mission', h: 700, alt: 'The top of the Mission page: the mode, mission name and operational period' },
+  { id: 'B2.3', file: 'screen-rangers', route: '/rangers', h: 640, alt: 'The Rangers page: the roster, one row per person, with call signs and teams' },
+].map(s => ({ phase: 'demo', vw: 1100, wide: true, find: screen(s.h), ...s }))
 const SHOTS = [
+  ...WIDE,
+  { id: 'C2.1', file: 'screen-field-phone', phase: 'field', route: '/', mobile: true, wide: true, pad: 0,
+    setupReloads: true,
+    setup: `(async () => { window.__click('.entry-welcome button', /my field phone/i); await new Promise(r => setTimeout(r, 2500)) })()`,
+    find: screen(760),
+    alt: 'RangerTrak on a field phone: only Entry and Help, with My reports and the Send button' },
   { id: 'A1.2', file: 'demo-offer', phase: 'clean', route: '/', pad: 3,
     vw: 700,
     find: `(() => { const s = document.querySelector('.entry-welcome__demo-line strong'), t = document.querySelector('[data-testid="welcome-tour-link"]'); if (!s || !t) return null
@@ -251,15 +268,20 @@ async function takeShot(b, s) {
     let file = `${s.file}.png`
     try {
       const webp = path.join(OUT, `${s.file}.webp`)
-      execFileSync('magick', [png, '-quality', '82', '-define', 'webp:method=6', webp])
+      // Whole screens are shown at most 640 px wide (click for full size): 1400 device px is plenty.
+      execFileSync('magick', [png, ...(s.wide ? ['-resize', '1400x>'] : []), '-quality', '82', '-define', 'webp:method=6', webp])
       fs.unlinkSync(png); file = `${s.file}.webp`
     } catch { row.note = 'kept PNG (magick not found or failed)' }
     row.file = file
     row.width = Math.round(w); row.height = Math.round(h)   // CSS px = device px / SCALE
     row.alt = s.alt
+    if (s.wide) row.wide = true
     row.kb = Math.round(fs.statSync(path.join(OUT, file)).size / 1024)
   } catch (e) { row.skipped = e.message.split('\n')[0] }
-  finally { if (s.after) { try { await b.evaluate(s.after) } catch { } } }
+  finally {
+    if (s.after) { try { await b.evaluate(s.after) } catch { } }
+    if (s.cleanup) { try { await b.evaluate(s.cleanup) } catch { } }   // runs only once the shot is taken
+  }
 }
 
 async function main() {
@@ -295,7 +317,7 @@ async function main() {
   const jf = path.join(OUT, 'shots.json')
   let map = {}
   try { map = JSON.parse(fs.readFileSync(jf, 'utf8')) } catch { }
-  for (const r of results) if (!r.skipped) map[r.id] = { file: r.file, alt: r.alt, width: r.width, height: r.height }
+  for (const r of results) if (!r.skipped) map[r.id] = { file: r.file, alt: r.alt, width: r.width, height: r.height, ...(r.wide ? { wide: true } : {}) }
   fs.writeFileSync(jf, JSON.stringify(map, null, 2) + '\n')
   console.log('\nSummary')
   for (const r of results) console.log(r.skipped ? `  SKIPPED ${r.id}: ${r.skipped}` : `  ok      ${r.id}  ${r.file}  ${r.kb} KB  ${r.width}x${r.height}${r.note ? '  ' + r.note : ''}`)

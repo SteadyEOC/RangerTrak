@@ -89,6 +89,16 @@ function route () {
     a.getAttribute('href') === '#' + key ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')
   }
   document.body.classList.toggle('in-module', !!tour)
+  // Reference: its chart chips show under the tabs; the chip for the chart you jumped to is marked.
+  const chips = document.getElementById('ref-chips')
+  if (chips) {
+    chips.hidden = key !== 'reference'
+    for (const a of chips.querySelectorAll('a')) {
+      a.getAttribute('href') === '#' + hash ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')
+    }
+    // Headings land below the sticky bar, whatever its height on this screen.
+    document.documentElement.style.setProperty('--top-h', document.querySelector('header.top').offsetHeight + 'px')
+  }
   // A view's own heading (or the view itself) opens at the top; a step or section scrolls to it.
   target?.closest('details')?.setAttribute('open', '')
   const first = view.querySelector('h1, h2')

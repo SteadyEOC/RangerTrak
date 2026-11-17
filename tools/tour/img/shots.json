@@ -94,5 +94,54 @@
     "alt": "Field mode’s Send new reports button on a phone",
     "width": 144,
     "height": 72
+  },
+  "A1.3": {
+    "file": "screen-entry.webp",
+    "alt": "The Entry page with the Grand Canyon demo loaded: the form for logging a radio call, and its small map",
+    "width": 1100,
+    "height": 708,
+    "wide": true
+  },
+  "A1.4": {
+    "file": "screen-radio-log.webp",
+    "alt": "The Radio Log page: every call in a table, newest first, with its message number, ranger, location and notes",
+    "width": 1280,
+    "height": 608,
+    "wide": true
+  },
+  "A2.5": {
+    "file": "screen-map.webp",
+    "alt": "The Map page showing the demo’s radio calls as markers along the South Rim",
+    "width": 1100,
+    "height": 648,
+    "wide": true
+  },
+  "A4.2": {
+    "file": "screen-messages.webp",
+    "alt": "The Messages page: formal messages and resource requests, each with its message number",
+    "width": 1100,
+    "height": 648,
+    "wide": true
+  },
+  "B1.5": {
+    "file": "screen-mission.webp",
+    "alt": "The top of the Mission page: the mode, mission name and operational period",
+    "width": 1100,
+    "height": 708,
+    "wide": true
+  },
+  "B2.3": {
+    "file": "screen-rangers.webp",
+    "alt": "The Rangers page: the roster, one row per person, with call signs and teams",
+    "width": 1100,
+    "height": 648,
+    "wide": true
+  },
+  "C2.1": {
+    "file": "screen-field-phone.webp",
+    "alt": "RangerTrak on a field phone: only Entry and Help, with My reports and the Send button",
+    "width": 390,
+    "height": 760,
+    "wide": true
   }
 }

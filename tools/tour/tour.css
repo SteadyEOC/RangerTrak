@@ -254,7 +254,21 @@ a.next { margin-left: auto; }
 /* E-244: a small picture of the control a step names (tools/tour/capture-shots.js). */
 .shot { display: block; max-width: 100%; height: auto; max-width: min(100%, 420px); margin-top: 6px;
   border: 1px solid var(--rule); border-radius: 4px; background: #fff; }
-@media print { .shot { max-width: 200px; break-inside: avoid; } }
+/* A whole screen of the app, so the words sit beside the real thing; a click opens it full size. */
+.shot--wide { max-width: min(100%, 640px); border-radius: 6px; box-shadow: 0 1px 4px rgba(0, 0, 0, .12); }
+.shotlink { display: inline-block; max-width: 100%; cursor: zoom-in; }
+@media print { .shot { max-width: 200px; break-inside: avoid; } .shot--wide { max-width: 320px; } }
+
+/* Reference: a second row under the tabs, one chip per chart (shown on Reference only) */
+.subtabs { display: flex; gap: .4rem; padding: .35rem 12px .5rem; overflow-x: auto; scrollbar-width: none;
+  border-top: 1px solid var(--rule); }
+.subtabs[hidden] { display: none; }
+.subtabs a { flex: none; padding: .22rem .7rem; border: 1px solid var(--rule); border-radius: 999px; font-size: .88rem;
+  text-decoration: none; color: var(--fg); background: var(--tint); white-space: nowrap; }
+.subtabs a:hover, .subtabs a:focus-visible { border-color: var(--accent); color: var(--accent); }
+.subtabs a[aria-current] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+#reference h3[id] { scroll-margin-top: calc(var(--top-h, 8rem) + .5rem); }
+@media print { .subtabs { display: none; } }
 ul.checks li { position: relative; }
 ul.checks li > span[id] { position: absolute; left: 0; top: 0; width: 0; height: 0; }
 /* Phones: tighter tables, so the phonetic alphabet's six columns fit 390 px without a sideways scroll. */

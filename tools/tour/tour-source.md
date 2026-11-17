@@ -21,6 +21,7 @@
 ;;   ~~~ ... ~~~               a block shown as typed (a roster file)
 ;;   > text                    an aside (a quote box)
 ;;   ### text                  a small heading
+;;   ### text {#id|Chip}       on Reference: the heading gets that anchor and a chip in the row under the tabs
 ;;   - text                    a bullet
 ;;   anything else             a paragraph
 ;;   {{call Team :: message}}  a call card exchange: Village Base, THIS IS Team... ROGER, OUT.
@@ -44,7 +45,7 @@ Bookmark this page (rangertrak.org/tour) and come back when you have more time. 
 
 ### Seats
 
-Every leg is a short scene for up to four people: the **Scribe** at the keyboard, **Net control** speaking for the base, a **Field team** reading the call cards, and an optional **Observer**. Between legs everyone moves one seat round. Solo? Play every seat and read the cards aloud anyway. [Seats and rotation in full](#reference) are on the Reference tab.
+Every leg is a short scene for up to four people: the **Scribe** at the keyboard, **Net control** speaking for the base, a **Field team** reading the call cards, and an optional **Observer**. Between legs everyone moves one seat round. Solo? Play every seat and read the cards aloud anyway. [Seats and rotation in full](#seats) are on the Reference tab.
 
 {{tours}}
 
@@ -54,7 +55,7 @@ Every leg is a short scene for up to four people: the **Scribe** at the keyboard
 
 Things to look up while you ride: radio words, the seats, how the passes work and who is who in the demos.
 
-### Radio basics
+### Prowords {#prowords|Prowords}
 
 Every call card is written as a real exchange, the way a net runs, so the tour doubles as practice with the phonetic alphabet and prowords (the short standard words that keep radio traffic clear). They are practice for people: RangerTrak does not check any of it, and where your own net's procedure differs, yours wins. The first set below is from the ARRL's [prowords page](https://nts2.arrl.org/prowords-and-introductory-words-and-phrases/); the second is standard voice-net practice that the cards also use.
 | Proword | What it means |
@@ -73,6 +74,9 @@ Every call card is written as a real exchange, the way a net runs, so the tour d
 | WAIT / WAIT OUT | WAIT: hold on a few seconds. WAIT OUT: it will be longer; I will call you back. |
 | CORRECTION | I made a mistake; here is the right version. |
 The tour brings them in a little at a time. Leg A2: THIS IS, OVER, OUT, ROGER. Leg A3: FIGURES. Leg A4: SAY AGAIN, WAIT, CORRECTION, BREAK, INITIALS. Leg B2: I SPELL. Tours B and C use them all as a matter of course.
+
+### Phonetic alphabet and figures {#alphabet|Phonetic alphabet}
+
 | Letter | Say | Letter | Say | Letter | Say |
 |---|---|---|---|---|---|
 | A | Alpha | J | Juliet | S | Sierra |
@@ -86,7 +90,7 @@ The tour brings them in a little at a time. Leg A2: THIS IS, OVER, OUT, ROGER. L
 | I | India | R | Romeo | . | decimal |
 **Figures:** ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINER (not "nine", which can sound like "no"). All the call signs on the cards are made up, in the WZ0… pattern.
 
-### Seats and rotation
+### Seats and rotation {#seats|Seats}
 
 Every leg is a short scene for up to four people. Seats are named the same in every tour:
 | Seat | What you do |
@@ -97,12 +101,12 @@ Every leg is a short scene for up to four people. Seats are named the same in ev
 | **Observer** | Optional. Keeps time, keeps a paper log if you want one, and writes down the step IDs of anything odd. |
 Each leg's Setup box says which seats it needs. Between legs there is a **rest stop: swap seats, everyone moves one seat round, and the new scribe starts the next leg.** The two long legs (A4 and B4) also have a swap in the middle. **Solo?** You play every seat. Read the cards aloud anyway: saying the words is half the practice.
 
-### How passes and feedback work
+### How passes and feedback work {#passes|Passes and feedback}
 
 A step is a pass when you did it and it worked: that is how you learn the app, one working step at a time. Every step has an ID, the leg plus a number, such as **A3.2** (Tour A, leg 3, step 2). A few steps are questions instead, with IDs such as **A3.Q1**: those are the only places we need an answer, and they are listed on the Feedback tab. Each leg ends with one plain line: "Anything odd, slow or missing? Note the step ID and one line."
 If something breaks, carry on: the next step rarely depends on it. Note the ID and, if you can, press AAR/214 at the top of the page right then (leg A1 shows you how) to record your observation. The Feedback tab says where to send what you found, and has a checklist for anyone who likes paper at a drill.
 
-### The demo cast
+### The demo cast {#cast|Demo cast}
 
 Tour A runs on the Grand Canyon, South Rim demo, which already has a roster and about forty radio log entries. The call cards use three names, so you can read them aloud without hunting through the roster:
 | Name on the cards | Who they are | Tour A (the demo roster) | Tours B and C (your own roster) |
