@@ -320,8 +320,9 @@ B4.7 Card 7: **Attach** adds a 📎 1 chip to the entry; hovering it on the Radi
 B4.8 Card 8: the disposition box cycles ✓, →, ! and back to empty, and a tap lands on the box you meant (even with a wet finger).
 B4.9 Card 9: on Mission, change who is operating Mather. Earlier Mather entries keep their old operator.
 B4.10 Half-way through typing a call, go to Map to look at the spot, then come back to Entry. What you had typed is still there.
+B4.11 Optional, after card 6: log Mather's battery once more as a resource request. Tick **Also generate an ICS-213RR (Resource Request)**, line 1: Qty **1**, Kind **Radio battery**, priority **Routine**, deliver to **Mather**. On Messages, choose **Resource requests** in the filter: it is there, and **Print** fills FEMA's ICS-213RR requestor band.
 B4.Q1 RangerTrak has the ICS-213 and the ICS-213RR (Resource Request). Was the 213 good enough for card 6, or does anyone on your team need a 213RR?
-Skills: the coordinate format switcher in DD, DDM, MGRS, UTM and Maidenhead; fix an entry on the Radio Log; ICS-213 to a named recipient; Attach a photo; disposition marks; change who is operating a team.
+Skills: the coordinate format switcher in DD, DDM, MGRS, UTM and Maidenhead; fix an entry on the Radio Log; ICS-213 to a named recipient; an ICS-213RR resource request; Attach a photo; disposition marks; change who is operating a team.
 Note: Anything odd, slow or missing? Note the step ID and one line.
 
 @leg B5 | Wrap-up | everyone
