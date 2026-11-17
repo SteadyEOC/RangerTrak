@@ -24,6 +24,8 @@
   color          : var(--rt-chrome-ink);
   padding-top    : 0.3em;
   padding-bottom : 0.25em;
+  // 11-16: the site-wide gutter, so the brand lines up with the page title and content below.
+  padding-inline : var(--rt-page-gutter);
   font-size      : 1.2em;
 }
 

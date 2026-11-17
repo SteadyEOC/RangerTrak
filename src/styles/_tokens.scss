@@ -13,6 +13,7 @@
 @use 'sass:map';
 @use './chrome';
 @use './status';
+@use './breakpoints' as bp;
 
 // Emits one skin's surface/ink/chrome/accent tokens. Was a flat :root block reading a
 // single compile-time-selected map (styles/_active-skin.scss, now gone) - widened
@@ -184,6 +185,10 @@
   --rt-space-md: calc(0.75rem * var(--rt-space-scale));
   --rt-space-lg: calc(1rem * var(--rt-space-scale));
   --rt-space-xl: calc(1.5rem * var(--rt-space-scale));
+
+  // 11-16, John: ONE page gutter for the whole site, shared by the navbar, the page title row and the page
+  // content, so their left edges line up: 16px on a phone, 24px on a tablet, 32px on a laptop (D-33 classes).
+  --rt-page-gutter: 32px;
   --rt-gap: var(--rt-space-md);
 
   // Field-conditions minimum. D-33 puts a phone in scope for the Entry screen, and
@@ -215,6 +220,14 @@
   --rt-type-body-sm-line: 1.25rem;
   --rt-type-label-size: 0.75rem;
   --rt-type-label-line: 1rem;
+}
+
+@include bp.tablet-only {
+  :root { --rt-page-gutter: 24px; }
+}
+
+@include bp.phone {
+  :root { --rt-page-gutter: 16px; }
 }
 
 // Explicit overrides - only the tokens that actually vary per skin (surfaces/ink/chrome/

@@ -13,7 +13,8 @@
     background     : var(--rt-surface-2);
     color          : var(--rt-ink);
     border-bottom  : 1px solid var(--rt-line);
-    padding        : 0 5px var(--rt-space-sm) 5px;
+    // 11-16: the site-wide gutter, so the title lines up with the navbar and the content.
+    padding        : 0 var(--rt-page-gutter) var(--rt-space-sm);
     //margin : 0;
     display        : flex;
     flex-flow      : row wrap;
