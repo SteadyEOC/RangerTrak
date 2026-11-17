@@ -1453,6 +1453,35 @@ async function checkEntryAutofocusAndReset() {
  * forward is guaranteed to land in the future no matter what real time this check happens to
  * run at - typing a fixed hour could land in the past depending on the clock.
  */
+async function checkEntryUndo() {
+  console.log('\nE-301: Entry undo and redo step the whole form back and forward')
+  await goto('/')
+  const type = (sel, text) => evaluate(`(() => {
+    const el = document.querySelector(${JSON.stringify(sel)});
+    el.focus();
+    const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, ${JSON.stringify(text)});
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    // A headless window without focus fires no real focus events, so send the one the form listens for.
+    el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+  })()`)
+  const notes = () => evaluate(`document.getElementById('enter__What--area').value`)
+  const disabled = tid => evaluate(`document.querySelector('[data-testid=${tid}]').disabled`)
+  check('E-301: nothing to undo on a fresh form', await disabled('entry-undo'), true)
+  await type('#enter__What--area', 'first words'); await sleep(300)
+  await type('#enter__What--area', 'first words, then a typo'); await sleep(300)
+  check('E-301: two changes recorded, Undo is enabled', await disabled('entry-undo'), false)
+  await evaluate(`document.querySelector('[data-testid=entry-undo]').click()`); await sleep(300)
+  check('E-301: Undo puts the previous text back', await notes(), 'first words')
+  await evaluate(`document.body.focus(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }))`); await sleep(300)
+  check('E-301: Ctrl+Z outside a text box steps back again', await notes(), '')
+  await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'y', ctrlKey: true, bubbles: true }))`); await sleep(300)
+  check('E-301: Ctrl+Y redoes', await notes(), 'first words')
+  await evaluate(`document.querySelector('[data-testid=entry-redo]').click()`); await sleep(300)
+  check('E-301: Redo again', await notes(), 'first words, then a typo')
+  await goto('/')
+}
+
 async function checkEntryFutureTimeWarning() {
   console.log('\nEntry: a future report time shows a warning, but Submit still works (H)')
   await goto('/')
@@ -6643,6 +6672,7 @@ async function main() {
     // are safe against production too, which is where phone-width regressions actually bite.
     if (want('entry')) await checkEntryTabOrder()
     if (want('entry')) await checkEntryFutureTimeWarning()
+    if (want('entry')) await checkEntryUndo()
     if (want('entry')) await checkMiniMapFillsItsBox()
     if (want('entry')) await checkEntryPhoneWidth()
     if (want('shell')) await checkAllRoutesPhoneWidth()

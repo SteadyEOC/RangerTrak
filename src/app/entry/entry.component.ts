@@ -10,7 +10,7 @@ import { HttpClient } from '@angular/common/http'
 import {
   AfterViewInit, Component, computed, ElementRef, EventEmitter, Inject, Input, NgZone, OnDestroy,
   OnInit, Output, signal, type WritableSignal, ViewChild, QueryList, ViewChildren,
-  ChangeDetectionStrategy, effect, inject
+  ChangeDetectionStrategy, effect, inject, HostListener
 } from '@angular/core'
 import { toSignal } from '@angular/core/rxjs-interop'
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms'
@@ -45,6 +45,7 @@ import { AttachmentBudgetService } from '../shared/attachments/attachment-budget
 import { TimePickerComponent } from '../shared/time-picker/time-picker.component'
 import { DDToDDM } from '../domain/coordinate'
 import { farLocation, farLocationText } from '../domain/far-location'
+import { UndoHistory } from '../domain/undo-history'
 import { matchRanger } from '../domain/ranger-match'
 import {
   RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
@@ -672,6 +673,71 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // patch entryForm's model - as THAT is what gets saved with on form submit
     this.entryModel.update(m => ({ ...m, location: newLocation }))
     this.updateFarNote()
+    this.recordUndo()
+  }
+
+  // ---- E-301 level 1: undo and redo on this report's form ----
+  // A snapshot of the whole form after each committed change (leaving a field, a map click, a format switch),
+  // up to 20 steps, in memory for this report only; cleared when it is saved. Inside a text box the browser's own
+  // undo still works; Ctrl+Z / Ctrl+Y (or the Undo and Redo buttons) step the whole form back and forward.
+  private readonly undoHistory = new UndoHistory<EntryDraft>(20, (a, b) => JSON.stringify(this.undoKey(a)) === JSON.stringify(this.undoKey(b)))
+  readonly canUndo = signal(false)
+  readonly canRedo = signal(false)
+  private applyingUndo = false
+
+  /** Attachments and the report time are not undone (files stay as picked; the time is when it was started). */
+  private undoKey(d: EntryDraft): unknown {
+    return { ...d, pendingFiles: undefined, date: undefined }
+  }
+
+  private undoSnapshot(): EntryDraft {
+    return { ...this.currentDraft(), location: this.locationParent, pendingFiles: [] }
+  }
+
+  private syncUndoButtons(): void {
+    this.canUndo.set(this.undoHistory.canUndo)
+    this.canRedo.set(this.undoHistory.canRedo)
+  }
+
+  private resetUndo(): void {
+    this.undoHistory.reset(this.undoSnapshot())
+    this.syncUndoButtons()
+  }
+
+  /** Called after a committed change. Deferred one tick so the field's new value is in the model. */
+  recordUndo(): void {
+    if (this.applyingUndo) return
+    setTimeout(() => {
+      if (this.applyingUndo) return
+      this.undoHistory.record(this.undoSnapshot())
+      this.syncUndoButtons()
+    })
+  }
+
+  private applyUndo(d: EntryDraft | undefined): void {
+    if (!d) return
+    this.applyingUndo = true
+    try {
+      this.applyDraft({ ...d, pendingFiles: this.pendingFiles(), date: this.entryModel().date })
+    } finally {
+      this.applyingUndo = false
+    }
+    this.syncUndoButtons()
+  }
+
+  onUndo(): void { this.applyUndo(this.undoHistory.undo()) }
+  onRedo(): void { this.applyUndo(this.undoHistory.redo()) }
+
+  /** Ctrl+Z / Cmd+Z, and Ctrl+Y / Ctrl+Shift+Z, when the focus is not in a text box (there the browser's undo wins). */
+  @HostListener('document:keydown', ['$event'])
+  onUndoKeys(e: KeyboardEvent): void {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+    const t = e.target as HTMLElement | null
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return
+    if (this.document.querySelector('.cdk-overlay-container .mat-mdc-dialog-container')) return
+    const k = e.key.toLowerCase()
+    if (k === 'z' && !e.shiftKey && this.undoHistory.canUndo) { e.preventDefault(); this.onUndo() }
+    else if ((k === 'y' || (k === 'z' && e.shiftKey)) && this.undoHistory.canRedo) { e.preventDefault(); this.onRedo() }
   }
 
   /**
@@ -964,6 +1030,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.initEntryForm()
     this.restoreDraft()
+    // E-301: the starting point to undo back to (after a restored draft, if any).
+    queueMicrotask(() => this.resetUndo())
 
     this.submitInfo = this.document.getElementById("enter__Submit-info")
     if (!this.submitInfo) {
@@ -1332,6 +1400,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     })
     // E-300: the log just grew (or the form was cleared), so the carried-forward position is judged afresh.
     this.updateFarNote()
+    // E-301: a saved or cleared report starts a fresh undo history.
+    queueMicrotask(() => this.resetUndo())
     // D-44: operatorModel is deliberately NOT reset - it carries forward across entries in
     // the same session (see its own declaration). Only its EDITING state changes here: once
     // a name has actually been entered, later resets collapse it to the compact summary line

@@ -153,7 +153,7 @@
   @if (editing()) {
   <p class="entry-editing" role="status" data-testid="entry-editing">{{ editingLabel() }}. Nothing has been sent, so the saved report replaces it.</p>
   }
-  <form [formGroup]="entryControlsForm" (ngSubmit)="onFormSubmit()" (keydown)="onFormKeydown($event)" class="enter__form">
+  <form [formGroup]="entryControlsForm" (ngSubmit)="onFormSubmit()" (keydown)="onFormKeydown($event)" (focusout)="recordUndo()" class="enter__form">
     <!-- Groups the mini-map with Who/Where so a breakpoint can reorder them together
          without touching desktop layout at all: default (undeclared) `display` here does
          nothing, so at tablet-up widths this is a no-op wrapper and the float below behaves
@@ -808,6 +808,16 @@
          (_icon-button-chunk.mjs) after the failure, not assumed beforehand; this is the one
          spot in this pass where an assumption ("a plain directive won't touch tabindex")
          turned out wrong, caught only because the FULL e2e suite ran, not just `ng build`. -->
+    <!-- E-301: undo and redo the whole form, step by step, until the report is saved. Out of the tab order (the
+         entry tab order is fixed); Ctrl+Z and Ctrl+Y do the same from the keyboard outside a text box. -->
+    <button matButton type="button" class="enter__undo" tabindex="-1" data-testid="entry-undo" [disabled]="!canUndo()"
+      (click)="onUndo()" title="Undo the last change to this report (Ctrl+Z outside a text box)" aria-label="Undo">
+      <mat-icon>undo</mat-icon>
+    </button>
+    <button matButton type="button" class="enter__undo" tabindex="-1" data-testid="entry-redo" [disabled]="!canRedo()"
+      (click)="onRedo()" title="Redo (Ctrl+Y outside a text box)" aria-label="Redo">
+      <mat-icon>redo</mat-icon>
+    </button>
     @if (editing()) {
     <button matButton="outlined" (click)="onCancelEdit()" title="Leave this report as it was and go back to your new report"
       type="button" [tabIndex]="resetTabIndex" data-testid="entry-cancel-edit">

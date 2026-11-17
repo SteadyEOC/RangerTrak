@@ -99,6 +99,7 @@ print
 public
 publish
 radio
+redo
 refresh
 remove
 reply
@@ -106,6 +107,7 @@ report
 restore
 rule
 satellite
+save
 scale
 science
 search

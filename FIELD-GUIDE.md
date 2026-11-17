@@ -301,6 +301,10 @@ If a position lands far from the mission's other reports (or, before there are s
 than 30 km from the mission's default location), a note under **Where** says how far, so you can catch a wrong
 digit, a lost minus sign or last mission's location. It's only a warning; you can still save.
 
+**Undo and Redo.** The two arrow buttons beside **Reset** step the whole report back and forward, one change
+at a time (up to 20), until you add it to the log: handy after a mistyped position or an overwritten message. Outside
+a text box, **Ctrl+Z** and **Ctrl+Y** do the same; inside a text box they undo your typing as usual.
+
 You can also type coordinates, or an address for RangerTrak to look up. RangerTrak accepts a
 position in whichever format it was called in over the radio. A small switcher above the
 coordinate fields picks which one you type into; every other format updates underneath it,
