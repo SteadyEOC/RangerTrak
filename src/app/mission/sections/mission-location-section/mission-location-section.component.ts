@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common'
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core'
+import { ChangeDetectionStrategy, Component, Input, computed, inject } from '@angular/core'
 import { FieldTree, FormField } from '@angular/forms/signals'
 
 import { COORDINATE_FORMATS, CoordinateFormat, defaultCoordinateFormat } from '../../../domain/coordinate'
-import { MissionType } from '../../../shared/services/'
+import { MissionType, RadioLogService } from '../../../shared/services/'
+import { bearingAndDistance } from '../../../domain/coordinate'
+import { isUsablePoint } from '../../../domain/far-location'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
 import { MatCardModule } from '@angular/material/card'
@@ -25,6 +27,22 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle'
 export class MissionLocationSectionComponent {
   @Input({ required: true }) form!: FieldTree<MissionType>
   @Input({ required: true }) settings!: MissionType
+
+  private radioLog = inject(RadioLogService)
+
+  /**
+   * E-296 (11-14 drill): a new default location under an old mission's reports. The maps fit to every report in
+   * the log, so Grand Canyon reports kept pulling the map away from a new Vashon default. Counts the reports more
+   * than 50 km from the default being typed, so the card can say why and point at Start the next mission.
+   */
+  readonly farReports = computed(() => {
+    const lat = Number(this.form?.defLat?.().value())
+    const lng = Number(this.form?.defLng?.().value())
+    if (!isUsablePoint({ lat, lng })) return 0
+    return (this.radioLog.getCurrentRadioLog()?.logEntries ?? [])
+      .filter(e => isUsablePoint(e.location) && bearingAndDistance(lat, lng, e.location.lat, e.location.lng).distanceMeters > 50_000)
+      .length
+  })
 
   /**
    * 2026-08-26 (maintainer): "Default coordinate format for Entry" becomes a real

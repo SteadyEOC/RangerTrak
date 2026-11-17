@@ -597,6 +597,8 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
    * @param title
    * @returns
    */
+  private positionedOnce = false
+
   override addMarker(lat: number, lng: number, title: string = '') {
     const at = mapPoint({ lat, lng })
     if (!at || !this.lMap) {
@@ -615,8 +617,15 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
     this.positionMarker.bindPopup(title)
     this.positionMarker.addTo(this.lMap)
 
-    // Refit map
-    this.lMap.setView(at)
+    // Refit map. E-296 (11-14 drill): the map first fits every report in the log, and with an old mission's
+    // reports still there (Grand Canyon under a new Vashon default) that left the small map zoomed out between the
+    // two. The first position of a visit therefore also sets a usable zoom; later moves keep the scribe's zoom.
+    if (!this.positionedOnce) {
+      this.positionedOnce = true
+      this.lMap.setView(at, Math.max(this.lMap.getZoom(), this.settings?.leaflet?.defZoom ?? 13))
+    } else {
+      this.lMap.setView(at)
+    }
     //marker.addEventListener('click', this._markerOnClick);
 
   }

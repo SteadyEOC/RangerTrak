@@ -5,6 +5,15 @@
       auto-center on the centroid of the reports actually entered, then zoom to fit.</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
+    @if (farReports() > 0) {
+    <!-- E-296: old reports far from the default steer the maps; say so, and where to clear them. -->
+    <p class="rt-alert" role="note" data-testid="mission-far-reports">
+      {{ farReports() }} {{ farReports() === 1 ? 'report' : 'reports' }} in the radio log
+      {{ farReports() === 1 ? 'is' : 'are' }} more than 50 km from this location, perhaps from an earlier mission. The maps
+      fit to every report, so {{ farReports() === 1 ? 'it pulls' : 'they pull' }} the map away from here.
+      On this page, <strong>Danger zone &gt; Start the next mission</strong> clears the old reports and keeps the roster and Places.
+    </p>
+    }
     <div class="rt-field-grid">
       <mat-form-field floatLabel="always">
         <mat-label>Default latitude</mat-label>
