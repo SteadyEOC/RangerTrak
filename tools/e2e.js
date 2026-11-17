@@ -5850,6 +5850,11 @@ async function checkBoard(downloads) {
       document.querySelector('#rows tr').classList.contains('alerted'), !!document.querySelector('#rows tr [data-ack]'), document.title.startsWith('(1) ')]`, v.sessionId), [true, true, true])
     await evaluate(`document.querySelector('#rows [data-ack]').click()`, v.sessionId)
     await sleep(300)
+    await evaluate(`document.querySelector('#rows tr[data-rid] td:last-child').previousElementSibling.click()`, v.sessionId)
+    await sleep(300)
+    check('E-292: a tap on a row opens the whole report (title names the station, Message shown)', await evaluate(`[
+      !document.getElementById('overlay').hidden, /E2E-/.test(document.getElementById('ovTitle').textContent), [...document.querySelectorAll('#ovBody dt')].some(d => d.textContent === 'Time')]`, v.sessionId), [true, true, true])
+    await evaluate(`document.getElementById('ovClose').click()`, v.sessionId)
     check('E-310: Acknowledge clears it on this viewer', await evaluate(`[document.getElementById('alertBanner').hidden, document.querySelectorAll('#rows tr.alerted').length, document.title.startsWith('(')]`, v.sessionId), [true, 0, false])
     await closeTarget(v.targetId)
 

@@ -281,6 +281,7 @@
   #alertsDialog .actions button { min-height: 44px; padding: 0 1rem; font: inherit; }
   #mapPanel:fullscreen { background: var(--bg); padding: 0.5rem; }
   #mapPanel:fullscreen #mapBox { height: calc(100vh - 5rem); }
+  #rows tr[data-rid] { cursor: pointer; }
   tr.hit td { animation: hitrow 4s ease-out; }
   @keyframes hitrow { 0%, 60% { background: #ffe680; color: #1a1a1a; } 100% { background: transparent; } }
   /* Print from a 213: only the message prints, on a plain white page. */
@@ -727,8 +728,16 @@
 
   rowsEl.addEventListener('click', function (ev) {
     var t = ev.target;
-    var btn = t && t.closest ? t.closest('button') : null;
-    if (!btn) { return; }
+    var btn = t && t.closest ? t.closest('button, a') : null;
+    if (!btn) {
+      // E-292 (John 11-14): on a phone a long message needs a sideways scroll; a tap on the row shows it whole.
+      var tr = t && t.closest ? t.closest('tr[data-rid]') : null;
+      var rid = tr && tr.getAttribute('data-rid');
+      var hit = rid && ((latest && latest.reports) || []).filter(function (x) { return String(x.id) === rid; })[0];
+      if (hit) { openReport(hit); }
+      return;
+    }
+    if (btn.tagName === 'A') { return; }
     if (btn.hasAttribute('data-mark')) { toggleMark(btn.getAttribute('data-mark')); return; }
     if (btn.hasAttribute('data-more')) { expanded[btn.getAttribute('data-more')] = true; render(); return; }
     if (btn.hasAttribute('data-open213')) {
@@ -1307,6 +1316,42 @@
       setTimeout(window.print, 50);
     });
     ov.download.appendChild(print);
+    ov.close.focus();
+  }
+
+  // E-292: one report, every field wrapped, in the same overlay as a 213 (a bottom sheet's job on a phone).
+  function openReport(r) {
+    closeOverlay();
+    var row = function (label, value, cls) {
+      return value ? '<dt>' + esc(label) + '</dt><dd' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(value) + '</dd>' : '';
+    };
+    var loc = r.location && typeof r.location.lat === 'number'
+      ? (r.location.address ? r.location.address + ' - ' : '') + r.location.lat.toFixed(5) + ', ' + r.location.lng.toFixed(5) : '';
+    var files = (r.attachments || []).filter(function (a) { return a && !a.removed; }).map(function (a) { return a.name || a.type || 'file'; }).join(', ');
+    ov.root.hidden = false;
+    ov.title.textContent = (r.msgNo ? r.msgNo + ' - ' : '') + (station(r.tacticalCall, r.callsign) || 'Report');
+    ov.status.className = '';
+    ov.status.textContent = isAlerted(r) ? 'Alert: ' + alertReasons(r) : '';
+    ov.body.innerHTML = '<dl class="form213">'
+      + row('Time', fmtTime(r.date))
+      + row('From', station(r.tacticalCall, r.callsign))
+      + row('To', station(r.toTactical, r.toCallsign))
+      + row('Status', r.status)
+      + row('Source', r.source)
+      + row('Where', loc)
+      + row('Message', r.notes, 'message')
+      + row('Resource request', r.rr213, 'message')
+      + (is213(r) ? row('ICS-213', (r.ics213.subject || '(no subject)') + ': ' + (r.ics213.message || ''), 'message') : '')
+      + row('Files', files)
+      + row('Message number', r.msgNoFull)
+      + '</dl>';
+    if (is213(r)) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = 'Open the ICS-213';
+      b.addEventListener('click', function () { open213(r); });
+      ov.download.appendChild(b);
+    }
     ov.close.focus();
   }
 
