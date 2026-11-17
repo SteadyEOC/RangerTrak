@@ -51,7 +51,7 @@
   {
     "id": "local-name-failed",
     "seenFrom": ["app"],
-    "message": "This device couldn't reach {host}. Names ending in .local don't work on every network: paste the address made of numbers that RangerView printed under the name. If that fails too, open RangerView once to accept its certificate.",
+    "message": "This device couldn't reach {host}. First, open RangerView once and accept its certificate (Advanced, then Proceed). If it still fails, names ending in .local don't work on every network: paste the address made of numbers that RangerView printed under the name.",
     "detail": "A .local name is found by multicast DNS, which some routers do not pass between Wi-Fi and wired devices, and some devices do not support. The numbered address always works on the same network (E-289).",
     "anchor": "cant-reach-board-local-name"
   },
@@ -107,7 +107,7 @@
   {
     "id": "laptop-asleep",
     "seenFrom": ["server"],
-    "message": "Keep this computer plugged in with the lid open. If it sleeps, RangerView stops.",
+    "message": "Keep this computer plugged in and awake (on a laptop, lid open). If it sleeps, RangerView stops.",
     "detail": "RangerView only runs while this computer is awake. On battery, set sleep to Never while RangerView is in use.",
     "anchor": "cant-reach-board-asleep"
   }

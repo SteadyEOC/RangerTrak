@@ -217,6 +217,7 @@ export class CommandPostPublishService implements OnDestroy {
     this.retry.stop()
     this.listen(false)
     this.stopPolling()
+    clearTimeout(this.logPublishTimer)
     this.missionSubscription?.unsubscribe()
     this.radioLogSubscription?.unsubscribe()
   }
@@ -384,9 +385,16 @@ export class CommandPostPublishService implements OnDestroy {
 
   // ---- publishing ----
 
+  // E-291 (e): one saved entry was published twice 150 ms apart: the log emits once for the entry and again as its
+  // attachments or 213RR land. Log-driven publishes wait 300 ms for the burst to settle, then send the final state once.
+  private logPublishTimer: ReturnType<typeof setTimeout> | undefined
+
   private onRadioLog(_radioLog: RadioLogType): void {
     const state = this.stateSignal()
-    if (state === 'publishing') void this.publish()
+    if (state === 'publishing') {
+      clearTimeout(this.logPublishTimer)
+      this.logPublishTimer = setTimeout(() => void this.publish(), 300)
+    }
     else if (state === 'error' && this.active && !document.hidden) this.start(this.active.base, false) // try the claim again
   }
 

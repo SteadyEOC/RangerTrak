@@ -91,6 +91,12 @@
       <p class="mission-command-post__certificate">
         <a matButton="outlined" [href]="helloUrl()" target="_blank" rel="noopener">Open RangerView</a>
       </p>
+      <!-- E-291 (d), (f): two things the 11-14 retest found that alarm or stop a scribe. -->
+      <p class="meta mission-command-post__cert-notes" data-testid="board-cert-notes">
+        Opens in a browser tab, even from the installed RangerTrak app (an installed app can't show the certificate
+        page). Once you accept it, Chrome may mark this page "Not secure": that is expected while it talks to RangerView
+        on your own network; reports still go only to RangerView.
+      </p>
     }
     <!-- Catches the one mistake this codebase now knows is silently fatal - see
          entersPlainHttp()'s own doc comment. -->
