@@ -68,6 +68,22 @@ describe('DevicePrefsService', () => {
     expect(prefs.getMsgStation()).toBe('A')
   })
 
+  it('keeps the Winlink call sign and saved addresses on the device, with safe defaults on an old store (E-307)', () => {
+    // A returning user's storage has neither key: both read as their defaults.
+    expect(prefs.getWinlinkCall()).toBe('')
+    expect(prefs.getWinlinkAddresses()).toEqual([])
+    expect(prefs.setWinlinkCall(' k7abc ')).toBe(true)
+    expect(prefs.getWinlinkCall()).toBe('K7ABC')
+    expect(prefs.setWinlinkAddresses([{ label: '', address: 'W7EOC' }, { label: 'x', address: ' ' }])).toBe(true)
+    expect(prefs.getWinlinkAddresses()).toEqual([{ label: 'W7EOC', address: 'W7EOC' }])
+    localStorage.setItem('rt-winlink-addresses', '{not json')
+    expect(prefs.getWinlinkAddresses()).toEqual([])
+    localStorage.setItem('rt-winlink-addresses', '"text"')
+    expect(prefs.getWinlinkAddresses()).toEqual([])
+    prefs.setWinlinkCall('')
+    expect(localStorage.getItem('rt-winlink-call')).toBeNull()
+  })
+
   it('remembers Fit to screen per grid, and reads unknown names as off', () => {
     expect(prefs.getGridFit('radio-log')).toBe(false)
     prefs.setGridFit('rangers', true)

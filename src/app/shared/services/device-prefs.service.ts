@@ -18,6 +18,9 @@ const AAR_NOTE_LAST_KIND_KEY = 'aarNoteLastKind'
 const MSG_STATION_KEY = 'rt-msg-station'
 // 2026-10-27: the grids this device fits to the screen (Fit to screen), comma-separated names.
 const GRID_FIT_KEY = 'rt-grid-fit'
+// E-307 (Q80): the Winlink call sign and saved radio addresses this device sends from. A mission may override both.
+const WINLINK_CALL_KEY = 'rt-winlink-call'
+const WINLINK_ADDRESSES_KEY = 'rt-winlink-addresses'
 
 /**
  * D-61: what this device remembers about publishing to RangerView. `key` is the hidden publish key the
@@ -27,7 +30,21 @@ const GRID_FIT_KEY = 'rt-grid-fit'
 /** The grids that have a Fit to screen switch. */
 export type GridName = 'radio-log' | 'rangers'
 
+/** E-307: one saved radio address: a name to pick it by, and the address (CALLSIGN, tactical or SMTP:user@host). */
+export type WinlinkAddress = { label: string, address: string }
+
 export type BoardPublisherPref = { base?: string, key?: string, replaced?: boolean }
+
+/** Keeps the entries that have an address; a blank label shows the address. */
+export function parseWinlinkAddresses(v: unknown): WinlinkAddress[] {
+  if (!Array.isArray(v)) return []
+  return v.flatMap((x): WinlinkAddress[] => {
+    const address = typeof x?.address === 'string' ? x.address.trim() : ''
+    if (!address) return []
+    const label = typeof x?.label === 'string' && x.label.trim() ? x.label.trim() : address
+    return [{ label, address }]
+  })
+}
 
 /**
  * Small per-device UI preferences that used to be read and written by components straight
@@ -72,6 +89,33 @@ export class DevicePrefsService {
   setGridFit(grid: GridName, fit: boolean): void {
     const others = (this.read(GRID_FIT_KEY) ?? '').split(',').filter(g => g && g !== grid)
     this.write(GRID_FIT_KEY, (fit ? [...others, grid] : others).join(','))
+  }
+
+  /** E-307: this device's Winlink call sign, upper case; blank when never set. */
+  getWinlinkCall(): string {
+    return (this.read(WINLINK_CALL_KEY) ?? '').trim().toUpperCase()
+  }
+
+  setWinlinkCall(call: string): boolean {
+    const clean = (call ?? '').trim().toUpperCase()
+    if (!clean) { try { localStorage.removeItem(WINLINK_CALL_KEY); return true } catch { return false } }
+    return this.write(WINLINK_CALL_KEY, clean)
+  }
+
+  /** E-307: saved radio addresses. Missing or malformed data reads as none; bad entries are dropped. */
+  getWinlinkAddresses(): WinlinkAddress[] {
+    try {
+      const parsed: unknown = JSON.parse(this.read(WINLINK_ADDRESSES_KEY) ?? '[]')
+      return parseWinlinkAddresses(parsed)
+    } catch {
+      return []
+    }
+  }
+
+  setWinlinkAddresses(list: readonly WinlinkAddress[]): boolean {
+    const clean = parseWinlinkAddresses(list)
+    if (!clean.length) { try { localStorage.removeItem(WINLINK_ADDRESSES_KEY); return true } catch { return false } }
+    return this.write(WINLINK_ADDRESSES_KEY, JSON.stringify(clean))
   }
 
   getLastCoordinateFormat(): string | null {

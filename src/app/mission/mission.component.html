@@ -47,6 +47,19 @@
         }
       </ul>
       }
+      @if (winlinkAdvisory()) {
+      <!-- E-307 (Q81): a suggestion, not a failing check: the dot and the count above do not include it. -->
+      <p class="mission__readiness-sub">Suggested, and not counted above:</p>
+      <ul class="mission__readiness-list">
+        <li class="mission__readiness-item" data-testid="readiness-winlink">
+          Winlink callsign set (needed to send by radio)
+          <button matButton type="button" class="mission__readiness-ignore" data-testid="readiness-ignore-winlink"
+            title="Stop suggesting this until this tab is closed" (click)="readiness.ignore('winlink')">
+            Ignore for now
+          </button>
+        </li>
+      </ul>
+      }
       @if (ignoredGaps().length > 0) {
       <p class="mission__readiness-sub">Ignored until this tab is closed:</p>
       <ul class="mission__readiness-list mission__readiness-list--ignored" data-testid="readiness-ignored-list">

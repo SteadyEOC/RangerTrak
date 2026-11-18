@@ -243,6 +243,13 @@ export type RadioLogEntryType = {
   // been sent" warning - D-47's own "warning, not a block" policy, not a new one.
   printedAt?: Date,
   /**
+   * E-307 (Q83): when this 213 or 213RR was last saved or copied for sending by radio (Send by radio
+   * dialog). Shown as "Saved for radio 14:32" beside the printed status. Unlike printedAt it moves on each
+   * save: the question it answers is when the text last left for the radio. Optional; round-trips through
+   * backup and import like printedAt.
+   */
+  radioSavedAt?: Date,
+  /**
    * E-194 / ADR D-60: photos, video and audio attached to this entry. References only (the
    * fingerprint, name, type, size and who/when); the bytes sit in the `rangertrak-attachments`
    * IndexedDB, keyed by `sha256`, and are never altered once stored (a smaller copy is its own file,

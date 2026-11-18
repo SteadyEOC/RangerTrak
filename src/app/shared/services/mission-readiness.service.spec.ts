@@ -42,6 +42,27 @@ describe('MissionReadinessService', () => {
     service.storagePersisted.set(ready)
   }
 
+  describe('Winlink call sign advisory (E-307, Q81)', () => {
+    it('reads the device call sign, shows in Full menus only, and never moves the level', () => {
+      setAll(true)
+      expect(service.level()).toBe('green')
+      service.refreshWinlink()
+      expect(service.winlinkCallSet()).toBe(false)
+      expect(service.level()).toBe('green') // advisory: unset call sign is not a failing check
+      localStorage.setItem('rt-winlink-call', 'K7ABC')
+      service.refreshWinlink()
+      expect(service.winlinkCallSet()).toBe(true)
+    })
+
+    it('is advised in Full menus and never in Easy menus', () => {
+      const view = TestBed.inject(ViewService)
+      view.setView('simple')
+      expect(service.winlinkAdvisoryCounts()).toBe(false)
+      view.setView('full')
+      expect(service.winlinkAdvisoryCounts()).toBe(true)
+    })
+  })
+
   describe('ignoring a check (E-299)', () => {
     afterEach(() => sessionStorage.removeItem(READINESS_IGNORED_KEY))
 

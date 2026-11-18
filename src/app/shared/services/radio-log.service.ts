@@ -374,6 +374,7 @@ export class RadioLogService {
     if (old.msgNo) replaced.msgNo = old.msgNo
     if (old.revisedAt) replaced.revisedAt = old.revisedAt
     if (old.printedAt) replaced.printedAt = old.printedAt
+    if (old.radioSavedAt) replaced.radioSavedAt = old.radioSavedAt
     if (old.handled) replaced.handled = old.handled
     if (old.handledClearedAt) replaced.handledClearedAt = old.handledClearedAt
     if (old.sourceUid) replaced.sourceUid = old.sourceUid

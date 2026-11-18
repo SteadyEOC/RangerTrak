@@ -265,6 +265,11 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
     return gaps
   })
 
+  /** E-307 (Q81): advisory, Full menus only, never counted in the dot or the totals above; Ignore for now applies. */
+  readonly winlinkAdvisory = computed(() =>
+    this.readiness.winlinkAdvisoryCounts() && !this.readiness.winlinkCallSet() && !(this.missionModel().winlinkCall ?? '').trim()
+    && !this.readiness.isIgnored('winlink'))
+
   /** E-299: the failing checks still counted, and the ones ignored in this tab (listed apart, with Undo). */
   readonly activeGaps = computed(() => this.readinessGaps().filter(g => !g.ignored))
   readonly ignoredGaps = computed(() => this.readinessGaps().filter(g => g.ignored))

@@ -4,6 +4,7 @@ import { wantedPmtilesUrls } from '../mapping/demo-map'
 import { CustomPmtilesService } from './custom-pmtiles.service'
 import { MapEngineService } from '../../map/map-engine.service'
 import { ViewService } from './view.service'
+import { DevicePrefsService } from './device-prefs.service'
 import { LogService } from './log.service'
 import { RangerService } from './ranger.service'
 import { MissionService } from './mission.service'
@@ -17,8 +18,8 @@ export type ReadinessLevel = 'red' | 'amber' | 'green'
  * ignored item stops pulling the level down but stays listed, marked ignored. The two red items (mission named,
  * real roster) and the op period are never ignorable: they are always fixable and always matter.
  */
-export type IgnorableReadiness = 'offlineTiles' | 'mapWarmed' | 'storage'
-export const IGNORABLE_READINESS: readonly IgnorableReadiness[] = ['offlineTiles', 'mapWarmed', 'storage']
+export type IgnorableReadiness = 'offlineTiles' | 'mapWarmed' | 'storage' | 'winlink'
+export const IGNORABLE_READINESS: readonly IgnorableReadiness[] = ['offlineTiles', 'mapWarmed', 'storage', 'winlink']
 
 /** sessionStorage: JSON array of IgnorableReadiness ids. This tab only; gone when it closes (John: "for this session"). */
 export const READINESS_IGNORED_KEY = 'rt-readiness-ignored'
@@ -73,9 +74,19 @@ export class MissionReadinessService {
   readonly offlineTilesSaved = signal(false)
   readonly bundledMapWarmed = signal(false)
   readonly storagePersisted = signal(false)
+  /**
+   * E-307 (Q81): a Winlink call sign is set (this mission's, else this device's). Advisory only: it is listed in
+   * Full menus but never moves the level, since most missions never send by radio.
+   */
+  readonly winlinkCallSet = signal(false)
+  private missionWinlinkCall = ''
 
   private readonly view = inject(ViewService)
   private readonly mapEngine = inject(MapEngineService)
+  private readonly devicePrefs = inject(DevicePrefsService)
+
+  /** The advisory shows only where Send by radio does (Full menus). */
+  readonly winlinkAdvisoryCounts = computed(() => this.view.isShown('send-by-radio'))
 
   /** False in Easy menus unless MapLibre is the engine in use (see the class comment). */
   readonly mapWarmedCounts = computed(() =>
@@ -137,6 +148,8 @@ export class MissionReadinessService {
       next: settings => {
         this.missionNamed.set(settings.mission.trim() !== '')
         this.opPeriodCurrent.set(new Date(settings.opPeriodEnd).getTime() > Date.now())
+        this.missionWinlinkCall = (settings.winlinkCall ?? '').trim()
+        this.refreshWinlink()
       },
       error: e => this.log.error(`Settings subscription error: ${e}`, this.id),
     })
@@ -147,8 +160,14 @@ export class MissionReadinessService {
     })
   }
 
+  /** The call sign can be set from the Send by radio dialog at any time, so this reads the device again. */
+  refreshWinlink(): void {
+    this.winlinkCallSet.set(!!this.missionWinlinkCall || !!this.devicePrefs.getWinlinkCall())
+  }
+
   /** Re-checks the three async signals. Safe to call repeatedly; each check is read-only. */
   async refresh(): Promise<void> {
+    this.refreshWinlink()
     this.storagePersisted.set(this.storagePersistenceService.persisted() === true)
 
     try {

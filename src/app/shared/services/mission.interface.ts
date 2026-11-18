@@ -203,6 +203,12 @@ export type MissionType = {
   // MISSION_SCHEMA_VERSION bump. Writers: UsageStateService (setScenarioClock; cleared by
   // setMode() away from Exercise and by startRealMission()). Pure rules: domain/scenario.ts.
   scenarioClock?: ScenarioClock,
+
+  // E-307 (Q80): this mission's own Winlink call sign and saved radio addresses; each wins over the device's
+  // (DevicePrefsService) when set. Genuinely optional, no default, like missionMode: backfillMissingFields()
+  // must NOT manufacture them. No MISSION_SCHEMA_VERSION bump.
+  winlinkCall?: string,
+  winlinkAddresses?: { label: string, address: string }[],
 }
 
 /** E-168a: the stored codes for MissionType.missionMode. Display labels live in the UI. */

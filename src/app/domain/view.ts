@@ -95,6 +95,8 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'attachments', label: 'Attachments', isInUse: ctx => ctx.attachmentCount > 0 },
   { id: 'evidence-location', label: 'Evidence location', isInUse: ctx => ctx.evidenceLocationCount > 0 },
   { id: 'resource-request', label: 'Resource request (ICS-213RR)', isInUse: ctx => ctx.resourceRequestCount > 0 },
+  // E-307 (Q81): Send by radio (Winlink, Pat, FLDIGI text). Full menus only; nothing makes it appear in Easy.
+  { id: 'send-by-radio', label: 'Send by radio', isInUse: never },
   // Map
   { id: 'maplibre', label: 'Alternative map', isInUse: ctx => ctx.mapEngineIsAlternative },
   { id: 'map-layers-extra', label: 'Extra map layers', isInUse: ctx => ctx.mapExtraLayersOn },

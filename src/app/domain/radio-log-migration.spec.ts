@@ -173,6 +173,7 @@ describe('migrateRadioLog date rehydration', () => {
           date: new Date('2026-08-31T09:00:00.000Z'),
           revisedAt: new Date('2026-08-31T13:00:00.000Z'),
           printedAt: new Date('2026-08-31T14:00:00.000Z'),
+          radioSavedAt: new Date('2026-08-31T14:32:00.000Z'),
         },
       ],
       ...extra,
@@ -196,6 +197,9 @@ describe('migrateRadioLog date rehydration', () => {
     expect(result!.logEntries[1].date instanceof Date).toBe(true)
     expect(result!.logEntries[1].revisedAt instanceof Date).toBe(true)
     expect(result!.logEntries[1].printedAt instanceof Date).toBe(true)
+    // E-307 (Q83): rides a backup/import like printedAt and comes back a Date.
+    expect(result!.logEntries[1].radioSavedAt instanceof Date).toBe(true)
+    expect(result!.logEntries[1].radioSavedAt!.toISOString()).toBe('2026-08-31T14:32:00.000Z')
   })
 
   it('preserves each instant exactly', () => {
@@ -210,6 +214,7 @@ describe('migrateRadioLog date rehydration', () => {
 
     expect(result!.logEntries[0].revisedAt).toBeUndefined()
     expect(result!.logEntries[0].printedAt).toBeUndefined()
+    expect(result!.logEntries[0].radioSavedAt).toBeUndefined()
   })
 
   it('restores dates even for a store from a NEWER schema, which is returned unmigrated', () => {
