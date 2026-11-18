@@ -7,7 +7,33 @@ import * as L from 'leaflet'
  *
  * It moves the VIEW only. A scribe laptop's own position is often not the incident's (E-114), so this never
  * sets a report's location or a Place. The MapLibre map uses MapLibre's own GeolocateControl for the same job.
+ *
+ * Q117 (John 11-17): Entry's small map has it too, bottom right, worded "Pan to my location" with hover text
+ * saying it does not set the report's position (see ENTRY_LOCATE).
  */
+export interface LocateControlText {
+  /** Hover text. */
+  title: string
+  /** Accessible name. */
+  label: string
+  /** data-testid of the button; the status line gets `<testid>-status`. */
+  testid: string
+}
+
+/** The Map page's wording. */
+export const MAP_LOCATE: LocateControlText = {
+  title: 'Go to my location (moves the map only)',
+  label: 'Go to my location',
+  testid: 'map-locate',
+}
+
+/** Entry's small map (Q117): a tap on that map sets the report's position, so this says it does not. */
+export const ENTRY_LOCATE: LocateControlText = {
+  title: "Pan to my location. This only moves the map; it does NOT set this report's position.",
+  label: "Pan to my location (does not set the report's position)",
+  testid: 'entry-locate',
+}
+
 export class LocateControl extends L.Control {
   private lMap?: L.Map
   private button?: HTMLAnchorElement
@@ -15,7 +41,7 @@ export class LocateControl extends L.Control {
   private here?: L.LayerGroup
   private busy = false
 
-  constructor(position: L.ControlPosition = 'topleft') {
+  constructor(position: L.ControlPosition = 'topleft', private readonly text: LocateControlText = MAP_LOCATE) {
     super({ position })
   }
 
@@ -25,18 +51,21 @@ export class LocateControl extends L.Control {
     const a = L.DomUtil.create('a', 'rt-locate__btn', bar) as HTMLAnchorElement
     a.href = '#'
     a.setAttribute('role', 'button')
-    a.title = 'Go to my location (moves the map only)'
-    a.setAttribute('aria-label', 'Go to my location')
-    a.dataset['testid'] = 'map-locate'
+    a.title = this.text.title
+    a.setAttribute('aria-label', this.text.label)
+    a.dataset['testid'] = this.text.testid
     a.innerHTML = '<i class="material-icons" aria-hidden="true">my_location</i>'
     this.button = a
     const status = L.DomUtil.create('span', 'rt-locate__status', bar)
     status.setAttribute('role', 'status')
     status.setAttribute('aria-live', 'polite')
-    status.dataset['testid'] = 'map-locate-status'
+    status.dataset['testid'] = `${this.text.testid}-status`
     this.status = status
 
     L.DomEvent.disableClickPropagation(bar)
+    // disableClickPropagation only keeps the click from Leaflet's own map handlers; it still bubbles in the DOM.
+    // Entry's small map sets the report's position from a DOM click on its container (Q117), so stop it here.
+    L.DomEvent.on(bar, 'click dblclick', L.DomEvent.stopPropagation)
     L.DomEvent.on(a, 'click', (e: Event) => {
       L.DomEvent.preventDefault(e)
       this.toggle()

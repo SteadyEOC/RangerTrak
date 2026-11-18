@@ -3,6 +3,7 @@ import { tileLayerOffline } from 'leaflet.offline' // https://github.com/allartk
 //import { markerClusterGroup } from 'leaflet'
 import * as L from 'leaflet'
 import { removeLeafletMap } from '../shared/mapping/leaflet-teardown'
+import { ENTRY_LOCATE, LocateControl } from '../mapLeaflet/leaflet-locate-control'
 
 //import pc from 'picocolors' // https://github.com/alexeyraspopov/picocolors
 import { delay, throwError } from 'rxjs'
@@ -330,6 +331,9 @@ export class MiniMapLeafletComponent extends AbstractMap implements OnInit, Afte
 
     tiles.addTo(this.lMap)
     hillshadeOverlay.addTo(this.lMap)
+    // Q117 (John 11-17): Pan to my location, bottom right. Moves the view only; a tap on the map itself is
+    // what sets the report's position, and the control stops its own clicks reaching the map.
+    new LocateControl('bottomright', ENTRY_LOCATE).addTo(this.lMap)
     // !debugger
     if (this.displayReports && this.radioLog) {
       // No All/selected switch exists on this map (hasSelectedReports = false, above), so

@@ -1,6 +1,6 @@
 import * as L from 'leaflet'
 
-import { LocateControl, locateErrorText, locateFoundText } from './leaflet-locate-control'
+import { ENTRY_LOCATE, LocateControl, locateErrorText, locateFoundText } from './leaflet-locate-control'
 
 describe('LocateControl text (E-297)', () => {
   it('says how close the fix is, in metres or km', () => {
@@ -45,6 +45,19 @@ describe('LocateControl on a map (E-297)', () => {
     expect(countLayers(map)).toBeGreaterThan(before)
     expect(btn!.classList).toContain('rt-locate__btn--on')
     expect(host.querySelector('[data-testid="map-locate-status"]')!.textContent).toContain('30 m')
+  })
+
+  it("Entry's version (Q117) sits bottom right and says it does not set the report's position; its clicks never reach the map", () => {
+    new LocateControl('bottomright', ENTRY_LOCATE).addTo(map)
+    const btn = host.querySelector<HTMLAnchorElement>('[data-testid="entry-locate"]')
+    expect(btn).toBeTruthy()
+    expect(btn!.closest('.leaflet-bottom.leaflet-right')).toBeTruthy()
+    expect(btn!.title).toContain('does NOT set')
+    expect(host.querySelector('[data-testid="entry-locate-status"]')).toBeTruthy()
+    const onHostClick = vi.fn()
+    host.addEventListener('click', onHostClick)
+    btn!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    expect(onHostClick).not.toHaveBeenCalled()
   })
 
   it('reports a refusal in the status line', () => {
