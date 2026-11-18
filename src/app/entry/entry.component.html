@@ -780,8 +780,10 @@
       @if (operatorEditing()) {
       <mat-form-field class="enter__operator-field" floatLabel="always">
         <mat-label>Prepared by (your name or call sign)</mat-label>
+        <!-- Q103 (John 11-17): in a demo the field shows a placeholder, never a stored value (D-44). -->
         <input matInput type="text" [formField]="operatorForm.operator"
           [attr.tabindex]="operatorTabIndex"
+          [placeholder]="usage.state() === 'demo' ? 'Scribe name goes here' : ''" data-testid="entry-operator"
           title="Whoever is filing this report; the map sheet's Prepared by starts with it too. Carries forward to your next entry this session; blank is fine." />
       </mat-form-field>
       } @else {
