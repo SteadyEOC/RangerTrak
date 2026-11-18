@@ -48,6 +48,13 @@ export class ThemeService {
     this.log.verbose(`Theme mode set to '${mode}'`, this.id)
   }
 
+  /** E-313 / Q97: a read-only window follows the main window's choice live. Reads, applies, never writes. */
+  reloadFromStore(): void {
+    const mode = this.readStored()
+    this.mode.set(mode)
+    this.apply(mode)
+  }
+
   private apply(mode: ThemeMode): void {
     document.documentElement.style.colorScheme = mode === 'auto' ? '' : mode
   }

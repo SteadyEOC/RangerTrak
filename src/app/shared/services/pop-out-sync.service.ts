@@ -12,6 +12,8 @@ import { MissionLocationService } from './mission-location.service'
 import { MissionService } from './mission.service'
 import { RadioLogService } from './radio-log.service'
 import { RangerService } from './ranger.service'
+import { SkinService } from './skin.service'
+import { ThemeService } from './theme.service'
 
 /** How long a burst of announcements for one key is allowed to settle before it is re-read. */
 export const POPOUT_DEBOUNCE_MS = 250
@@ -25,7 +27,8 @@ export const MAIN_CHECK_MS = 5000
  *   the key name only). Here, each announced key is re-read, read-only, by RecordStore and handed to the
  *   service that owns it, which republishes; the Map, the grids and Summary already follow those
  *   observables and signals. A burst of announcements for one key is read once (250 ms).
- * - The mission settings live in localStorage, so the browser's own `storage` event tells us.
+ * - The mission settings live in localStorage, so the browser's own `storage` event tells us. The same
+ *   event carries light/dark (`themeMode`) and the skin (`skinChoice`), applied at once (Q97).
  * - A pop-out does not hold the tab lock, so `navigator.locks.query()` says whether the main window is
  *   still open (every 5 seconds and when the window is shown again). Closed: the window keeps showing the
  *   last data and says so (`mainWindowOpen`); back: it re-reads everything once, because it may have
@@ -50,7 +53,12 @@ export class PopOutSyncService implements OnDestroy {
     this.started = true
     this.stops.push(listenForWrites(key => this.schedule(key)))
 
-    const onStorage = (e: StorageEvent) => { if (e.key === 'appSettings' || e.key === null) this.schedule('appSettings') }
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'appSettings' || e.key === null) this.schedule('appSettings')
+      // Q97 (John 11-17): light/dark and skin follow the main window live, not only when opened.
+      if (e.key === 'themeMode' || e.key === null) this.injector.get(ThemeService).reloadFromStore()
+      if (e.key === 'skinChoice' || e.key === null) this.injector.get(SkinService).reloadFromStore()
+    }
     window.addEventListener('storage', onStorage)
     this.stops.push(() => window.removeEventListener('storage', onStorage))
 

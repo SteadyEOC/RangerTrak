@@ -17,6 +17,8 @@ import { PopOutService } from './pop-out.service'
 import { MAIN_CHECK_MS, POPOUT_DEBOUNCE_MS, PopOutSyncService } from './pop-out-sync.service'
 import { RadioLogService } from './radio-log.service'
 import { RangerService } from './ranger.service'
+import { SkinService } from './skin.service'
+import { ThemeService } from './theme.service'
 
 /**
  * E-313: the pieces of a pop-out that follow the main window. Each service's reloadFromStore() takes what
@@ -215,6 +217,30 @@ describe('pop-out services (E-313)', () => {
       } finally {
         vi.useRealTimers()
       }
+    })
+
+    it('follows light/dark and the skin live from the storage event, without writing (Q97)', async () => {
+      const theme = TestBed.inject(ThemeService)
+      const skin = TestBed.inject(SkinService)
+      // What the main window saves (before this window's read-only guard, which refuses writes).
+      localStorage.setItem('themeMode', 'dark')
+      localStorage.setItem('skinChoice', 'sagebrush')
+      installReadOnlyGuard()
+      recordStore.useReadOnly()
+      const sync = TestBed.inject(PopOutSyncService)
+      vi.spyOn(sync, 'checkMainWindow').mockResolvedValue(undefined)
+      sync.start()
+      await writesNothing(() => {
+        window.dispatchEvent(new StorageEvent('storage', { key: 'themeMode', newValue: 'dark' }))
+        window.dispatchEvent(new StorageEvent('storage', { key: 'skinChoice', newValue: 'sagebrush' }))
+      })
+      expect(theme.mode()).toBe('dark')
+      expect(document.documentElement.style.colorScheme).toBe('dark')
+      expect(skin.skin()).toBe('sagebrush')
+      expect(document.documentElement.getAttribute('data-skin')).toBe('sagebrush')
+      sync.ngOnDestroy()
+      document.documentElement.style.colorScheme = ''
+      document.documentElement.removeAttribute('data-skin')
     })
 
     it('does nothing outside a read-only window', () => {

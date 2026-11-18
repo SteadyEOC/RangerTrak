@@ -51,6 +51,13 @@ export class SkinService {
     this.log.verbose(`Skin set to '${skin}'`, this.id)
   }
 
+  /** E-313 / Q97: a read-only window follows the main window's choice live. Reads, applies, never writes. */
+  reloadFromStore(): void {
+    const skin = this.readStored()
+    this.skin.set(skin)
+    this.apply(skin)
+  }
+
   private apply(skin: Skin): void {
     if (skin === 'command') {
       // command IS the unmarked default in both styles.scss and _tokens.scss - removing
