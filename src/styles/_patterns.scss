@@ -417,6 +417,12 @@ rangertrak-io-panel.rt-advanced.rt-advanced {
   color: var(--rt-current-period);
   font-weight: 600;
 }
+// E-306: the possible-duplicate mark beside a Msg #; text only, so it needs no icon font.
+.rt-dup-mark {
+  margin-left: 0.25rem;
+  font-weight: 700;
+  cursor: help;
+}
 
 .ag-cell.rt-fill-cell,
 .ag-cell.rt-elapsed {

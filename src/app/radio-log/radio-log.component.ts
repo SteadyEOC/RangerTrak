@@ -58,6 +58,7 @@ import { diagnoseFile, REPORT_PACKET_DAMAGED_MESSAGE } from '../shared/export/im
 import { MISSION_EXPORT_SCHEMA_VERSION } from '../shared/services/backup.service'
 import { sendReportPacket } from '../shared/export/report-packet-send'
 import { buildReceipt, receiptFilename, type ReportReceipt } from '../domain/report-receipt'
+import { duplicateNotes, duplicateSummarySentence, findPossibleDuplicates } from '../domain/possible-duplicates'
 import { mediaSummary, PHOTOS_LEFT_OUT_MESSAGE } from '../domain/report-packet-files'
 import {
   RadioLogService, RadioLogStatusType, RadioLogType, RadioLogEntryType, LogService,
@@ -184,6 +185,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   public toggleLabel = computed(() =>
     !this.currentOnly() && hasOtherOpPeriod(this.radioLogEntries(), this.opPeriodLabel())
       ? `Current op period (${this.opPeriodLabel().trim()})` : '')
+  /** E-306: entries that another station may have logged too (same call, other letter, within 5 minutes). Marks only. */
+  public duplicateNotesByEntry = computed(() => duplicateNotes(findPossibleDuplicates(this.radioLogEntries())))
+
+  /** "Possible duplicate: also logged as C012 at 14:32" for the Msg # tooltip; '' when there is none. */
+  private duplicateTooltip(entry: RadioLogEntryType): string {
+    const notes = this.duplicateNotesByEntry().get(entry)
+    if (!notes?.length) return ''
+    return `Possible duplicate: also logged as ${notes.map(n => `${n.msgNo} at ${this.formatLogTime(n.time)}`).join(', ')}`
+  }
+
   /** E-190 chips, plus E-234's "Current op period" chip while that toggle is on. */
   public filterChips = computed<FilterChip[]>(() => {
     const grid = this.isPhone() ? [] : this.gridChips()
@@ -321,12 +332,17 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         cellClass: (params: { data: RadioLogEntryType }) => isCurrentOpPeriod(params.data, this.settings?.opPeriod) ? 'rt-current-period-cell' : undefined,
         cellRenderer: (params: { data: RadioLogEntryType, value: string }) => {
           const cur = isCurrentOpPeriod(params.data, this.settings?.opPeriod)
+          // E-306: a mark, never a merge; the tooltip names the other entry.
+          const dup = this.duplicateNotesByEntry().has(params.data)
           return `${params.value ?? ''}${cur ? '<span class="visually-hidden">, current op period</span>' : ''}`
+            + (dup ? '<span class="rt-dup-mark" aria-hidden="true">&asymp;</span><span class="visually-hidden">, possible duplicate</span>' : '')
         },
         tooltipValueGetter: (params: { data: RadioLogEntryType }) => {
           const full = formatMsgNoFull(params.data?.msgNo)
           if (!full) return undefined
-          return isCurrentOpPeriod(params.data, this.settings?.opPeriod) ? `${full} · current op period` : full
+          const base = isCurrentOpPeriod(params.data, this.settings?.opPeriod) ? `${full} · current op period` : full
+          const dup = this.duplicateTooltip(params.data)
+          return dup ? `${base} · ${dup}` : base
         },
         comparator: (_a: unknown, _b: unknown, nodeA: { data: RadioLogEntryType }, nodeB: { data: RadioLogEntryType }) =>
           (nodeA.data.msgNo?.seq ?? 0) - (nodeB.data.msgNo?.seq ?? 0),
@@ -1419,6 +1435,13 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     return { status: 'merged', file, packet, isCatchUp, inExercise, added, skipped, rejected, clashes: clashes ?? [] }
   }
 
+  /** E-306: "N possible duplicates (heard at B and C)" for pairs that involve an entry just merged in. '' for none. */
+  private duplicateLineFor(mergedUids: ReadonlySet<string>): string {
+    const pairs = findPossibleDuplicates(this.radioLogService.getCurrentRadioLog().logEntries)
+      .filter(p => (p.a.uid && mergedUids.has(p.a.uid)) || (p.b.uid && mergedUids.has(p.b.uid)))
+    return duplicateSummarySentence(pairs)
+  }
+
   /** The single-file summary, worded as it always was. */
   private async finishPacketMerge(o: MergedPacket, media: readonly File[], batch: PacketBatch): Promise<void> {
     const { file, packet, isCatchUp, inExercise, added, skipped, rejected, clashes } = o
@@ -1437,6 +1460,9 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // E-220 / D-68: two entries with one number are named, not renumbered.
     const clashLine = msgNoClashSentence(clashes)
     if (clashLine) lines.push(clashLine)
+    // E-306: never merged or removed, only pointed out.
+    const dupLine = this.duplicateLineFor(new Set(packet.entries.map(e => e.uid).filter((u): u is string => !!u)))
+    if (dupLine) lines.push(dupLine)
     if (batch.safety === 'kept') {
       await this.importSafety.markImportDone()
       lines.push('Undo is in Mission > Data safety for 24 hours.')
@@ -1485,6 +1511,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     const clashLine = msgNoClashSentence(merged.flatMap(o => o.clashes))
     if (clashLine) lines.push(clashLine)
     const uids = allEntries.map(e => e.uid).filter((u): u is string => !!u)
+    const dupLine = this.duplicateLineFor(new Set(uids))
+    if (dupLine) lines.push(dupLine)
     if (merged.length && batch.safety === 'kept') {
       await this.importSafety.markImportDone()
       lines.push('Undo is in Mission > Data safety for 24 hours.')
