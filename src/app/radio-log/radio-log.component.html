@@ -197,7 +197,7 @@
               <button matButton="outlined" type="button" (click)="reportPacketFileInput.click()"
                 [attr.title]="usage.mode() === 'exercise'
                   ? 'Merge in the scenario entries from a catch-up file from the exercise controller - never replaces anything already here'
-                  : 'Merge in the reports from a Report Packet someone handed you, with any photos, audio or video that came with it - never replaces anything already here'">
+                  : 'Merge in the reports from one or more Report Packets someone handed you (pick several files at once), with any photos, audio or video that came with it - never replaces anything already here'">
                 <mat-icon>upload</mat-icon>
                 {{ usage.mode() === 'exercise' ? 'Load catch-up file' : 'Load Report Packet' }}
               </button>

@@ -335,3 +335,57 @@ describe('buildIcs309Log with reports that have been through JSON', () => {
     })
   })
 })
+
+describe('buildIcs309Log grouped by station (E-306)', () => {
+  const mission: Ics309MissionInfo = {
+    mission: 'M1', opPeriod: 'OP 1',
+    opPeriodStart: new Date('2026-11-17T09:00:00'), opPeriodEnd: new Date('2026-11-17T21:00:00'),
+  }
+  const e = (station: string, seq: number, hhmm: string, over: Partial<RadioLogEntryType> = {}): RadioLogEntryType => ({
+    id: seq, callsign: `K7${station}${seq}`,
+    location: { lat: 0, lng: 0, address: '', derivedFromAddress: false },
+    date: new Date(`2026-11-17T${hhmm}:00`), status: 'Normal', notes: `${station}${seq}`,
+    msgNo: { mission: 'M1', opPeriod: 'OP 1', station, seq },
+    ...over,
+  })
+  const group = { groupByStation: true }
+
+  it('prints exactly as before when not asked', () => {
+    const log = buildIcs309Log([e('B', 1, '10:00'), e('A', 1, '11:00')], mission, new Date(), '')
+    expect(log.groups).toBeUndefined()
+    expect(log.rows.map(r => r.msgNo)).toEqual(['B001', 'A001'])
+  })
+
+  it('stays flat for a one-letter log even when asked', () => {
+    const log = buildIcs309Log([e('A', 2, '11:00'), e('A', 1, '10:00')], mission, new Date(), '', group)
+    expect(log.groups).toBeUndefined()
+    expect(log.rows.map(r => r.msgNo)).toEqual(['A001', 'A002'])
+  })
+
+  it('groups by letter with each group in its own time order, never reordered across groups', () => {
+    const log = buildIcs309Log(
+      [e('B', 1, '09:00'), e('A', 2, '12:00'), e('A', 1, '10:00'), e('B', 2, '08:00')],
+      mission, new Date(), '', group)
+    expect(log.groups!.map(g => g.heading)).toEqual(['Station A', 'Station B'])
+    expect(log.groups![0].rows.map(r => r.msgNo)).toEqual(['A001', 'A002'])
+    // B's 08:00 is earlier than A's rows by wall clock; B's group still follows A's.
+    expect(log.groups![1].rows.map(r => r.msgNo)).toEqual(['B002', 'B001'])
+    expect(log.rows.map(r => r.msgNo)).toEqual(['A001', 'A002', 'B002', 'B001'])
+  })
+
+  it('puts unnumbered entries last under their own heading', () => {
+    const plain = e('A', 9, '13:00', { msgNo: undefined })
+    const log = buildIcs309Log([plain, e('B', 1, '09:00'), e('A', 1, '10:00')], mission, new Date(), '', group)
+    expect(log.groups!.map(g => g.heading)).toEqual(['Station A', 'Station B', 'No station letter'])
+    expect(log.groups![2].rows).toHaveLength(1)
+  })
+
+  it('remarks "also C012" on possible duplicates in the grouped log only', () => {
+    const b = e('B', 4, '14:30', { callsign: 'K7ABC' })
+    const c = e('C', 12, '14:32', { callsign: 'k7abc' })
+    const grouped = buildIcs309Log([b, c], mission, new Date(), '', group)
+    expect(grouped.groups![0].rows[0].remark).toBe('also C012')
+    expect(grouped.groups![1].rows[0].remark).toBe('also B004')
+    expect(buildIcs309Log([b, c], mission).rows.map(r => r.remark)).toEqual(['', ''])
+  })
+})

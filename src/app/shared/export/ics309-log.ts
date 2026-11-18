@@ -3,6 +3,7 @@ import { formatStation } from '../../domain/station-label'
 import { formatHeading } from '../../domain/heading'
 import { rr213Summary } from '../../domain/rr213'
 import { PrintAttachment, printAttachments } from '../../domain/attachments'
+import { duplicateNotes, findPossibleDuplicates } from '../../domain/possible-duplicates'
 import { formatMsgNoContextLine, formatMsgNoFull, formatMsgNoShort, HANDLED_MARK_GLYPH, HANDLED_MARK_LABEL } from '../../domain/msg-no'
 
 /**
@@ -74,11 +75,35 @@ export interface Ics309LogRow {
   message: string
   /** E-194: the entry's live attachments, listed under the message (the printout adds thumbnails for images). */
   attachments: PrintAttachment[]
+  /** E-306: "also C012" when another station may have logged the same message; '' otherwise and always '' when not grouped. */
+  remark: string
+}
+
+/** E-306: one station's rows, under its own heading. */
+export interface Ics309Group {
+  /** The station letter, or '' for entries that carry no message number. */
+  station: string
+  /** "Station B", or "No station letter" for unnumbered entries. */
+  heading: string
+  rows: Ics309LogRow[]
 }
 
 export interface Ics309Log {
   header: Ics309LogHeader
+  /** Every row. When `groups` is set, in group order (each group in its own time order), never one wall-clock order. */
   rows: Ics309LogRow[]
+  /** E-306: set only when the log was built grouped by station. */
+  groups?: Ics309Group[]
+}
+
+export interface Ics309Options {
+  /** E-306: group rows under a heading per station letter. Ignored (no groups) unless 2+ letters are present. */
+  groupByStation?: boolean
+}
+
+/** E-306: the distinct station letters on numbered entries, alphabetical. */
+export function ics309StationLetters(reports: readonly RadioLogEntryType[]): string[] {
+  return [...new Set(reports.map(r => r.msgNo?.station).filter((s): s is string => !!s))].sort()
 }
 
 /** What a caller pulls from `MissionType` - kept narrow so this module has no Angular tie. */
@@ -101,10 +126,12 @@ export function buildIcs309Log(
   mission: Ics309MissionInfo,
   now: Date = new Date(),
   preparedBy: string = '',
+  options: Ics309Options = {},
 ): Ics309Log {
-  const rows = [...reports]
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .map((r): Ics309LogRow => ({
+  // E-306: grouping only when asked for AND the log really holds 2+ station letters.
+  const grouped = !!options.groupByStation && ics309StationLetters(reports).length >= 2
+  const notes = grouped ? duplicateNotes(findPossibleDuplicates(reports)) : new Map<RadioLogEntryType, { msgNo: string }[]>()
+  const toRow = (r: RadioLogEntryType): Ics309LogRow => ({
       time: r.date,
       mark: r.handled ? HANDLED_MARK_GLYPH[r.handled.mark] ?? '' : '',
       markLabel: r.handled ? HANDLED_MARK_LABEL[r.handled.mark] ?? '' : '',
@@ -120,7 +147,27 @@ export function buildIcs309Log(
       source: r.source ?? '',
       message: formatMessage(r),
       attachments: printAttachments(r),
-    }))
+      remark: (notes.get(r) ?? []).length ? `also ${(notes.get(r) ?? []).map(n => n.msgNo).join(', ')}` : '',
+    })
+  const byTime = (a: RadioLogEntryType, b: RadioLogEntryType) => a.date.getTime() - b.date.getTime()
+
+  let groups: Ics309Group[] | undefined
+  let rows: Ics309Log['rows']
+  if (grouped) {
+    // Each station's rows keep that station's own times; clocks drift, so groups are never merged by wall clock.
+    const letters = ics309StationLetters(reports)
+    const unnumbered = reports.filter(r => !r.msgNo?.station)
+    groups = [
+      ...letters.map(station => ({
+        station, heading: `Station ${station}`,
+        rows: reports.filter(r => r.msgNo?.station === station).sort(byTime).map(toRow),
+      })),
+      ...(unnumbered.length ? [{ station: '', heading: 'No station letter', rows: unnumbered.sort(byTime).map(toRow) }] : []),
+    ]
+    rows = groups.flatMap(g => g.rows)
+  } else {
+    rows = [...reports].sort(byTime).map(toRow)
+  }
 
   return {
     header: {
@@ -133,6 +180,7 @@ export function buildIcs309Log(
       msgNoContext: formatMsgNoContextLine(mission.mission, mission.opPeriod),
     },
     rows,
+    ...(groups ? { groups } : {}),
   }
 }
 

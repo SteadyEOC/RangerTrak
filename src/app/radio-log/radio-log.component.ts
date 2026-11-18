@@ -99,6 +99,14 @@ export class myUnusedPipe implements PipeTransform {
 // had become the exact stale-second-name problem the rest of that restructuring existed to
 // fix.
 /** E-196 (D-66): hover text for the scenario mark (Origin column and phone cards). */
+/** E-306: what one pick of Report Packet files shares across its files. */
+type PacketBatch = { safety: 'none' | 'kept' | 'skipped', stop: boolean }
+type MergedPacket = {
+  status: 'merged', file: File, packet: ReturnType<typeof parseReportPacket>, isCatchUp: boolean, inExercise: boolean,
+  added: number, skipped: number, rejected: number, clashes: Array<{ msgNo: string, uids: [string, string] }>,
+}
+type PacketOutcome = MergedPacket | { status: 'failed', file: File, message: string } | { status: 'cancelled', file: File }
+
 const SCENARIO_MARK_TITLE = 'Scenario traffic from the exercise controller, not typed by a player'
 
 @Component({
@@ -1278,14 +1286,18 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   /** E-196 (D-66): the scenario time line on the printed 309, '' unless Exercise mode with a clock. */
   protected scenarioLine(preparedAt: Date): string { return this.usage.scenarioLabelAt(preparedAt) }
 
-  /** Reads a picked Report Packet file and hands it to `mergeIncomingEntries()` (E-114 Phase
+  /** Reads the picked Report Packet file(s) and hands each to `mergeIncomingEntries()` (E-114 Phase
    *  0). No confirm() dialog needed - a merge only ADDS new entries and never touches an
    *  existing one, unlike every other import on this page's own Danger Zone.
    *
    *  D-60 item 6: the picker takes the `.txt` and the photos, audio and video that came with it
    *  together. The entries are merged first; then each other file is hashed and stored only if a
    *  live reference on this device names its fingerprint. Media alone (they arrived later) also
-   *  works. */
+   *  works.
+   *
+   *  E-306 rung 1: several packets can be picked at once (one per station). Each goes through the
+   *  same per-file path in order; a file that cannot be read is named in the one combined summary
+   *  and never stops the others. One packet reads exactly as it always did. */
   async onReportPacketFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement
     const picked = Array.from(input.files ?? [])
@@ -1294,115 +1306,190 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       return
     }
     const isPacket = (f: File) => f.type === 'text/plain' || f.type === 'application/json' || /\.(txt|json)$/i.test(f.name)
-    const file = picked.find(isPacket)
-    const media = picked.filter(f => f !== file)
+    const files = picked.filter(isPacket)
+    const media = picked.filter(f => !isPacket(f))
 
     try {
-      if (!file) {
+      if (!files.length) {
         alert(this.mediaOnlyMessage(await this.radioLogService.storePacketMedia(media)))
         return
       }
-      // E-198: say plainly what is wrong with the file (cut off, a backup, from a newer RangerTrak...)
-      // before trying to read it; the technical reason goes to the log only.
-      const diagnosis = await diagnoseFile(file, 'report-packet',
-        { backup: MISSION_EXPORT_SCHEMA_VERSION, reportPacket: REPORT_PACKET_SCHEMA_VERSION })
-      if (diagnosis.problem !== 'none') {
-        this.log.error(`Could not read "${file.name}" as a Report Packet: ${diagnosis.technical}`, this.id)
-        alert(`Could not read "${file.name}".\n\n${diagnosis.message}`)
-        return
-      }
-      let packet: ReturnType<typeof parseReportPacket>
-      try {
-        packet = parseReportPacket(await file.text())
-      } catch (parseError: any) {
-        this.log.error(`Could not read "${file.name}" as a Report Packet: ${parseError?.message ?? parseError}`, this.id)
-        alert(`Could not read "${file.name}".\n\n${REPORT_PACKET_DAMAGED_MESSAGE}`)
-        return
-      }
-
-      // E-196 (D-66): a catch-up file from the exercise console. Warn, never block (D-46).
-      const isCatchUp = packet.event === 'EXERCISE'
-      const inExercise = this.usage.mode() === 'exercise'
-      if (isCatchUp && !inExercise) {
-        if (!confirm('This file is EXERCISE training traffic. This mission is not an exercise, so these '
-          + 'entries would sit in a real log. Import it anyway?')) {
-          this.log.verbose('onReportPacketFileSelected: user cancelled an EXERCISE file outside Exercise mode.', this.id)
-          return
+      const batch: PacketBatch = { safety: 'none', stop: false }
+      const outcomes: PacketOutcome[] = []
+      for (const file of files) {
+        if (batch.stop) break
+        try {
+          outcomes.push(await this.mergePacketFile(file, batch))
+        } catch (e: any) {
+          this.log.error(`Could not read "${file.name}" as a Report Packet: ${e?.message ?? e}`, this.id)
+          outcomes.push({ status: 'failed', file, message: String(e?.message ?? e) })
         }
       }
 
-      const currentMission = this.settings?.mission?.trim()
-      // In Exercise mode a catch-up file is expected to name a different mission, so no question.
-      if (!(isCatchUp && inExercise) && currentMission && packet.mission && packet.mission.trim() !== currentMission) {
-        if (!confirm(
-          `This Report Packet says "${packet.mission}", but this device's current mission `
-          + `is "${currentMission}".\n\nImport its ${packet.entries.length} report`
-          + `${packet.entries.length === 1 ? '' : 's'} anyway?`)) {
-          this.log.verbose('onReportPacketFileSelected: user cancelled on mission mismatch.', this.id)
-          return
-        }
-      }
-
-      // 2026-10-28, John: a field phone's packet names no mission, so ask about time instead:
-      // reports from before this mission started, or from the future. Warn, never block (D-46).
-      // A catch-up file in Exercise mode carries scenario times, so it is left alone.
-      if (!(isCatchUp && inExercise)) {
-        const check = checkPacketTimes({
-          incoming: packet.entries, existing: this.radioLogService.getCurrentRadioLog().logEntries,
-          opPeriodStart: this.settings?.opPeriodStart, now: Date.now(),
-        })
-        const warning = packetTimeWarning(check, packet.entries.length, d => d.toLocaleString([], { hour12: false }))
-        if (warning && !confirm(warning)) {
-          this.log.verbose('onReportPacketFileSelected: user cancelled on report times outside this mission.', this.id)
-          return
-        }
-      }
-
-      // E-198: the device as it is now, kept for 24 hours, before the merge changes anything.
-      const safetyCopy = await this.importSafety.ensureBeforeImport('report-packet', file.name)
-      if (safetyCopy === 'cancelled') {
-        this.log.verbose('onReportPacketFileSelected: no safety copy and the user chose not to continue.', this.id)
+      if (files.length === 1) {
+        const o = outcomes[0]
+        if (!o) return
+        if (o.status === 'failed') { alert(`Could not read "${o.file.name}".\n\n${o.message}`); return }
+        if (o.status === 'cancelled') return
+        await this.finishPacketMerge(o, media, batch)
         return
       }
 
-      const { added, skipped, rejected, clashes } = this.radioLogService.mergeIncomingEntries(packet.entries, packet.operator)
-      const lines = isCatchUp && inExercise
-        ? [`Added ${added} scenario entr${added === 1 ? 'y' : 'ies'} (${skipped} already here).`]
-        : [`Merged ${added} new report${added === 1 ? '' : 's'} from "${file.name}".`]
-      if (media.length || packet.entries.some(e => e.attachments?.length)) {
-        lines.push(...mediaSummary(await this.radioLogService.storePacketMedia(media, packet.entries)))
-      }
-      if (skipped && !(isCatchUp && inExercise)) {
-        lines.push(`${skipped} already present on this device were skipped.`)
-      }
-      if (rejected) {
-        lines.push(`${rejected} report${rejected === 1 ? '' : 's'} could not be read (bad timestamp or location) and were NOT imported - see the Log page for which.`)
-      }
-      // E-220 / D-68: two entries with one number are named, not renumbered.
-      const clashLine = msgNoClashSentence(clashes ?? [])
-      if (clashLine) lines.push(clashLine)
-      if (safetyCopy === 'kept') {
-        await this.importSafety.markImportDone()
-        lines.push('Undo is in Mission > Data safety for 24 hours.')
-      }
-      if (isCatchUp && inExercise) {
-        alert(lines.join('\n'))
-      } else {
-        // E-260 (D-69): the summary, with an offer to send a receipt back. It closes before anything below.
-        await this.showMergeSummary(lines, packet.entries.map(e => e.uid).filter((u): u is string => !!u))
-      }
-
-      // E-196 (D-66): offer the file's scenario clock whenever it differs from the mission's.
-      if (isCatchUp && inExercise && packet.scenarioClock
-        && !sameScenarioClock(packet.scenarioClock, this.usage.scenarioClock())) {
-        const label = formatScenarioTime(scenarioTimeAt(packet.scenarioClock, Date.now()))
-        if (confirm(`Set the scenario clock to ${label}?`)) this.usage.saveScenarioClock(packet.scenarioClock)
-      }
+      await this.finishBatchMerge(outcomes, media, batch)
     } catch (e: any) {
-      const label = file?.name ?? 'those files'
+      const label = files[0]?.name ?? 'those files'
       this.log.error(`Could not read "${label}" as a Report Packet: ${e?.message ?? e}`, this.id)
       alert(`Could not read "${label}".\n\n${e?.message ?? e}`)
     }
+  }
+
+  /**
+   * One packet file: diagnose, parse, ask the usual questions, keep the safety copy (once per pick), merge.
+   * Never alerts about a bad file; it returns `failed` with the plain words so the caller can show them
+   * alone (one file) or in the combined summary (several).
+   */
+  private async mergePacketFile(file: File, batch: PacketBatch): Promise<PacketOutcome> {
+    // E-198: say plainly what is wrong with the file (cut off, a backup, from a newer RangerTrak...)
+    // before trying to read it; the technical reason goes to the log only.
+    const diagnosis = await diagnoseFile(file, 'report-packet',
+      { backup: MISSION_EXPORT_SCHEMA_VERSION, reportPacket: REPORT_PACKET_SCHEMA_VERSION })
+    if (diagnosis.problem !== 'none') {
+      this.log.error(`Could not read "${file.name}" as a Report Packet: ${diagnosis.technical}`, this.id)
+      return { status: 'failed', file, message: diagnosis.message }
+    }
+    let packet: ReturnType<typeof parseReportPacket>
+    try {
+      packet = parseReportPacket(await file.text())
+    } catch (parseError: any) {
+      this.log.error(`Could not read "${file.name}" as a Report Packet: ${parseError?.message ?? parseError}`, this.id)
+      return { status: 'failed', file, message: REPORT_PACKET_DAMAGED_MESSAGE }
+    }
+
+    // E-196 (D-66): a catch-up file from the exercise console. Warn, never block (D-46).
+    const isCatchUp = packet.event === 'EXERCISE'
+    const inExercise = this.usage.mode() === 'exercise'
+    if (isCatchUp && !inExercise) {
+      if (!confirm('This file is EXERCISE training traffic. This mission is not an exercise, so these '
+        + 'entries would sit in a real log. Import it anyway?')) {
+        this.log.verbose('onReportPacketFileSelected: user cancelled an EXERCISE file outside Exercise mode.', this.id)
+        return { status: 'cancelled', file }
+      }
+    }
+
+    const currentMission = this.settings?.mission?.trim()
+    // In Exercise mode a catch-up file is expected to name a different mission, so no question.
+    if (!(isCatchUp && inExercise) && currentMission && packet.mission && packet.mission.trim() !== currentMission) {
+      if (!confirm(
+        `This Report Packet says "${packet.mission}", but this device's current mission `
+        + `is "${currentMission}".\n\nImport its ${packet.entries.length} report`
+        + `${packet.entries.length === 1 ? '' : 's'} anyway?`)) {
+        this.log.verbose('onReportPacketFileSelected: user cancelled on mission mismatch.', this.id)
+        return { status: 'cancelled', file }
+      }
+    }
+
+    // 2026-10-28, John: a field phone's packet names no mission, so ask about time instead:
+    // reports from before this mission started, or from the future. Warn, never block (D-46).
+    // A catch-up file in Exercise mode carries scenario times, so it is left alone.
+    if (!(isCatchUp && inExercise)) {
+      const check = checkPacketTimes({
+        incoming: packet.entries, existing: this.radioLogService.getCurrentRadioLog().logEntries,
+        opPeriodStart: this.settings?.opPeriodStart, now: Date.now(),
+      })
+      const warning = packetTimeWarning(check, packet.entries.length, d => d.toLocaleString([], { hour12: false }))
+      if (warning && !confirm(warning)) {
+        this.log.verbose('onReportPacketFileSelected: user cancelled on report times outside this mission.', this.id)
+        return { status: 'cancelled', file }
+      }
+    }
+
+    // E-198: the device as it is now, kept for 24 hours, before the merge changes anything.
+    // E-306: once per pick; later files in the same pick are covered by the same copy.
+    if (batch.safety === 'none') {
+      const safetyCopy = await this.importSafety.ensureBeforeImport('report-packet', file.name)
+      if (safetyCopy === 'cancelled') {
+        this.log.verbose('onReportPacketFileSelected: no safety copy and the user chose not to continue.', this.id)
+        batch.stop = true
+        return { status: 'cancelled', file }
+      }
+      batch.safety = safetyCopy
+    }
+
+    const { added, skipped, rejected, clashes } = this.radioLogService.mergeIncomingEntries(packet.entries, packet.operator)
+    return { status: 'merged', file, packet, isCatchUp, inExercise, added, skipped, rejected, clashes: clashes ?? [] }
+  }
+
+  /** The single-file summary, worded as it always was. */
+  private async finishPacketMerge(o: MergedPacket, media: readonly File[], batch: PacketBatch): Promise<void> {
+    const { file, packet, isCatchUp, inExercise, added, skipped, rejected, clashes } = o
+    const lines = isCatchUp && inExercise
+      ? [`Added ${added} scenario entr${added === 1 ? 'y' : 'ies'} (${skipped} already here).`]
+      : [`Merged ${added} new report${added === 1 ? '' : 's'} from "${file.name}".`]
+    if (media.length || packet.entries.some(e => e.attachments?.length)) {
+      lines.push(...mediaSummary(await this.radioLogService.storePacketMedia(media, packet.entries)))
+    }
+    if (skipped && !(isCatchUp && inExercise)) {
+      lines.push(`${skipped} already present on this device were skipped.`)
+    }
+    if (rejected) {
+      lines.push(`${rejected} report${rejected === 1 ? '' : 's'} could not be read (bad timestamp or location) and were NOT imported - see the Log page for which.`)
+    }
+    // E-220 / D-68: two entries with one number are named, not renumbered.
+    const clashLine = msgNoClashSentence(clashes)
+    if (clashLine) lines.push(clashLine)
+    if (batch.safety === 'kept') {
+      await this.importSafety.markImportDone()
+      lines.push('Undo is in Mission > Data safety for 24 hours.')
+    }
+    if (isCatchUp && inExercise) {
+      alert(lines.join('\n'))
+    } else {
+      // E-260 (D-69): the summary, with an offer to send a receipt back. It closes before anything below.
+      await this.showMergeSummary(lines, packet.entries.map(e => e.uid).filter((u): u is string => !!u))
+    }
+
+    // E-196 (D-66): offer the file's scenario clock whenever it differs from the mission's.
+    if (isCatchUp && inExercise && packet.scenarioClock
+      && !sameScenarioClock(packet.scenarioClock, this.usage.scenarioClock())) {
+      const label = formatScenarioTime(scenarioTimeAt(packet.scenarioClock, Date.now()))
+      if (confirm(`Set the scenario clock to ${label}?`)) this.usage.saveScenarioClock(packet.scenarioClock)
+    }
+  }
+
+  /** E-306: the one combined summary for several packets: a line per file, then the shared notes. */
+  private async finishBatchMerge(outcomes: readonly PacketOutcome[], media: readonly File[], batch: PacketBatch): Promise<void> {
+    const merged = outcomes.filter((o): o is MergedPacket => o.status === 'merged')
+    const totals = { added: 0, skipped: 0, rejected: 0 }
+    const fileLines: string[] = []
+    for (const o of outcomes) {
+      if (o.status === 'merged') {
+        totals.added += o.added; totals.skipped += o.skipped; totals.rejected += o.rejected
+        fileLines.push(`"${o.file.name}": ${o.added} added, ${o.skipped} already here, ${o.rejected} could not be read.`)
+      } else if (o.status === 'failed') {
+        fileLines.push(`"${o.file.name}": could not be read, nothing merged. ${o.message}`)
+      } else {
+        fileLines.push(`"${o.file.name}": skipped at your request.`)
+      }
+    }
+    const lines = [
+      `Merged ${merged.length} of ${outcomes.length} files: ${totals.added} new report${totals.added === 1 ? '' : 's'} added, `
+        + `${totals.skipped} already here, ${totals.rejected} could not be read.`,
+      ...fileLines,
+    ]
+    if (batch.stop) lines.push('Stopped before the remaining files because no safety copy was kept.')
+
+    const allEntries = merged.flatMap(o => o.packet.entries)
+    if (media.length || allEntries.some(e => e.attachments?.length)) {
+      lines.push(...mediaSummary(await this.radioLogService.storePacketMedia(media, allEntries)))
+    }
+    const clashLine = msgNoClashSentence(merged.flatMap(o => o.clashes))
+    if (clashLine) lines.push(clashLine)
+    const uids = allEntries.map(e => e.uid).filter((u): u is string => !!u)
+    if (merged.length && batch.safety === 'kept') {
+      await this.importSafety.markImportDone()
+      lines.push('Undo is in Mission > Data safety for 24 hours.')
+    }
+    await this.showMergeSummary(lines, uids)
   }
 
   /**
