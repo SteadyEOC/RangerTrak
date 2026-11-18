@@ -54,10 +54,13 @@ describe('LocateControl on a map (E-297)', () => {
     expect(btn!.closest('.leaflet-bottom.leaflet-right')).toBeTruthy()
     expect(btn!.title).toContain('does NOT set')
     expect(host.querySelector('[data-testid="entry-locate-status"]')).toBeTruthy()
+    // No real lookup: one can finish after this test's map is removed ("Invalid LatLng").
+    const locate = vi.spyOn(map, 'locate').mockReturnValue(map)
     const onHostClick = vi.fn()
     host.addEventListener('click', onHostClick)
     btn!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onHostClick).not.toHaveBeenCalled()
+    expect(locate).toHaveBeenCalledTimes(1)
   })
 
   it('reports a refusal in the status line', () => {
