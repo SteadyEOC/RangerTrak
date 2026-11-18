@@ -257,6 +257,9 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             bullets: [
               'Build Report Packet packages every report on THIS device into one small file, ready to hand to another device.',
               'Load Report Packet reads one of those files back in and merges it — it only ever ADDS reports this device does not already have; nothing existing is ever replaced or overwritten.',
+              'Several stations? Pick all their Report Packet files at once. You get one summary with a line for each file; a file that cannot be read does not stop the others.',
+              'If two stations may have logged the same message (same call sign, different station letters, within five minutes), the summary says so and both rows are marked in the Msg # column. Nothing is merged or removed for you.',
+              'Print 309 Log can group the rows under a heading for each station letter (the Group by station box appears when the log holds two or more), each group in its own time order. Remarks such as "also C012" point to the other copy.',
               'A merged-in report is marked with a small 📦 in its own column (or next to the callsign on a phone) — a quick way to tell it apart from one typed directly on this device.',
               'A report that can\'t be read — a bad timestamp or an out-of-range position, usually a sign the file was hand-edited or corrupted — is skipped on its own and you\'re told how many, rather than the whole file being refused.',
               'Importing the exact same file twice is safe — the second time changes nothing, so there is no harm in re-sending one if you are not sure it landed.',
