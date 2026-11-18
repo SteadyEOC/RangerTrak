@@ -380,6 +380,10 @@ that is what a printed ICS-213 shows in its top margin.
 - If two different entries turn up with the same number, the app tells you and leaves both as
   they are; change one device's letter.
 
+### Sending a form by radio (advanced)
+
+In Full menus, **Send by radio** on a message, on the Radio Log and in the ICS-214 export gets a form ready for Winlink, Pat or FLDIGI. It does not transmit: it shows exactly what will go out and its size, then saves a file for a Winlink form's Load Data button, copies plain text, saves a Pat outbox message (straight into the Pat folder in Chrome or Edge, once you pick it), or saves an FLMSG file (new, not yet tested with FLMSG itself). The first time it asks for your Winlink callsign. Only what is on the paper form goes, never the roster, and radio is unencrypted: no patient names, medical details or personal numbers. A looked-up address goes out with a ~ in front. See Help > Your data > Send a form by Winlink, Pat or FLDIGI.
+
 ### Marking entries
 
 The first column of the Radio Log is a small box. Click it to mark an entry handled (✓),
