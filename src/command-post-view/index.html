@@ -339,9 +339,20 @@
       <input id="alTo" type="text" autocomplete="off" placeholder="e.g. Logistics"></label>
     <div class="row"><input id="alRr" type="checkbox"><label for="alRr">An ICS-213RR resource request arrives</label></div>
     <div class="row"><input id="al213" type="checkbox"><label for="al213">Any ICS-213 message arrives</label></div>
+    <fieldset>
+      <legend>Not heard from</legend>
+      <label class="field">Call signs or tactical calls to watch (comma between them)
+        <input id="alSilent" type="text" autocomplete="off" placeholder="e.g. Medic2, KX7ABC"></label>
+      <label class="field">Alert when there has been no report for this many minutes (5 or more)
+        <input id="alSilentMins" type="number" min="5" step="1" inputmode="numeric" value="30"></label>
+    </fieldset>
+    <div class="row" id="wakeRow" hidden><input id="alWake" type="checkbox"><label for="alWake">Keep this screen on</label></div>
+    <p id="wakeNote" class="meta meta--small" role="status" hidden>This browser won't keep the screen on here.</p>
     <p class="meta meta--small">An alert highlights the report at the top of the log until you acknowledge it, shows a banner,
-      plays a tone, vibrates a phone and puts the count in the tab's title. On a phone it works only while this page is open
-      and the screen is on.</p>
+      plays a tone, vibrates a phone and puts the count in the tab's title. A "not heard from" alert is quiet (banner and
+      title only) and starts counting from when you save it; a new report from that station restarts the count. On a phone
+      alerts work only while this page is open and the screen is on, so "Keep this screen on" helps where this browser
+      allows it.</p>
     <div class="actions">
       <button type="submit" value="cancel">Cancel</button>
       <button type="submit" value="save" id="alSave">Save</button>
@@ -840,7 +851,7 @@
   // opening or reloading RangerView never sounds off for the whole history.
   var ALERT_RULES_KEY = 'boardAlertRules';
   var DEFAULT_STATUSES = ['Urgent', 'Need Rest/Food', 'Evidence Report', 'Location Report', 'Incident Check-in', 'Incident Check-out', 'Normal'];
-  var alertRules = { statuses: [], words: '', calls: '', to: '', rr: false, m213: false };
+  var alertRules = { statuses: [], words: '', calls: '', to: '', rr: false, m213: false, silent: '', silentMins: 30, silentSince: {} };
   try { var storedRules = JSON.parse(localStorage.getItem(ALERT_RULES_KEY) || 'null'); if (storedRules && typeof storedRules === 'object') { alertRules = Object.assign(alertRules, storedRules); } } catch (e) { /* defaults */ }
   var alertMission = null;     // which mission seen/open below belong to
   var seenKeys = null;         // markKey -> true, for every report this screen has already looked at
@@ -857,7 +868,40 @@
   }
   function rulesSet() {
     return (alertRules.statuses || []).length > 0 || splitList(alertRules.words).length > 0 || splitList(alertRules.calls).length > 0
-      || splitList(alertRules.to).length > 0 || !!alertRules.rr || !!alertRules.m213;
+      || splitList(alertRules.to).length > 0 || !!alertRules.rr || !!alertRules.m213 || splitNames(alertRules.silent).length > 0;
+  }
+  // Names as typed (for display), trimmed, without empty entries.
+  function splitNames(text) {
+    return String(text || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  // "Not heard from" (E-310 phase 2). Pure: which listed names have had no report for `minutes`, as of `now`.
+  //   names: names as typed; reports: [{callsign, tacticalCall, date}]; since: lower-case name -> ms it was first watched;
+  //   snoozed: lower-case name -> newest-report ms at acknowledge time (hidden until a newer report arrives).
+  // Each report time is the station's own clock; only "newest report from this name vs now" is used.
+  // Returns [{ name, mins, never, newest }], mins being whole minutes of silence.
+  function notHeardFrom(names, minutes, reports, since, snoozed, now) {
+    var limit = Math.max(5, Number(minutes) || 30) * 60000;
+    var out = [];
+    names.forEach(function (name) {
+      var key = name.toLowerCase();
+      var newest = 0;
+      reports.forEach(function (r) {
+        if (String(r.callsign || '').toLowerCase() !== key && String(r.tacticalCall || '').toLowerCase() !== key) { return; }
+        var t = new Date(r.date).getTime() || 0;
+        if (t > newest) { newest = t; }
+      });
+      var startedAt = newest || Number(since && since[key]) || now;
+      if (now - startedAt < limit) { return; }
+      if (snoozed && Object.prototype.hasOwnProperty.call(snoozed, key) && newest <= snoozed[key]) { return; }
+      out.push({ name: name, mins: Math.floor((now - startedAt) / 60000), never: !newest, newest: newest });
+    });
+    return out;
+  }
+  var silentAck = {};          // lower-case name -> newest report ms when acknowledged (per mission)
+  var silentNow = [];          // the current "not heard from" results
+  function silentList() {
+    var reports = (latest && latest.reports) || [];
+    return notHeardFrom(splitNames(alertRules.silent), alertRules.silentMins, reports, alertRules.silentSince, silentAck, Date.now());
   }
   // Why a report alerts, or '' when it doesn't.
   function alertWhy(r) {
@@ -882,7 +926,10 @@
     alertMission = mission;
     seenKeys = null;
     openAlerts = {};
+    silentAck = {};
     try {
+      var sa = JSON.parse(localStorage.getItem('boardSilentAck:' + mission) || '{}');
+      if (sa && typeof sa === 'object') { silentAck = sa; }
       var seen = JSON.parse(localStorage.getItem('boardSeen:' + mission) || 'null');
       if (Array.isArray(seen)) { seenKeys = {}; seen.forEach(function (k) { seenKeys[k] = true; }); }
       var open = JSON.parse(localStorage.getItem('boardOpenAlerts:' + mission) || '{}');
@@ -895,6 +942,7 @@
       if (keys.length > 5000) { keys = keys.slice(keys.length - 5000); }
       localStorage.setItem('boardSeen:' + alertMission, JSON.stringify(keys));
       localStorage.setItem('boardOpenAlerts:' + alertMission, JSON.stringify(openAlerts));
+      localStorage.setItem('boardSilentAck:' + alertMission, JSON.stringify(silentAck));
     } catch (e) { /* kept for this visit only */ }
   }
 
@@ -955,17 +1003,32 @@
     var keys = Object.keys(openAlerts);
     var reports = (latest && latest.reports) || [];
     var first = reports.filter(isAlerted)[0];
-    alertBanner.hidden = keys.length === 0;
-    if (keys.length) {
-      alertTextEl.textContent = '⚠ ' + keys.length + (keys.length === 1 ? ' alert' : ' alerts')
-        + (first ? ': ' + (station(first.tacticalCall, first.callsign) || 'a report') + ' (' + alertReasons(first) + ')' : '');
+    silentNow = latest ? silentList() : [];
+    var total = keys.length + silentNow.length;
+    alertBanner.hidden = total === 0;
+    if (total) {
+      var parts = [];
+      if (keys.length) {
+        parts.push(keys.length + (keys.length === 1 ? ' alert' : ' alerts')
+          + (first ? ': ' + (station(first.tacticalCall, first.callsign) || 'a report') + ' (' + alertReasons(first) + ')' : ''));
+      }
+      if (silentNow.length) {
+        parts.push('Not heard from: ' + silentNow.map(function (s) {
+          return s.name + ' (' + (s.never ? 'no reports since alerts were set' : s.mins + ' min') + ')';
+        }).join(', '));
+      }
+      alertTextEl.textContent = '⚠ ' + parts.join(' · ');
     }
-    document.title = (keys.length ? '(' + keys.length + ') ' : '') + baseTitle;
+    document.title = (total ? '(' + total + ') ' : '') + baseTitle;
     soundHint.hidden = !(rulesSet() && !(audioCtx && audioCtx.state === 'running'));
   }
 
   function acknowledge(key) {
-    if (key) { delete openAlerts[key]; } else { openAlerts = {}; }
+    if (key) { delete openAlerts[key]; } else {
+      openAlerts = {};
+      // Snooze each silent name until a newer report arrives from it, which restarts its clock.
+      silentNow.forEach(function (s) { silentAck[s.name.toLowerCase()] = s.newest; });
+    }
     saveAlertState();
     updateAlertUi();
     render();
@@ -997,23 +1060,78 @@
     document.getElementById('alTo').value = alertRules.to || '';
     document.getElementById('alRr').checked = !!alertRules.rr;
     document.getElementById('al213').checked = !!alertRules.m213;
+    document.getElementById('alSilent').value = alertRules.silent || '';
+    document.getElementById('alSilentMins').value = alertRules.silentMins || 30;
+    document.getElementById('alWake').checked = wakeWanted;
+    wakeNote.hidden = !wakeFailed;
     alertsDialog.showModal();
   });
   alertsDialog.addEventListener('close', function () {
     if (alertsDialog.returnValue !== 'save') { return; }
+    var oldSince = alertRules.silentSince || {};
     alertRules = {
       statuses: Array.prototype.map.call(document.querySelectorAll('#alStatuses input:checked'), function (i) { return i.getAttribute('data-status'); }),
       words: document.getElementById('alWords').value,
       calls: document.getElementById('alCalls').value,
       to: document.getElementById('alTo').value,
       rr: document.getElementById('alRr').checked,
-      m213: document.getElementById('al213').checked
+      m213: document.getElementById('al213').checked,
+      silent: document.getElementById('alSilent').value,
+      silentMins: Math.max(5, Math.floor(Number(document.getElementById('alSilentMins').value)) || 30),
+      silentSince: {}
     };
+    // Each watched name keeps its start time; a newly listed name starts counting now.
+    var now = Date.now();
+    splitNames(alertRules.silent).forEach(function (n) {
+      var k = n.toLowerCase();
+      alertRules.silentSince[k] = Number(oldSince[k]) || now;
+    });
+    // Saving starts the snoozes over.
+    silentAck = {};
     try { localStorage.setItem(ALERT_RULES_KEY, JSON.stringify(alertRules)); } catch (e) { /* this visit only */ }
+    saveAlertState();
+    setWake(document.getElementById('alWake').checked);
+    updateAlertUi();
     unlockSound(); // Save was a tap, so sound can start now
     document.getElementById('alertsBtn').textContent = rulesSet() ? '🔔 Alerts (on)' : '🔔 Alerts';
   });
   document.getElementById('alertsBtn').textContent = rulesSet() ? '🔔 Alerts (on)' : '🔔 Alerts';
+
+  // E-310 phase 2: keep this screen on (Screen Wake Lock). Needs a secure page (https or localhost), so the control stays
+  // hidden on a plain-http or unsupported browser; the choice is this device's, in localStorage.
+  var WAKE_KEY = 'boardKeepScreenOn';
+  var wakeRow = document.getElementById('wakeRow');
+  var wakeNote = document.getElementById('wakeNote');
+  var wakeSupported = ('wakeLock' in navigator) && window.isSecureContext === true;
+  var wakeWanted = false;
+  var wakeFailed = false;
+  var wakeSentinel = null;
+  try { wakeWanted = localStorage.getItem(WAKE_KEY) === '1'; } catch (e) { /* off */ }
+  function storeWake() { try { localStorage.setItem(WAKE_KEY, wakeWanted ? '1' : '0'); } catch (e) { /* this visit only */ } }
+  function wakeRequest() {
+    if (!wakeSupported || !wakeWanted || wakeSentinel || document.visibilityState !== 'visible') { return; }
+    navigator.wakeLock.request('screen').then(function (s) {
+      wakeSentinel = s;
+      s.addEventListener('release', function () { if (wakeSentinel === s) { wakeSentinel = null; } });
+    }).catch(function () {
+      wakeWanted = false; wakeFailed = true; storeWake();
+      document.getElementById('alWake').checked = false;
+      wakeNote.hidden = false;
+    });
+  }
+  function setWake(on) {
+    if (!wakeSupported) { return; }
+    wakeWanted = !!on; wakeFailed = false; wakeNote.hidden = true; storeWake();
+    if (wakeWanted) { wakeRequest(); }
+    else if (wakeSentinel) { var s = wakeSentinel; wakeSentinel = null; s.release().catch(function () { /* already released */ }); }
+  }
+  if (wakeSupported) {
+    wakeRow.hidden = false;
+    document.addEventListener('visibilitychange', wakeRequest);
+    wakeRequest();
+  }
+  // "Not heard from" also needs a clock: a station can go quiet between snapshots.
+  setInterval(updateAlertUi, 60000);
 
   // Q68 (b): the map alone, full screen, for a TV.
   document.getElementById('mapFull').addEventListener('click', function () {

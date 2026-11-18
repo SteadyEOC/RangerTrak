@@ -571,7 +571,9 @@ status such as Urgent, words in a message, call signs, a To station, or a resour
 that arrive from then on alert: the report is highlighted at the top of the log until acknowledged, with a
 banner, a tone (after one tap on the page), a vibration on a phone and the count in the tab's title. Rules
 and acknowledgements stay on that device; the scribe and other screens never see them. On a phone, alerts
-work only while the page is open and the screen is on.
+work only while the page is open and the screen is on. The bell can also watch for silence: list call signs or
+tactical calls and a number of minutes, and the banner says "Not heard from" when a station has sent no report
+for that long (quietly, no tone). "Keep this screen on" stops the screen sleeping where the browser allows it.
 
 ### Handing over to another scribe
 

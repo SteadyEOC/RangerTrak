@@ -69,6 +69,7 @@ AT THE COMMAND POST
    side, and "Follow newest" keeps the latest report in view. The Map needs no Internet.
    The bell (Alerts) lets each screen pick what should get its attention: Urgent, words, call signs.
    Only new reports alert; rules stay on that device.
+   It can also warn when a station has not reported for a while, and keep the screen on.
 
 
 THE LOG
