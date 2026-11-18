@@ -1839,6 +1839,62 @@ async function checkMessagesPage() {
 }
 
 /**
+ * E-307: Send by radio, end to end. Full menus (forced by default): a 213 submitted on Entry shows the button on
+ * Messages; the dialog states the warning and previews the message text; Save for a Winlink form (Load Data)
+ * stamps radioSavedAt on the stored entry and the Messages page then shows "Saved for radio"; Easy menus has no
+ * button. Not run by a fast run (it needs --full): node tools/e2e.js --full --only=radiolog
+ */
+async function checkSendByRadio() {
+  console.log('\nSend by radio (E-307): Messages button, dialog, Load Data stamps Saved for radio, hidden in Easy menus')
+  await goto('/')
+  await idbRemoveRaw('radioLog')
+  await goto('/')
+  await sleep(1200)
+  await evaluate(`document.querySelector('[data-testid="generates213-toggle"] input[type=checkbox]').click()`)
+  await sleep(300)
+  await evaluate(`(async () => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    const taSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
+    const setInput = (el, v) => { setter.call(el, v); el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); };
+    taSetter.call(document.querySelector('.enter__213-message textarea'), 'E2E-RADIO message body');
+    document.querySelector('.enter__213-message textarea').dispatchEvent(new Event('input', {bubbles:true}));
+    document.querySelector('.enter__213 mat-chip-option .mat-mdc-chip-action')?.click();
+    setInput(document.getElementById('enter__Callsign-input'), 'E2E-RADIO');
+    await new Promise(r => setTimeout(r, 900));
+    document.querySelector('.enter__Submit-button')?.click();
+    await new Promise(r => setTimeout(r, 1200));
+  })()`)
+  await goto('/messages')
+  await sleep(600)
+  check('Full menus: the message has a Send by radio button', await evaluate(`!!document.querySelector('[data-testid="messages-send-radio"]')`), true)
+  await evaluate(`document.querySelector('[data-testid="messages-send-radio"]').click()`)
+  await sleep(1500) // the dialog, the mapping and the writers load on demand
+  const dlg = await evaluate(`(() => ({
+    warn: document.querySelector('[data-testid="radio-warning"]')?.textContent || '',
+    preview: document.querySelector('[data-testid="radio-preview"]')?.textContent || '',
+    size: document.querySelector('[data-testid="radio-size"]')?.textContent || '',
+    first: document.querySelector('.rt-radio__buttons button')?.textContent.trim() || '',
+  }))()`)
+  check('the dialog warns that radio is unencrypted', dlg.warn.includes('Goes out by radio, unencrypted'), true)
+  check('the preview holds the message text', dlg.preview.includes('E2E-RADIO message body'), true)
+  check('the size line is shown', /bytes: about/.test(dlg.size), true)
+  check('Load Data is the first button', dlg.first, 'Save for a Winlink form (Load Data)')
+  await evaluate(`document.querySelector('[data-testid="radio-loaddata"]').click()`)
+  await sleep(600)
+  check('the next-steps line names Load Data', await evaluate(`(document.querySelector('[data-testid="radio-next"]')?.textContent || '').includes('click Load Data')`), true)
+  const stored = JSON.parse(await idbGetRaw('radioLog') || '{}').logEntries?.find(f => f.callsign === 'E2E-RADIO')
+  check('the stored entry has radioSavedAt', typeof stored?.radioSavedAt, 'string')
+  await evaluate(`document.querySelector('[data-testid="radio-close"]').click()`)
+  await sleep(500)
+  check('Messages shows Saved for radio', await evaluate(`(document.querySelector('[data-testid="messages-radio-saved"]')?.textContent || '').startsWith('Saved for radio')`), true)
+  await evaluate(`localStorage.setItem('rt-view', 'simple'); localStorage.setItem('rt-view-source', 'user')`)
+  await goto('/messages')
+  await sleep(500)
+  check('Easy menus: no Send by radio button', await evaluate(`!!document.querySelector('[data-testid="messages-send-radio"]')`), false)
+  await evaluate(`localStorage.setItem('rt-view', 'full'); localStorage.setItem('rt-view-source', 'user')`)
+  check('Send by radio raised no console errors', consoleErrors.slice(0, 2), [])
+}
+/**
  * E-283 phase 2 (2026-11-12): an ICS-213RR resource request, end to end. Full menus (forced by default),
  * tick the box on Entry, fill two order lines, save, then Messages: the Resource requests filter shows
  * exactly that row with the first line's text, All still lists it, and a second line keeps the Entry
@@ -6734,8 +6790,9 @@ async function main() {
         if (want('entry')) await checkClueHeading()
         if (want('radiolog')) await checkMessagesPage()
         if (want('radiolog')) await checkResourceRequest() // E-283
+        if (want('radiolog')) await checkSendByRadio() // E-307
       } else {
-        note('fast run: skipping checkEvidenceLocation, checkClueHeading, checkMessagesPage, checkResourceRequest (pass --full to include)')
+        note('fast run: skipping checkEvidenceLocation, checkClueHeading, checkMessagesPage, checkResourceRequest, checkSendByRadio (pass --full to include)')
       }
       if (want('entry')) await checkDerivedValuesDoNotCarryOver() // also submits, same reason
       if (want('mission')) await checkMissionFormSave()
