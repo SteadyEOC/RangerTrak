@@ -1,0 +1,89 @@
+<h2 mat-dialog-title>Send {{ payload.formLabel }} by radio</h2>
+
+<div mat-dialog-content class="rt-radio">
+  <p class="rt-radio__warn" data-testid="radio-warning">Goes out by radio, unencrypted: no patient names, medical details or personal numbers.</p>
+
+  @if (!call()) {
+  <div class="rt-radio__row" data-testid="radio-call-prompt">
+    <mat-form-field appearance="outline">
+      <mat-label>Your Winlink callsign</mat-label>
+      <input matInput [ngModel]="callDraft()" (ngModelChange)="callDraft.set($event)" data-testid="radio-call" autocomplete="off" />
+      <mat-hint>Kept on this device. Needed for a Pat message.</mat-hint>
+    </mat-form-field>
+    <button matButton type="button" (click)="saveCall()" [disabled]="!callDraft().trim()" data-testid="radio-call-save">Save callsign</button>
+  </div>
+  } @else {
+  <p class="rt-radio__hint">Sending as <strong>{{ call() }}</strong>.</p>
+  }
+
+  <div class="rt-radio__row">
+    <mat-form-field appearance="outline" class="rt-radio__grow">
+      <mat-label>To</mat-label>
+      <input matInput [ngModel]="to()" (ngModelChange)="to.set($event)" data-testid="radio-to" autocomplete="off"
+        placeholder="CALLSIGN, tactical, or SMTP:user@host" />
+      @for (h of toHints(); track h) { <mat-hint>{{ h }}</mat-hint> }
+    </mat-form-field>
+    @if (saved.length) {
+    <mat-form-field appearance="outline">
+      <mat-label>Saved addresses</mat-label>
+      <mat-select (selectionChange)="addSaved('to', $event.value)" data-testid="radio-saved">
+        @for (a of saved; track a.address) { <mat-option [value]="a.address">{{ a.label }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    }
+  </div>
+  <div class="rt-radio__row">
+    <mat-form-field appearance="outline" class="rt-radio__grow">
+      <mat-label>Cc (optional)</mat-label>
+      <input matInput [ngModel]="cc()" (ngModelChange)="cc.set($event)" data-testid="radio-cc" autocomplete="off" />
+      @for (h of ccHints(); track h) { <mat-hint>{{ h }}</mat-hint> }
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="outline">
+    <mat-label>Subject</mat-label>
+    <input matInput [ngModel]="subject()" (ngModelChange)="subject.set($event)" data-testid="radio-subject" autocomplete="off" />
+  </mat-form-field>
+
+  <h3 class="rt-radio__h">What goes out</h3>
+  <pre class="rt-radio__preview" data-testid="radio-preview" tabindex="0">{{ text() }}</pre>
+  @if (sizeLine()) { <p class="rt-radio__hint" data-testid="radio-size">{{ sizeLine() }}</p> }
+  @if (out()?.folded) {
+  <p class="rt-radio__hint" data-testid="radio-folded">Some characters were changed to plain letters so every radio program can carry them.</p>
+  }
+  @if (payload.notInSaveData > 0) {
+  <p class="rt-radio__hint" data-testid="radio-overflow">The form's own file holds the first rows only; {{ payload.notInSaveData }} more are in the text.</p>
+  }
+
+  @if (problem()) { <p class="rt-radio__error" role="alert" data-testid="radio-error">{{ problem() }}</p> }
+  @if (nextSteps()) { <p class="rt-radio__next" role="status" data-testid="radio-next">{{ nextSteps() }}</p> }
+
+  <div class="rt-radio__buttons">
+    @if (hasLoadData) {
+    <button matButton="filled" type="button" (click)="saveLoadData()" [disabled]="!forms()" data-testid="radio-loaddata"
+      title="Saves a file for the {{ payload.formLabel }} form's Load Data button in Winlink Express or Pat">Save for a Winlink form (Load Data)</button>
+    }
+    <button matButton="outlined" type="button" (click)="copyText()" [disabled]="!text()" data-testid="radio-copy">Copy text</button>
+    <button matButton="outlined" type="button" (click)="saveForPat()" [disabled]="!forms() || busy() || !call()" data-testid="radio-pat">Save for Pat outbox</button>
+    <button matButton="outlined" type="button" (click)="saveFlmsg()" [disabled]="!forms()" data-testid="radio-flmsg"
+      [title]="flmsgNote">Save for FLMSG</button>
+  </div>
+  @if (canPickFolder) {
+  <p class="rt-radio__hint">
+    @if (patFolder(); as f) {
+    Pat outbox folder: <strong>{{ f.name }}</strong>
+    @if (!patReady()) { <button matButton type="button" (click)="rearmFolder()" data-testid="radio-rearm">Allow it again</button> }
+    <button matButton type="button" (click)="pickFolder()" data-testid="radio-pick">Change folder</button>
+    } @else {
+    <button matButton type="button" (click)="pickFolder()" data-testid="radio-pick">Choose the Pat outbox folder</button>
+    so a Pat message saves straight into it.
+    }
+  </p>
+  } @else {
+  <p class="rt-radio__hint">This browser cannot save into a folder, so a Pat message downloads as a file to move into the Pat outbox.</p>
+  }
+  <p class="rt-radio__hint" data-testid="radio-flmsg-note">{{ flmsgNote }} FLMSG files are new and not yet tested with FLMSG itself.</p>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button matButton type="button" (click)="close()" data-testid="radio-close">Close</button>
+</div>

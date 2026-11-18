@@ -17,8 +17,8 @@ export interface DirHandle {
   requestPermission?(opts: { mode: 'readwrite' }): Promise<'granted' | 'denied' | 'prompt'>
 }
 
-export function canPickFolder(win: { showDirectoryPicker?: unknown } = window): boolean {
-  return typeof win.showDirectoryPicker === 'function'
+export function canPickFolder(win: object = window): boolean {
+  return typeof (win as { showDirectoryPicker?: unknown }).showDirectoryPicker === 'function'
 }
 
 function openDb(): Promise<IDBDatabase> {
@@ -30,12 +30,12 @@ function openDb(): Promise<IDBDatabase> {
   })
 }
 
-async function withStore<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+async function withStore<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest): Promise<T> {
   const db = await openDb()
   try {
     return await new Promise<T>((resolve, reject) => {
       const req = run(db.transaction(STORE, mode).objectStore(STORE))
-      req.onsuccess = () => resolve(req.result)
+      req.onsuccess = () => resolve(req.result as T)
       req.onerror = () => reject(req.error)
     })
   } finally {

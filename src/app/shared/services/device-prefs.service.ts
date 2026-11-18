@@ -4,6 +4,9 @@ import {
   COLUMN_TARGETS, ImportMappings, parseImportMappings, PLACE_TARGET_WORDS, rememberMapping,
 } from "../../domain/roster-sheet"
 
+import { parseWinlinkAddresses, type WinlinkAddress } from "../../domain/winlink-station"
+export type { WinlinkAddress }
+
 // Keys unchanged from when the components wrote them directly, so nothing stored moves.
 const LAST_COORDINATE_FORMAT_KEY = 'lastCoordinateFormat'
 const RANGERS_PRIVACY_DISMISSED_KEY = 'rangertrak.rangers.privacyNoticeDismissed'
@@ -30,21 +33,7 @@ const WINLINK_ADDRESSES_KEY = 'rt-winlink-addresses'
 /** The grids that have a Fit to screen switch. */
 export type GridName = 'radio-log' | 'rangers'
 
-/** E-307: one saved radio address: a name to pick it by, and the address (CALLSIGN, tactical or SMTP:user@host). */
-export type WinlinkAddress = { label: string, address: string }
-
 export type BoardPublisherPref = { base?: string, key?: string, replaced?: boolean }
-
-/** Keeps the entries that have an address; a blank label shows the address. */
-export function parseWinlinkAddresses(v: unknown): WinlinkAddress[] {
-  if (!Array.isArray(v)) return []
-  return v.flatMap((x): WinlinkAddress[] => {
-    const address = typeof x?.address === 'string' ? x.address.trim() : ''
-    if (!address) return []
-    const label = typeof x?.label === 'string' && x.label.trim() ? x.label.trim() : address
-    return [{ label, address }]
-  })
-}
 
 /**
  * Small per-device UI preferences that used to be read and written by components straight
