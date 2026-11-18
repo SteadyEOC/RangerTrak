@@ -12,6 +12,7 @@
  */
 import { chunkActivityRows, type ActivityRow, type ActivityLogHeader } from '../../../domain/activity-log'
 import { csvRow } from '../csv'
+import { markedAddress } from '../../../domain/address-mark'
 import { ics213FieldsFromReport } from '../ics213-pdf'
 import { ICS213RR_FIELD, rr213FieldsFromReport, rrDescField, rrKindField, rrNeededField, rrQtyField, rrTypeField, ICS213RR_ROWS } from '../ics213rr-pdf'
 import { formDate, formTime, ics214SheetFields } from '../ics214-pdf'
@@ -53,11 +54,7 @@ export interface RadioPayload {
 }
 
 /** Q112: a looked-up address reads "~123 Main St"; one the scribe typed or was told stays as written. */
-export function radioAddress(location: { address?: string, derivedFromAddress?: boolean } | undefined): string {
-  const a = (location?.address ?? '').trim()
-  if (!a) return ''
-  return location?.derivedFromAddress === false ? `~${a}` : a
-}
+export const radioAddress = markedAddress
 
 const mm = (d: Date) => `${formDate(d)} ${formTime(d)}`
 const one = (s: string) => s.replace(/\s*[\r\n]+\s*/g, ' ').trim()

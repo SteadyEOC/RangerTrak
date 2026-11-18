@@ -43,6 +43,7 @@ import { AarNoteService } from '../shared/services/aar-note.service'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
 import { ViewService } from '../shared/services/view.service'
 import { SendByRadioService } from '../shared/radio-send/send-by-radio.service'
+import { radioLogCsvCell } from './radio-log-csv-cell'
 import { PrintBrandComponent } from '../shared/print-brand/print-brand.component'
 import { clearedPlain, noteMatcher } from '../domain/clear-choices'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
@@ -1099,6 +1100,12 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       fileName: onlySelected ? params.fileName.replace(/\.csv$/, '-selected.csv') : params.fileName,
       exportedRows: this.allRows() ? 'all' : 'filteredAndSorted',
       onlySelected,
+      // Q112: a looked-up address is "~123 Main St" in the CSV (the screen says "(inferred)").
+      processCellCallback: (p: any) => {
+        const def = p.column.getColDef()
+        return radioLogCsvCell(p.column.getColId(), p.value, p.node?.data, p.formatValue,
+          !!def.valueFormatter && def.useValueFormatterForExport !== false)
+      },
     })
     this.journal.record('radio-log-exported', `Exported the radio log to ${onlySelected ? params.fileName.replace(/\.csv$/, '-selected.csv') : params.fileName}.`)
   }
