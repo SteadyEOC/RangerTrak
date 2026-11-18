@@ -1342,9 +1342,10 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         if (batch.stop) break
         try {
           outcomes.push(await this.mergePacketFile(file, batch))
-        } catch (e: any) {
-          this.log.error(`Could not read "${file.name}" as a Report Packet: ${e?.message ?? e}`, this.id)
-          outcomes.push({ status: 'failed', file, message: String(e?.message ?? e) })
+        } catch (e) {
+          const why = e instanceof Error ? e.message : String(e)
+          this.log.error(`Could not read "${file.name}" as a Report Packet: ${why}`, this.id)
+          outcomes.push({ status: 'failed', file, message: why })
         }
       }
 
