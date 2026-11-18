@@ -346,6 +346,7 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       // E-194 / D-61: no RangerView password, and no attachments on RangerView, until the mission opts in.
       boardPassword: '',
       boardShowAttachments: false,
+      boardOfferSetup: false,
     }
   }
 

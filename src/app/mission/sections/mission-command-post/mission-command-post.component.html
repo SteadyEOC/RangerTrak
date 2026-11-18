@@ -147,6 +147,12 @@
         Show attachments on RangerView
       </mat-slide-toggle>
 
+      <!-- E-287: off by default. A Setup file with settings, op period and places, never the roster, for phones to download. -->
+      <mat-slide-toggle class="mission-command-post__attachments" [checked]="form.boardOfferSetup().value()"
+        (change)="form.boardOfferSetup().value.set($event.checked)" data-testid="board-offer-setup">
+        Offer a setup file to phones (settings, op period and places; never the roster)
+      </mat-slide-toggle>
+
       <!-- Raised live 2026-08-31: "a URL to click" to confirm /view actually works, without
            hand-typing it into a second tab. Doubles as the one-time cert-acceptance step now
            that the server is self-signed HTTPS (see the warning above) - clicking this link

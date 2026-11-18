@@ -184,6 +184,10 @@ export type MissionType = {
   // and lets a viewer ask for the full-size file. Additive-only, backfilled false.
   boardShowAttachments: boolean,
 
+  // E-287 (John, Q115): whether RangerView also offers phones a Setup file to download - settings, op period
+  // and places, never the roster. Off by default. Additive-only, backfilled false (no MISSION_SCHEMA_VERSION bump).
+  boardOfferSetup: boolean,
+
   // E-168a (2026-10-01, John): what this mission is being used for - 'demo', 'exercise' or
   // 'incident'. STORED CODES, not labels: the words shown to the operator may change later
   // without touching storage. Belongs to the mission (not a device key) so an exercise restored

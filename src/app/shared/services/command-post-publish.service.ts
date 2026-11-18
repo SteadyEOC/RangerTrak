@@ -16,6 +16,7 @@ import type { BoardDiagnosis, HelloResult, LocalNetworkPermission } from '../../
 import { liveRefs } from '../../domain/attachments'
 import { AttachmentStoreService } from './attachment-store.service'
 import { areaMapRef, currentAreaMap, type AreaMap, type AreaMapRef } from './board-area-map'
+import * as packageJson from '../../../../package.json'
 import { CustomPmtilesService } from './custom-pmtiles.service'
 import { MissionLocationService } from './mission-location.service'
 import { DevicePrefsService } from './device-prefs.service'
@@ -96,6 +97,8 @@ export type CommandPostMission = {
   maps?: AreaMapRef[]
   /** E-293 phase C (Q70 yes): the mission's Places, drawn on the viewer's map. Name, kind and position only. */
   places?: { name: string, type: string, lat: number, lng: number }[]
+  /** E-287: the Setup file RangerView should offer phones (settings, op period, places; never the roster); absent when off. */
+  setup?: { sha256: string, bytes: number, name: string }
   publishedAt: string
   mission: string
   event: string
@@ -141,7 +144,7 @@ export class CommandPostPublishService implements OnDestroy {
   private listening = false
 
   /** The server and settings this run of publishing started from, to notice a change. */
-  private active?: { base: string, password: string, show: boolean }
+  private active?: { base: string, password: string, show: boolean, offer: boolean }
   private firstSettings = true
   private takingOver = false
   private key = ''
@@ -158,6 +161,12 @@ export class CommandPostPublishService implements OnDestroy {
   private places = inject(MissionLocationService)
   private areaMap: AreaMap | null = null
   private mapUploading = false
+  // E-287: the Setup file offered to phones. Rebuilt only when its content changes (a rebuild changes the zip's bytes
+  // and so its fingerprint), and sent once per fingerprint, like the area map.
+  private setupFile: { key: string, bytes: Uint8Array, sha256: string, name: string } | null = null
+  private setupUploading = false
+  private setupTimer: ReturnType<typeof setTimeout> | undefined
+  private placesSubscription?: Subscription
   private journal = inject(MissionJournalService)
 
   constructor(
@@ -175,6 +184,12 @@ export class CommandPostPublishService implements OnDestroy {
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => { this.settings = newMission; this.onSettings(newMission) },
       error: (e) => this.log.error(`Mission subscription error: ${e}`, this.id),
+    })
+
+    // E-287: a change to the places is a reason to rebuild the offered Setup file (a no-op while it is not offered).
+    this.placesSubscription = this.places.getLocationsObserver().subscribe({
+      next: () => this.onSetupInputsChanged(),
+      error: (e) => this.log.error(`Places subscription error: ${e}`, this.id),
     })
 
     this.radioLogSubscription = this.radioLogService.getRadioLogObserver().subscribe({
@@ -218,6 +233,8 @@ export class CommandPostPublishService implements OnDestroy {
     this.listen(false)
     this.stopPolling()
     clearTimeout(this.logPublishTimer)
+    clearTimeout(this.setupTimer)
+    this.placesSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()
     this.radioLogSubscription?.unsubscribe()
   }
@@ -249,7 +266,8 @@ export class CommandPostPublishService implements OnDestroy {
       return
     }
     const show = !!settings.boardShowAttachments
-    this.active = { base, password, show }
+    const offer = !!settings.boardOfferSetup
+    this.active = { base, password, show, offer }
     this.listen(true)
     // The app's first look at the settings is a start-up, which keeps a `replaced` it remembers.
     // Any later switch-on is a person choosing to publish, which is a normal claim.
@@ -267,6 +285,16 @@ export class CommandPostPublishService implements OnDestroy {
     }
     // A change to the attachments switch rides the next publish; send one now.
     if (this.stateSignal() === 'publishing' && was && was.show !== show) void this.publish()
+    // E-287: switching the Setup file on or off goes out at once; any other settings change while it is on, after a pause.
+    if (this.stateSignal() === 'publishing' && was && was.offer !== offer) void this.publish()
+    else if (offer) this.onSetupInputsChanged()
+  }
+
+  /** E-287: settings or places changed. While a Setup file is offered and publishing, send a fresh snapshot after a pause. */
+  private onSetupInputsChanged(): void {
+    if (!this.active?.offer || this.stateSignal() !== 'publishing') return
+    clearTimeout(this.setupTimer)
+    this.setupTimer = setTimeout(() => void this.publish(), 1500)
   }
 
   private start(base: string, startUp: boolean): void {
@@ -466,6 +494,8 @@ export class CommandPostPublishService implements OnDestroy {
         if (Array.isArray(asked)) this.queueUploads(asked, usedKey)
         const map = (reply.body as { map?: { sha256?: unknown, held?: unknown } } | null)?.map
         if (map && map.held === false && typeof map.sha256 === 'string') void this.uploadMap(map.sha256, usedKey)
+        const setup = (reply.body as { setup?: { sha256?: unknown, held?: unknown } } | null)?.setup
+        if (setup && setup.held === false && typeof setup.sha256 === 'string') void this.uploadSetup(setup.sha256, usedKey)
         return
       }
       if (read.kind !== 'other') this.onKeyedRefusal(read, usedKey)
@@ -539,6 +569,45 @@ export class CommandPostPublishService implements OnDestroy {
     } finally {
       this.mapUploading = false
     }
+  }
+
+  /**
+   * E-287: sends the Setup file once, when RangerView says the snapshot lists it and it is not held yet. RangerView
+   * refuses a file that carries rangers or photos (CLAUDE.md rule 5); this device never builds one that does.
+   */
+  private async uploadSetup(sha: string, usedKey: string): Promise<void> {
+    const file = this.setupFile
+    const base = this.baseOf(this.settings)
+    if (this.setupUploading || !file || file.sha256 !== sha || !base || !this.settings?.boardOfferSetup) return
+    this.setupUploading = true
+    try {
+      const reply = await this.call(base, 'POST', `/api/setup/${sha}`, {
+        headers: { 'Content-Type': 'application/zip' }, key: usedKey, body: file.bytes as BodyInit,
+      })
+      const read = readKeyedReply(reply.status, reply.body)
+      if (read.kind === 'ok') this.journal.record('board-setup-sent', 'Sent the Setup file (settings and places, no roster) to RangerView.')
+      else if (read.kind === 'other') this.log.warn(`RangerView refused the Setup file (HTTP ${reply.status}).`, this.id)
+      else this.onKeyedRefusal(read, usedKey)
+    } catch (e) {
+      this.log.warn(`RangerView Setup file not sent (${e})`, this.id)
+    } finally {
+      this.setupUploading = false
+    }
+  }
+
+  /** The Setup file for the settings and places as they are now; rebuilt only when they differ from last time. */
+  private async currentSetupFile(settings: MissionType): Promise<NonNullable<CommandPostPublishService['setupFile']>> {
+    const locations = this.places.getCurrentLocations()
+    const key = JSON.stringify({ settings, locations })
+    if (this.setupFile?.key === key) return this.setupFile
+    const { buildRangerViewSetupFile } = await import('../export/setup-file-build')
+    const built = await buildRangerViewSetupFile({
+      settings, locations,
+      appVersion: JSON.parse(JSON.stringify(packageJson)).version,
+      exportedAt: new Date().toISOString(),
+    })
+    this.setupFile = { key, ...built }
+    return this.setupFile
   }
 
   /** The stored 240 px thumbnail as a data URL, read once per fingerprint. Images only; '' when none. */
@@ -693,6 +762,18 @@ export class CommandPostPublishService implements OnDestroy {
     }
   }
 
+  /** E-287: the snapshot's `setup` entry, or nothing when the scribe has not offered one (the file is then dropped). */
+  private async setupRef(settings: MissionType): Promise<{ setup?: { sha256: string, bytes: number, name: string } }> {
+    if (!settings.boardOfferSetup) { this.setupFile = null; return {} }
+    try {
+      const f = await this.currentSetupFile(settings)
+      return { setup: { sha256: f.sha256, bytes: f.bytes.length, name: f.name } }
+    } catch (e) {
+      this.log.warn(`Could not build the Setup file to offer (${e})`, this.id)
+      return {}
+    }
+  }
+
   private async buildPayload(settings: MissionType, radioLog: RadioLogType): Promise<CommandPostMission> {
     const show = !!settings.boardShowAttachments
     if (show) {
@@ -707,6 +788,7 @@ export class CommandPostPublishService implements OnDestroy {
         .filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lng))
         .map(p => ({ name: p.name ?? '', type: p.type ?? '', lat: p.lat, lng: p.lng })),
       publishedAt: new Date().toISOString(),
+      ...(await this.setupRef(settings)),
       mission: settings.mission,
       event: settings.event,
       opPeriod: settings.opPeriod,

@@ -91,6 +91,7 @@ const blankMission: MissionType = {
   attachmentBudgetMB: 512,
   boardPassword: '',
   boardShowAttachments: false,
+  boardOfferSetup: false,
 }
 
 @Component({

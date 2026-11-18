@@ -97,30 +97,23 @@ export class SetupFileComponent {
 
     this.building.set(true)
     try {
-      const { buildMissionZipBytes, layerFor, MISSION_ZIP_SCHEMA_VERSION } = await import('../../../shared/export/mission-zip')
+      const { buildMissionZipBytes } = await import('../../../shared/export/mission-zip')
+      const { buildSetupManifest } = await import('../../../shared/export/setup-file-build')
       // No rangers in the file means no photo could possibly match anyone in it.
       const photoBlobs = includeRangers ? await this.photos.allPhotoBlobs() : []
       // JSON.parse(JSON.stringify(...)): the workaround backup.service.ts uses for a default-exporting module.
       const appVersion = JSON.parse(JSON.stringify(packageJson)).version
 
       const locations = includePlaces ? this.locationService.getCurrentLocations() : undefined
-      const contents = {
-        // D-61 item 8: the RangerView password travels only in an encrypted backup, never in a Setup file.
-        ...(includeSettings ? { settings: { ...this.missionService.settings, boardPassword: '' } } : {}),
+      const exportedAt = new Date().toISOString()
+      const manifest = buildSetupManifest({
+        ...(includeSettings ? { settings: this.missionService.settings } : {}),
         ...(includeRangers ? { rangers } : {}),
         ...(includePlaces ? { locations } : {}),
-      }
-      const exportedAt = new Date().toISOString()
-      const layer = this.exportLayerName().trim()
-      const suggestedView = this.exportSuggestedView()
-      const manifest: MissionZipManifest = {
-        schemaVersion: MISSION_ZIP_SCHEMA_VERSION,
-        exportedAt,
-        appVersion,
-        ...contents,
-        ...(suggestedView ? { suggestedView } : {}),
-        ...(layer ? { layer: layerFor(contents, layer, exportedAt.slice(0, 10)) } : {}),
-      }
+        layerName: this.exportLayerName(),
+        suggestedView: this.exportSuggestedView(),
+        appVersion, exportedAt,
+      })
 
       const bytes = await buildMissionZipBytes(manifest, photoBlobs)
       const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/zip' }))

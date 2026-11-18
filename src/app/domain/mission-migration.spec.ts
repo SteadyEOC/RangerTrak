@@ -187,6 +187,7 @@ describe('migrateMission', () => {
       ...v0Settings(),
       boardPassword: '',
       boardShowAttachments: false,
+      boardOfferSetup: false,
     } as unknown as MissionType
 
     it('gives a returning user no password and attachments off, keeping everything else', () => {
@@ -200,6 +201,7 @@ describe('migrateMission', () => {
       const out = migrateMission(stored, defaults)
       expect(out.boardPassword).toBe('')
       expect(out.boardShowAttachments).toBe(false)
+      expect(out.boardOfferSetup).toBe(false) // E-287: the Setup file offer is off for a returning user
       expect(out.mission).toBe('Kept')
       expect(out.commandPostEnabled).toBe(true)
       expect(out.commandPostServerUrl).toBe('https://x:8080')

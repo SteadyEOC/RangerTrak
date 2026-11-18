@@ -18,12 +18,14 @@
 //     off at once.
 const crypto = require('crypto');
 const { parseRange } = require('./viewer-lib');
+const { checkSetupZip } = require('./setup-zip');
 
 const SHA_RE = /^[0-9a-f]{64}$/;
 const SMALL_BODY_LIMIT = 64 * 1024;
 const MISSION_BODY_LIMIT = 25 * 1024 * 1024; // as before: generous for JSON, cheap insurance
 const MB500 = 500 * 1024 * 1024;
 const MB250 = 250 * 1024 * 1024; // E-293 phase B: the area map's own cap, separate from the attachments
+const MB20 = 20 * 1024 * 1024; // E-287: the Setup file for phones (settings and places; a few KB in practice)
 const RATE_MAX_FAILS = 5;
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_BLOCK_MS = 60 * 1000;
@@ -89,7 +91,7 @@ function safeContentType(type) {
  * @param {string}   [o.wifi]           the Wi-Fi network's name when the server could read it, told to viewers
  *                                      so "Lost RangerView" can ask "Still on <name>?" (E-216)
  */
-function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, mapCap = MB250, name = '', onClaim = () => {}, version = '', wifi = '', update = () => null } = {}) {
+function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, mapCap = MB250, setupCap = MB20, name = '', onClaim = () => {}, version = '', wifi = '', update = () => null } = {}) {
   let claim = null; // { key, password, by, at, previous? }
   let snapshot = null;
   let refs = new Map(); // sha -> { size, type }, the non-removed attachment refs in the snapshot
@@ -101,6 +103,9 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   // `maps` lists; `heldMap` is the bytes, once uploaded and fingerprint-checked.
   let wantedMap = null; // { sha, bytes, name, bbox }
   let heldMap = null; // { sha, buf }
+  // E-287: the Setup file offered to phones (settings, op period, places; never the roster), memory only like the map.
+  let wantedSetup = null; // { sha, bytes, name }
+  let heldSetup = null; // { sha, buf, filename }
   const retiredKeys = []; // SHA-256 hex of keys superseded by a takeover, newest last, capped
   const attempts = new Map(); // remote address -> { fails: number[], blockedUntil }
   const board = { name };
@@ -207,6 +212,14 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     return null;
   }
 
+  function wantedSetupOf(mission) {
+    const m = mission.setup;
+    const sha = m && typeof m.sha256 === 'string' ? m.sha256.toLowerCase() : '';
+    const bytes = Number(m && m.bytes);
+    if (!SHA_RE.test(sha) || !Number.isInteger(bytes) || bytes <= 0) return null;
+    return { sha, bytes, name: cleanText(m.name, 120) };
+  }
+
   function collectRefs(mission) {
     const found = new Map();
     for (const report of Array.isArray(mission.reports) ? mission.reports : []) {
@@ -294,6 +307,8 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     }
     wantedMap = wantedMapOf(body);
     if (heldMap && (!wantedMap || wantedMap.sha !== heldMap.sha)) heldMap = null;
+    wantedSetup = wantedSetupOf(body);
+    if (heldSetup && (!wantedSetup || wantedSetup.sha !== heldSetup.sha)) heldSetup = null;
     log(`[${new Date(now()).toLocaleTimeString()}] Published: "${cleanText(body.mission) || '(unnamed)'}" - ${(Array.isArray(body.reports) ? body.reports : []).length} report(s).`);
     send(res, 204);
   }
@@ -301,7 +316,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   function getRequests(req, res) {
     if (!keyed(req, res)) return;
     // E-293 phase B: also whether the area map the snapshot lists is still to be sent.
-    send(res, 200, { state: 'ok', requests: [...requests], ...(wantedMap ? { map: { sha256: wantedMap.sha, held: !!heldMap } } : {}) });
+    send(res, 200, { state: 'ok', requests: [...requests], ...(wantedMap ? { map: { sha256: wantedMap.sha, held: !!heldMap } } : {}), ...(wantedSetup ? { setup: { sha256: wantedSetup.sha, held: !!heldSetup } } : {}) });
   }
 
   // Counts each address that read the mission in the last minute. Nothing else is kept about it.
@@ -408,6 +423,41 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     send(res, 204);
   }
 
+  // ---- E-287: the Setup file for phones ----
+  function getSetup(req, res, sha) {
+    if (!viewerAllowed(req, res)) return;
+    if (!heldSetup || heldSetup.sha !== sha) { send(res, 404, { error: 'That Setup file is not held.' }); return; }
+    res.writeHead(200, {
+      'Content-Type': 'application/zip', 'Content-Length': heldSetup.buf.length, 'Cache-Control': 'no-store',
+      'Content-Disposition': `attachment; filename="${heldSetup.filename}"`,
+      'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': 'sandbox',
+    });
+    res.end(req.method === 'HEAD' ? undefined : heldSetup.buf);
+  }
+
+  async function postSetup(req, res, sha) {
+    if (!keyed(req, res)) return;
+    if (!wantedSetup || wantedSetup.sha !== sha) { send(res, 404, { error: 'That Setup file is not in the current snapshot.' }); return; }
+    if (wantedSetup.bytes > setupCap) { send(res, 413, { error: 'The Setup file is over the RangerView limit.', limit: setupCap }); return; }
+    if (heldSetup && heldSetup.sha === sha) { send(res, 204); return; }
+    const buf = await readBody(req, wantedSetup.bytes);
+    if (!keyed(req, res)) return;
+    if (!wantedSetup || wantedSetup.sha !== sha) { send(res, 404, { error: 'That Setup file is no longer in the snapshot.' }); return; }
+    if (buf.length !== wantedSetup.bytes) { send(res, 400, { error: 'Size does not match the snapshot.', expected: wantedSetup.bytes, received: buf.length }); return; }
+    if (crypto.createHash('sha256').update(buf).digest('hex') !== sha) { send(res, 400, { error: 'Fingerprint does not match.' }); return; }
+    // Rule 5: whatever the snapshot says, the file itself must hold no roster and no photos.
+    const checked = checkSetupZip(buf);
+    if (!checked.ok) {
+      log(`[${new Date(now()).toLocaleTimeString()}] Setup file refused: ${checked.reason}`);
+      send(res, 422, { error: checked.reason });
+      return;
+    }
+    const label = cleanText(snapshot && snapshot.mission, 80).replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '') || 'mission';
+    heldSetup = { sha, buf, filename: `${label}-setup.zip` };
+    log(`[${new Date(now()).toLocaleTimeString()}] Setup file received (${(buf.length / 1024).toFixed(0)} KB).`);
+    send(res, 204);
+  }
+
   async function route(req, res, urlPath) {
     const m = req.method;
     const wrongMethod = () => send(res, 405, { error: 'Method not allowed' });
@@ -425,6 +475,12 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
       if (!SHA_RE.test(mapPath[1])) { send(res, 400, { error: 'Not a SHA-256 fingerprint (64 lower-case hex digits).' }); return; }
       if (m === 'GET' || m === 'HEAD') return getMap(req, res, mapPath[1]);
       return m === 'POST' ? postMap(req, res, mapPath[1]) : wrongMethod();
+    }
+    const setupPath = /^\/api\/setup\/([^/]*)$/.exec(urlPath);
+    if (setupPath) {
+      if (!SHA_RE.test(setupPath[1])) { send(res, 400, { error: 'Not a SHA-256 fingerprint (64 lower-case hex digits).' }); return; }
+      if (m === 'GET' || m === 'HEAD') return getSetup(req, res, setupPath[1]);
+      return m === 'POST' ? postSetup(req, res, setupPath[1]) : wrongMethod();
     }
     const sha = /^\/api\/(request|attachments)\/([^/]*)$/.exec(urlPath);
     if (sha) {

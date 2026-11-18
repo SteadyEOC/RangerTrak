@@ -61,6 +61,8 @@
   .help-link { align-self: center; font-size: 0.9rem; }
   #opLine { margin: -0.4rem 0 0.75rem; }
   #opLine strong { color: var(--ink); }
+  .setup-offer button { padding: 0.5rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--surface); color: var(--accent); font-size: 0.95rem; cursor: pointer; }
+  .setup-offer { margin-top: 1.2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
   .board-foot { margin-top: 2rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
   .board-foot .newer { color: var(--warn); font-weight: 600; }
   .badge {
@@ -394,6 +396,13 @@
   <p id="mapNote" role="status"></p>
   <div id="mapBox"></div>
 </div>
+</div>
+
+<!-- E-287: the scribe can offer a Setup file (settings, op period and places; never the roster). -->
+<div id="setupOffer" class="setup-offer" hidden>
+  <button id="setupDownload" type="button">Download mission setup</button>
+  <span class="meta meta--small">Load it in RangerTrak on your phone: Mission &rarr; Data safety &rarr; Setup file &rarr; Import a Setup file.</span>
+  <span id="setupNote" class="meta meta--small" role="status"></span>
 </div>
 
 <footer class="board-foot meta meta--small">
@@ -762,8 +771,43 @@
     if (a) { openOverlay(a); }
   });
 
+  // E-287: a Setup file the scribe offers phones. Shown only when the snapshot lists one; the download goes through
+  // api() so a RangerView password is sent, then is saved from memory under the name RangerView gave it.
+  var setupOfferEl = document.getElementById('setupOffer');
+  var setupNoteEl = document.getElementById('setupNote');
+  var setupSha = null;
+  function drawSetupOffer() {
+    var listed = latest && latest.setup;
+    setupSha = listed && SHA_RE.test(listed.sha256 || '') ? listed.sha256 : null;
+    setupOfferEl.hidden = !setupSha;
+    if (!setupSha) { setupNoteEl.textContent = ''; }
+  }
+  document.getElementById('setupDownload').addEventListener('click', function () {
+    var sha = setupSha;
+    if (!sha) { return; }
+    setupNoteEl.textContent = '';
+    api('/api/setup/' + sha).then(function (res) {
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      var disposition = res.headers.get('Content-Disposition') || '';
+      var named = /filename="([^"]+)"/.exec(disposition);
+      return res.blob().then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = named ? named[1] : 'mission-setup.zip';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+      });
+    }).catch(function () {
+      setupNoteEl.textContent = 'The setup file is not ready yet. Try again in a moment.';
+    });
+  });
+
   function render() {
     drawHead();
+    drawSetupOffer();
     var onMap = view === 'map';
     var both = view === 'both';
     logPanelEl.hidden = onMap;

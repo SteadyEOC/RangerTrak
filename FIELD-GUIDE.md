@@ -541,6 +541,8 @@ step by step, with a checklist. Paste the address it prints into the
 Mission page's RangerView card. Use the `rangerview.local` or numbered address even on the same
 computer: `localhost` publishes, but the viewer link made from it opens nowhere else.
 
+**Offering a setup file to phones.** Turn on **Offer a setup file to phones** in the Mission page's RangerView card and viewers see a **Download mission setup** button. The file holds the mission's settings, op period and places, never the roster or photos. On a phone, load it in RangerTrak under **Mission → Data safety → Setup file → Import a Setup file**.
+
 **If RangerView won't connect,** press **Test connection** on the Mission page's
 RangerView card. It tells you, in one sentence, the most likely reason:
 

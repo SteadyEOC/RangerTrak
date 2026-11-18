@@ -70,6 +70,9 @@ AT THE COMMAND POST
    The bell (Alerts) lets each screen pick what should get its attention: Urgent, words, call signs.
    Only new reports alert; rules stay on that device.
    It can also warn when a station has not reported for a while, and keep the screen on.
+   If the scribe turns on "Offer a setup file to phones", a "Download mission setup" button appears: the
+   mission's settings, op period and places (never the roster). On a phone, load it in RangerTrak under
+   Mission, Data safety, Setup file, Import a Setup file.
 
 
 THE LOG

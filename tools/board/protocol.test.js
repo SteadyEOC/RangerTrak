@@ -559,3 +559,80 @@ test('area map: a snapshot without it, or with another, drops the held one; view
   assert.strictEqual((await b.call('GET', `/api/map/${sha}`, { headers: { 'X-Board-Password': 'pw' } })).status, 404);
   assert.strictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': key } })).json.map, undefined);
 }));
+
+// ---- E-287: the Setup file for phones (settings and places; never the roster) ----
+const { zipSync, strToU8 } = require('fflate');
+const setupZip = (manifest, extra = {}) => Buffer.from(zipSync({ 'mission-zip.json': strToU8(JSON.stringify(manifest)), 'README.txt': strToU8('hi'), ...extra }));
+const GOOD_MANIFEST = { schemaVersion: 3, exportedAt: '2026-11-18T00:00:00Z', appVersion: '1', settings: { mission: 'Fernhollow' }, locations: [{ name: 'Shelter' }] };
+const setupSnapshot = (zip, extra = {}) => ({ mission: 'Fern hollow/Test', reports: [], setup: { sha256: sha256(zip), bytes: zip.length, name: 'x-setup.zip', ...extra } });
+const upSetup = (b, key, sha, body) => b.call('POST', `/api/setup/${sha}`, { headers: { 'X-Board-Key': key }, body });
+
+test('setup file: wanted, uploaded, then downloaded as an attachment', withBoard(async (b) => {
+  const zip = setupZip(GOOD_MANIFEST);
+  const sha = sha256(zip);
+  const key = await claim(b);
+  assert.strictEqual((await publish(b, key, setupSnapshot(zip))).status, 204);
+  assert.deepStrictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': key } })).json.setup, { sha256: sha, held: false });
+  assert.strictEqual((await b.call('GET', `/api/setup/${sha}`)).status, 404, 'nothing to read before the upload');
+  assert.strictEqual((await b.call('POST', `/api/setup/${sha}`, { body: zip })).status, 403, 'no key, no upload');
+  assert.strictEqual((await upSetup(b, key, sha, zip)).status, 204);
+  assert.strictEqual((await upSetup(b, key, sha, zip)).status, 204, 'a repeat is harmless');
+  assert.deepStrictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': key } })).json.setup, { sha256: sha, held: true });
+  const got = await b.call('GET', `/api/setup/${sha}`);
+  assert.strictEqual(got.status, 200);
+  assert.ok(got.raw.equals(zip));
+  assert.strictEqual(got.headers['content-disposition'], 'attachment; filename="Fern_hollow_Test-setup.zip"');
+  assert.strictEqual(got.headers['content-type'], 'application/zip');
+}));
+
+test('setup file: wrong fingerprint or size is 400, not in the snapshot is 404', withBoard(async (b) => {
+  const zip = setupZip(GOOD_MANIFEST);
+  const key = await claim(b);
+  assert.strictEqual((await upSetup(b, key, sha256(zip), zip)).status, 404, 'no snapshot lists it yet');
+  const other = Buffer.from(zip); other[other.length - 30] ^= 1;
+  await publish(b, key, setupSnapshot(zip));
+  assert.strictEqual((await upSetup(b, key, sha256(zip), other)).status, 400, 'right size, wrong fingerprint');
+  assert.strictEqual((await upSetup(b, key, sha256(zip), zip.subarray(1))).status, 400, 'wrong size');
+  assert.strictEqual((await b.call('POST', '/api/setup/not-a-sha', { headers: { 'X-Board-Key': key }, body: zip })).status, 400);
+}));
+
+test('setup file: over the cap is refused', withBoard(async (b) => {
+  const zip = setupZip(GOOD_MANIFEST);
+  const key = await claim(b);
+  await publish(b, key, setupSnapshot(zip));
+  assert.strictEqual((await upSetup(b, key, sha256(zip), zip)).status, 413);
+}, { setupCap: 100 }));
+
+test('setup file: a roster, photos or radio log entries are refused, with the reason', withBoard(async (b) => {
+  const key = await claim(b);
+  const refuse = async (zip, pattern) => {
+    await publish(b, key, setupSnapshot(zip));
+    const r = await upSetup(b, key, sha256(zip), zip);
+    assert.strictEqual(r.status, 422);
+    assert.match(r.json.error, pattern);
+    assert.strictEqual((await b.call('GET', `/api/setup/${sha256(zip)}`)).status, 404, 'a refused file is not held');
+  };
+  await refuse(setupZip({ ...GOOD_MANIFEST, rangers: [{ name: 'A Ranger' }] }), /roster/);
+  await refuse(setupZip({ ...GOOD_MANIFEST, rangers: [] }), /roster/); // presence of the key, not emptiness
+  await refuse(setupZip(GOOD_MANIFEST, { 'photos/K7ABC.jpg': new Uint8Array([1, 2, 3]) }), /photos/);
+  await refuse(setupZip(GOOD_MANIFEST, { 'attachments/abc.png': new Uint8Array([1, 2, 3]) }), /photos or attachments/);
+  await refuse(setupZip({ ...GOOD_MANIFEST, entries: [] }), /radio log/);
+  await refuse(Buffer.from('this is not a zip file at all'), /not a readable/);
+  await refuse(Buffer.from(zipSync({ 'README.txt': strToU8('no manifest') })), /no mission-zip\.json/);
+}));
+
+test('setup file: a snapshot without it, or a new claim, forgets it; viewers need the password', withBoard(async (b) => {
+  const zip = setupZip(GOOD_MANIFEST);
+  const sha = sha256(zip);
+  const key = await claim(b, 'pw');
+  await publish(b, key, setupSnapshot(zip));
+  await upSetup(b, key, sha, zip);
+  assert.strictEqual((await b.call('GET', `/api/setup/${sha}`)).status, 401);
+  assert.strictEqual((await b.call('GET', `/api/setup/${sha}`, { headers: { 'X-Board-Password': 'pw' } })).status, 200);
+  // A takeover: the new publisher's first snapshot does not list the file, so RangerView drops it.
+  const took = await b.call('POST', '/api/claim', { json: { password: 'pw', by: { ...BY, scribe: 'Sam' } } });
+  assert.strictEqual(took.status, 200);
+  await publish(b, took.json.key, { mission: 'Test Mission', reports: [] });
+  assert.strictEqual((await b.call('GET', `/api/setup/${sha}`, { headers: { 'X-Board-Password': 'pw' } })).status, 404);
+  assert.strictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': took.json.key } })).json.setup, undefined);
+}));
