@@ -1,6 +1,6 @@
 import { MasonryDirective } from '../shared/layout/masonry.directive'
 import { RouterLink } from '@angular/router'
-import { CellValueChangedEvent, ColumnResizedEvent, GridOptions, GridSizeChangedEvent, SelectionChangedEvent } from 'ag-grid-community'
+import { CellValueChangedEvent, ColumnResizedEvent, GridOptions, GridSizeChangedEvent, ProcessCellForExportParams, SelectionChangedEvent } from 'ag-grid-community'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN, elapsedMinutes, overdueBand } from '../domain/overdue'
 // , TeamService
 import { Observable, subscribeOn, Subscription } from 'rxjs'
@@ -1101,7 +1101,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       exportedRows: this.allRows() ? 'all' : 'filteredAndSorted',
       onlySelected,
       // Q112: a looked-up address is "~123 Main St" in the CSV (the screen says "(inferred)").
-      processCellCallback: (p: any) => {
+      processCellCallback: (p: ProcessCellForExportParams<RadioLogEntryType>) => {
         const def = p.column.getColDef()
         return radioLogCsvCell(p.column.getColId(), p.value, p.node?.data, p.formatValue,
           !!def.valueFormatter && def.useValueFormatterForExport !== false)
