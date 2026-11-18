@@ -164,6 +164,13 @@
                 <mat-icon>print</mat-icon>
                 Print 309 Log
               </button>
+              @if (viewService.isShown('send-by-radio')) {
+              <button matButton="outlined" type="button" (click)="onBtnSend309ByRadio()" data-testid="radiolog-send-radio"
+                title="Get this log ready to send by Winlink, Pat or FLDIGI">
+                <mat-icon>radio</mat-icon>
+                Send by radio
+              </button>
+              }
             </div>
           </mat-card-content>
         </mat-card>

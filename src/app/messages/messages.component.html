@@ -84,9 +84,14 @@
                 <dt>Operator</dt>
                 <dd>{{ m.operator || '(none recorded)' }}</dd>
               </dl>
-              @if (m.printedAt) {
+              @if (m.printedAt || m.radioSavedAt) {
               <p class="messages__meta">
+                @if (m.printedAt) {
                 <span>Printed {{ formatTime(m.printedAt) }}</span>
+                }
+                @if (m.radioSavedAt) {
+                <span data-testid="messages-radio-saved">Saved for radio {{ formatTime(m.radioSavedAt) }}</span>
+                }
               </p>
               }
               } @else if (!editing()) {
@@ -148,9 +153,14 @@
               <!-- Non-editable by design - see printedAt's own doc comment
                    (radio-log-entry.interface.ts). revisedAt now shows inline on the Time row
                    above instead of down here, so this is printedAt-only. -->
-              @if (m.printedAt) {
+              @if (m.printedAt || m.radioSavedAt) {
               <p class="messages__meta">
+                @if (m.printedAt) {
                 <span>Printed {{ formatTime(m.printedAt) }}</span>
+                }
+                @if (m.radioSavedAt) {
+                <span data-testid="messages-radio-saved">Saved for radio {{ formatTime(m.radioSavedAt) }}</span>
+                }
               </p>
               }
               } @else {
@@ -195,6 +205,10 @@
                   (ngModelChange)="onPrintCopiesChanged($event)" [ngModelOptions]="{standalone: true}"
                   data-testid="printCopies213" style="width: 3.5em">
               </label>
+              @if (view.isShown('send-by-radio')) {
+              <button matButton="outlined" type="button" (click)="onSendByRadio()" data-testid="messages-send-radio"
+                title="Get this form ready to send by Winlink, Pat or FLDIGI">Send by radio</button>
+              }
               <button matButton="filled" type="button" [disabled]="printing()" (click)="printAsIcs213()"
                 [title]="selectedForm === 'rr' ? 'Fill the ICS-213RR and open the print dialog; choose your printer there' : 'Fill the ICS-213 and open the print dialog; choose your printer there'">
                 {{ printing() ? 'Preparing…' : 'Print' }}

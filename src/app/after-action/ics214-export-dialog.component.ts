@@ -15,6 +15,8 @@ import {
 import { localDateStamp } from '../shared/export/local-date'
 import { ActivityLogHeaderService, AarNoteService, LogService, MissionService } from '../shared/services'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
+import { SendByRadioService } from '../shared/radio-send/send-by-radio.service'
+import { ViewService } from '../shared/services/view.service'
 
 type Scope = 'op' | 'all'
 
@@ -55,6 +57,9 @@ export class Ics214ExportDialogComponent {
 
   // E-222 / D-67 item 8: journal entries the scribe may add as lines. Never ticked by default.
   private journal = inject(MissionJournalService)
+  /** E-307: Send by radio is a Full menus control (Q81). */
+  protected readonly view = inject(ViewService)
+  private readonly sendByRadio = inject(SendByRadioService)
   /** Seqs of the ticked suggestions. */
   readonly ticked = signal<ReadonlySet<number>>(new Set())
   /** In the chosen scope, worth a line, and not already a line. */
@@ -124,6 +129,26 @@ export class Ics214ExportDialogComponent {
 
   onCancel(): void {
     this.dialogRef.close(false)
+  }
+
+  /** E-307: the same header and lines as Export, as text for a radio route. */
+  async onSendByRadio(): Promise<void> {
+    if (this.busy() || this.exportCount() === 0) return
+    this.error.set('')
+    try {
+      const header = this.headerService.save({
+        name: this.name(),
+        icsPosition: this.icsPosition().trim() || DEFAULT_ICS_POSITION,
+        homeAgency: this.homeAgency(),
+        resources: this.resources(),
+      })
+      this.addTickedSuggestions()
+      const lines = selectActivityLines(this.notes.getCurrentNotes(), this.missionService.settings, this.scope() === 'op')
+      await this.sendByRadio.open214(header, buildActivityRows(lines))
+    } catch (e) {
+      this.log.error(`Send by radio failed: ${e}`, this.id)
+      this.error.set('Send by radio could not open. Your lines and the header are saved; try again.')
+    }
   }
 
   async onExport(): Promise<void> {

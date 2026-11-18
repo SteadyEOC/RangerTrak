@@ -134,3 +134,7 @@
   background: var(--rt-surface-2);
   border-color: var(--rt-accent);
 }
+
+.messages__meta span + span {
+  margin-left: 1em;
+}

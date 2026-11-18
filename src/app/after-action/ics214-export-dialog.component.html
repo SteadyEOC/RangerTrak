@@ -73,6 +73,10 @@
 
 <div mat-dialog-actions align="end">
   <button matButton type="button" (click)="onCancel()">Cancel</button>
+  @if (view.isShown('send-by-radio')) {
+  <button matButton="outlined" type="button" [disabled]="busy() || exportCount() === 0" (click)="onSendByRadio()"
+    data-testid="ics214-send-radio" title="Get this log ready to send by Winlink, Pat or FLDIGI">Send by radio</button>
+  }
   <button matButton="filled" type="button" [disabled]="busy() || exportCount() === 0" (click)="onExport()"
     data-testid="ics214-export">{{ busy() ? 'Making the form...' : 'Export ICS-214' }}</button>
 </div>

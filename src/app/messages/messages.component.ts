@@ -22,6 +22,8 @@ import { formatMsgNoFull, formatMsgNoShort, HANDLED_MARK_GLYPH, HANDLED_MARK_LAB
 // route (app.routes.ts), so there is no eager-bundle cost to guard against here the way
 // there is on Entry.
 import { printIcs213 } from '../shared/export/ics213-print'
+import { SendByRadioService } from '../shared/radio-send/send-by-radio.service'
+import { ViewService } from '../shared/services/view.service'
 import { PrintCopiesService } from '../shared/services/print-copies.service'
 import { AttachmentChipComponent } from '../shared/attachments/attachment-chip.component'
 import { ics213AttachmentsFor } from '../shared/attachments/attachment-print'
@@ -76,6 +78,9 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private attachmentViewer = inject(AttachmentViewerService)
   private attachmentStore = inject(AttachmentStoreService)
   private journal = inject(MissionJournalService)
+  /** E-307: Send by radio is a Full menus control (Q81). */
+  protected readonly view = inject(ViewService)
+  private readonly sendByRadio = inject(SendByRadioService)
   /** E-314: Display is look-only; this page shows the newest message and keeps following it. */
   protected readonly display = inject(DisplayService)
   private followNewest = true
@@ -200,6 +205,18 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   rrLineText(l: Rr213LineType): string {
     return rr213LineText(l)
+  }
+
+  /** E-307: opens Send by radio for the selected 213 or 213RR. */
+  async onSendByRadio(): Promise<void> {
+    const report = this.selected
+    if (!report) return
+    try {
+      if (this.selectedForm === 'rr') await this.sendByRadio.open213rr(report)
+      else await this.sendByRadio.open213(report)
+    } catch (e) {
+      this.log.error(`Opening Send by radio failed: ${e}`, this.id)
+    }
   }
 
   onPrintCopiesChanged(value: string | number): void {

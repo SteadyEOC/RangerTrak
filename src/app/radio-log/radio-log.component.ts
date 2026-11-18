@@ -41,6 +41,8 @@ import { isScenarioEntry, formatScenarioTime, scenarioTimeAt, sameScenarioClock 
 import { UsageStateService } from '../shared/services/usage-state.service'
 import { AarNoteService } from '../shared/services/aar-note.service'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
+import { ViewService } from '../shared/services/view.service'
+import { SendByRadioService } from '../shared/radio-send/send-by-radio.service'
 import { PrintBrandComponent } from '../shared/print-brand/print-brand.component'
 import { clearedPlain, noteMatcher } from '../domain/clear-choices'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
@@ -620,6 +622,9 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   private attachmentViewer = inject(AttachmentViewerService)
   /** E-196 (D-66): the mode decides the catch-up wording and the import warnings. */
   protected usage = inject(UsageStateService)
+  /** E-307: Send by radio is a Full menus control (Q81). */
+  protected readonly viewService = inject(ViewService)
+  private readonly sendByRadio = inject(SendByRadioService)
   private aarNoteService = inject(AarNoteService)
   private operatorName = inject(OperatorNameService)
   private activityLogHeader = inject(ActivityLogHeaderService)
@@ -1452,6 +1457,23 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    */
   /** E-194: object URLs of the stored thumbnails for the attachments on the 309 being printed. */
   public printThumbs = signal<Record<string, string>>({})
+
+  /** E-307: the same scope as Print 309, as text for a radio route. */
+  async onBtnSend309ByRadio(): Promise<void> {
+    const reports = this.reportsForPrintScope()
+    if (!reports.length) {
+      alert('No reports match that scope - nothing to send.')
+      return
+    }
+    try {
+      await this.sendByRadio.open309(reports, {
+        mission: this.settings.mission, event: this.settings.event, opPeriod: this.settings.opPeriod,
+        opPeriodStart: this.settings.opPeriodStart, opPeriodEnd: this.settings.opPeriodEnd,
+      }, this.preparedBy309())
+    } catch (e) {
+      this.log.error(`Opening Send by radio failed: ${e}`, this.id)
+    }
+  }
 
   async onBtnPrint309() {
     const reports = this.reportsForPrintScope()
