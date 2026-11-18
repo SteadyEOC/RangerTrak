@@ -33,7 +33,7 @@ import { rangertrakGridTheme } from '../shared/ag-grid-theme'
 // MapLibre style helpers, and this route is already its own lazy chunk (loadComponent in
 // app.routes.ts); going through the barrel would drag MapLibre into THIS chunk for no reason.
 import { rangerColorFor } from '../shared/mapping/ranger-marker'
-import { buildIcs309Log, Ics309Log } from '../shared/export/ics309-log'
+import { buildIcs309Log, Ics309Log, ics309StationLetters } from '../shared/export/ics309-log'
 import { formatStation } from '../domain/station-label'
 import { formatHeading } from '../domain/heading'
 import { applyCallsignEdit, callsignEditNotice } from '../domain/ranger-match'
@@ -285,6 +285,12 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   // Read by the print-only block in the template (radio-log.component.html) - null
   // until "Print 309 Log" is clicked, so nothing renders under `@media print` before then.
   public ics309Log = signal<Ics309Log | null>(null)
+
+  /** E-306: the station letters in this log; the Group by station option appears with 2 or more. */
+  public stationLetters = computed(() => ics309StationLetters(this.radioLogEntries()))
+  /** null = follow the default: on only when 2+ letters are present. Not stored; a fresh visit starts on the default again. */
+  public groupByStationChoice = signal<boolean | null>(null)
+  public groupByStation = computed(() => this.groupByStationChoice() ?? this.stationLetters().length >= 2)
   // NOT initialized here with `= this.buildColumnDefs('ID')` the way rangers.component.ts's
   // own columnDefs field is - that only works there because its cellRenderer fields are
   // declared BEFORE columnDefs (class field initializers run top-to-bottom at construction
@@ -1605,7 +1611,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       opPeriod: this.settings.opPeriod,
       opPeriodStart: this.settings.opPeriodStart,
       opPeriodEnd: this.settings.opPeriodEnd,
-    }, new Date(), this.preparedBy309())
+    }, new Date(), this.preparedBy309(), { groupByStation: this.groupByStation() })
     // E-194: images print their stored thumbnail beside the list; read before the block renders.
     const thumbs: Record<string, string> = {}
     for (const row of log.rows) {

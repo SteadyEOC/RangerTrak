@@ -159,6 +159,14 @@
                 </mat-select>
               </mat-form-field>
 
+              @if (stationLetters().length >= 2) {
+                <mat-checkbox [checked]="groupByStation()" (change)="groupByStationChoice.set($event.checked)"
+                  data-testid="radiolog-309-group"
+                  title="Group the log under a heading per station letter, each in its own time order. Clocks differ between stations, so rows are never mixed by time.">
+                  Group by station
+                </mat-checkbox>
+              }
+
               <button matButton="filled" type="button" (click)="onBtnPrint309()"
                 title="Opens your browser's print dialog; choose your printer there">
                 <mat-icon>print</mat-icon>
@@ -414,7 +422,11 @@
           </tr>
         </thead>
         <tbody>
-          @for (row of log.rows; track $index) {
+          @for (group of log.groups ?? [{ heading: '', rows: log.rows }]; track $index) {
+          @if (log.groups) {
+            <tr class="ics309-form__group" data-testid="ics309-group"><th colspan="8">{{ group.heading }}</th></tr>
+          }
+          @for (row of group.rows; track $index) {
             <tr>
               <td class="ics309-form__mark" [attr.title]="row.markLabel || null">@if (row.mark) { {{ row.mark }} } @else {<span class="ics309-form__box-empty"></span>}</td>
               <td class="ics309-form__ownno">{{ row.msgNo }}</td>
@@ -423,8 +435,9 @@
               <td></td>
               <td>{{ row.to }}</td>
               <td></td>
-              <td>{{ row.message }}@if (row.source) {<span class="ics309-form__via"> (via {{ row.source }})</span>}@for (a of row.attachments; track a.sha256) {<span class="ics309-attach">📎 {{ a.name }} ({{ a.fingerprint }})@if (a.smallerCopy) {<small> - {{ a.smallerCopy }}</small>}@if (a.isImage && printThumbs()[a.sha256]) {<img [src]="printThumbs()[a.sha256]" alt="" />}</span>}</td>
+              <td>{{ row.message }}@if (row.source) {<span class="ics309-form__via"> (via {{ row.source }})</span>}@if (row.remark) {<span class="ics309-form__via" data-testid="ics309-remark"> [{{ row.remark }}]</span>}@for (a of row.attachments; track a.sha256) {<span class="ics309-attach">📎 {{ a.name }} ({{ a.fingerprint }})@if (a.smallerCopy) {<small> - {{ a.smallerCopy }}</small>}@if (a.isImage && printThumbs()[a.sha256]) {<img [src]="printThumbs()[a.sha256]" alt="" />}</span>}</td>
             </tr>
+          }
           }
           <!-- A few empty rows for traffic logged by hand after printing, as on the paper form. -->
           @for (blank of [1, 2, 3]; track blank) {
@@ -484,7 +497,11 @@
           </tr>
         </thead>
         <tbody>
-          @for (row of log.rows; track $index) {
+          @for (group of log.groups ?? [{ heading: '', rows: log.rows }]; track $index) {
+          @if (log.groups) {
+            <tr class="ics309-form__group" data-testid="ics309-group"><th colspan="7">{{ group.heading }}</th></tr>
+          }
+          @for (row of group.rows; track $index) {
             <tr>
               <td class="ics309-form__mark" [attr.title]="row.markLabel || null">@if (row.mark) { {{ row.mark }} } @else {<span class="ics309-form__box-empty"></span>}</td>
               <td>{{ row.msgNo }}</td>
@@ -492,9 +509,11 @@
               <td>{{ row.from }}</td>
               <td>{{ row.to }}</td>
               <td>{{ row.source }}</td>
-              <td>{{ row.message }}@for (a of row.attachments; track a.sha256) {<span class="ics309-attach">📎 {{ a.name }} ({{ a.fingerprint }})@if (a.smallerCopy) {<small> - {{ a.smallerCopy }}</small>}@if (a.isImage && printThumbs()[a.sha256]) {<img [src]="printThumbs()[a.sha256]" alt="" />}</span>}</td>
+              <td>{{ row.message }}@if (row.remark) {<span data-testid="ics309-remark"> [{{ row.remark }}]</span>}@for (a of row.attachments; track a.sha256) {<span class="ics309-attach">📎 {{ a.name }} ({{ a.fingerprint }})@if (a.smallerCopy) {<small> - {{ a.smallerCopy }}</small>}@if (a.isImage && printThumbs()[a.sha256]) {<img [src]="printThumbs()[a.sha256]" alt="" />}</span>}</td>
             </tr>
-          } @empty {
+          }
+          }
+          @if (!log.rows.length) {
             <tr><td colspan="7">No reports in this range.</td></tr>
           }
         </tbody>
