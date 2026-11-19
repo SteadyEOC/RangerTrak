@@ -68,6 +68,15 @@ difference between a working tool and a blank screen.
   saveable for offline use, and MapLibre + PMTiles with a bundled offline basemap. Each
   ranger gets a distinct marker and a trail; "Latest per ranger" shows one marker each, with no trails.
 - **ICS paperwork:** a printable ICS-309 comms log, and ICS-213 messages generated from radio log entries (field reports).
+- **Send by radio:** the ICS-213, 213RR, 309 and 214 as files for Winlink Express (Load Data), Pat's outbox or
+  FLDIGI's FLMSG, with a preview, its size and a slow-link time estimate. RangerTrak makes the file; your
+  Winlink or FLDIGI program sends it.
+- **Catches caller mistakes as you log:** EOC call signs, people on the roster and unknown callers each show in
+  their own colour with a text tag. An optional offline call sign list, imported from the public ISED (Canada) or
+  FCC (US) licence file, fills in the name and town for callers who are not on the roster.
+- **Net summary:** counts by mode, by caller and by station, ready to copy into a net report.
+- **Several stations, one picture:** each station keeps its own log; Report Packets from several stations merge
+  into one ICS-309 grouped by station, with possible duplicates flagged.
 - **Roster, statuses, mission and operational period**, all configurable per mission.
 - **Backup, export and demo data:** spreadsheets, whole-mission backups (optionally
   passphrase-encrypted), and demo scenarios for training.
@@ -76,7 +85,7 @@ difference between a working tool and a blank screen.
 How to use each screen is in the app's Help, not here; developer detail is in
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
-> ⚠️ The roster contains personal information — names, addresses, phone numbers, and call
+> ⚠️ The roster contains personal information — names, phone numbers, photos, and call
 > signs that map to public licence records — **stored unencrypted on the device, unless you
 > turn on device encryption** (Mission → Data safety). Mission backups can also be encrypted
 > with a passphrase (optional, and blank still writes a plain file). See Help → **Your data**
@@ -99,14 +108,16 @@ supported." The release others are actively encouraged to adopt will be `1.0.0-r
 
 Known gaps worth stating plainly:
 
-- **Nothing syncs between devices.** Each device keeps its own log, and logs move only as
-  files someone sends and merges by hand: a scribe's hand-over file, or a field phone's report
-  packet. The optional RangerView screen shows a read-only copy of one device's log to others on the
-  station's Wi-Fi.
+- **Nothing syncs between devices.** Each device keeps its own log and is its only writer. Logs
+  move as files someone sends and merges: a scribe's hand-over file, or Report Packets from field
+  phones and other stations. The optional RangerView screen shows a read-only picture to others on
+  the local Wi-Fi; several stations can publish to one RangerView, marked by station, but nothing
+  flows back to any station and nobody edits a shared log.
 
-- It will not **interrupt** you. Overdue teams are shaded green through red on the map, the
-  roster and the Radio Log, against your mission's own check-in interval — but nothing beeps
-  or pops up, and the times refresh when a screen redraws rather than ticking.
+- The scribe's screen will not **interrupt** you. Overdue teams are shaded green through red on the
+  map, the roster and the Radio Log, against your mission's own check-in interval — but nothing
+  beeps or pops up there. Alerts (a banner, a tone, "not heard from") are on RangerView's viewer
+  screens, set up on each viewing device.
 - There is no **geo-fence** — nothing warns that a ranger is outside an expected area.
 - The bundled offline map covers the **whole world at low detail**, with street-level detail
   only in a demo's area while that demo is loaded. Your own area needs saving on the street map beforehand, or a
