@@ -3,7 +3,7 @@ import type { MissionLocationType } from '../services/mission-location.interface
 import { UnknownRanger } from '../services/ranger.interface'
 
 import { extractMissionZip } from './mission-zip'
-import { buildRangerViewSetupFile, buildSetupManifest, rangerViewSetupSettings } from './setup-file-build'
+import { buildRangerViewSetupFile, buildSetupManifest, rangerViewSetupSettings, settingsForImport } from './setup-file-build'
 
 describe('setup file build (E-287)', () => {
   const settings = {
@@ -57,5 +57,28 @@ describe('setup file build (E-287)', () => {
     expect('rangers' in m).toBe(false)
     expect('layer' in m).toBe(false)
     expect('suggestedView' in m).toBe(false)
+  })
+})
+
+describe('settingsForImport (Q118)', () => {
+  const mission = (over: Partial<MissionType>) => ({ mission: 'm', googleGeocodingApiKey: '', boardPassword: '', ...over }) as unknown as MissionType
+
+  it("keeps this device's Google key and RangerView password when the file leaves them blank", () => {
+    const out = settingsForImport(mission({ mission: 'from file' }), mission({ googleGeocodingApiKey: 'DEVICE-KEY', boardPassword: 'pw' }))
+    expect(out.mission).toBe('from file')
+    expect(out.googleGeocodingApiKey).toBe('DEVICE-KEY')
+    expect(out.boardPassword).toBe('pw')
+  })
+
+  it("takes the file's key when it has one", () => {
+    const out = settingsForImport(mission({ googleGeocodingApiKey: 'FILE-KEY' }), mission({ googleGeocodingApiKey: 'DEVICE-KEY' }))
+    expect(out.googleGeocodingApiKey).toBe('FILE-KEY')
+  })
+
+  it('leaves both blank on a device that has none, and does not change the incoming object', () => {
+    const incoming = mission({})
+    const out = settingsForImport(incoming, undefined)
+    expect(out.googleGeocodingApiKey).toBe('')
+    expect(out).not.toBe(incoming)
   })
 })

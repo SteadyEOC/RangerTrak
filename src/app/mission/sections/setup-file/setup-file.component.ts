@@ -177,7 +177,7 @@ export class SetupFileComponent {
 
       const lines: string[] = []
       if (manifest.settings) {
-        lines.push('Mission settings: this file\'s settings replace this device\'s settings wholesale.')
+        lines.push('Mission settings: this file\'s settings replace this device\'s settings; a blank Google key or RangerView password keeps this device\'s own.')
       }
       if (manifest.rangers) {
         lines.push(`Rangers: ${describeRangerMerge(mergeRangers(this.rangerService.rangers, manifest.rangers))}.`)
@@ -252,9 +252,9 @@ export class SetupFileComponent {
     const parts: string[] = []
 
     if (manifest.settings) {
-      const incoming = migrateMission(manifest.settings, this.missionService.initMission())
-      // A Setup file carries no RangerView password (D-61): keep this device's.
-      if (!incoming.boardPassword) incoming.boardPassword = this.missionService.settings.boardPassword
+      // Blanks in the file (RangerView password, Google key) keep this device's own (D-61, Q118).
+      const { settingsForImport } = await import('../../../shared/export/setup-file-build')
+      const incoming = settingsForImport(migrateMission(manifest.settings, this.missionService.initMission()), this.missionService.settings)
       this.missionService.updateMission(incoming)
       parts.push('settings applied')
     }

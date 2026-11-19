@@ -501,7 +501,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             heading: 'Backup and advanced options',
             bullets: [
               'Back up mission (Data safety card) downloads settings, rangers and radio log entries as one file — the way to back up a mission or move it to another device. Restore mission, in the Danger zone below, round-trips it back in.',
-              'Setup file (Data safety card, also reached from the Setup files button on Rangers) is a starter kit for a NEW device: mission settings, roster with photos and places, any of the three, never radio log entries. Importing one shows what it would do first: the roster and places are added to what is here (nothing is removed, a blank cell never erases), and settings replace this device\'s settings wholesale. Load one file at a time. Old /prep links land here.',
+              'Setup file (Data safety card, also reached from the Setup files button on Rangers) is a starter kit for a NEW device: mission settings, roster with photos and places, any of the three, never radio log entries. Importing one shows what it would do first: the roster and places are added to what is here (nothing is removed, a blank cell never erases), and settings replace this device\'s settings, except that a blank Google key or RangerView password keeps this device\'s own. Load one file at a time. Old /prep links land here.',
               'Load sample mission and Reset mission to defaults are also in the Danger zone — each replaces data already on this device and cannot be undone. Loading a sample mission first shows what will go and lets you choose what else to clear, such as your notes and ICS-214 lines.'
             ]
           },

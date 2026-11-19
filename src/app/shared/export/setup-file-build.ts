@@ -75,3 +75,17 @@ export async function buildRangerViewSetupFile(input: {
   const label = (input.settings.mission || 'mission').replace(/[^a-z0-9_-]+/gi, '_')
   return { bytes, sha256, name: `${label}-setup.zip` }
 }
+
+/**
+ * The settings a Setup file import saves. The file's settings replace this device's, except that a value the file
+ * leaves blank never erases this device's own (Q118, John 11-18):
+ * - the RangerView viewer password (a Setup file never carries one, D-61);
+ * - the Google address-lookup key (the RangerView copy strips it, E-287, and a shared file may too).
+ * Pure: returns a new object.
+ */
+export function settingsForImport(incoming: MissionType, current: MissionType | undefined): MissionType {
+  const out = { ...incoming }
+  if (!out.boardPassword?.trim() && current?.boardPassword) out.boardPassword = current.boardPassword
+  if (!out.googleGeocodingApiKey?.trim() && current?.googleGeocodingApiKey) out.googleGeocodingApiKey = current.googleGeocodingApiKey
+  return out
+}
