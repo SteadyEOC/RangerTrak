@@ -229,6 +229,11 @@
       </rangertrak-mission-eoc-calls>
       }
 
+      <!-- E-325: this device's offline call sign list (not mission data). -->
+      @if (view.isShown('callsign-list')) {
+      <rangertrak-mission-callsign-list></rangertrak-mission-callsign-list>
+      }
+
       <!-- Sharing. -->
       @if (view.isShown('board')) {
       <rangertrak-mission-command-post [form]="settingsForm"></rangertrak-mission-command-post>

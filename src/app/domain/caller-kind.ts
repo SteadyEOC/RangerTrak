@@ -14,7 +14,14 @@ export type CallerContext = {
   directoryHit?: { name: string; city: string; region: string } | null
 }
 
-export type CallerResult = { kind: CallerKind; tag: string; /** Extra text for the chip: the directory name and place. */ detail?: string }
+export type CallerResult = {
+  kind: CallerKind
+  tag: string
+  /** Extra text for the chip: the directory name and place. */
+  detail?: string
+  /** The directory name alone, for "Add to roster". */
+  name?: string
+}
 
 /** The shape of an amateur call sign, after suffixes are stripped. */
 const AMATEUR_CALL = /^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}[A-Z]$/
@@ -57,7 +64,7 @@ export function callerKind(call: string, ctx: CallerContext): CallerResult {
   const hit = ctx.directoryHit
   if (hit) {
     const place = [hit.city, hit.region].filter(Boolean).join(', ')
-    return { kind: 'directory', tag: 'Not on roster', detail: [hit.name, place].filter(Boolean).join(', ') }
+    return { kind: 'directory', tag: 'Not on roster', detail: [hit.name, place].filter(Boolean).join(', '), name: hit.name }
   }
   if (hit === null && AMATEUR_CALL.test(norm)) return { kind: 'unknown', tag: 'Not in call sign list' }
   return { kind: 'unknown', tag: 'Unknown' }

@@ -47,7 +47,8 @@ import { DDToDDM } from '../domain/coordinate'
 import { farLocation, farLocationText } from '../domain/far-location'
 import { UndoHistory } from '../domain/undo-history'
 import { matchRanger } from '../domain/ranger-match'
-import { callerKind, type CallerResult } from '../domain/caller-kind'
+import { callerKind, normalizeCall, type CallerResult } from '../domain/caller-kind'
+import { CallsignDirectoryService } from '../shared/services/callsign-directory.service'
 import {
   RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
   LogService, RangerService, RangerType, MissionService, MissionType, TacticalCallType, UsageStateService,
@@ -460,6 +461,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly fromHint = signal<CallerResult | null>(null)
   readonly toHint = signal<CallerResult | null>(null)
   private hintSubscriptions: Subscription[] = []
+  private readonly directory = inject(CallsignDirectoryService)
   //readonly imagePath = "'./assets/imgs/rangers/'" // not yet used by *.html
 
   // Get location events from <location> component
@@ -660,20 +662,38 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // https://material.angular.io/components/autocomplete/examples#autocomplete-overview; also Ang Dev with TS, pg 140ff; Must be in OnInit, once component properties initialized
     this.callsignCtrl.valueChanges.pipe(debounceTime(700)).subscribe(newCall => this.callsignChanged(newCall))
     this.hintSubscriptions = [
-      this.callsignCtrl.valueChanges.pipe(debounceTime(300)).subscribe(v => void this.updateHint(v, this.fromHint)),
-      this.toCtrl.valueChanges.pipe(debounceTime(300)).subscribe(v => void this.updateHint(v, this.toHint)),
+      this.callsignCtrl.valueChanges.pipe(debounceTime(300)).subscribe(v => void this.updateHint(v, this.fromHint, this.callsignCtrl)),
+      this.toCtrl.valueChanges.pipe(debounceTime(300)).subscribe(v => void this.updateHint(v, this.toHint, this.toCtrl)),
     ]
   }
 
   /** E-324: who is this caller (EOC, roster, tactical ...)? Colour and a text tag; never blocks a save. */
-  private async updateHint(call: string, target: WritableSignal<CallerResult | null>): Promise<void> {
+  private async updateHint(call: string, target: WritableSignal<CallerResult | null>, ctrl: FormControl<string>): Promise<void> {
     const ctx = {
       eocCalls: this.settings?.eocCalls ?? [],
       roster: this.rangers,
       tacticalCalls: this.settings?.tacticalCalls ?? [],
     }
-    const result = callerKind(call, ctx)
+    let result = callerKind(call, ctx)
     target.set(result.kind === 'blank' ? null : result)
+    if (result.kind === 'unknown') {
+      // The device's call sign list (E-325), if one is loaded: a single keyed read.
+      const hit = await this.directory.lookup(call)
+      if (ctrl.value !== call) return   // typed on while the lookup ran
+      result = callerKind(call, { ...ctx, directoryHit: hit })
+      target.set(result)
+    }
+  }
+
+  /** E-324: a caller found only in the call sign list becomes a roster row, with the call sign and name filled in. */
+  addHintToRoster(call: string, hint: CallerResult, target: WritableSignal<CallerResult | null>, ctrl: FormControl<string>): void {
+    const callsign = normalizeCall(call)
+    if (!callsign) return
+    this.rangerService.AddRanger(JSON.stringify({
+      callsign, fullName: hint.name ?? '', image: '', phone: '', team: '', role: '', note: '',
+    }))
+    this._snackBar.open(`Added ${callsign} to the roster. Fill in the rest on the Rangers page.`, 'OK', { duration: 6000 })
+    void this.updateHint(ctrl.value, target, ctrl)
   }
 
   // https://angular.io/guide/practical-observable-usage#type-ahead-suggestions

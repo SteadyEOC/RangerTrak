@@ -263,6 +263,10 @@
         <p class="enter__caller-hint" role="status" data-testid="from-caller-hint">
           <span [class]="'rt-caller rt-caller--' + h.kind">{{ h.tag }}</span>
           @if (h.detail) {<span class="enter__caller-detail">{{ h.detail }}</span>}
+          @if (h.kind === 'directory') {
+          <button matButton type="button" (click)="addHintToRoster(callsignCtrl.value, h, fromHint, callsignCtrl)"
+            data-testid="from-add-to-roster">Add to roster</button>
+          }
         </p>
         }
         @if (view.isShown('stations', entryHere())) {
@@ -298,6 +302,10 @@
         <p class="enter__caller-hint" role="status" data-testid="to-caller-hint">
           <span [class]="'rt-caller rt-caller--' + h.kind">{{ h.tag }}</span>
           @if (h.detail) {<span class="enter__caller-detail">{{ h.detail }}</span>}
+          @if (h.kind === 'directory') {
+          <button matButton type="button" (click)="addHintToRoster(toCtrl.value, h, toHint, toCtrl)"
+            data-testid="to-add-to-roster">Add to roster</button>
+          }
         </p>
         }
         }

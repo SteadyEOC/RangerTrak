@@ -36,6 +36,7 @@ import { rangerColorFor } from '../shared/mapping/ranger-marker'
 import { buildIcs309Log, Ics309Log, ics309StationLetters } from '../shared/export/ics309-log'
 import { formatStation } from '../domain/station-label'
 import { callerKind, type CallerResult } from '../domain/caller-kind'
+import { CallsignDirectoryService } from '../shared/services/callsign-directory.service'
 import { formatHeading } from '../domain/heading'
 import { applyCallsignEdit, callsignEditNotice } from '../domain/ranger-match'
 import { isScenarioEntry, formatScenarioTime, scenarioTimeAt, sameScenarioClock } from '../domain/scenario'
@@ -165,6 +166,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    * text. Rebuilt once per data, roster or settings change, never per cell paint. Screen only.
    */
   private callerKinds = new Map<string, CallerResult>()
+  private callerKindsGeneration = 0
+  private readonly directory = inject(CallsignDirectoryService)
 
   // Mutated inside onRowSelection(), itself invoked from gridOptions.onSelectionChanged
   // - an ag-grid-native callback, not a template event binding. Same reasoning as above.
@@ -808,6 +811,18 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       if (call && !next.has(call)) next.set(call, callerKind(call, ctx))
     }
     this.callerKinds = next
+    void this.resolveFromDirectory(++this.callerKindsGeneration, ctx, [...next.entries()].filter(([, r]) => r.kind === 'unknown').map(([c]) => c))
+  }
+
+  /** E-325: calls not on the roster, EOC or tactical list are looked up in this device's call sign list, if one is loaded. */
+  private async resolveFromDirectory(generation: number, ctx: Parameters<typeof callerKind>[1], calls: string[]): Promise<void> {
+    if (!calls.length || !(await this.directory.meta())) return
+    for (const call of calls) {
+      const hit = await this.directory.lookup(call)
+      if (generation !== this.callerKindsGeneration) return   // the log changed while this ran
+      this.callerKinds.set(call, callerKind(call, { ...ctx, directoryHit: hit }))
+    }
+    if (this.gridApi && !this.gridApi.isDestroyed?.()) this.gridApi.refreshCells({ columns: ['callsign'], force: true })
   }
 
   statusCellRenderer = (params: { data: RadioLogEntryType }) => {

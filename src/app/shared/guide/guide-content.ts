@@ -107,6 +107,10 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             text: 'RangerTrak is a free, open-source app for keeping the radio log during a Search & Rescue, CERT, or other volunteer emergency-response incident - the kind of radio check-ins ("I\'m at grid B4, all clear") a scribe would otherwise write on a paper log. It runs entirely in this browser, on this device, with no server, account, or internet connection required. A SteadyEOC project; see github.com/SteadyEOC/RangerTrak to learn more, report a problem, or contribute.'
           },
           {
+            heading: 'Who is calling',
+            text: 'Under the From box a small tag says who the call sign is: blue EOC for a call listed under EOC and station call signs on the Mission page, purple with the team name for someone on your roster, a plain tag for a tactical call, and red Unknown when it is none of those. If you have imported a call sign list (Mission page, Call sign list), a call that is not on your roster shows the name and town from the list, with an Add to roster button; a call-shaped text that is not in the list says Not in call sign list, which is often a typo. These tags only inform: nothing stops you logging the report. Colours show on screen only, never on printed forms or exports.'
+          },
+          {
             heading: 'The four questions',
             text: 'Each radio log entry (a field report, if that is what your team calls it) answers four questions: who is reporting, where they are, when it happened, and what they said. Tab moves through them in radio-call order, so a whole report can be typed without touching the mouse. When it is complete, log it with the "Add to radio log" button at the bottom, or press Ctrl+Enter (Cmd+Enter on a Mac) from any box.'
           },

@@ -2,6 +2,7 @@ import { recordStore } from './record-store'
 import { clearActiveDemoScenario } from '../mapping/demo-map'
 import { ATTACHMENTS_DB_NAME } from '../services/attachment-store.service'
 import { RANGER_PHOTOS_DB_NAME } from '../services/ranger-photo.service'
+import { CALLSIGN_DB_NAME } from '../../domain/callsign-directory-db'
 
 /**
  * E-122 Phase 2b: the passphrase gate `main.ts` shows before Angular boots, whenever
@@ -104,7 +105,7 @@ export function runUnlockGate(options?: { readOnly?: boolean }): Promise<void> {
 
       forgotBtn.disabled = true
       clearActiveDemoScenario() // E-124: nothing left on the device is a demo
-      Promise.all([recordStore.eraseEncryptedRecords(), eraseRangerPhotosDb(), eraseAttachmentsDb()])
+      Promise.all([recordStore.eraseEncryptedRecords(), eraseRangerPhotosDb(), eraseAttachmentsDb(), eraseCallsignDb()])
         .catch(err => {
           // Still proceed to boot: an empty, unlocked device beats a permanently stuck one.
           console.error('RecordStore: erase-on-forgot did not fully complete:', err)
@@ -132,6 +133,12 @@ function eraseRangerPhotosDb(): Promise<void> {
 function eraseAttachmentsDb(): Promise<void> {
   if (typeof indexedDB === 'undefined') return Promise.resolve()
   return eraseDb(indexedDB.deleteDatabase(ATTACHMENTS_DB_NAME))
+}
+
+/** E-325: the device's call sign list goes too (public data, but device data all the same). */
+function eraseCallsignDb(): Promise<void> {
+  if (typeof indexedDB === 'undefined') return Promise.resolve()
+  return eraseDb(indexedDB.deleteDatabase(CALLSIGN_DB_NAME))
 }
 
 function eraseDb(req: IDBOpenDBRequest): Promise<void> {

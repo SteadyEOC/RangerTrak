@@ -82,6 +82,7 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'maps', label: 'Maps and geocoding', isInUse: ctx => ctx.mapSettingsCustomised },
   { id: 'recipients213', label: 'Listed message recipients', isInUse: ctx => ctx.recipientsCustomised },
   { id: 'tactical-calls', label: 'Tactical call signs', isInUse: ctx => ctx.tacticalCallCount > 0 },
+  { id: 'callsign-list', label: 'Call sign list', isInUse: never },
   { id: 'board', label: 'RangerView', isInUse: ctx => ctx.boardInUse },
   { id: 'attachments-budget', label: 'Attachments budget', isInUse: ctx => ctx.attachmentCount > 0 },
   { id: 'setup-file', label: 'Setup file', isInUse: ctx => ctx.setupFileAsked },

@@ -1,0 +1,39 @@
+<mat-card appearance="outlined" class="rt-mission-card" [rtAdvanced]="'callsign-list'">
+  <mat-card-header>
+    <mat-card-title>Call sign list</mat-card-title>
+    <mat-card-subtitle>An offline copy of the public amateur radio licence list, so Entry can show the name and
+      town for a call sign that is not on your roster. You download it yourself, once; it stays on this device and is
+      not in backups or files you share.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <p class="mission__callsign-links">
+      <a href="https://apc-cap.ic.gc.ca/datafiles/amateur_delim.zip" target="_blank" rel="noopener">Canada: ISED amateur list</a>
+      <a href="https://data.fcc.gov/download/pub/uls/complete/l_amat.zip" target="_blank" rel="noopener">United States: FCC licence file</a>
+    </p>
+    <mat-form-field class="mission__callsign-region" floatLabel="always">
+      <mat-label>States, provinces or ZIP and postal prefixes</mat-label>
+      <input matInput type="text" [ngModel]="region()" (ngModelChange)="region.set($event)" name="callsignRegion"
+        placeholder="e.g. BC, WA, V8, 980" data-lpignore="true" spellcheck="false" data-testid="callsignRegion" />
+      <mat-hint>Separate with commas. Needed for the United States file, which is too big for a phone whole.
+        Optional for Canada.</mat-hint>
+    </mat-form-field>
+    @if (directory.metaSignal()) {
+    <p data-testid="callsignSummary"><strong>{{ summary() }}</strong></p>
+    }
+    @if (progress()) {
+    <p role="status" data-testid="callsignProgress">{{ progress() }}</p>
+    }
+    @if (error()) {
+    <p role="alert" class="mission__callsign-error" data-testid="callsignError">{{ error() }}</p>
+    }
+  </mat-card-content>
+  <mat-card-actions>
+    <input #picker type="file" hidden accept=".zip,.txt,.dat" (change)="onFile($event)" data-testid="callsignFile" />
+    <button matButton="outlined" type="button" [disabled]="busy()" (click)="picker.click()" data-testid="callsignImport">
+      {{ directory.metaSignal() ? 'Replace the list' : 'Import the list' }}
+    </button>
+    @if (directory.metaSignal()) {
+    <button matButton type="button" [disabled]="busy()" (click)="onRemove()" data-testid="callsignRemove">Remove</button>
+    }
+  </mat-card-actions>
+</mat-card>

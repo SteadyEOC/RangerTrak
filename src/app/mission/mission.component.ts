@@ -62,6 +62,7 @@ import { MissionLocationsListComponent } from './sections/mission-locations-list
 import { MissionRecipients213Component } from './sections/mission-recipients213/mission-recipients213.component'
 import { MissionTacticalCallsComponent } from './sections/mission-tactical-calls/mission-tactical-calls.component'
 import { MissionEocCallsComponent } from './sections/mission-eoc-calls/mission-eoc-calls.component'
+import { MissionCallsignListComponent } from './sections/mission-callsign-list/mission-callsign-list.component'
 import { MissionCommandPostComponent } from './sections/mission-command-post/mission-command-post.component'
 import { MasonryDirective } from '../shared/layout/masonry.directive'
 import { ViewService } from '../shared/services/view.service'
@@ -116,6 +117,7 @@ const blankMission: MissionType = {
     MissionRecipients213Component,
     MissionTacticalCallsComponent,
     MissionEocCallsComponent,
+    MissionCallsignListComponent,
     MissionCommandPostComponent,
     MissionAdvancedOptionsComponent,
     InstallUpdateComponent,
@@ -292,7 +294,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
 
   /** E-207: the advanced cards on this page, for the header Full menus switch. */
   protected readonly advancedIds = ['statuses', 'location-categories', 'locations-list', 'maps', 'recipients213',
-    'tactical-calls', 'board', 'attachments-budget', 'setup-file', 'device-encryption', 'advanced-debug'] as const
+    'tactical-calls', 'callsign-list', 'board', 'attachments-budget', 'setup-file', 'device-encryption', 'advanced-debug'] as const
 
   constructor(
     private log: LogService,

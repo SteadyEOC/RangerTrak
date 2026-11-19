@@ -227,6 +227,23 @@
   After a save, a 213 or 213RR shows <span class="ui">Saved for radio</span> with the time beside its printed status.
   Set your callsign (and saved To addresses) once; Mission readiness suggests it in Full menus.
 </p>
+<h3 id="callsign-list">Call sign list (names for call signs not on your roster)</h3>
+<p>
+  In Full menus, the Mission page has a <span class="ui">Call sign list</span> card. It holds an offline copy of the
+  public amateur radio licence list, so Entry can show the name and town for a call sign that is not on your roster.
+  RangerTrak never downloads it for you. Download it yourself, once, while you have a connection: the card links to
+  Canada's list (<span class="ui">ISED amateur list</span>, a small zip file) and the United States list
+  (<span class="ui">FCC licence file</span>, a very large zip file). Then choose the file on the card.
+</p>
+<ul>
+  <li><strong>States, provinces or ZIP and postal prefixes.</strong> Two letters (<span class="ui">BC, WA</span>) are a
+    province or state; anything else is the start of a postal or ZIP code (<span class="ui">V8, 980</span>). The United
+    States file needs at least one, because the whole list is too big for a phone. For Canada it is optional.</li>
+  <li><strong>What is kept.</strong> Only call sign, name, town and province or state. Street address, postal or ZIP
+    code, phone and email are dropped as the file is read.</li>
+  <li><strong>It stays on this device.</strong> The list is not in backups, Setup files, Report Packets, hand-over files or
+    RangerView. Importing again replaces it; <span class="ui">Remove</span> deletes it.</li>
+</ul>
 <h3>Getting data off the device</h3>
 
 <p>
