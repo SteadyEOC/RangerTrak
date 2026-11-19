@@ -1649,6 +1649,31 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   /** E-194: object URLs of the stored thumbnails for the attachments on the 309 being printed. */
   public printThumbs = signal<Record<string, string>>({})
 
+  /**
+   * E-326: the net summary of the entries in view (the grid's rows after the op-period toggle and any column
+   * filters; on a phone, the cards shown). The dialog loads on first use.
+   */
+  async onBtnNetSummary(): Promise<void> {
+    let rows: RadioLogEntryType[] = []
+    if (this.gridApi) this.gridApi.forEachNodeAfterFilterAndSort((node: { data: RadioLogEntryType }) => rows.push(node.data))
+    else rows = this.cardEntries()
+    const { NetSummaryDialogComponent } = await import('./net-summary-dialog/net-summary-dialog.component')
+    this.dialog.open(NetSummaryDialogComponent, {
+      width: '34rem', maxWidth: '95vw',
+      data: {
+        entries: rows,
+        ctx: {
+          eocCalls: this.settings?.eocCalls ?? [],
+          roster: this.rangerService.rangers,
+          tacticalCalls: this.settings?.tacticalCalls ?? [],
+          rosterUids: new Set(this.rangerService.rangers.map(r => r.uid).filter((u): u is string => !!u)),
+        },
+        head: { mission: this.settings?.mission, opPeriod: this.settings?.opPeriod },
+        letters: ics309StationLetters(rows),
+      },
+    })
+  }
+
   /** E-307: the same scope as Print 309, as text for a radio route. */
   async onBtnSend309ByRadio(): Promise<void> {
     const reports = this.reportsForPrintScope()

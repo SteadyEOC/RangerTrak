@@ -224,6 +224,14 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
             ]
           },
           {
+            heading: 'Who called',
+            text: 'The Callsign column carries a small tag: blue EOC for the call signs listed under EOC and station call signs on the Mission page, a purple team name for people on your roster, and red Unknown for a call that is none of those. If you have imported a call sign list, a call that is only in that list shows the name and town on hover. The colours show on screen only, never on printed forms or exports.'
+          },
+          {
+            heading: 'Net summary',
+            text: 'In Full menus, Net summary (beside Print 309 Log) counts the entries shown now: how many, from how many stations, how they came in (Voice, Packet and so on) and who called (EOC, roster, other, unknown). Use the Current op period toggle or the column filters first to choose what is counted. Copy puts it on the clipboard as plain text of 72 columns or less, ready to paste into a message. With two or more station letters you can pick one station. Nothing is stored.'
+          },
+          {
             heading: 'Message numbers',
             bullets: [
               'Every entry gets a number when it is logged, such as A007: a station letter, then a count. Hover a number to see it in full, for example 26-0142 / OP 2 / A007 (mission, operational period, number).',

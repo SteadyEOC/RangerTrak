@@ -97,6 +97,8 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   { id: 'evidence-location', label: 'Evidence location', isInUse: ctx => ctx.evidenceLocationCount > 0 },
   { id: 'resource-request', label: 'Resource request (ICS-213RR)', isInUse: ctx => ctx.resourceRequestCount > 0 },
   // E-307 (Q81): Send by radio (Winlink, Pat, FLDIGI text). Full menus only; nothing makes it appear in Easy.
+  // E-326: Net summary on the Radio Log (counts by source and by who called). Full menus only.
+  { id: 'net-summary', label: 'Net summary', isInUse: never },
   { id: 'send-by-radio', label: 'Send by radio', isInUse: never },
   // Map
   { id: 'maplibre', label: 'Alternative map', isInUse: ctx => ctx.mapEngineIsAlternative },

@@ -40,7 +40,7 @@ import { AdvancedDirective } from '../../../shared/view/advanced.directive'
   </mat-card-content>
 </mat-card>`,
   styles: [`:host { display: contents; } .mission__eoc-field { width: 100%; }`],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MissionEocCallsComponent {
   @Input({ required: true }) items: string[] = []

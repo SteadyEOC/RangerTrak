@@ -172,6 +172,13 @@
                 <mat-icon>print</mat-icon>
                 Print 309 Log
               </button>
+              @if (viewService.isShown('net-summary')) {
+              <button matButton="outlined" type="button" (click)="onBtnNetSummary()" data-testid="radiolog-net-summary"
+                title="Counts of the entries shown now, by how they came in and who called, as text to copy">
+                <mat-icon>assignment</mat-icon>
+                Net summary
+              </button>
+              }
               @if (viewService.isShown('send-by-radio')) {
               <button matButton="outlined" type="button" (click)="onBtnSend309ByRadio()" data-testid="radiolog-send-radio"
                 title="Get this log ready to send by Winlink, Pat or FLDIGI">

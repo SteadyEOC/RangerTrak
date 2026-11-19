@@ -19,7 +19,7 @@ import { AdvancedDirective } from '../../../shared/view/advanced.directive'
   imports: [FormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, AdvancedDirective],
   templateUrl: './mission-callsign-list.component.html',
   styles: [`:host { display: contents; } .mission__callsign-region { width: 100%; } .mission__callsign-links { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0 0 1rem; }`],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MissionCallsignListComponent {
   protected readonly directory = inject(CallsignDirectoryService)
