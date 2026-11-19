@@ -62,7 +62,7 @@ export function buildSaveData(forms: Forms, p: RadioPayload): { text: string, by
   return { text, bytes: forms.encodeUtf8(text) }
 }
 
-/** The FLMSG file: text (LF) and the extension FLMSG uses for it. */
+/** The FLMSG file: text (CRLF, as FLMSG itself writes, since emcomm-forms 0.1.2) and the extension FLMSG uses for it. */
 export function buildFlmsg(forms: Forms, p: RadioPayload, call: string, at: Date, version?: string): { text: string, ext: string } {
   const text = forms.writeFlmsg({
     form: p.flmsg.form, fields: p.flmsg.fields, ...(p.flmsg.rows ? { rows: p.flmsg.rows } : {}),
