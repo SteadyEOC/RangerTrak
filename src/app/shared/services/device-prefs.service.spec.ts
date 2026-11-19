@@ -7,6 +7,7 @@ describe('DevicePrefsService', () => {
     'rt-board-publisher',
     'rt-msg-station',
     'rt-grid-fit',
+    'rt-log-rows-per-page',
   ]
   let prefs: DevicePrefsService
 
@@ -94,5 +95,14 @@ describe('DevicePrefsService', () => {
     expect(localStorage.getItem('rt-grid-fit')).toBe('radio-log')
     localStorage.setItem('rt-grid-fit', 'junk,,')
     expect(prefs.getGridFit('radio-log')).toBe(false)
+  })
+
+  it('E-331: the log scrolls as one list by default and remembers Rows per page', () => {
+    expect(prefs.getLogRowsPerPage()).toBe('All')
+    prefs.setLogRowsPerPage('25')
+    expect(prefs.getLogRowsPerPage()).toBe('25')
+    expect(localStorage.getItem('rt-log-rows-per-page')).toBe('25')
+    localStorage.setItem('rt-log-rows-per-page', '7')
+    expect(prefs.getLogRowsPerPage()).toBe('All')
   })
 })

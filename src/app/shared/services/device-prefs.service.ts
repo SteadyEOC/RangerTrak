@@ -21,6 +21,8 @@ const AAR_NOTE_LAST_KIND_KEY = 'aarNoteLastKind'
 const MSG_STATION_KEY = 'rt-msg-station'
 // 2026-10-27: the grids this device fits to the screen (Fit to screen), comma-separated names.
 const GRID_FIT_KEY = 'rt-grid-fit'
+// E-331: the Radio Log's Rows per page choice on this device. Absent = 'All' (one scrolling list).
+const LOG_ROWS_PER_PAGE_KEY = 'rt-log-rows-per-page'
 // E-307 (Q80): the Winlink call sign and saved radio addresses this device sends from. A mission may override both.
 const WINLINK_CALL_KEY = 'rt-winlink-call'
 const WINLINK_ADDRESSES_KEY = 'rt-winlink-addresses'
@@ -32,6 +34,10 @@ const WINLINK_ADDRESSES_KEY = 'rt-winlink-addresses'
  */
 /** The grids that have a Fit to screen switch. */
 export type GridName = 'radio-log' | 'rangers'
+
+/** E-331: the Radio Log's Rows per page choices, in picker order. */
+export const LOG_ROWS_PER_PAGE_OPTIONS = ['All', 'Auto', '5', '10', '25', '50', '100'] as const
+export type LogRowsPerPage = typeof LOG_ROWS_PER_PAGE_OPTIONS[number]
 
 export type BoardPublisherPref = { base?: string, key?: string, replaced?: boolean }
 
@@ -78,6 +84,19 @@ export class DevicePrefsService {
   setGridFit(grid: GridName, fit: boolean): void {
     const others = (this.read(GRID_FIT_KEY) ?? '').split(',').filter(g => g && g !== grid)
     this.write(GRID_FIT_KEY, (fit ? [...others, grid] : others).join(','))
+  }
+
+  /**
+   * E-331 (tester feedback 2026-11-19): the Radio Log's Rows per page, remembered on this device.
+   * Default 'All', one scrolling list, rather than paging. Anything unknown reads as 'All'.
+   */
+  getLogRowsPerPage(): LogRowsPerPage {
+    const v = this.read(LOG_ROWS_PER_PAGE_KEY) ?? ''
+    return (LOG_ROWS_PER_PAGE_OPTIONS as readonly string[]).includes(v) ? v as LogRowsPerPage : 'All'
+  }
+
+  setLogRowsPerPage(option: LogRowsPerPage): void {
+    if ((LOG_ROWS_PER_PAGE_OPTIONS as readonly string[]).includes(option)) this.write(LOG_ROWS_PER_PAGE_KEY, option)
   }
 
   /** E-307: this device's Winlink call sign, upper case; blank when never set. */

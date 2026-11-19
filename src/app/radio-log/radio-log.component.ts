@@ -83,7 +83,7 @@ import { RecordStore } from '../shared/storage/record-store'
 import {
   formatMsgNoFull, formatMsgNoShort, HANDLED_MARK_GLYPH, HANDLED_MARK_LABEL, msgNoClashSentence, msgNoCsvFields, MSG_NO_CSV_COLUMNS,
 } from '../domain/msg-no'
-import { DevicePrefsService } from '../shared/services/device-prefs.service'
+import { DevicePrefsService, LOG_ROWS_PER_PAGE_OPTIONS, type LogRowsPerPage } from '../shared/services/device-prefs.service'
 import { showFirstPrintTip } from '../shared/export/print-tip'
 import { armPrintTitle } from '../shared/export/print-title'
 
@@ -231,8 +231,8 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   // one would have thrown, one would have silently exported the wrong rows).
   /** CSV column separator: 'none' (comma), 'tab', or a literal character. */
   public columnSeparator = signal('none')
-  /** Rows per page, as shown in the picker: 'Auto' | '5' | ... | 'All'. */
-  public rowsPerPage = signal('Auto')
+  /** Rows per page, as shown in the picker. E-331: remembered on this device; default 'All' (scroll). */
+  public rowsPerPage = signal<LogRowsPerPage>(inject(DevicePrefsService).getLogRowsPerPage())
 
   /** Options for the rows-per-page picker - kept here so the template just iterates. */
   // E-144 follow-up: the grid was a fixed 60vh, leaving an empty band under a short log. Same
@@ -255,7 +255,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     if (this.display.active()) return 'calc(100vh - 9rem)'
     return `min(60vh, ${px}px)`
   })
-  readonly rowsPerPageOptions = ['Auto', '5', '10', '25', '50', '100', 'All']
+  readonly rowsPerPageOptions = LOG_ROWS_PER_PAGE_OPTIONS
 
   /** Options for the CSV separator picker: [stored value, label shown to the user]. */
   readonly separatorOptions: { value: string; label: string }[] = [
@@ -591,13 +591,14 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     },
 
     // https://www.ag-grid.com/javascript-data-grid/row-pagination/#pagination-properties
-    pagination: true,
+    // E-331: the starting state comes from the remembered Rows per page (default 'All', no pages);
+    // onRowsPerPage() changes it later. Our own picker replaces AG Grid's page-size selector.
+    ...RadioLogComponent.paginationFor(this.rowsPerPage()),
+    paginationPageSizeSelector: false,
     // E-144 follow-up: pinned so gridHeight() can size the grid to its rows exactly.
     rowHeight: RadioLogComponent.GRID_ROW_PX,
     headerHeight: RadioLogComponent.GRID_HEADER_PX,
     floatingFiltersHeight: RadioLogComponent.GRID_HEADER_PX,
-    paginationAutoPageSize: true, // if set overrides paginationPageSize & forces it back to this on changes...
-    //paginationPageSize: 5,
     // suppressScrollOnNewData: true, // grid to NOT scroll to the top, on page changes
 
     // E-166 (2026-09-30): without a delay setting, AG Grid waits its default ~2 s before showing
@@ -1863,48 +1864,19 @@ export class RadioLogComponent implements OnInit, OnDestroy {
    * then thrown on `.options[...]`. Driving it from the emitted value is both correct here
    * and one less direct-DOM read of the kind Sprint G converted away from.
    */
-  onRowsPerPage(option: string) {
-    // this.gridApi.pagination = true // should have been done initially...
-    switch (option) {
-      case "Auto":
-        //this.gridApi.paginationSetPageSize()
-        this.gridApi.paginationAutoPageSize = true
-        this.gridApi.redrawRows()
-        break;
-      case "5":
-        //! WORKS! - Maybe any number LESS than auto????
-        this.gridApi.paginationAutoPageSize = false
-        this.gridApi.paginationSetPageSize("5")
-        break;
-      case "10":
-        // WORKS! - Maybe any number LESS than auto????
-        this.gridApi.paginationAutoPageSize = false
-        this.gridApi.paginationSetPageSize("10")
-        break;
-      case "25":
-        this.gridApi.paginationAutoPageSize = false
-        this.gridApi.paginationSetPageSize("25")
-        break;
-      case "50":
-        this.gridApi.paginationAutoPageSize = false
-        this.gridApi.paginationSetPageSize("50")
-        break;
-      case "100":
-        this.gridApi.paginationAutoPageSize = false
-        this.gridApi.paginationSetPageSize("100")
-        break;
-      case "All":
-        //https://www.ag-grid.com/javascript-data-grid/infinite-scrolling
-        //set rowModelType: infinite ???
-        this.gridApi.pagination = false
-        this.gridApi.paginationAutoPageSize = false
-        break;
+  onRowsPerPage(option: LogRowsPerPage) {
+    // E-331: the old switch called paginationSetPageSize(), which AG Grid removed (it threw), and
+    // assigned gridApi.pagination / .paginationAutoPageSize, which the grid never read - so the
+    // picker did nothing. Grid options go through updateGridOptions() now.
+    this.devicePrefs.setLogRowsPerPage(option)
+    this.gridApi?.updateGridOptions?.(RadioLogComponent.paginationFor(option))
+  }
 
-      default:
-        this.log.error(`onRowsPerPage got unknown option: ${option}`, this.id)
-        break;
-    }
-    // this.refreshGrid()
+  /** E-331: the grid's pagination options for one Rows per page choice. */
+  private static paginationFor(option: LogRowsPerPage): { pagination: boolean, paginationAutoPageSize: boolean, paginationPageSize?: number } {
+    if (option === 'All') return { pagination: false, paginationAutoPageSize: false }
+    if (option === 'Auto') return { pagination: true, paginationAutoPageSize: true }
+    return { pagination: true, paginationAutoPageSize: false, paginationPageSize: Number(option) }
   }
 
   /** E-314: Display on or off for the grid: no editing, scaled rows, and selection as marking. */
