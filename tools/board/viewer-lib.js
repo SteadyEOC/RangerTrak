@@ -104,4 +104,90 @@ function createViewerLib(options) {
   };
 }
 
-module.exports = { createViewerLib, resolveLibs, parseRange, NAMES, PREFIX };
+// ---- E-306 rung 2: pure helpers the viewer page also carries inline ----
+// BEGIN stations-lib (E-306 rung 2). The same text sits in src/command-post-view/index.html: the page cannot require
+// this file, so viewer-lib.test.js fails when the two copies differ. Edit both together.
+// findPossibleDuplicates is the plain-JS port of src/app/domain/possible-duplicates.ts; its test cases are copied
+// from possible-duplicates.spec.ts into viewer-lib.test.js so the two cannot drift unnoticed.
+var DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
+function dupLetter(r) {
+  var m = /^([A-Z])\d/.exec(String(r && r.msgNo || ''));
+  return m ? m[1] : '';
+}
+function dupNorm(s) { return String(s || '').trim().toLowerCase(); }
+function dupSharesCall(a, b) {
+  var ca = dupNorm(a.callsign);
+  if (ca && ca === dupNorm(b.callsign)) { return true; }
+  var ta = dupNorm(a.tacticalCall);
+  return !!ta && ta === dupNorm(b.tacticalCall);
+}
+// Every possible-duplicate pair: different station letters (from the message number), the same call sign or
+// tactical call, within windowMs. Each pair once, earlier first. Marks only; nothing is merged or hidden.
+function findPossibleDuplicates(reports, windowMs) {
+  var limit = windowMs == null ? DUPLICATE_WINDOW_MS : windowMs;
+  var stamped = [];
+  (reports || []).forEach(function (r) {
+    var t = new Date(r && r.date).getTime();
+    if (dupLetter(r) && isFinite(t)) { stamped.push({ r: r, t: t }); }
+  });
+  stamped.sort(function (x, y) { return x.t - y.t; });
+  var out = [];
+  for (var i = 0; i < stamped.length; i++) {
+    for (var j = i + 1; j < stamped.length; j++) {
+      if (stamped[j].t - stamped[i].t > limit) { break; }
+      var a = stamped[i].r, b = stamped[j].r;
+      if (dupLetter(a) === dupLetter(b)) { continue; }
+      if (dupSharesCall(a, b)) { out.push({ a: a, b: b }); }
+    }
+  }
+  return out;
+}
+// For each report in a pair: what to say about the other one(s). Map: report -> [{ msgNo, date }].
+function duplicateNotes(pairs) {
+  var out = new Map();
+  function add(from, other) {
+    var list = out.get(from) || [];
+    list.push({ msgNo: other.msgNo, date: other.date });
+    out.set(from, list);
+  }
+  pairs.forEach(function (p) { add(p.a, p.b); add(p.b, p.a); });
+  return out;
+}
+// "5 min ago", "2 h 5 min ago", "just now"; '' when there is no time.
+function agoText(ms, nowMs) {
+  if (!ms) { return ''; }
+  var mins = Math.max(0, Math.floor((nowMs - ms) / 60000));
+  if (mins < 1) { return 'just now'; }
+  if (mins < 120) { return mins + ' min ago'; }
+  return Math.floor(mins / 60) + ' h ' + (mins % 60) + ' min ago';
+}
+// One line per station: "Station B, scribe Pat, last update 2 min ago". `stations` is the server's list.
+function stationLines(stations, nowMs) {
+  return (stations || []).map(function (s) {
+    var seen = Date.parse(s.seenAt) || 0;
+    return 'Station ' + (s.station || '(no letter)')
+      + (s.scribe ? ', scribe ' + s.scribe : '')
+      + (seen ? ', last update ' + agoText(seen, nowMs) : ', no update yet');
+  });
+}
+function stationMissionLabel(s) {
+  var name = String(s && s.event || '').trim(), id = String(s && s.mission || '').trim();
+  return name && id ? name + ' (' + id + ')' : name || id;
+}
+// Warnings for stations whose mission differs from the first (primary) station's.
+function stationMissionWarnings(stations) {
+  var list = stations || [];
+  if (list.length < 2) { return []; }
+  var first = stationMissionLabel(list[0]).toLowerCase();
+  var out = [];
+  list.slice(1).forEach(function (s) {
+    var label = stationMissionLabel(s);
+    if (label.toLowerCase() !== first) {
+      out.push('Station ' + (s.station || '(no letter)') + ' is publishing a different mission: ' + (label || '(unnamed mission)') + '.');
+    }
+  });
+  return out;
+}
+// END stations-lib
+
+module.exports = { findPossibleDuplicates, duplicateNotes, stationLines, stationMissionWarnings, agoText, createViewerLib, resolveLibs, parseRange, NAMES, PREFIX };

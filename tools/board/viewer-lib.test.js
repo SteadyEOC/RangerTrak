@@ -115,3 +115,89 @@ test('parseRange', () => {
   assert.strictEqual(parseRange('bytes=0-1,5-6', 100), null); // several ranges: send the whole file
   assert.strictEqual(parseRange('bytes=0-5', 0), 'bad');
 });
+
+// ---- E-306 rung 2: the possible-duplicate port and the station lines ----
+// The cases below are copied from src/app/domain/possible-duplicates.spec.ts. The viewer cannot import TypeScript, so
+// findPossibleDuplicates is a plain-JS port, and the viewer page carries its own copy of the same block. Each case runs
+// against BOTH the module and the page's copy, and the two blocks must be identical, so none of the three can drift.
+const vm = require('node:vm');
+const lib = require('./viewer-lib');
+
+const BEGIN = '// BEGIN stations-lib';
+const END = '// END stations-lib';
+const blockOf = (text) => text.slice(text.indexOf(BEGIN), text.indexOf(END) + END.length).split('\n').map((l) => l.trim()).join('\n');
+const pageHtml = fs.readFileSync(path.join(REPO, 'src', 'command-post-view', 'index.html'), 'utf8');
+
+function pageCopy() {
+  const ctx = {};
+  vm.createContext(ctx);
+  vm.runInContext(`${blockOf(pageHtml)}\nthis.out = { findPossibleDuplicates, duplicateNotes, stationLines, stationMissionWarnings, agoText };`, ctx);
+  return ctx.out;
+}
+
+test('the viewer page carries the same stations block as viewer-lib.js', () => {
+  assert.ok(pageHtml.includes(BEGIN) && pageHtml.includes(END));
+  assert.strictEqual(blockOf(pageHtml), blockOf(fs.readFileSync(path.join(__dirname, 'viewer-lib.js'), 'utf8')));
+});
+
+for (const [label, impl] of [['viewer-lib.js', lib], ['the page copy', pageCopy()]]) {
+  const e = (station, seq, hhmm, callsign = 'K7ABC', tacticalCall) =>
+    ({ msgNo: `${station}${String(seq).padStart(3, '0')}`, date: new Date(`2026-11-17T${hhmm}:00`).toISOString(), callsign, tacticalCall });
+  const find = impl.findPossibleDuplicates;
+
+  test(`${label}: duplicates: the same call under different stations within five minutes`, () => {
+    const b = e('B', 4, '14:30'), c = e('C', 12, '14:32');
+    const pairs = find([c, b]);
+    assert.strictEqual(pairs.length, 1);
+    assert.strictEqual(pairs[0].a, b);
+    assert.strictEqual(pairs[0].b, c);
+  });
+  test(`${label}: duplicates: call signs match ignoring case and spaces; tactical call matches when call signs differ`, () => {
+    assert.strictEqual(find([e('B', 1, '14:30', ' k7abc '), e('C', 1, '14:31', 'K7ABC')]).length, 1);
+    assert.strictEqual(find([e('B', 1, '14:30', 'K7AAA', 'Team 1'), e('C', 1, '14:31', 'K7BBB', 'team 1')]).length, 1);
+  });
+  test(`${label}: duplicates: blank calls, the same station, other calls and unnumbered entries never pair`, () => {
+    assert.strictEqual(find([e('B', 1, '14:30', ''), e('C', 1, '14:31', '  ')]).length, 0);
+    assert.strictEqual(find([e('B', 1, '14:30'), e('B', 2, '14:31')]).length, 0);
+    assert.strictEqual(find([e('B', 1, '14:30', 'K7AAA'), e('C', 1, '14:31', 'K7BBB')]).length, 0);
+    assert.strictEqual(find([{ date: '2026-11-17T14:30:00', callsign: 'K7ABC' }, e('C', 1, '14:31')]).length, 0);
+  });
+  test(`${label}: duplicates: more than five minutes apart is out, exactly five is in; input is not changed`, () => {
+    assert.strictEqual(find([e('B', 1, '14:30'), e('C', 1, '14:36')]).length, 0);
+    assert.strictEqual(find([e('B', 1, '14:30'), e('C', 1, '14:35')]).length, 1);
+    const list = [e('C', 1, '14:31'), e('B', 1, '14:30')];
+    find(list);
+    assert.strictEqual(list[0].msgNo, 'C001');
+  });
+  test(`${label}: duplicate notes name the other number on each side`, () => {
+    const b = e('B', 4, '14:30'), c = e('C', 12, '14:32');
+    const notes = impl.duplicateNotes(find([b, c]));
+    assert.strictEqual(notes.get(b)[0].msgNo, 'C012');
+    assert.strictEqual(notes.get(c)[0].msgNo, 'B004');
+    assert.strictEqual(notes.get(c)[0].date, b.date);
+  });
+
+  const NOW = Date.parse('2026-11-18T15:00:00Z');
+  const iso = (minsAgo) => new Date(NOW - minsAgo * 60000).toISOString();
+  test(`${label}: a line per station with the scribe and the minutes since the last update`, () => {
+    const lines = impl.stationLines([
+      { station: 'A', scribe: 'Pat', seenAt: iso(0) },
+      { station: 'B', scribe: 'Sam', seenAt: iso(2) },
+      { station: 'C', scribe: '', seenAt: iso(130) },
+      { station: '', scribe: 'Lee', seenAt: '' },
+    ], NOW);
+    assert.deepStrictEqual(lines, [
+      'Station A, scribe Pat, last update just now',
+      'Station B, scribe Sam, last update 2 min ago',
+      'Station C, last update 2 h 10 min ago',
+      'Station (no letter), scribe Lee, no update yet',
+    ]);
+  });
+  test(`${label}: a station on a different mission is warned about; the same mission, any case, is not`, () => {
+    const same = [{ station: 'A', event: 'Fern', mission: '26-1' }, { station: 'B', event: 'FERN', mission: '26-1' }];
+    assert.deepStrictEqual(Array.from(impl.stationMissionWarnings(same)), []);
+    assert.deepStrictEqual(Array.from(impl.stationMissionWarnings([same[0]])), []);
+    assert.deepStrictEqual(Array.from(impl.stationMissionWarnings([...same, { station: 'C', event: 'Oso', mission: '26-2' }])),
+      ['Station C is publishing a different mission: Oso (26-2).']);
+  });
+}
