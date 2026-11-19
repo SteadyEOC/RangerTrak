@@ -17,6 +17,7 @@ import { LeafletOverlays, RING_STEPS_MILES, formatRingMiles } from './leaflet-ov
 import { LeafletOfflineController } from './leaflet-offline-controller'
 import { LeafletPrintController } from './leaflet-print-controller'
 import { LocateControl } from './leaflet-locate-control'
+import { RtLayersControl } from './leaflet-layers-control'
 
 //import pc from 'picocolors' // https://github.com/alexeyraspopov/picocolors
 import { Subscription, throwError } from 'rxjs'
@@ -651,7 +652,10 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
       'Hiking trails (Waymarked Trails)': trailsOverlay,
       'Roads and place names (for Satellite)': roadsLabelsOverlay,
     }
-    const layersControl = new L.LayersControl(baseLayers, overlayLayers, { position: 'topright', title: 'Map layers' }).addTo(this.lMap)
+    // Leaflet 2.0.0-beta.5: a collapsed box rebuilds its rows on expand, so the row hiding re-runs then.
+    const layersControl = new RtLayersControl(baseLayers, overlayLayers, { position: 'topright', title: 'Map layers' })
+    layersControl.onExpand = () => this.syncLayerExtras()
+    layersControl.addTo(this.lMap)
     // E-207 / D-62: the layers box extras that Easy menus hides while none is on (see syncLayerExtras()).
     this.layerExtras = [
       ['USNG / MGRS grid', this.usngGridLayer],
