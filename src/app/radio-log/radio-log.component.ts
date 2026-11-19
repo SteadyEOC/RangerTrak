@@ -35,6 +35,7 @@ import { rangertrakGridTheme } from '../shared/ag-grid-theme'
 import { rangerColorFor } from '../shared/mapping/ranger-marker'
 import { buildIcs309Log, Ics309Log, ics309StationLetters } from '../shared/export/ics309-log'
 import { formatStation } from '../domain/station-label'
+import { callerKind, type CallerResult } from '../domain/caller-kind'
 import { formatHeading } from '../domain/heading'
 import { applyCallsignEdit, callsignEditNotice } from '../domain/ranger-match'
 import { isScenarioEntry, formatScenarioTime, scenarioTimeAt, sameScenarioClock } from '../domain/scenario'
@@ -156,7 +157,14 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   private radioLog: RadioLogType | undefined
 
   private missionSubscription!: Subscription
+  private rangersSubscription?: Subscription
   private settings!: MissionType
+
+  /**
+   * E-324: who each call sign in the log is (EOC, roster team, unknown ...), keyed by the upper-cased call
+   * text. Rebuilt once per data, roster or settings change, never per cell paint. Screen only.
+   */
+  private callerKinds = new Map<string, CallerResult>()
 
   // Mutated inside onRowSelection(), itself invoked from gridOptions.onSelectionChanged
   // - an ag-grid-native callback, not a template event binding. Same reasoning as above.
@@ -387,7 +395,9 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       // field actually holds. The collapse-when-callsign-is-the-key behavior (F29-44's other
       // half) is a separate, still-open decision - see the handoff doc.
       {
-        headerName: 'Callsign', field: "callsign", tooltipField: "team", maxWidth: 160,
+        headerName: 'Callsign', field: "callsign", maxWidth: 160,
+        cellRenderer: this.callsignCellRenderer,
+        tooltipValueGetter: (params: { data: RadioLogEntryType }) => this.callerTooltip(params.data?.callsign),
         headerTooltip: 'The reporting station\'s FCC call sign, such as K7ABC. It can be blank for members who are not licensed. Double-click to edit; a call, name or ID on the roster moves the report to that person.',
         valueSetter: (params: { data: RadioLogEntryType, newValue: any }) => this.setCallsign(params.data, params.newValue),
         cellStyle: (params: { data: RadioLogEntryType }) => {
@@ -723,6 +733,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       next: (newMission) => {
         this.settings = newMission
         this.opPeriodLabel.set(newMission?.opPeriod ?? '')
+        this.rebuildCallerKinds()
         this.columnDefs = this.buildColumnDefs()
       },
       error: (e) => this.log.error('Settings Subscription got:' + e, this.id)
@@ -747,6 +758,11 @@ export class RadioLogComponent implements OnInit, OnDestroy {
       error: (e) => this.log.error('Radio Log entries Subscription got:' + e, this.id)
     })
 
+    this.rangersSubscription = this.rangerService.getRangersObserver().subscribe(() => {
+      this.rebuildCallerKinds()
+      if (this.gridApi && !this.gridApi.isDestroyed?.()) this.gridApi.refreshCells({ columns: ['callsign'], force: true })
+    })
+
     if (this.gridApi) {
       this.gridApi.refreshCells()
     }
@@ -763,6 +779,36 @@ export class RadioLogComponent implements OnInit, OnDestroy {
   // machinery: RangerPhotoService.photoUrl(callsign) plus the androgynous fallback), but
   // it adds a column to a grid that is already wide, so it is a product decision rather
   // than a revival of this.
+
+  /** E-324: the call sign with a small tag chip saying who it is. The tag is text, so colour is never the only signal. */
+  callsignCellRenderer = (params: { data: RadioLogEntryType }) => {
+    const call = params.data?.callsign ?? ''
+    const kind = this.callerKinds.get(call.trim().toUpperCase())
+    const text = escapeHtml(call)
+    if (!kind || !kind.tag || kind.kind === 'blank') return text
+    return `${text} <span class="rt-caller rt-caller--${kind.kind}">${escapeHtml(kind.tag)}</span>`
+  }
+
+  private callerTooltip(call: string | undefined): string | undefined {
+    const kind = this.callerKinds.get((call ?? '').trim().toUpperCase())
+    if (!kind?.tag) return undefined
+    return kind.detail ? `${kind.tag}: ${kind.detail}` : kind.tag
+  }
+
+  /** E-324: one pass over the distinct call signs in the log. */
+  private rebuildCallerKinds(): void {
+    const ctx = {
+      eocCalls: this.settings?.eocCalls ?? [],
+      roster: this.rangerService.rangers,
+      tacticalCalls: this.settings?.tacticalCalls ?? [],
+    }
+    const next = new Map<string, CallerResult>()
+    for (const e of this.radioLogEntries()) {
+      const call = (e.callsign ?? '').trim().toUpperCase()
+      if (call && !next.has(call)) next.set(call, callerKind(call, ctx))
+    }
+    this.callerKinds = next
+  }
 
   statusCellRenderer = (params: { data: RadioLogEntryType }) => {
     const status = escapeHtml(params.data.status)
@@ -946,6 +992,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     // passing the same reference was a no-op for the signal and the grid never saw a merged
     // Report Packet until the page was reopened.
     this.radioLogEntries.set([...newReports.logEntries])
+    this.rebuildCallerKinds()
     this.refreshGrid()
     //this.reloadPage()  // TODO: needed? - creates endless loop!
   }
@@ -1838,6 +1885,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
     this.display.setMarks(null)
     this.radioLogSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()
+    this.rangersSubscription?.unsubscribe()
     this.phoneMediaQuery.removeEventListener('change', this.onPhoneMediaChange)
   }
 }

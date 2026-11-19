@@ -61,6 +61,7 @@ import { MissionLocationTypesComponent } from './sections/mission-location-types
 import { MissionLocationsListComponent } from './sections/mission-locations-list/mission-locations-list.component'
 import { MissionRecipients213Component } from './sections/mission-recipients213/mission-recipients213.component'
 import { MissionTacticalCallsComponent } from './sections/mission-tactical-calls/mission-tactical-calls.component'
+import { MissionEocCallsComponent } from './sections/mission-eoc-calls/mission-eoc-calls.component'
 import { MissionCommandPostComponent } from './sections/mission-command-post/mission-command-post.component'
 import { MasonryDirective } from '../shared/layout/masonry.directive'
 import { ViewService } from '../shared/services/view.service'
@@ -87,6 +88,7 @@ const blankMission: MissionType = {
   checkInIntervalMin: DEFAULT_CHECK_IN_INTERVAL_MIN,
   autoPrint213: false,
   tacticalCalls: [],
+  eocCalls: [],
   extraCopies213: 1,
   attachmentBudgetMB: 512,
   boardPassword: '',
@@ -113,6 +115,7 @@ const blankMission: MissionType = {
     MissionLocationsListComponent,
     MissionRecipients213Component,
     MissionTacticalCallsComponent,
+    MissionEocCallsComponent,
     MissionCommandPostComponent,
     MissionAdvancedOptionsComponent,
     InstallUpdateComponent,
@@ -209,6 +212,9 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
    * / Reset Defaults must replace it, not leave the previous mission's list showing).
    */
   tacticalCalls = signal<TacticalCallType[]>([])
+
+  /** E-324: the working EOC call sign list behind MissionEocCallsComponent, re-seeded like tacticalCalls. */
+  eocCalls = signal<string[]>([])
 
   /**
    * E-79: the header's readiness dot (ADR D-32) only ever showed the aggregate red/amber/
@@ -343,6 +349,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
     this.locationTypesRowData.set(newMission.locationTypes)
     this.recipientOptions213.set(newMission.recipientOptions213)
     this.tacticalCalls.set(newMission.tacticalCalls ?? [])
+    this.eocCalls.set(newMission.eocCalls ?? [])
     this.opPeriodStart.set(newMission.opPeriodStart)
     this.opPeriodEnd.set(newMission.opPeriodEnd)
   }
@@ -503,6 +510,12 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   onTacticalCallsChange(newList: TacticalCallType[]) {
     this.tacticalCalls.set(newList)
     this.missionModel.update(m => ({ ...m, tacticalCalls: newList }))
+  }
+
+  /** E-324: same child-emits, parent-writes-both pattern. */
+  onEocCallsChange(newList: string[]) {
+    this.eocCalls.set(newList)
+    this.missionModel.update(m => ({ ...m, eocCalls: newList }))
   }
 
   /**

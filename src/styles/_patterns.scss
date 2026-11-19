@@ -540,3 +540,25 @@ html[data-fullscreen-fallback] {
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CALLER CHIPS  (E-324)
+//
+//  A small chip that says who a call sign is (EOC, a roster team, Unknown ...). Used under the From and
+//  To boxes on Entry and in the Radio Log call sign column. Screen only: nothing prints. The text tag is
+//  always present; the colour only backs it up.
+// ─────────────────────────────────────────────────────────────────────────────
+.rt-caller {
+  display        : inline-block;
+  padding        : 0 var(--rt-space-sm);
+  border         : 1px solid currentcolor;
+  border-radius  : 999px;
+  font-size      : var(--rt-type-body-sm-size);
+  line-height    : 1.5;
+  white-space    : nowrap;
+  background     : var(--rt-caller-neutral-bg);
+  color          : var(--rt-caller-neutral);
+}
+.rt-caller--eoc      { background: var(--rt-caller-eoc-bg);      color: var(--rt-caller-eoc); }
+.rt-caller--operator { background: var(--rt-caller-operator-bg); color: var(--rt-caller-operator); }
+.rt-caller--unknown  { background: var(--rt-caller-unknown-bg);  color: var(--rt-caller-unknown); }

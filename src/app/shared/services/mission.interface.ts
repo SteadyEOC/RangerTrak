@@ -157,6 +157,11 @@ export type MissionType = {
   // supplies `[]` (see initMission()) to any returning user whose stored settings predate it.
   tacticalCalls: TacticalCallType[],
 
+  // E-324 (2026-11-18): call signs of the EOC and other fixed stations; a call from one of these shows blue with an "EOC"
+  // tag on Entry and in the Radio Log. Informs only, never blocks a save. Additive-only field, same reasoning as
+  // tacticalCalls above - no MISSION_SCHEMA_VERSION bump, backfillMissingFields supplies `[]` (see initMission()).
+  eocCalls: string[],
+
   // E-150 (2026-09-30): extra paper copies printed along with each ICS-213 for the paper log
   // (the Mission page's "Extra copies for the paper log"; Entry's auto-print and Messages'
   // Copies box read it via PrintCopiesService). Valid 0-9, default 1. Saved under John's

@@ -82,6 +82,19 @@
   --rt-notice-ink: #{light-dark(#5C4400, #F6DFA0)};
   --rt-notice-line: #{light-dark(#D9A300, #8A6100)};
 
+  // ── Caller kinds (E-324) ───────────────────────────────────────────
+  // Chips that say who a call sign is: EOC blue, roster operator purple, unknown red, neutral for
+  // tactical and not-on-roster. Never per-skin (the colour carries meaning) and never the only signal:
+  // every chip also carries a text tag. Each -ink is at least 4.5:1 on its own background, light and dark.
+  --rt-caller-eoc: #{light-dark(#0B4A9E, #9CC7FF)};
+  --rt-caller-eoc-bg: #{light-dark(#E3EFFD, #132A47)};
+  --rt-caller-operator: #{light-dark(#5A2A93, #D9BDF7)};
+  --rt-caller-operator-bg: #{light-dark(#F1E7FB, #2B1A40)};
+  --rt-caller-unknown: #{light-dark(#9B1111, #FFB4B4)};
+  --rt-caller-unknown-bg: #{light-dark(#FDE9E9, #401818)};
+  --rt-caller-neutral: #{light-dark(#37474F, #CFD8DC)};
+  --rt-caller-neutral-bg: #{light-dark(#ECEFF1, #263238)};
+
   // ── Mission readiness (D-32) ───────────────────────────────────────
   // Deliberately NOT per-skin, same argument as Notice/caution above: red/amber/green means
   // the same thing under every skin. Reuses the same vetted hue pairs as the status colors

@@ -225,6 +225,8 @@
       @if (view.isShown('tactical-calls')) {
       <rangertrak-mission-tactical-calls [items]="tacticalCalls()" (itemsChange)="onTacticalCallsChange($event)">
       </rangertrak-mission-tactical-calls>
+      <rangertrak-mission-eoc-calls [items]="eocCalls()" (itemsChange)="onEocCallsChange($event)">
+      </rangertrak-mission-eoc-calls>
       }
 
       <!-- Sharing. -->

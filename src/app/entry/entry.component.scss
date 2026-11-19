@@ -919,3 +919,13 @@ mat-chip-option.enter__status-selected {
     margin: 0;
   }
 }
+
+// E-324: the who-is-this chip under the From and To boxes.
+.enter__caller-hint {
+  display    : flex;
+  flex-wrap  : wrap;
+  gap        : var(--rt-space-sm);
+  align-items: center;
+  margin     : 0 0 var(--rt-space-sm);
+  font-size  : var(--rt-type-body-sm-size);
+}

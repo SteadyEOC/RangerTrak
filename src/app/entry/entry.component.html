@@ -258,6 +258,13 @@
         </mat-form-field>
         <span id="enter__Callsign-image"> </span>
         <span id="enter__Callsign-upshot"> </span>
+        @if (fromHint(); as h) {
+        <!-- E-324: who is this caller? Colour plus a text tag; informs only, never blocks Submit. -->
+        <p class="enter__caller-hint" role="status" data-testid="from-caller-hint">
+          <span [class]="'rt-caller rt-caller--' + h.kind">{{ h.tag }}</span>
+          @if (h.detail) {<span class="enter__caller-detail">{{ h.detail }}</span>}
+        </p>
+        }
         @if (view.isShown('stations', entryHere())) {
         <!-- E-165: the station the message went TO, over the air. Same options and rules as the
              From box above; writes toTactical/toCallsign/toRangerUid. Not the ICS-213
@@ -287,6 +294,12 @@
             </mat-optgroup>
           </mat-autocomplete>
         </mat-form-field>
+        @if (toHint(); as h) {
+        <p class="enter__caller-hint" role="status" data-testid="to-caller-hint">
+          <span [class]="'rt-caller rt-caller--' + h.kind">{{ h.tag }}</span>
+          @if (h.detail) {<span class="enter__caller-detail">{{ h.detail }}</span>}
+        </p>
+        }
         }
       </div>
 

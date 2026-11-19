@@ -47,6 +47,7 @@ import { DDToDDM } from '../domain/coordinate'
 import { farLocation, farLocationText } from '../domain/far-location'
 import { UndoHistory } from '../domain/undo-history'
 import { matchRanger } from '../domain/ranger-match'
+import { callerKind, type CallerResult } from '../domain/caller-kind'
 import {
   RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
   LogService, RangerService, RangerType, MissionService, MissionType, TacticalCallType, UsageStateService,
@@ -454,6 +455,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // the addressee person/position on the 213 form, this is the station the message went to
   // over the air, and neither auto-fills the other.
   toCtrl = new FormControl<string>('', { nonNullable: true })
+
+  // E-324: the one-line "who is this caller" chips under the From and To boxes. Informs only; Submit never reads them.
+  readonly fromHint = signal<CallerResult | null>(null)
+  readonly toHint = signal<CallerResult | null>(null)
+  private hintSubscriptions: Subscription[] = []
   //readonly imagePath = "'./assets/imgs/rangers/'" // not yet used by *.html
 
   // Get location events from <location> component
@@ -653,6 +659,21 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // NOTE: workaround for onChange not working...
     // https://material.angular.io/components/autocomplete/examples#autocomplete-overview; also Ang Dev with TS, pg 140ff; Must be in OnInit, once component properties initialized
     this.callsignCtrl.valueChanges.pipe(debounceTime(700)).subscribe(newCall => this.callsignChanged(newCall))
+    this.hintSubscriptions = [
+      this.callsignCtrl.valueChanges.pipe(debounceTime(300)).subscribe(v => void this.updateHint(v, this.fromHint)),
+      this.toCtrl.valueChanges.pipe(debounceTime(300)).subscribe(v => void this.updateHint(v, this.toHint)),
+    ]
+  }
+
+  /** E-324: who is this caller (EOC, roster, tactical ...)? Colour and a text tag; never blocks a save. */
+  private async updateHint(call: string, target: WritableSignal<CallerResult | null>): Promise<void> {
+    const ctx = {
+      eocCalls: this.settings?.eocCalls ?? [],
+      roster: this.rangers,
+      tacticalCalls: this.settings?.tacticalCalls ?? [],
+    }
+    const result = callerKind(call, ctx)
+    target.set(result.kind === 'blank' ? null : result)
   }
 
   // https://angular.io/guide/practical-observable-usage#type-ahead-suggestions
@@ -1716,6 +1737,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     //this.locationChange?.unsubscribe()
     this.rangersSubscription?.unsubscribe()
     this.missionSubscription?.unsubscribe()
+    this.hintSubscriptions.forEach(s => s.unsubscribe())
     //this.timeSubscription?.unsubscribe()
   }
 }
