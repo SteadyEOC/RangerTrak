@@ -636,3 +636,223 @@ test('setup file: a snapshot without it, or a new claim, forgets it; viewers nee
   assert.strictEqual((await b.call('GET', `/api/setup/${sha}`, { headers: { 'X-Board-Password': 'pw' } })).status, 404);
   assert.strictEqual((await b.call('GET', '/api/requests', { headers: { 'X-Board-Key': took.json.key } })).json.setup, undefined);
 }));
+
+// ---- E-306 rung 2 (D-72): several stations publish to one RangerView ----
+const claimAs = (b, station, extra = {}, scribe = `Scribe ${station || 'none'}`) =>
+  b.call('POST', '/api/claim', { json: { station, by: { ...BY, scribe }, ...extra } });
+const K = (key) => ({ 'X-Board-Key': key });
+const rep = (id, extra = {}) => ({ id, date: '2026-11-18T14:30:00Z', callsign: 'K7ABC', msgNo: `A00${id}`, ...extra });
+
+test('rung 2: two stations join an open RangerView and each keeps its own key and snapshot', withBoard(async (b) => {
+  const a = await claimAs(b, 'A');
+  assert.strictEqual(a.status, 200);
+  assert.deepStrictEqual(a.json.stations, ['A']);
+  const c = await claimAs(b, 'C');
+  assert.strictEqual(c.status, 200);
+  assert.notStrictEqual(c.json.key, a.json.key);
+  assert.deepStrictEqual(c.json.stations, ['A', 'C']);
+  assert.strictEqual(c.json.tookOverFrom, undefined, 'a join is not a takeover');
+  assert.strictEqual((await publish(b, a.json.key, { mission: 'M', reports: [rep(1)] })).status, 204);
+  assert.strictEqual((await publish(b, c.json.key, { mission: 'M', reports: [rep(1, { msgNo: 'C001' }), rep(2, { msgNo: 'C002' })] })).status, 204);
+  const read = (await b.call('GET', '/api/mission')).json;
+  assert.strictEqual(read.reports.length, 3);
+  assert.deepStrictEqual(read.reports.map((r) => [r.station, r.msgNo]), [['A', 'A001'], ['C', 'C001'], ['C', 'C002']], 'the publisher letter never overwrites msgNo');
+  assert.deepStrictEqual(read.stations.map((s) => [s.station, s.scribe, s.reports]), [['A', 'Scribe A', 1], ['C', 'Scribe C', 2]]);
+  assert.ok(read.stations.every((s) => s.seenAt));
+  assert.strictEqual(read.board.by.scribe, 'Scribe A', 'the header is the primary');
+}));
+
+test('rung 2: a station with no letter may publish, and the claim reply lists letters only', withBoard(async (b) => {
+  const a = await claimAs(b, 'A');
+  const n = await claimAs(b, '');
+  assert.strictEqual(n.status, 200);
+  assert.deepStrictEqual(n.json.stations, ['A']);
+  await publish(b, a.json.key, { mission: 'M', reports: [rep(1)] });
+  await publish(b, n.json.key, { mission: 'M', reports: [rep(2)] });
+  const read = (await b.call('GET', '/api/mission')).json;
+  assert.deepStrictEqual(read.reports.map((r) => r.station), ['A', '']);
+  assert.strictEqual((await claimAs(b, 'a')).status, 400, 'lower case');
+  assert.strictEqual((await claimAs(b, 'AB')).status, 400);
+  assert.strictEqual((await claimAs(b, 7)).status, 400);
+}));
+
+test('rung 2: with a password a join needs it; a wrong one is refused, counted and rate limited', withBoard(async (b) => {
+  await claimAs(b, 'A', { password: 'pw' });
+  const wrong = await claimAs(b, 'B', { password: 'nope' });
+  assert.strictEqual(wrong.status, 403);
+  assert.strictEqual(wrong.json.needPassword, true);
+  assert.strictEqual((await claimAs(b, 'B', { password: '' })).status, 403);
+  const ok = await claimAs(b, 'B', { password: 'pw' });
+  assert.strictEqual(ok.status, 200);
+  assert.deepStrictEqual(ok.json.stations, ['A', 'B']);
+  assert.strictEqual((await b.call('GET', '/api/mission', { headers: { 'X-Board-Password': 'pw' } })).status, 200);
+  for (let i = 0; i < 5; i++) await claimAs(b, 'D', { password: `bad${i}` });
+  assert.strictEqual((await claimAs(b, 'D', { password: 'pw' })).status, 429, 'five wrong in a minute blocks even the right one');
+}));
+
+test('rung 2: taking over one station leaves the others publishing', withBoard(async (b) => {
+  const a = await claimAs(b, 'A');
+  const c = await claimAs(b, 'C');
+  await publish(b, a.json.key, { mission: 'M', reports: [rep(1)] });
+  await publish(b, c.json.key, { mission: 'M', reports: [rep(2, { msgNo: 'C001' })] });
+  const took = await claimAs(b, 'C', {}, 'Sam');
+  assert.strictEqual(took.status, 200);
+  assert.strictEqual(took.json.tookOverFrom.by.scribe, 'Scribe C');
+  assert.strictEqual((await publish(b, c.json.key, { mission: 'M', reports: [] })).status, 403, "C's old key is cut off");
+  const old = await publish(b, c.json.key, {});
+  assert.strictEqual(old.json.by.scribe, 'Sam', 'and told who holds station C');
+  assert.strictEqual((await publish(b, a.json.key, { mission: 'M', reports: [rep(1), rep(3)] })).status, 204, 'A is untouched');
+  assert.strictEqual((await publish(b, took.json.key, { mission: 'M', reports: [rep(2, { msgNo: 'C001' })] })).status, 204);
+  const read = (await b.call('GET', '/api/mission')).json;
+  assert.deepStrictEqual(read.stations.map((s) => [s.station, s.scribe]), [['A', 'Scribe A'], ['C', 'Sam']]);
+}));
+
+test('rung 2: takeover of a station on a protected RangerView needs the password', withBoard(async (b) => {
+  await claimAs(b, 'A', { password: 'pw' });
+  const c = await claimAs(b, 'C', { password: 'pw' });
+  const refused = await claimAs(b, 'C', { password: 'nope' });
+  assert.strictEqual(refused.status, 403);
+  assert.strictEqual(refused.json.error, 'claimed');
+  assert.strictEqual((await publish(b, c.json.key, { mission: 'M', reports: [] })).status, 204, 'the real C is unharmed');
+  assert.strictEqual((await claimAs(b, 'C', { password: 'pw' })).status, 200);
+}));
+
+test('rung 2: an automatic reclaim never takes over a station, but may join one that is not there', withBoard(async (b) => {
+  const a = await claimAs(b, 'A');
+  const again = await claimAs(b, 'A', { reclaim: true });
+  assert.strictEqual(again.status, 409);
+  assert.strictEqual(again.json.error, 'claimed');
+  assert.strictEqual((await publish(b, a.json.key, { mission: 'M', reports: [] })).status, 204, 'A still holds its key');
+  const joined = await claimAs(b, 'B', { reclaim: true });
+  assert.strictEqual(joined.status, 200);
+  assert.deepStrictEqual(joined.json.stations, ['A', 'B']);
+}));
+
+test('rung 2: a reclaim on a protected RangerView joins only with the password', withBoard(async (b) => {
+  await claimAs(b, 'A', { password: 'pw' });
+  assert.strictEqual((await claimAs(b, 'B', { reclaim: true, password: '' })).status, 409);
+  assert.strictEqual((await claimAs(b, 'B', { reclaim: true, password: 'pw' })).status, 200);
+}));
+
+test('rung 2: at most 8 stations', withBoard(async (b) => {
+  for (const l of 'ABCDEFGH') assert.strictEqual((await claimAs(b, l)).status, 200, l);
+  const ninth = await claimAs(b, 'I');
+  assert.strictEqual(ninth.status, 409);
+  assert.deepStrictEqual(ninth.json, { error: 'too-many-stations' });
+  assert.strictEqual((await claimAs(b, 'A')).status, 200, 'a takeover of a present station is not a ninth');
+}));
+
+test('rung 2: only the primary (first to connect) changes the password', withBoard(async (b) => {
+  const a = await claimAs(b, 'A');
+  const c = await claimAs(b, 'C');
+  const denied = await b.call('POST', '/api/password', { headers: K(c.json.key), json: { password: 'x' } });
+  assert.strictEqual(denied.status, 403);
+  assert.strictEqual(denied.json.state, 'not-primary');
+  assert.strictEqual((await b.call('GET', '/api/mission')).status, 200, 'unchanged');
+  assert.strictEqual((await b.call('POST', '/api/password', { headers: K(a.json.key), json: { password: 'x' } })).status, 204);
+  assert.strictEqual((await b.call('GET', '/api/mission')).status, 401);
+  // A takeover of C by a device carrying a different password does not change the board's.
+  assert.strictEqual((await claimAs(b, 'C', { password: 'x' })).status, 200);
+  assert.strictEqual((await b.call('GET', '/api/mission', { headers: { 'X-Board-Password': 'x' } })).status, 200);
+}));
+
+test('rung 2: leave drops the station and its reports; the oldest left becomes primary', withBoard(async (b) => {
+  const a = await claimAs(b, 'A');
+  const c = await claimAs(b, 'C');
+  const d = await claimAs(b, 'D');
+  await publish(b, a.json.key, { mission: 'M', reports: [rep(1)] });
+  await publish(b, c.json.key, { mission: 'M', reports: [rep(2)] });
+  await publish(b, d.json.key, { mission: 'M', reports: [rep(3)] });
+  assert.strictEqual((await b.call('POST', '/api/leave', { headers: K(c.json.key) })).status, 204);
+  let read = (await b.call('GET', '/api/mission')).json;
+  assert.deepStrictEqual(read.stations.map((s) => s.station), ['A', 'D']);
+  assert.strictEqual(read.reports.length, 2);
+  assert.strictEqual((await publish(b, c.json.key, {})).status, 403, 'its key is gone');
+  assert.strictEqual((await b.call('POST', '/api/leave', { headers: K('not-a-key') })).status, 403);
+  // The primary leaves: D (the oldest left) takes over the password.
+  assert.strictEqual((await b.call('POST', '/api/leave', { headers: K(a.json.key) })).status, 204);
+  read = (await b.call('GET', '/api/mission')).json;
+  assert.deepStrictEqual(read.stations.map((s) => s.station), ['D']);
+  assert.strictEqual(read.board.by.scribe, 'Scribe D');
+  assert.strictEqual((await b.call('POST', '/api/password', { headers: K(d.json.key), json: { password: 'now' } })).status, 204);
+  // The last one leaving puts RangerView back to unclaimed, and the password with it.
+  assert.strictEqual((await b.call('POST', '/api/leave', { headers: K(d.json.key) })).status, 204);
+  assert.deepStrictEqual((await b.call('GET', '/api/mission')).json, { waiting: true });
+  assert.strictEqual((await claimAs(b, 'B')).status, 200);
+  assert.strictEqual((await b.call('GET', '/api/mission')).status, 200, 'no password left over');
+}));
+
+test("rung 2: a request for station B's attachment works, and only B is asked to upload it", withBoard(async (b) => {
+  const photo = { bytes: crypto.randomBytes(2048) };
+  const sha = sha256(photo.bytes);
+  const a = await claimAs(b, 'A');
+  const c = await claimAs(b, 'B');
+  await publish(b, a.json.key, { mission: 'M', reports: [] });
+  await publish(b, c.json.key, snapshotWith(photo));
+  assert.strictEqual((await b.call('POST', `/api/request/${sha}`)).status, 202, 'the union lists it');
+  assert.deepStrictEqual((await b.call('GET', '/api/requests', { headers: K(a.json.key) })).json.requests, [], 'A has no such file');
+  assert.deepStrictEqual((await b.call('GET', '/api/requests', { headers: K(c.json.key) })).json.requests, [sha]);
+  assert.strictEqual((await b.call('POST', `/api/attachments/${sha}`, { headers: K(a.json.key), body: photo.bytes })).status, 404, 'A cannot supply it');
+  assert.strictEqual((await b.call('POST', `/api/attachments/${sha}`, { headers: K(c.json.key), body: photo.bytes })).status, 204);
+  const got = await b.call('GET', `/api/attachments/${sha}`);
+  assert.strictEqual(got.status, 200);
+  assert.ok(got.raw.equals(photo.bytes));
+  // B leaves: its reference, and the held original, go with it.
+  await b.call('POST', '/api/leave', { headers: K(c.json.key) });
+  assert.strictEqual((await b.call('GET', `/api/attachments/${sha}`)).status, 404);
+  assert.strictEqual((await b.call('POST', `/api/request/${sha}`)).status, 404);
+}));
+
+test('rung 2: the area map and the Setup file come from the primary only', withBoard(async (b) => {
+  const map = crypto.randomBytes(3000);
+  const msha = sha256(map);
+  const a = await claimAs(b, 'A');
+  const c = await claimAs(b, 'C');
+  await publish(b, c.json.key, mapSnapshot(map));
+  assert.strictEqual((await b.call('GET', '/api/requests', { headers: K(c.json.key) })).json.map, undefined, "C's map is ignored");
+  assert.strictEqual((await b.call('POST', `/api/map/${msha}`, { headers: K(c.json.key), body: map })).status, 404);
+  const zip = setupZip(GOOD_MANIFEST);
+  await publish(b, c.json.key, { ...setupSnapshot(zip), ...mapSnapshot(map) });
+  assert.strictEqual((await b.call('POST', `/api/setup/${sha256(zip)}`, { headers: K(c.json.key), body: zip })).status, 404);
+  await publish(b, a.json.key, mapSnapshot(map));
+  assert.deepStrictEqual((await b.call('GET', '/api/requests', { headers: K(a.json.key) })).json.map, { sha256: msha, held: false });
+  assert.strictEqual((await b.call('POST', `/api/map/${msha}`, { headers: K(a.json.key), body: map })).status, 204);
+  assert.strictEqual((await b.call('GET', `/api/map/${msha}`)).status, 200);
+}));
+
+test('rung 2: one station: the payload is as before, plus stations', withBoard(async (b) => {
+  const a = await claimAs(b, 'B');
+  const snap = { mission: 'M', event: 'Fern', reports: [rep(1)], places: [] };
+  await publish(b, a.json.key, snap);
+  const read = (await b.call('GET', '/api/mission')).json;
+  const { board, stations, ...rest } = read;
+  assert.deepStrictEqual(rest, snap, 'reports carry no station field with one station');
+  assert.ok(board);
+  assert.strictEqual(stations.length, 1);
+  assert.strictEqual(stations[0].station, 'B');
+  assert.strictEqual(stations[0].mission, 'M');
+  assert.strictEqual(stations[0].reports, 1);
+}));
+
+test('rung 2: a key from before a restart is told 409 unclaimed even after another station re-claimed', async () => {
+  const first = await start();
+  let oldKey;
+  try { oldKey = (await claimAs(first, 'C')).json.key; } finally { await first.close(); }
+  const b = await start();
+  try {
+    await claimAs(b, 'A');
+    assert.strictEqual((await publish(b, oldKey, {})).status, 409, 'so station C re-claims and joins');
+    assert.strictEqual((await publish(b, 'plain-stranger-key', {})).status, 403);
+    assert.strictEqual((await claimAs(b, 'C', { reclaim: true })).status, 200);
+  } finally { await b.close(); }
+});
+
+test('rung 2: join and leave are logged, never a key or password', withBoard(async (b) => {
+  const a = await claimAs(b, 'A', { password: 'topsecret' });
+  const c = await claimAs(b, 'C', { password: 'topsecret' });
+  await b.call('POST', '/api/leave', { headers: K(c.json.key) });
+  const text = b.lines.join('\n');
+  assert.match(text, /Station joined: station C/);
+  assert.match(text, /Station left: station C/);
+  assert.ok(!text.includes('topsecret') && !text.includes(a.json.key) && !text.includes(c.json.key));
+}));

@@ -6,6 +6,12 @@
 // requested originals. A restart forgets everything, on purpose; the scribe's device notices
 // (every keyed call answers 409 'unclaimed'), claims again and re-sends (D-61 item 6).
 //
+// E-306 rung 2 (ADR D-72): several stations may publish to one RangerView. Each claim names its
+// station (one letter A-Z, or '' for a device with no letter); the server keeps one publisher, key,
+// heartbeat and snapshot PER STATION and merges them, read-only, for viewers. The first claim after
+// a restart makes its station the PRIMARY, which owns the password, the area map, the Setup file and
+// the mission name in the header. Nothing is ever sent back to a station beyond the letters in the claim reply.
+//
 // A claim body may carry `reclaim: true`. The client sets it only for the AUTOMATIC re-claim after
 // a 409 (restart), never for a person's "Take over". A reclaim on an unclaimed RangerView is a normal
 // first claim; on a claimed RangerView it never takes over (409 'claimed') - see postClaim().
@@ -21,6 +27,8 @@ const { parseRange } = require('./viewer-lib');
 const { checkSetupZip } = require('./setup-zip');
 
 const SHA_RE = /^[0-9a-f]{64}$/;
+const STATION_RE = /^[A-Z]?$/;
+const MAX_STATIONS = 8;
 const SMALL_BODY_LIMIT = 64 * 1024;
 const MISSION_BODY_LIMIT = 25 * 1024 * 1024; // as before: generous for JSON, cheap insurance
 const MB500 = 500 * 1024 * 1024;
@@ -92,9 +100,16 @@ function safeContentType(type) {
  *                                      so "Lost RangerView" can ask "Still on <name>?" (E-216)
  */
 function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, uploadCap = MB500, mapCap = MB250, setupCap = MB20, name = '', onClaim = () => {}, version = '', wifi = '', update = () => null } = {}) {
-  let claim = null; // { key, password, by, at, previous? }
-  let snapshot = null;
-  let refs = new Map(); // sha -> { size, type }, the non-removed attachment refs in the snapshot
+  // D-72: one publisher and one snapshot per station. Map order is join order (a takeover keeps its place).
+  const publishers = new Map(); // station -> { station, key, by, at, seenAt, previous? }
+  const snapshots = new Map(); // station -> the last snapshot that station published
+  const stationRefs = new Map(); // station -> Map(sha -> { size, type }) from that station's snapshot
+  let password = ''; // board-wide; only the primary changes it
+  let primary = null; // the station of the first claim after a restart (or the oldest left, once it leaves)
+  // A key starts with this process's own tag, so a key from before a restart is told apart from a stranger's.
+  const instance = crypto.randomBytes(6).toString('base64url');
+  const newKey = () => `${instance}.${crypto.randomBytes(32).toString('base64url')}`;
+  let refs = new Map(); // sha -> { size, type }: the UNION of every station's non-removed attachment refs
   const requests = new Set();
   const originals = new Map(); // sha -> Buffer; Map keeps insertion order, so the first key is the oldest
   let originalsBytes = 0;
@@ -106,12 +121,11 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   // E-287: the Setup file offered to phones (settings, op period, places; never the roster), memory only like the map.
   let wantedSetup = null; // { sha, bytes, name }
   let heldSetup = null; // { sha, buf, filename }
-  const retiredKeys = []; // SHA-256 hex of keys superseded by a takeover, newest last, capped
+  const retiredKeys = []; // { hash: SHA-256 hex of a key superseded by a takeover, station }, newest last, capped
   const attempts = new Map(); // remote address -> { fails: number[], blockedUntil }
   const board = { name };
   // E-216: when the scribe's device last made a keyed call (the heartbeat), and which viewer addresses have
   // read the mission lately. The addresses are only ever counted: they are never printed, logged or returned.
-  let scribeSeenAt = 0;
   const viewers = new Map(); // remote address -> last time it read /api/mission
 
   const clock = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -157,33 +171,41 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   const sendBlocked = (res, retry) => send(res, 429, { error: 'Too many wrong passwords. Wait a minute and try again.', retryAfter: retry }, { 'Retry-After': String(retry) });
 
   // ---- who is asking ----
-  // The publisher's calls. 409: nobody has claimed (a restart) - the client claims again and
-  // resends. 403: somebody else holds RangerView now - the client stops publishing.
+  // The publisher's calls. 409: nobody has claimed, or the key is from before a restart - the client
+  // claims again and resends. 403: this station's key was superseded by a takeover - the client stops
+  // publishing. Returns the station's publisher, or false after answering.
   function keyed(req, res) {
-    if (!claim) { send(res, 409, { state: 'unclaimed' }); return false; }
+    if (publishers.size === 0) { send(res, 409, { state: 'unclaimed' }); return false; }
     const key = req.headers['x-board-key'];
-    if (typeof key !== 'string' || !safeEqual(key, claim.key)) {
-      // Who holds RangerView is told only to a device that provably held it (its key was
-      // superseded by a takeover) or when RangerView is open anyway. Any other key gets no details,
-      // so a stranger on the network learns nothing from a password-protected RangerView.
-      const known = typeof key === 'string' && retiredKeys.includes(digest(key).toString('hex'));
-      send(res, 403, !claim.password || known ? { state: 'replaced', by: claim.by, at: claim.at } : { state: 'replaced' });
-      return false;
+    if (typeof key === 'string') {
+      for (const p of publishers.values()) {
+        if (safeEqual(key, p.key)) { p.seenAt = now(); return p; }
+      }
+      // A key this process never issued but that carries another process's tag: a restart forgot it.
+      const dot = key.indexOf('.');
+      if (dot > 0 && key.slice(0, dot) !== instance && /^[\w-]{8}$/.test(key.slice(0, dot))) { send(res, 409, { state: 'unclaimed' }); return false; }
     }
-    scribeSeenAt = now();
-    return true;
+    // Who holds the station is told only to a device that provably held it (its key was superseded by a
+    // takeover) or when RangerView is open anyway. Any other key gets no details, so a stranger on the
+    // network learns nothing from a password-protected RangerView.
+    const retired = typeof key === 'string' ? retiredKeys.find((r) => r.hash === digest(key).toString('hex')) : undefined;
+    const holder = retired ? publishers.get(retired.station) : password ? undefined : primaryPublisher();
+    send(res, 403, holder ? { state: 'replaced', by: holder.by, at: holder.at } : { state: 'replaced' });
+    return false;
   }
-  // A viewer's calls. No claim means no password exists yet, so there is nothing to check.
+  // A viewer's calls. No publisher means no password exists yet, so there is nothing to check.
   function viewerAllowed(req, res) {
-    if (!claim || !claim.password) return true;
-    const { result, retry } = checkPassword(req, claim.password);
+    if (publishers.size === 0 || !password) return true;
+    const { result, retry } = checkPassword(req, password);
     if (result === 'ok') return true;
     if (result === 'blocked') sendBlocked(res, retry);
     else send(res, 401, { needPassword: true });
     return false;
   }
+  const primaryPublisher = () => publishers.get(primary);
+  const lettersNow = () => [...publishers.keys()].filter(Boolean).sort();
 
-  const modeLine = () => (claim.password ? 'Password required' : 'Open to this network');
+  const modeLine = () => (password ? 'Password required' : 'Open to this network');
   const byLine = (by) => `${by.mission || '(unnamed mission)'}, op period ${by.opPeriod || '?'}, by ${by.scribe || 'a scribe with no name set'} (${by.agent || 'unknown browser'})`;
 
   // ---- originals: an in-memory LRU, oldest dropped first ----
@@ -232,63 +254,132 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     return found;
   }
 
+  // D-72 item 4: what viewers may ask for is the union over every station's snapshot. Requests and held
+  // originals nobody lists any more are dropped.
+  function rebuildRefs() {
+    refs = new Map();
+    for (const m of stationRefs.values()) for (const [sha, r] of m) if (!refs.has(sha)) refs.set(sha, r);
+    for (const sha of [...requests]) if (!refs.has(sha)) requests.delete(sha);
+    for (const [sha, buf] of [...originals]) {
+      if (!refs.has(sha)) { originals.delete(sha); originalsBytes -= buf.length; }
+    }
+  }
+
+  // The primary changed hands or was cleared: the map and Setup file belong to the primary only, and the new
+  // primary's own offers apply on its next publish.
+  function dropPrimaryOffers() {
+    wantedMap = null; heldMap = null; wantedSetup = null; heldSetup = null;
+  }
+
   // ---- routes ----
   async function postClaim(req, res) {
     const body = await readJson(req, SMALL_BODY_LIMIT);
     const by = cleanBy(body && body.by);
     if (!by) { send(res, 400, { error: 'by is required' }); return; }
-    const password = typeof body.password === 'string' ? body.password : '';
+    const given = typeof body.password === 'string' ? body.password : '';
+    const station = body.station === undefined || body.station === null ? '' : body.station;
+    if (typeof station !== 'string' || !STATION_RE.test(station)) { send(res, 400, { error: 'station must be one upper-case letter A-Z, or empty' }); return; }
+    const stamp = new Date(now()).toISOString();
+    const who = station ? `station ${station}: ` : '';
 
-    if (!claim) {
-      claim = { key: crypto.randomBytes(32).toString('base64url'), password, by, at: new Date(now()).toISOString() };
-      log(`RangerView claimed: ${byLine(by)}, ${clock(now())}`);
+    if (publishers.size === 0) {
+      password = given;
+      primary = station;
+      const first = { station, key: newKey(), by, at: stamp, seenAt: 0 };
+      publishers.set(station, first);
+      log(`RangerView claimed: ${who}${byLine(by)}, ${clock(now())}`);
       log(modeLine());
-      send(res, 200, { key: claim.key });
+      send(res, 200, { key: first.key, stations: lettersNow() });
+      onClaim();
+      return;
+    }
+
+    const present = publishers.get(station);
+    const entitled = () => !password || safeEqual(given, password);
+
+    if (!present) {
+      // Joining: a station not yet publishing. Needs the password when there is one. A reclaim may join too.
+      if (body.reclaim === true) {
+        if (!entitled()) { send(res, 409, { error: 'claimed' }); return; }
+      } else if (password) {
+        const addr = req.socket.remoteAddress || '';
+        const retry = blockedFor(addr);
+        if (retry) { sendBlocked(res, retry); return; }
+        if (!entitled()) { recordFailure(addr); send(res, 403, { error: 'password', needPassword: true }); return; }
+        attempts.delete(addr);
+      }
+      if (publishers.size >= MAX_STATIONS) { send(res, 409, { error: 'too-many-stations' }); return; }
+      const joined = { station, key: newKey(), by, at: stamp, seenAt: 0 };
+      publishers.set(station, joined);
+      log(`Station joined: ${who || '(no station letter) '}${byLine(by)}, ${clock(now())} (${publishers.size} publishing)`);
+      send(res, 200, { key: joined.key, stations: lettersNow() });
       onClaim();
       return;
     }
 
     // An automatic re-claim (the client's answer to a 409 after a restart) never takes over: a
     // device superseded before the restart may re-claim first-come, and must not then be able
-    // to swap RangerView back and forth with the real publisher with nobody acting. Only a claim
+    // to swap this station back and forth with the real publisher with nobody acting. Only a claim
     // without reclaim - a person pressing "Take over" - falls through to the takeover below.
     if (body.reclaim === true) {
-      const entitled = !claim.password || safeEqual(password, claim.password);
-      send(res, 409, entitled ? { error: 'claimed', by: claim.by, at: claim.at } : { error: 'claimed' });
+      send(res, 409, entitled() ? { error: 'claimed', by: present.by, at: present.at } : { error: 'claimed' });
       return;
     }
-    // Takeover. With a password set, the claim body must carry it; with none, anyone may.
-    if (claim.password) {
+    // Takeover of THIS station. With a password set, the claim body must carry it; with none, anyone may.
+    if (password) {
       const addr = req.socket.remoteAddress || '';
       const retry = blockedFor(addr);
       if (retry) { sendBlocked(res, retry); return; }
-      if (!safeEqual(password, claim.password)) {
+      if (!entitled()) {
         recordFailure(addr);
         send(res, 403, { error: 'claimed', needPassword: true });
         return;
       }
       attempts.delete(addr);
     }
-    const previous = { by: claim.by, at: claim.at };
-    retiredKeys.push(digest(claim.key).toString('hex'));
+    const previous = { by: present.by, at: present.at };
+    retiredKeys.push({ hash: digest(present.key).toString('hex'), station });
     if (retiredKeys.length > 20) retiredKeys.shift();
-    claim = {
-      key: crypto.randomBytes(32).toString('base64url'),
-      password: password !== '' ? password : claim.password,
-      by, at: new Date(now()).toISOString(), previous,
-    };
-    log(`Publisher changed to ${byLine(by)}, ${clock(now())} (was ${previous.by.scribe || 'unnamed'}, ${previous.by.mission || 'unnamed mission'})`);
+    const taken = { station, key: newKey(), by, at: stamp, seenAt: 0, previous };
+    publishers.set(station, taken);
+    // Only the primary's holder may set a new password, as before; another station keeps the board's.
+    if (station === primary && given !== '') password = given;
+    log(`Publisher changed to ${who}${byLine(by)}, ${clock(now())} (was ${previous.by.scribe || 'unnamed'}, ${previous.by.mission || 'unnamed mission'})`);
     log(modeLine());
-    send(res, 200, { key: claim.key, tookOverFrom: previous });
+    send(res, 200, { key: taken.key, tookOverFrom: previous, stations: lettersNow() });
     onClaim();
   }
 
   async function postPassword(req, res) {
     if (!keyed(req, res)) return;
     const body = await readJson(req, SMALL_BODY_LIMIT);
-    if (!keyed(req, res)) return;
-    claim.password = body && typeof body.password === 'string' ? body.password : '';
+    const me = keyed(req, res);
+    if (!me) return;
+    // Rung 2: the password is the board's, and the first station to connect owns it.
+    if (me.station !== primary) { send(res, 403, { state: 'not-primary', primary }); return; }
+    password = body && typeof body.password === 'string' ? body.password : '';
     log(modeLine());
+    send(res, 204);
+    onClaim();
+  }
+
+  // The station's device turned RangerView off. Its publisher and snapshot go; the oldest station left
+  // becomes primary, and the last one leaving puts RangerView back to unclaimed.
+  function postLeave(req, res) {
+    const me = keyed(req, res);
+    if (!me) return;
+    publishers.delete(me.station);
+    snapshots.delete(me.station);
+    stationRefs.delete(me.station);
+    rebuildRefs();
+    log(`Station left: ${me.station ? `station ${me.station}: ` : ''}${me.by.scribe || 'unnamed'}, ${clock(now())} (${publishers.size} still publishing)`);
+    if (publishers.size === 0) {
+      password = ''; primary = null; dropPrimaryOffers();
+    } else if (me.station === primary) {
+      primary = publishers.keys().next().value;
+      dropPrimaryOffers();
+      log(`Station ${primary || '(no letter)'} is now the first station.`);
+    }
     send(res, 204);
     onClaim();
   }
@@ -297,26 +388,31 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     if (!keyed(req, res)) return;
     const body = await readJson(req, MISSION_BODY_LIMIT);
     if (!body || typeof body !== 'object' || Array.isArray(body)) { send(res, 400, { error: 'Snapshot must be a JSON object' }); return; }
-    if (!keyed(req, res)) return; // the claim may have moved while the body was arriving
-    snapshot = body;
-    refs = collectRefs(body);
-    // The snapshot is the only authority on what viewers may ask for and what is worth holding.
-    for (const sha of [...requests]) if (!refs.has(sha)) requests.delete(sha);
-    for (const [sha, buf] of [...originals]) {
-      if (!refs.has(sha)) { originals.delete(sha); originalsBytes -= buf.length; }
+    const me = keyed(req, res); // the claim may have moved while the body was arriving
+    if (!me) return;
+    snapshots.set(me.station, body);
+    stationRefs.set(me.station, collectRefs(body));
+    // The snapshots are the only authority on what viewers may ask for and what is worth holding.
+    rebuildRefs();
+    // The map and the Setup file come from the primary's snapshot only; another station's fields are ignored.
+    if (me.station === primary) {
+      wantedMap = wantedMapOf(body);
+      if (heldMap && (!wantedMap || wantedMap.sha !== heldMap.sha)) heldMap = null;
+      wantedSetup = wantedSetupOf(body);
+      if (heldSetup && (!wantedSetup || wantedSetup.sha !== heldSetup.sha)) heldSetup = null;
     }
-    wantedMap = wantedMapOf(body);
-    if (heldMap && (!wantedMap || wantedMap.sha !== heldMap.sha)) heldMap = null;
-    wantedSetup = wantedSetupOf(body);
-    if (heldSetup && (!wantedSetup || wantedSetup.sha !== heldSetup.sha)) heldSetup = null;
-    log(`[${new Date(now()).toLocaleTimeString()}] Published: "${cleanText(body.mission) || '(unnamed)'}" - ${(Array.isArray(body.reports) ? body.reports : []).length} report(s).`);
+    log(`[${new Date(now()).toLocaleTimeString()}] Published${publishers.size > 1 ? ` by station ${me.station || '(no letter)'}` : ''}: "${cleanText(body.mission) || '(unnamed)'}" - ${(Array.isArray(body.reports) ? body.reports : []).length} report(s).`);
     send(res, 204);
   }
 
   function getRequests(req, res) {
-    if (!keyed(req, res)) return;
+    const me = keyed(req, res);
+    if (!me) return;
+    // A station is asked only for files its own snapshot lists; the area map and Setup file are the primary's.
+    const mine = stationRefs.get(me.station) || new Map();
+    const isPrimary = me.station === primary;
     // E-293 phase B: also whether the area map the snapshot lists is still to be sent.
-    send(res, 200, { state: 'ok', requests: [...requests], ...(wantedMap ? { map: { sha256: wantedMap.sha, held: !!heldMap } } : {}), ...(wantedSetup ? { setup: { sha256: wantedSetup.sha, held: !!heldSetup } } : {}) });
+    send(res, 200, { state: 'ok', requests: [...requests].filter((sha) => mine.has(sha)), ...(isPrimary && wantedMap ? { map: { sha256: wantedMap.sha, held: !!heldMap } } : {}), ...(isPrimary && wantedSetup ? { setup: { sha256: wantedSetup.sha, held: !!heldSetup } } : {}) });
   }
 
   // Counts each address that read the mission in the last minute. Nothing else is kept about it.
@@ -330,22 +426,43 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   }
 
   function getMission(req, res) {
-    if (!claim) { noteViewer(req); send(res, 200, { waiting: true }); return; }
+    if (publishers.size === 0) { noteViewer(req); send(res, 200, { waiting: true }); return; }
     // Password before "no snapshot yet": a protected RangerView shouldn't tell a stranger even that
     // much, and a viewer with a saved password just sees "Waiting for the scribe..." after it.
     if (!viewerAllowed(req, res)) return;
     noteViewer(req);
-    if (!snapshot) { send(res, 200, { waiting: true }); return; }
-    const info = { by: claim.by, at: claim.at, open: !claim.password, name: board.name };
-    if (scribeSeenAt) info.scribeSeenAt = new Date(scribeSeenAt).toISOString();
+    if (snapshots.size === 0) { send(res, 200, { waiting: true }); return; }
+    const head = primaryPublisher();
+    // The primary's snapshot gives the header fields; until it has published, the oldest station that has will do.
+    const baseStation = snapshots.has(primary) ? primary : snapshots.keys().next().value;
+    const info = { by: head.by, at: head.at, open: !password, name: board.name };
+    if (head.seenAt) info.scribeSeenAt = new Date(head.seenAt).toISOString();
     if (wifi) info.wifi = wifi;
-    if (claim.previous) info.previous = claim.previous;
-    send(res, 200, { ...snapshot, board: info });
+    if (head.previous) info.previous = head.previous;
+    const payload = { ...snapshots.get(baseStation), board: info };
+    const listOf = (st) => { const snap = snapshots.get(st); return snap && Array.isArray(snap.reports) ? snap.reports : []; };
+    if (publishers.size > 1) {
+      // Every station's reports, each marked with the publisher's letter (a report's own msgNo letter is never touched).
+      payload.reports = [];
+      for (const st of publishers.keys()) {
+        for (const r of listOf(st)) payload.reports.push(r && typeof r === 'object' && !Array.isArray(r) ? { ...r, station: st } : r);
+      }
+    }
+    payload.stations = [...publishers.values()].map((p) => {
+      const snap = snapshots.get(p.station);
+      return {
+        station: p.station, scribe: p.by.scribe,
+        mission: snap ? cleanText(snap.mission) : p.by.mission, opPeriod: p.by.opPeriod,
+        seenAt: p.seenAt ? new Date(p.seenAt).toISOString() : '', reports: listOf(p.station).length,
+        ...(snap && snap.event ? { event: cleanText(snap.event) } : {}),
+      };
+    });
+    send(res, 200, payload);
   }
 
   function postRequest(req, res, sha) {
     if (!viewerAllowed(req, res)) return;
-    if (!snapshot || !refs.has(sha)) { send(res, 404, { error: 'That file is not in the current snapshot.' }); return; }
+    if (snapshots.size === 0 || !refs.has(sha)) { send(res, 404, { error: 'That file is not in the current snapshot.' }); return; }
     if (originals.has(sha)) { send(res, 200, { ready: true }); return; }
     requests.add(sha);
     send(res, 202, { pending: true });
@@ -371,8 +488,9 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   }
 
   async function postAttachment(req, res, sha) {
-    if (!keyed(req, res)) return;
-    const ref = refs.get(sha);
+    const me = keyed(req, res);
+    if (!me) return;
+    const ref = (stationRefs.get(me.station) || new Map()).get(sha);
     if (!requests.has(sha) || !ref) { send(res, 404, { error: 'That file was not requested.' }); return; }
     if (!Number.isInteger(ref.size) || ref.size < 0) { send(res, 400, { error: 'The snapshot gives no valid size for this file.' }); return; }
     if (ref.size > uploadCap) { send(res, 413, { error: 'File is over the per-upload limit.', limit: uploadCap }); return; }
@@ -409,8 +527,9 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   }
 
   async function postMap(req, res, sha) {
-    if (!keyed(req, res)) return;
-    if (!wantedMap || wantedMap.sha !== sha) { send(res, 404, { error: 'That map is not in the current snapshot.' }); return; }
+    const me = keyed(req, res);
+    if (!me) return;
+    if (me.station !== primary || !wantedMap || wantedMap.sha !== sha) { send(res, 404, { error: 'That map is not in the current snapshot.' }); return; }
     if (wantedMap.bytes > mapCap) { send(res, 413, { error: 'The map is over the RangerView map limit.', limit: mapCap }); return; }
     if (heldMap && heldMap.sha === sha) { send(res, 204); return; }
     const buf = await readBody(req, wantedMap.bytes);
@@ -436,8 +555,9 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   }
 
   async function postSetup(req, res, sha) {
-    if (!keyed(req, res)) return;
-    if (!wantedSetup || wantedSetup.sha !== sha) { send(res, 404, { error: 'That Setup file is not in the current snapshot.' }); return; }
+    const me = keyed(req, res);
+    if (!me) return;
+    if (me.station !== primary || !wantedSetup || wantedSetup.sha !== sha) { send(res, 404, { error: 'That Setup file is not in the current snapshot.' }); return; }
     if (wantedSetup.bytes > setupCap) { send(res, 413, { error: 'The Setup file is over the RangerView limit.', limit: setupCap }); return; }
     if (heldSetup && heldSetup.sha === sha) { send(res, 204); return; }
     const buf = await readBody(req, wantedSetup.bytes);
@@ -452,7 +572,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
       send(res, 422, { error: checked.reason });
       return;
     }
-    const label = cleanText(snapshot && snapshot.mission, 80).replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '') || 'mission';
+    const label = cleanText(snapshots.get(primary) && snapshots.get(primary).mission, 80).replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '') || 'mission';
     heldSetup = { sha, buf, filename: `${label}-setup.zip` };
     log(`[${new Date(now()).toLocaleTimeString()}] Setup file received (${(buf.length / 1024).toFixed(0)} KB).`);
     send(res, 204);
@@ -465,6 +585,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     if (urlPath === '/api/hello') return m === 'GET' ? send(res, 200, { app: 'rangertrak-board', name: board.name, version, ...(update() ? { newer: update().version } : {}) }) : wrongMethod();
     if (urlPath === '/api/claim') return m === 'POST' ? postClaim(req, res) : wrongMethod();
     if (urlPath === '/api/password') return m === 'POST' ? postPassword(req, res) : wrongMethod();
+    if (urlPath === '/api/leave') return m === 'POST' ? postLeave(req, res) : wrongMethod();
     if (urlPath === '/api/requests') return m === 'GET' ? getRequests(req, res) : wrongMethod();
     if (urlPath === '/api/mission') {
       if (m === 'POST') return postMission(req, res);
@@ -514,18 +635,20 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
   }
 
   // For the QR code: whether anyone has claimed RangerView, and the viewer password if there is one.
-  const claimState = () => ({ claimed: !!claim, password: claim ? claim.password : '' });
+  const claimState = () => ({ claimed: publishers.size > 0, password });
 
   // For the server's own console status line (E-216). Times are epoch ms (0 = never); no addresses.
   function status() {
-    const reports = snapshot && Array.isArray(snapshot.reports) ? snapshot.reports : [];
+    const snap = snapshots.get(primary);
+    const reports = snap && Array.isArray(snap.reports) ? snap.reports : [];
     const last = reports.reduce((m, r) => Math.max(m, Date.parse(r && r.date) || 0), 0);
+    const head = primaryPublisher();
     return {
-      claimed: !!claim,
+      claimed: publishers.size > 0,
       // E-291 (c): the same words as the claim line, and no brackets (the status line adds its own).
-      scribe: claim ? claim.by.scribe || 'a scribe with no name set' : '',
-      claimedAt: claim ? Date.parse(claim.at) : 0,
-      scribeSeenAt,
+      scribe: head ? head.by.scribe || 'a scribe with no name set' : '',
+      claimedAt: head ? Date.parse(head.at) : 0,
+      scribeSeenAt: Math.max(0, ...[...publishers.values()].map((p) => p.seenAt)),
       viewers: viewerCount(),
       lastReportAt: last,
     };
