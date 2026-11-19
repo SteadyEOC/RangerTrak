@@ -651,6 +651,7 @@ test('rung 2: two stations join an open RangerView and each keeps its own key an
   assert.strictEqual(c.status, 200);
   assert.notStrictEqual(c.json.key, a.json.key);
   assert.deepStrictEqual(c.json.stations, ['A', 'C']);
+  assert.strictEqual(c.json.primary, 'A', 'the first station to connect');
   assert.strictEqual(c.json.tookOverFrom, undefined, 'a join is not a takeover');
   assert.strictEqual((await publish(b, a.json.key, { mission: 'M', reports: [rep(1)] })).status, 204);
   assert.strictEqual((await publish(b, c.json.key, { mission: 'M', reports: [rep(1, { msgNo: 'C001' }), rep(2, { msgNo: 'C002' })] })).status, 204);

@@ -5,7 +5,7 @@ import { FieldTree, FormField } from '@angular/forms/signals'
 import { LogService, MissionType } from '../../../shared/services/'
 import { CommandPostPublishService } from '../../../shared/services/command-post-publish.service'
 import { BOARD_HTTP_ERROR, BOARD_LOCALHOST_HINT, BOARD_VIEW_HINT, normaliseBoardAddress } from '../../../domain/board-address'
-import { replacedMessage } from '../../../domain/board-client'
+import { noStationLetterHint, passwordOwnerNote, replacedMessage, stationStatusLine, takeOverLabel } from '../../../domain/board-client'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
 import { MatIconModule } from '@angular/material/icon'
@@ -64,9 +64,34 @@ export class MissionCommandPostComponent implements OnDestroy {
       case 'claiming': return this.publisher.unreachable() ? "Can't reach RangerView." : 'Trying to reach RangerView...'
       // E-289: not said twice when Test connection's own "Connected to RangerView at ..." is showing.
       case 'publishing': return this.publisher.diagnosis()?.ok ? '' : 'Connected to RangerView.'
-      case 'replaced': return replacedMessage(this.publisher.holder())
+      case 'replaced': return replacedMessage(this.publisher.holder(), this.publisher.station())
       default: return this.publisher.unreachable() ? "Can't reach RangerView." : ''
     }
+  }
+
+  /** E-306 rung 2: "Publishing as station B. Also on this RangerView: A, C." Only while publishing. */
+  stationLine(): string {
+    return this.publisher.state() === 'publishing' ? stationStatusLine(this.publisher.station(), this.publisher.stations()) : ''
+  }
+
+  /** E-306 rung 2: a device with no station letter, while another station is publishing. */
+  letterHint(): string {
+    return this.publisher.state() === 'publishing' ? noStationLetterHint(this.publisher.station(), this.publisher.others()) : ''
+  }
+
+  /** Take over takes over one station, so the button says which. */
+  takeOverText(): string { return takeOverLabel(this.publisher.station()) }
+
+  /** Under the password field for a station that is not the first to connect; '' when this device may change it. */
+  passwordNote(): string {
+    return passwordOwnerNote(this.publisher.station(), this.publisher.others(), this.publisher.primary())
+  }
+
+  /** The hint's link: takes the scribe to the station letter box further up this page. */
+  goToStationLetter(): void {
+    const box = document.querySelector<HTMLInputElement>('[data-testid="msg-station"]')
+    box?.scrollIntoView({ block: 'center' })
+    box?.focus()
   }
 
   /** The cause sentence under the status. Left out when the diagnosis block below already says the same thing. */

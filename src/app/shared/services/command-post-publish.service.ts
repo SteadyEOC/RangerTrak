@@ -127,6 +127,16 @@ export class CommandPostPublishService implements OnDestroy {
   private holderSignal = signal<BoardHolder | undefined>(undefined)
   /** Who holds RangerView now, when `state` is `replaced` and the server said. */
   readonly holder = this.holderSignal.asReadonly()
+  private stationsSignal = signal<string[]>([])
+  /** E-306 rung 2: the station letters publishing to this RangerView as of this device's last claim, its own included. */
+  readonly stations = this.stationsSignal.asReadonly()
+  private primarySignal = signal('')
+  /** The first station to connect: the only one that may change the password. Told by the last claim. */
+  readonly primary = this.primarySignal.asReadonly()
+  /** This device's station letter ('' when none is set): what a claim names and what a takeover takes. */
+  station(): string { return this.prefs.getMsgStation() }
+  /** The other stations on this RangerView, as of the last claim. */
+  others(): string[] { const own = this.station(); return this.stationsSignal().filter(l => l !== own) }
   private messageSignal = signal('')
   /** Why the last claim failed, in words for the operator. Empty when there is nothing to say. */
   readonly message = this.messageSignal.asReadonly()
@@ -258,7 +268,7 @@ export class CommandPostPublishService implements OnDestroy {
     const password = settings.boardPassword ?? ''
     const was = this.active
     if (!base) {
-      if (this.stateSignal() !== 'off') this.dispatch({ type: 'stop' })
+      if (this.stateSignal() !== 'off') { this.leave(was?.base); this.dispatch({ type: 'stop' }) }
       this.active = undefined
       this.retry.stop()
       this.unreachableSignal.set(undefined)
@@ -276,7 +286,7 @@ export class CommandPostPublishService implements OnDestroy {
 
     if (this.stateSignal() === 'off' || (was && was.base !== base)) {
       // Switched on, or pointed at another server: a fresh start there.
-      if (this.stateSignal() !== 'off') this.dispatch({ type: 'stop' })
+      if (this.stateSignal() !== 'off') { this.leave(was?.base); this.dispatch({ type: 'stop' }) }
       this.start(base, startUp)
     } else if (this.stateSignal() === 'error' && was && (was.password !== password)) {
       this.start(base, false) // the password was the problem, and it changed
@@ -328,12 +338,12 @@ export class CommandPostPublishService implements OnDestroy {
       this.key = ''
       this.prefs.setBoardPublisher({ replaced: true })
       if (before !== 'off') {
-        this.snackBar.open(replacedMessage(this.holderSignal()), 'OK', { duration: 15000, verticalPosition: 'top' })
+        this.snackBar.open(replacedMessage(this.holderSignal(), this.station()), 'OK', { duration: 15000, verticalPosition: 'top' })
       }
     } else {
       this.holderSignal.set(undefined)
     }
-    if (now === 'off') this.messageSignal.set('')
+    if (now === 'off') { this.messageSignal.set(''); this.stationsSignal.set([]); this.primarySignal.set('') }
   }
 
   private async perform(action: BoardAction): Promise<void> {
@@ -351,6 +361,7 @@ export class CommandPostPublishService implements OnDestroy {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           password: settings.boardPassword ?? '',
+          station: this.station(),
           by: this.by(settings),
           ...(reclaim ? { reclaim: true } : {}),
         }),
@@ -361,6 +372,8 @@ export class CommandPostPublishService implements OnDestroy {
         this.key = read.key
         this.prefs.setBoardPublisher({ base, key: read.key })
         this.takingOver = false
+        this.stationsSignal.set(read.stations)
+        this.primarySignal.set(read.primary)
         this.dispatch({ type: 'claimed' })
       } else if (read.kind === 'heldByOther') {
         this.holderSignal.set(read.holder)
@@ -386,7 +399,7 @@ export class CommandPostPublishService implements OnDestroy {
       if (read.kind === 'ok') this.dispatch({ type: 'keyGood' })
       else if (read.kind === 'unclaimed') this.dispatch({ type: 'keyUnknown' })
       else if (read.kind === 'replaced') { this.holderSignal.set(read.holder); this.dispatch({ type: 'replaced' }) }
-      else { this.messageSignal.set(`RangerView answered with an error (HTTP ${read.status}).`); this.refuse() }
+      else { this.messageSignal.set(`RangerView answered with an error (HTTP ${reply.status}).`); this.refuse() }
     } catch (e) {
       this.claimFailed(base, e)
     }
@@ -454,6 +467,16 @@ export class CommandPostPublishService implements OnDestroy {
     }
   }
 
+  /** E-306 rung 2: tells RangerView this station is done, so its reports leave the merged view at once. Best effort: never awaited, never fails. */
+  private leave(base: string | undefined): void {
+    const key = this.key
+    if (!base || !key || this.stateSignal() !== 'publishing') return
+    void this.call(base, 'POST', '/api/leave', { key }).catch(() => { /* RangerView may be gone; it forgets us on a restart anyway */ })
+    // The key is spent: keeping it would make the next switch-on look "replaced" once other stations are publishing.
+    this.key = ''
+    this.prefs.setBoardPublisher({})
+  }
+
   private async sendPassword(password: string): Promise<void> {
     const base = this.baseOf(this.settings)
     const usedKey = this.key
@@ -464,6 +487,7 @@ export class CommandPostPublishService implements OnDestroy {
       })
       const read = readKeyedReply(reply.status, reply.body)
       if (read.kind === 'ok') this.journal.record('board-password-changed', 'Changed the RangerView password.')
+      else if (read.kind === 'notPrimary') this.messageSignal.set('Only the first station to connect to RangerView can change its password.')
       else if (read.kind !== 'other') this.onKeyedRefusal(read, usedKey)
     } catch (e) {
       this.log.warn(`RangerView password not sent (${e})`, this.id)

@@ -128,18 +128,30 @@
           {{ boardStatus() }} {{ statusMessage() }}
         </p>
       }
+      @if (stationLine()) {
+        <p class="mission-command-post__stations" role="status" data-testid="board-stations">{{ stationLine() }}</p>
+      }
+      @if (letterHint()) {
+        <p class="mission__note" data-testid="board-letter-hint">
+          {{ letterHint() }}
+          <button type="button" class="mission-command-post__copy-view" (click)="goToStationLetter()">Set the station letter</button>
+        </p>
+      }
       @if (publisher.state() === 'replaced') {
-        <button matButton="filled" type="button" (click)="publisher.takeOver()">Take over</button>
+        <button matButton="filled" type="button" (click)="publisher.takeOver()">{{ takeOverText() }}</button>
       }
 
       <!-- D-61: the viewers' password. A text field, not a masked one: the scribe reads it out or
            shows the QR code to the people who need it. Blank = open to the Wi-Fi. -->
-      <mat-form-field class="mission-command-post__url" floatLabel="always">
-        <mat-label>RangerView password</mat-label>
-        <input matInput type="text" [formField]="form.boardPassword" autocomplete="off"
-          autocapitalize="off" spellcheck="false" />
-        <mat-hint>Blank: anyone on this Wi-Fi can read RangerView.</mat-hint>
-      </mat-form-field>
+      <!-- E-306 rung 2: the password is the RangerView's, and the first station to connect owns it. -->
+      <fieldset class="mission-command-post__password" [disabled]="!!passwordNote()">
+        <mat-form-field class="mission-command-post__url" floatLabel="always">
+          <mat-label>RangerView password</mat-label>
+          <input matInput type="text" [formField]="form.boardPassword" autocomplete="off"
+            autocapitalize="off" spellcheck="false" />
+          <mat-hint>{{ passwordNote() || 'Blank: anyone on this Wi-Fi can read RangerView.' }}</mat-hint>
+        </mat-form-field>
+      </fieldset>
 
       <!-- D-60 item 6: off by default. Off sends only a count of attachments per report. -->
       <mat-slide-toggle class="mission-command-post__attachments" [checked]="form.boardShowAttachments().value()"

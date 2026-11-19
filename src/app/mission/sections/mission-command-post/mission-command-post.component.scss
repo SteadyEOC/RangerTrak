@@ -78,3 +78,18 @@
     cursor: pointer;
   }
 }
+
+// E-306 rung 2: who else is publishing, and the password field a later station cannot change.
+.mission-command-post__stations {
+  margin: 0 0 0.5rem;
+  font-size: var(--rt-type-body-sm-size);
+  line-height: var(--rt-type-body-sm-line);
+  color: var(--rt-ink-2);
+}
+
+.mission-command-post__password {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}

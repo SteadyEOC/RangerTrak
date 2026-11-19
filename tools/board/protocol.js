@@ -289,7 +289,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
       publishers.set(station, first);
       log(`RangerView claimed: ${who}${byLine(by)}, ${clock(now())}`);
       log(modeLine());
-      send(res, 200, { key: first.key, stations: lettersNow() });
+      send(res, 200, { key: first.key, stations: lettersNow(), primary });
       onClaim();
       return;
     }
@@ -312,7 +312,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
       const joined = { station, key: newKey(), by, at: stamp, seenAt: 0 };
       publishers.set(station, joined);
       log(`Station joined: ${who || '(no station letter) '}${byLine(by)}, ${clock(now())} (${publishers.size} publishing)`);
-      send(res, 200, { key: joined.key, stations: lettersNow() });
+      send(res, 200, { key: joined.key, stations: lettersNow(), primary });
       onClaim();
       return;
     }
@@ -346,7 +346,7 @@ function createBoard({ log = () => {}, now = Date.now, originalsCap = MB500, upl
     if (station === primary && given !== '') password = given;
     log(`Publisher changed to ${who}${byLine(by)}, ${clock(now())} (was ${previous.by.scribe || 'unnamed'}, ${previous.by.mission || 'unnamed mission'})`);
     log(modeLine());
-    send(res, 200, { key: taken.key, tookOverFrom: previous, stations: lettersNow() });
+    send(res, 200, { key: taken.key, tookOverFrom: previous, stations: lettersNow(), primary });
     onClaim();
   }
 

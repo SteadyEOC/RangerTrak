@@ -7,6 +7,12 @@ import {
   BoardState,
   boardStep,
   describeAgent,
+  noStationLetterHint,
+  passwordOwnerNote,
+  stationLetters,
+  stationStatusLine,
+  takeOverLabel,
+  TOO_MANY_STATIONS_MESSAGE,
   ics213Fields,
   rr213Fields,
   readClaimReply,
@@ -147,7 +153,17 @@ describe('board-client state machine (D-61)', () => {
 
 describe('board-client replies', () => {
   it('reads a claim', () => {
-    expect(readClaimReply(200, { key: 'k1' })).toEqual({ kind: 'ok', key: 'k1' })
+    expect(readClaimReply(200, { key: 'k1' })).toEqual({ kind: 'ok', key: 'k1', stations: [], primary: '' })
+  })
+
+  it('reads the stations and the first station from a claim (E-306 rung 2)', () => {
+    expect(readClaimReply(200, { key: 'k1', stations: ['C', 'A', 'x', 'A', 7], primary: 'A' }))
+      .toEqual({ kind: 'ok', key: 'k1', stations: ['A', 'C'], primary: 'A' })
+    expect(stationLetters('A')).toEqual([])
+  })
+
+  it('says so when RangerView already has 8 stations; that is a refusal, not a takeover', () => {
+    expect(readClaimReply(409, { error: 'too-many-stations' })).toEqual({ kind: 'refused', message: TOO_MANY_STATIONS_MESSAGE })
   })
 
   it('reads 409 claimed with and without the holder', () => {
@@ -183,6 +199,7 @@ describe('board-client replies', () => {
       kind: 'replaced',
       holder: {},
     })
+    expect(readKeyedReply(403, { state: 'not-primary', primary: 'A' })).toEqual({ kind: 'notPrimary' })
     expect(readKeyedReply(500, null)).toEqual({ kind: 'other', status: 500 })
   })
 
@@ -192,6 +209,30 @@ describe('board-client replies', () => {
       by: { mission: 'M', opPeriod: '2', scribe: 'N7XYZ', agent: 'Firefox on Linux' },
     })
     expect(text).toContain('N7XYZ, Firefox on Linux')
+  })
+})
+
+describe('several stations on one RangerView (E-306 rung 2)', () => {
+  it('names the station and who else is on', () => {
+    expect(stationStatusLine('B', ['A', 'B', 'C'])).toBe('Publishing as station B. Also on this RangerView: A, C.')
+    expect(stationStatusLine('B', ['B'])).toBe('Publishing as station B.')
+    expect(stationStatusLine('', ['A'])).toBe('Publishing without a station letter. Also on this RangerView: A.')
+  })
+  it('hints at a station letter only when this device has none and another station is on', () => {
+    expect(noStationLetterHint('', ['A'])).toContain('its own station letter')
+    expect(noStationLetterHint('', [])).toBe('')
+    expect(noStationLetterHint('B', ['A'])).toBe('')
+  })
+  it('Take over names its station', () => {
+    expect(takeOverLabel('B')).toBe('Take over station B')
+    expect(takeOverLabel('')).toBe('Take over')
+    expect(replacedMessage(undefined, 'B')).toBe('Another device publishes to RangerView as station B now.')
+  })
+  it("the password is the first station's to change", () => {
+    expect(passwordOwnerNote('C', ['A', 'C'], 'A')).toBe('Only station A (first to connect) can change this')
+    expect(passwordOwnerNote('A', ['A', 'C'], 'A')).toBe('')
+    expect(passwordOwnerNote('C', [], 'A')).toBe('')
+    expect(passwordOwnerNote('C', ['A', 'C'], '')).toBe('Only the first station to connect can change this')
   })
 })
 

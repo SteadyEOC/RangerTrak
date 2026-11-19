@@ -95,10 +95,19 @@ export function boardRequestUrl(base: string, path: string): string {
 
 // ---- reading the server's replies ----
 
+export const TOO_MANY_STATIONS_MESSAGE = 'This RangerView already has 8 stations publishing. Another station has to stop before this one can join.'
+
+/** The letters from a claim reply: upper-case A-Z only, sorted, each once. Anything else is ignored. */
+export function stationLetters(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((x): x is string => typeof x === 'string' && /^[A-Z]$/.test(x)))].sort()
+}
+
 export const WRONG_PASSWORD_MESSAGE = 'RangerView has a password. Check it with whoever runs RangerView.'
 
 export type ClaimReply =
-  | { kind: 'ok', key: string }
+  /** `stations`: the letters now publishing to this RangerView, this device's own included (E-306 rung 2). */
+  | { kind: 'ok', key: string, stations: string[], primary: string }
   | { kind: 'heldByOther', holder: BoardHolder }
   | { kind: 'refused', message: string }
 
@@ -122,7 +131,8 @@ function holderOf(body: Record<string, unknown>): BoardHolder {
 /** The reply to POST /api/claim. */
 export function readClaimReply(status: number, body: unknown): ClaimReply {
   const b = asRecord(body)
-  if (status === 200 && typeof b['key'] === 'string' && b['key']) return { kind: 'ok', key: b['key'] }
+  if (status === 200 && typeof b['key'] === 'string' && b['key']) return { kind: 'ok', key: b['key'], stations: stationLetters(b['stations']), primary: typeof b['primary'] === 'string' ? b['primary'] : '' }
+  if (status === 409 && b['error'] === 'too-many-stations') return { kind: 'refused', message: TOO_MANY_STATIONS_MESSAGE }
   if (status === 409) return { kind: 'heldByOther', holder: holderOf(b) }
   if (status === 403 && b['needPassword']) return { kind: 'refused', message: WRONG_PASSWORD_MESSAGE }
   if (status === 429) {
@@ -136,12 +146,15 @@ export type KeyedReply =
   | { kind: 'ok' }
   | { kind: 'unclaimed' }
   | { kind: 'replaced', holder: BoardHolder }
+  /** 403 on the password: only the first station to connect may change it (E-306 rung 2). Not a takeover. */
+  | { kind: 'notPrimary' }
   | { kind: 'other', status: number }
 
 /** The reply to any call that carries the publish key. */
 export function readKeyedReply(status: number, body: unknown): KeyedReply {
   if (status >= 200 && status < 300) return { kind: 'ok' }
   if (status === 409) return { kind: 'unclaimed' }
+  if (status === 403 && asRecord(body)['state'] === 'not-primary') return { kind: 'notPrimary' }
   if (status === 403) return { kind: 'replaced', holder: holderOf(asRecord(body)) }
   return { kind: 'other', status }
 }
@@ -169,13 +182,38 @@ export function describeAgent(ua: string, brands?: readonly { brand: string }[],
   return name || system || 'Unknown browser'
 }
 
-/** The sentence on the Mission card and the notice when another device takes RangerView. */
-export function replacedMessage(holder: BoardHolder | undefined): string {
+/** The sentence on the Mission card and the notice when another device takes RangerView (or, with a letter, that station). */
+export function replacedMessage(holder: BoardHolder | undefined, station = ''): string {
   const by = holder?.by
   const who = by && (by.scribe || by.agent)
     ? ` (${[by.scribe, by.agent].filter(Boolean).join(', ')}${holder?.at ? `, ${clockOf(holder.at)}` : ''})`
     : ''
-  return `Another device publishes to RangerView now${who}.`
+  return `Another device publishes to RangerView${station ? ` as station ${station}` : ''} now${who}.`
+}
+
+// ---- several stations (E-306 rung 2, ADR D-72) ----
+
+/** "Publishing as station B. Also on this RangerView: A, C." Without a letter: "Publishing without a station letter." */
+export function stationStatusLine(own: string, others: readonly string[]): string {
+  const rest = others.filter(l => l !== own)
+  const as = own ? `Publishing as station ${own}.` : 'Publishing without a station letter.'
+  return rest.length ? `${as} Also on this RangerView: ${rest.join(', ')}.` : as
+}
+
+/** The hint for a device with no station letter while another station is publishing; '' otherwise. */
+export function noStationLetterHint(own: string, others: readonly string[]): string {
+  return !own && others.length ? 'Give each device its own station letter so RangerView can tell the stations apart.' : ''
+}
+
+/** The label of the Take over button: it takes over one station, so it says which. */
+export function takeOverLabel(own: string): string {
+  return own ? `Take over station ${own}` : 'Take over'
+}
+
+/** Under the RangerView password field when this device is not the first station; '' when it is, or when nobody else is on. */
+export function passwordOwnerNote(own: string, others: readonly string[], primary: string): string {
+  if (!others.length || primary === own) return ''
+  return primary ? `Only station ${primary} (first to connect) can change this` : 'Only the first station to connect can change this'
 }
 
 function clockOf(iso: string): string {
