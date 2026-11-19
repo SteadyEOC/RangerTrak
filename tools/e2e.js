@@ -5931,11 +5931,11 @@ async function checkBoard(downloads) {
     check('device B takes RangerView over with the password', [taken?.board?.by?.mission, taken?.board?.previous?.by?.mission], ['E2E RangerView B', 'E2E RangerView'])
 
     const seenReplaced = await pollUntil(
-      () => evaluate(`document.body.innerText.includes('Another device publishes to RangerView now')`),
+      () => evaluate(`/Another device publishes to RangerView( as station [A-Z])? now/.test(document.body.innerText)`),
       v2 => v2 === true, 30, 500)
     check('device A stops and says another device publishes now', seenReplaced, true)
     await navigateInApp('Mission', 3000)
-    check('...and Mission offers Take over', await evaluate(`[...document.querySelectorAll('button')].some(b => /^\\s*Take over\\s*$/.test(b.textContent))`), true)
+    check('...and Mission offers Take over', await evaluate(`[...document.querySelectorAll('button')].some(b => /^\\s*Take over( station [A-Z])?\\s*$/.test(b.textContent))`), true)
 
     // ── the server restarts; the holder (B) re-claims, the replaced device (A) does not ──
     await server.close()
@@ -5947,7 +5947,7 @@ async function checkBoard(downloads) {
     check('...and the replaced device A did not take it back', (await boardNow())?.board?.by?.mission, 'E2E RangerView B')
 
     // ── Take over from A ───────────────────────────────────────────────────────
-    await evaluate(`[...document.querySelectorAll('button')].find(b => /^\\s*Take over\\s*$/.test(b.textContent))?.click()`)
+    await evaluate(`[...document.querySelectorAll('button')].find(b => /^\\s*Take over( station [A-Z])?\\s*$/.test(b.textContent))?.click()`)
     const back = await boardUntil(b => b.board?.by?.mission === 'E2E RangerView', 20)
     check('Take over on device A claims RangerView back, naming who it took over from', [back?.board?.by?.mission, back?.board?.previous?.by?.mission], ['E2E RangerView', 'E2E RangerView B'])
   } finally {

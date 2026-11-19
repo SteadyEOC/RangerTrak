@@ -11,10 +11,10 @@
       <a href="https://data.fcc.gov/download/pub/uls/complete/l_amat.zip" target="_blank" rel="noopener">United States: FCC licence file</a>
     </p>
     <mat-form-field class="mission__callsign-region" floatLabel="always">
-      <mat-label>States, provinces or ZIP and postal prefixes</mat-label>
+      <mat-label>Area to keep</mat-label>
       <input matInput type="text" [ngModel]="region()" (ngModelChange)="region.set($event)" name="callsignRegion"
         placeholder="e.g. BC, WA, V8, 980" data-lpignore="true" spellcheck="false" data-testid="callsignRegion" />
-      <mat-hint>Separate with commas. Needed for the United States file, which is too big for a phone whole.
+      <mat-hint>States, provinces, or ZIP and postal code starts, separated by commas. Needed for the United States file, which is too big for a phone whole.
         Optional for Canada.</mat-hint>
     </mat-form-field>
     @if (directory.metaSignal()) {
