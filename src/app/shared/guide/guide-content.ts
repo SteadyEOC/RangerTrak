@@ -122,7 +122,7 @@ export const GUIDE_CONTENT: Record<string, GuideEntry> = {
               'Alt+click the map to mark evidence or a clue at a different location instead, once that section is showing.',
               'A clue can also carry a heading, degrees true north (0 to 359): which way the tracks or subject were going. Ask for the heading in degrees true; if they read a compass, note it.',
               'Every format here assumes WGS84 / modern GPS. A position read off an older paper topo quad may use NAD27 instead, which can be 100–200 m off in the western US.',
-              'Every format (DD, DDM, DMS, MGRS, UTM) is always one tap away here, regardless of mission settings — a call in an unexpected format is never blocked. Mission → Location Defaults only picks which one this screen opens on by default; a team that mostly works in MGRS can set that as the default while every other format stays reachable.'
+              'Mission → Location Defaults picks the format this screen opens on: a team that works in UTM or MGRS sets it once, and a Setup file carries it to every device. In Full menus the format buttons (DD, DDM, DMS, MGRS, UTM) sit above the coordinates, so a call in an unexpected format is never blocked; Easy menus shows only the format the mission opens on.'
             ]
           },
           {

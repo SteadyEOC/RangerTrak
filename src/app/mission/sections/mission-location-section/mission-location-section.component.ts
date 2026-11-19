@@ -4,6 +4,7 @@ import { FieldTree, FormField } from '@angular/forms/signals'
 
 import { COORDINATE_FORMATS, CoordinateFormat, defaultCoordinateFormat } from '../../../domain/coordinate'
 import { MissionType, RadioLogService } from '../../../shared/services/'
+import { DevicePrefsService } from '../../../shared/services/device-prefs.service'
 import { bearingAndDistance } from '../../../domain/coordinate'
 import { isUsablePoint } from '../../../domain/far-location'
 import { MatFormFieldModule } from '@angular/material/form-field'
@@ -64,7 +65,16 @@ export class MissionLocationSectionComponent {
     })
   }
 
+  private devicePrefs = inject(DevicePrefsService)
+
+  /**
+   * E-329 (tester feedback 2026-11-19): also becomes this device's remembered Entry format. That
+   * remembered format outranks the mission default (E-114 §1a), so a device that once tapped DD in
+   * Full menus kept opening on DD after the mission was set to UTM - with no picker in Easy menus.
+   * Picking here is the most recent choice made on this device, so it wins here too.
+   */
   selectDefaultFormat(system: CoordinateFormat): void {
+    this.devicePrefs.setLastCoordinateFormat(system)
     this.form.showDD().value.set(system === 'DD')
     this.form.showDDM().value.set(system === 'DDM')
     this.form.showDMS().value.set(system === 'DMS')

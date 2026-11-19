@@ -35,11 +35,13 @@
     latitude past 90, say), the page says <em>Not saved yet</em> and saves as soon as you fix it.
   </rangertrak-expandable-section>
 
-  <rangertrak-expandable-section summary="A coordinate format disappeared from the entry screen.">
-    It has been switched off for this mission, under
-    <span class="path">Mission &rarr; Location Defaults</span>. The
-    <span class="ui">Show all coordinate systems</span> toggle on the entry screen brings them
-    back for this session.
+  <!-- E-329 (tester feedback 2026-11-19): the old answer named a "Show all coordinate systems"
+       toggle that E-104 removed. A UTM county could not find UTM in Easy menus. -->
+  <rangertrak-expandable-section summary="How do I enter UTM, MGRS, or degrees and minutes?">
+    Choose the format under <span class="path">Mission &rarr; Location Defaults</span>. The entry
+    screen opens on it from then on, and a Setup file carries it to every device on the team. In
+    <span class="ui">Full menus</span>, the format buttons above the coordinates switch format for
+    a single report. Easy menus shows only the mission's format.
   </rangertrak-expandable-section>
 
   <rangertrak-expandable-section summary="What happened to What3Words?">

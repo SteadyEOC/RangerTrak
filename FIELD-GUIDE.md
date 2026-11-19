@@ -328,8 +328,10 @@ read-only, so you can see the same position however else it's expressed:
   as a street address, Plus Code, or What3Words address; RangerTrak recognizes the
   shape and converts it automatically.
 
-Every format is always available from Entry's own switcher. **Mission → Location defaults**
-only picks which one Entry opens on — a convenience, not a restriction. Don't see a
+**Mission → Location defaults** picks the format Entry opens on. A team that works in UTM or
+MGRS sets it once, and a Setup file carries it to every device. In **Full menus** the format
+buttons sit above the coordinates, so any format is one tap away; **Easy menus** shows only the
+mission's format. Don't see a
 coordinate system your team uses (e.g. PLSS Township/Range/Section, or another country's
 national grid)? Open an issue on [GitHub](https://github.com/SteadyEOC/RangerTrak/issues) —
 genuine field use is exactly what decides what gets added next.
