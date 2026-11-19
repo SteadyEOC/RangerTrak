@@ -603,7 +603,10 @@ mat-chip-option.enter__status-selected {
   // empty middle read as unfinished rather than intentional. Capped and centered rather
   // than left-aligned, so it reads as a deliberately narrow column, not content that ran
   // out of things to fill a still-wide left side.
-  max-width                                               : 1000px;
+  // E-330 (tester feedback 2026-11-19, "the data entry page should all show on the screen at the
+  // same time"): 1000 -> 1240px. At 1366x768 the wider column fits every Status choice on one row
+  // and the page is 68px shorter; the map keeps its own min(35vw, 500px) cap.
+  max-width                                               : 1240px;
   margin-inline                                           : auto;
   width                                                   : 100%;
   // 2026-08-21: containing block for #enter__frm-reguritation's `position: absolute` below
@@ -739,7 +742,7 @@ mat-chip-option.enter__status-selected {
   margin-top: 0.5rem;
 
   // Raised live, 2026-08-27: "super wide, on a wide screen anyway" - a 4-row textarea
-  // spanning the form's full width (up to 1000px, .enter__form's own cap) reads as
+  // spanning the form's full width (up to 1240px, .enter__form's own cap) reads as
   // disproportionate. Capped on laptop-up only; tablet/phone keep the full-width 100%
   // above, where a narrower cap would waste the screen's own limited width instead.
   @include bp.laptop-up {
