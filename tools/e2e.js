@@ -6461,12 +6461,12 @@ async function checkSimpleView(fx) {
       [await has('[data-testid=zoomToExtent]'), await has('[data-testid=zoomToOfflineTiles]')], [true, true])
     const rows = await evaluate(`(() => {
       const labels = [...document.querySelectorAll('.leaflet-control-layers label')]
-      const extra = labels.filter(l => /USNG|Satellite|Hiking|Roads and place/.test(l.textContent))
-      const core = labels.filter(l => /OpenStreetMap|Places|Radio log entries/.test(l.textContent))
+      const extra = labels.filter(l => /USNG|Satellite|Roads and place/.test(l.textContent))
+      const core = labels.filter(l => /OpenStreetMap|Places|Radio log entries|Hiking trails/.test(l.textContent))
       return { extra: extra.length, extraHidden: extra.every(l => getComputedStyle(l).display === 'none'),
-        coreShown: core.length >= 3 && core.every(l => getComputedStyle(l).display !== 'none') }
+        coreShown: core.length >= 4 && core.every(l => getComputedStyle(l).display !== 'none') }
     })()`)
-    check('the layers box hides its extras (grid, satellite, hiking trails) and keeps the base layers',
+    check('the layers box hides its extras (grid, satellite) and keeps the base layers and Hiking trails',
       [rows.extra > 0, rows.extraHidden, rows.coreShown], [true, true, true])
     check('the Show on map box hides Heat map and the Range rings slider (E-277)',
       await firstPresent(['[data-testid=map-show-heat]', '[data-testid=ring-spacing]']), null)

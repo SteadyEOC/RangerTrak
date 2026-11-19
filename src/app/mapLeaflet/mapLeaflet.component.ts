@@ -211,8 +211,8 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
   private readonly fullscreenService = inject(FullscreenService)
 
   /**
-   * E-207 / D-62: in Easy menus the layers box shows its extras (USNG/MGRS grid, satellite,
-   * hiking trails) only while one of them is on, so a layer in use can always be switched off. Rows are
+   * E-207 / D-62: in Easy menus the layers box shows its extras (USNG/MGRS grid, satellite and its
+   * road labels) only while one of them is on (hiking trails always shows, John 2026-11-19), so a layer in use can always be switched off. Rows are
    * hidden, never removed from the control, so nothing is switched on or off by the view. In Full menus each
    * row carries the plum left-edge rule (styles/_patterns.scss).
    */
@@ -660,7 +660,6 @@ export class LmapComponent extends AbstractMap implements OnInit, AfterViewInit,
     this.layerExtras = [
       ['USNG / MGRS grid', this.usngGridLayer],
       ['Satellite (Esri World Imagery)', satelliteTiles], ['Roads and place names (for Satellite)', roadsLabelsOverlay],
-      ['Hiking trails (Waymarked Trails)', trailsOverlay],
     ].map(([label, layer]) => ({ label: label as string, layer: layer as L.Layer }))
     this.layersBox = layersControl.getContainer() ?? null
     // 2026-11-04, John: E-277 - the mission's own overlays (Ranger paths, Heat map, Range rings) left the

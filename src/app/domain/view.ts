@@ -50,7 +50,7 @@ export type ViewContext = {
   layerCount: number,
   /** The alternative map engine (MapLibre) is the one showing. */
   mapEngineIsAlternative: boolean,
-  /** An extra map layer (grid, range rings, satellite, hiking trails) is switched on. */
+  /** An extra map layer (grid, range rings, heat map, satellite) is switched on. */
   mapExtraLayersOn: boolean,
   /** Radio log entries that are also an ICS-213RR resource request (E-283). */
   resourceRequestCount: number,
