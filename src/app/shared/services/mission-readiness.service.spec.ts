@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http'
 import { TestBed } from '@angular/core/testing'
 
-import { MapEngineService } from '../../map/map-engine.service'
+import { MapEngineService } from '../../map-core/map-engine.service'
 import { MissionReadinessService, READINESS_IGNORED_KEY, parseIgnored } from './mission-readiness.service'
 import { ViewService } from './view.service'
 // E-122 Phase 2a: this service's constructor transitively constructs RangerService et al.,

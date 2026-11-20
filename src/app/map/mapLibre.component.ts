@@ -47,7 +47,7 @@ import { locationMarkerSvg, resolveLocationIcon } from '../shared/mapping/locati
 // Imported directly, not via the '../shared' barrel - same reasoning as the other
 // shared/mapping/* imports above, this file must not risk pulling Leaflet in.
 import { computeExtent, ExtentPoint } from '../shared/mapping/extent'
-import { MapEngineService } from './map-engine.service'
+import { MapEngineService } from '../map-core/map-engine.service'
 import {
   RadioLogType, RadioLogService, RadioLogEntryType, LogService, MissionLocationService,
   MissionLocationType, MissionService, MissionType, CustomPmtilesService, OfflineBasemapService
@@ -62,10 +62,10 @@ import { RecordStore } from '../shared/storage/record-store'
 import { Utility } from '../shared/utility'
 import { formatReportTime } from '../shared/mapping/report-time'
 import { formatMsgNoShort } from '../domain/msg-no'
-import { LocationDialogComponent } from './location-dialog/location-dialog.component'
-import { MapPrintFurnitureComponent } from './map-print/map-print-furniture.component'
-import { MapPrintLegendComponent } from './map-print/map-print-legend.component'
-import { printMapSheet } from './map-print/map-print-sheet'
+import { LocationDialogComponent } from '../map-core/location-dialog/location-dialog.component'
+import { MapPrintFurnitureComponent } from '../map-core/map-print/map-print-furniture.component'
+import { MapPrintLegendComponent } from '../map-core/map-print/map-print-legend.component'
+import { printMapSheet } from '../map-core/map-print/map-print-sheet'
 
 const REPORTS_SOURCE_ID = 'field-reports'
 /** The overview thumbnail's box showing where the main map is (syncOverview()). */

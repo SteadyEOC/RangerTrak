@@ -6,7 +6,7 @@ import { edgeTickStep, formatEdgeTick, type CoordinateFormat } from '../domain/c
 import {
   PrintPoint, PrintRect, choosePanelSpot, planFans, planBadges, padRect, BADGE_OVERLAP_PX, legendNeedsOwnPage,
 } from '../domain/map-print-layout'
-import { printMapSheet } from '../map/map-print/map-print-sheet'
+import { printMapSheet } from '../map-core/map-print/map-print-sheet'
 import type { MissionType } from '../shared/services'
 import type { MissionLocationType } from '../domain/model/mission-location.interface'
 import type { LeafletOverlays } from './leaflet-overlays'

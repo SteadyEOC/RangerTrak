@@ -7,7 +7,7 @@ import { MissionLocationService, MissionService, RadioLogEntryType } from '../..
 import { locationMarkerSvg, resolveLocationIcon } from '../../shared/mapping/location-marker'
 import { radioLogStatusColor, locationCategoryColor } from '../../shared/mapping/report-marker-status'
 import { evidenceMarkerSvg, headingArrowSvg, rangerColorFor, rangerShapeMarkup } from '../../shared/mapping/ranger-marker'
-import { HEAT_OPACITY, heatGradientCss } from '../../mapLeaflet/heat-points'
+import { HEAT_OPACITY, heatGradientCss } from '../heat-points'
 
 /**
  * 2026-09-30, John: E-152 part 1 - the legend on the printed map sheet. Hidden on screen

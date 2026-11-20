@@ -12,7 +12,7 @@ import { FilterChipsComponent } from '../shared/filter-chips/filter-chips.compon
 import {
   MapShowState, SHOW_EVERYTHING, flaggedStatuses, isStatusFlagged, mapFilterChips, selectMapEntries
 } from '../domain/map-entry-filter'
-import { HEAT_GRADIENT, HEAT_OPACITY, HEAT_OPTIONS, heatPoints, heatRadiusForZoom } from './heat-points'
+import { HEAT_GRADIENT, HEAT_OPACITY, HEAT_OPTIONS, heatPoints, heatRadiusForZoom } from '../map-core/heat-points'
 import { LeafletOverlays, RING_STEPS_MILES, formatRingMiles } from './leaflet-overlays'
 import { LeafletOfflineController } from './leaflet-offline-controller'
 import { LeafletPrintController } from './leaflet-print-controller'
@@ -54,8 +54,8 @@ import {
 } from '../shared/services'
 import { MissionJournalService } from '../shared/services/mission-journal.service'
 import { FullscreenService } from '../shared/services/fullscreen.service'
-import { LocationDialogComponent } from '../map/location-dialog/location-dialog.component'
-import { MapEngineService } from '../map/map-engine.service'
+import { LocationDialogComponent } from '../map-core/location-dialog/location-dialog.component'
+import { MapEngineService } from '../map-core/map-engine.service'
 import { liveRefs } from '../domain/attachments'
 import { formatMsgNoShort } from '../domain/msg-no'
 import { formatHeading, sanitizeHeading } from '../domain/heading'
@@ -64,8 +64,8 @@ import { popupNotesBlock } from './entry-popup-notes'
 import { AttachmentViewerService } from '../shared/attachments/attachment-viewer.service'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'
 import { ViewService } from '../shared/services/view.service'
-import { MapPrintFurnitureComponent } from '../map/map-print/map-print-furniture.component'
-import { MapPrintLegendComponent } from '../map/map-print/map-print-legend.component'
+import { MapPrintFurnitureComponent } from '../map-core/map-print/map-print-furniture.component'
+import { MapPrintLegendComponent } from '../map-core/map-print/map-print-legend.component'
 
 
 // https://www.digitalocean.com/community/tutorials/angular-angular-and-leaflet

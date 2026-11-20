@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core'
 
 import { wantedPmtilesUrls } from '../mapping/demo-map'
 import { CustomPmtilesService } from './custom-pmtiles.service'
-import { MapEngineService } from '../../map/map-engine.service'
+import { MapEngineService } from '../../map-core/map-engine.service'
 import { ViewService } from './view.service'
 import { DevicePrefsService } from './device-prefs.service'
 import { LogService } from './log.service'
