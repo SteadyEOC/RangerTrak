@@ -1340,10 +1340,14 @@ async function checkEntryTabOrder() {
     let ascending = true;
     for (let i = 1; i < idx.length; i++) if (idx[i] <= idx[i - 1]) ascending = false;
     const contiguous = idx.length > 0 && idx.every((n, i) => n === i + 1);
-    return { count: idx.length, first: idx[0], last: idx[idx.length - 1], dupes, ascending, contiguous };
+    // Which elements share a number, so a failure says where to look.
+    const dupeEls = [...form.querySelectorAll('[tabindex]')].filter(el => dupes.includes(Number(el.getAttribute('tabindex'))))
+      .map(el => el.getAttribute('tabindex') + ' ' + el.tagName.toLowerCase() + (el.getAttribute('aria-label') ? ' "' + el.getAttribute('aria-label') + '"' : '.' + [...el.classList].slice(0, 2).join('.')));
+    return { count: idx.length, first: idx[0], last: idx[idx.length - 1], dupes, dupeEls, ascending, contiguous };
   })()`), v => !v.error && v.count >= ENTRY_TAB_STOPS, 20, 300)
   if (r.error) { check('Entry form present for tab-order check', r.error, null); return }
   check('every Entry tabindex is unique', r.dupes, [])
+  if (r.dupes?.length) note(`shared tabindexes: ${r.dupeEls.join(' | ')}`)
   check('Entry tabindexes ascend in DOM order', r.ascending, true)
   check('the sequence starts at callsign (tabindex 1)', r.first, 1)
   // This comment previously described an ordering (evidence-location AFTER the whole 213
@@ -1414,7 +1418,8 @@ async function checkEntryTabOrder() {
 // 109, not 50: E-283 (2026-11-12) added the ICS-213RR box after the 213 box: its checkbox, NINE order lines of
 // six stops (Qty, Kind, Description, Type, Needed by, Remove; undrawn ones sit on hidden placeholders), Add
 // another item, Priority, Deliver to and Substitutes (59 stops).
-const ENTRY_TAB_STOPS = 111
+// 112, not 111: E-327 (2026-11-20) added the Band picker as one stop right after Source.
+const ENTRY_TAB_STOPS = 112
 
 async function checkEntryAutofocusAndReset() {
   console.log('\nEntry form: callsign holds focus on load and again after submit (no mouse needed)')
@@ -3929,10 +3934,19 @@ async function checkEntryLayouts() {
     await click('net-direction-out'); await sleep(300)
     check('Out: our station is From, the caller is To', await text('net-parties'), 'From E2ENET → To E2ECALLER')
     await click('net-direction-in'); await sleep(300)
+    // E-327: the Band picker offers the mission's list (a new or backfilled mission starts with the defaults).
+    const bandOpts = await evaluate(`[...document.querySelectorAll('[data-testid="net-band"] option')].map(o => o.value)`)
+    check('net Band offers None plus the mission bands', Array.isArray(bandOpts) && bandOpts[0] === '' && bandOpts.includes('UHF'), true)
+    await evaluate(`(() => { const s = document.querySelector('[data-testid="net-band"]'); if (!s) return;
+      s.value = 'UHF'; s.dispatchEvent(new Event('change', { bubbles: true })) })()`)
+    await sleep(200)
     await click('net-save')
     const net = await pollUntil(lastEntry, e => e?.callsign === 'E2ECALLER', 20, 300)
     check('a blank net message saves as Check-in', net?.notes, 'Check-in')
     check('the net entry is To our station', net?.toCallsign, 'E2ENET')
+    check('the net entry carries the band picked (E-327)', net?.band, 'UHF')
+    check('...and the band stays picked for the next call', await evaluate(`document.querySelector('[data-testid="net-band"]')?.value`), 'UHF')
+    await evaluate(`(() => { const s = document.querySelector('[data-testid="net-band"]'); s.value = ''; s.dispatchEvent(new Event('change', { bubbles: true })) })()`)
     check('the recent list under the line shows it', /E2ECALLER/.test(await text('entry-recent-list') || ''), true)
     // Add location starts at the mission's default position, never the -1, -1 "no location" marker.
     await click('net-add-location'); await sleep(500)

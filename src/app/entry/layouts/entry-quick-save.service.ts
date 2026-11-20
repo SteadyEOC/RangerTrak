@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core'
 import { toSignal } from '@angular/core/rxjs-interop'
 import { map } from 'rxjs'
 import { callerKind, type CallerResult } from '../../domain/caller-kind'
+import { bandChoices } from '../../domain/band'
 import { buildRadioLogEntry, missionDefaultLocation } from '../../domain/entry-build'
 import { missionStationCall, newestFirst } from '../../domain/entry-layout'
 import { CallsignDirectoryService } from '../../shared/services/callsign-directory.service'
@@ -10,7 +11,7 @@ import {
 } from '../../shared/services/'
 import type { LocationType } from '../../shared/services/'
 
-export type QuickEntry = { from: string; to: string; message: string; date?: Date; location?: LocationType }
+export type QuickEntry = { from: string; to: string; message: string; date?: Date; location?: LocationType; band?: string }
 
 /**
  * E-332: the shared save step for the simpler Entry layouts (basic log and net). The entry is assembled by
@@ -34,6 +35,13 @@ export class EntryQuickSaveService {
   readonly operator = this.operatorName.name
   /** The Sending as call chosen on the net layout; blank means the first option. In memory only, never stored in the mission. */
   readonly sendingAs = signal('')
+  /**
+   * E-327: the band last picked, on the net layout or the full form; it stays picked for the next entry, as in
+   * George's Comm Register. In memory only, like the operator (D-44): blank after a reload.
+   */
+  readonly band = signal('')
+  /** E-327: the mission's band list, plus the picked band if it has since been taken off the list. */
+  readonly bandChoices = computed(() => bandChoices(this.mission()?.bands, this.band()))
   readonly stationCall = computed(() => missionStationCall(this.mission()))
   readonly tacticalNames = computed(() => (this.mission()?.tacticalCalls ?? []).map(t => t.name))
   /** The current operator's own call sign, from the roster, when the name matches a ranger. */

@@ -1,5 +1,6 @@
 import { Observable, ReplaySubject } from 'rxjs'
 import { DEFAULT_CHECK_IN_INTERVAL_MIN } from '../../domain/overdue'
+import { DEFAULT_BANDS } from '../../domain/band'
 
 import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 
@@ -341,6 +342,8 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       tacticalCalls: [],
       // E-324: no EOC call signs until the mission lists some - see MissionType.eocCalls.
       eocCalls: [],
+      // E-327: the bands Entry offers; a mission edits its own copy.
+      bands: [...DEFAULT_BANDS],
       // E-332: the full Entry screen until the mission picks another.
       entryLayout: 'full',
       // E-150: see MissionType.extraCopies213 - one extra paper copy by default.

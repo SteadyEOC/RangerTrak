@@ -163,6 +163,11 @@ export type MissionType = {
   // tacticalCalls above - no MISSION_SCHEMA_VERSION bump, backfillMissingFields supplies `[]` (see initMission()).
   eocCalls: string[],
 
+  // E-327 (2026-11-20, Q119 b): the bands or modes Entry offers for an entry's optional Band (VHF, UHF, D-STAR ...).
+  // Additive-only field, same reasoning as eocCalls above - no MISSION_SCHEMA_VERSION bump, backfillMissingFields
+  // supplies DEFAULT_BANDS (see initMission()). Travels in Setup files and backups with the rest of the settings.
+  bands: string[],
+
   // E-332: which Entry screen this mission uses (basic / net / field / full). Optional and read everywhere as
   // `entryLayoutOf(mission)`, so a mission without it is `full`. Additive-only: no MISSION_SCHEMA_VERSION bump.
   entryLayout?: EntryLayout,

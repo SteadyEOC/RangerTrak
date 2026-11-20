@@ -78,6 +78,13 @@ describe('buildIcs309Log', () => {
     expect(headingOnly.rows[0].message).toBe('[Normal] Heading 0° T (N)')
   })
 
+  // E-327: the band is added to the message text (the 309 has no column for it).
+  it('adds the band to the message when set', () => {
+    expect(buildIcs309Log([report({ notes: 'checked in', band: 'UHF' })], mission).rows[0].message)
+      .toBe('[Normal] checked in - Band UHF')
+    expect(buildIcs309Log([report({ notes: 'checked in' })], mission).rows[0].message).toBe('[Normal] checked in')
+  })
+
   it('falls back to "(not given)" for a callsignless report - D-42, this is expected data', () => {
     const log = buildIcs309Log([report({ callsign: '' })], mission)
 

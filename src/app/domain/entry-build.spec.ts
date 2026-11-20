@@ -89,6 +89,11 @@ describe('P1 buildRadioLogEntry', () => {
       status: 'Closed', operator: 'Pat', evidenceLocation: null, evidenceDirection: null,
     })
   })
+  it('E-327: records the band when one is picked, and leaves the key off otherwise', () => {
+    expect(buildRadioLogEntry({ from: '', to: '', message: '', band: ' VHF ' }, base).band).toBe('VHF')
+    expect('band' in buildRadioLogEntry({ from: '', to: '', message: '', band: '' }, base)).toBe(false)
+    expect('band' in buildRadioLogEntry({ from: '', to: '', message: '' }, base)).toBe(false)
+  })
   it('uses the given location and status, and falls back to now for the date', () => {
     const loc = { ...none, lat: 1, lng: 2 }
     const e = buildRadioLogEntry({ from: '', to: '', message: '', location: loc, status: 'Open' },

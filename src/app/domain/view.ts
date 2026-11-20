@@ -42,6 +42,8 @@ export type ViewContext = {
   fieldMode: boolean,
   /** Radio log entries whose source is not the default. */
   nonDefaultSourceCount: number,
+  /** Radio log entries with a band (E-327), or the mission's band list differs from the default list. */
+  bandInUseCount: number,
   /** Radio log entries with a To station. */
   toStationCount: number,
   /** Radio log entries with an evidence location. */
@@ -92,6 +94,8 @@ export const ADVANCED_FEATURES: ReadonlyArray<AdvancedFeature> = [
   // Entry
   { id: 'stations', label: 'From and To station', isInUse: ctx => ctx.tacticalCallCount > 0 || ctx.toStationCount > 0 },
   { id: 'source', label: 'Source', isInUse: ctx => ctx.nonDefaultSourceCount > 0 },
+  // E-327: the Band picker on Entry and the Bands card on the Mission page.
+  { id: 'band', label: 'Band', isInUse: ctx => ctx.bandInUseCount > 0 },
   { id: 'coord-format', label: 'Coordinate format picker', isInUse: never },
   { id: 'attachments', label: 'Attachments', isInUse: ctx => ctx.attachmentCount > 0 },
   { id: 'evidence-location', label: 'Evidence location', isInUse: ctx => ctx.evidenceLocationCount > 0 },

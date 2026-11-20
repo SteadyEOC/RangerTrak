@@ -64,6 +64,7 @@ import { MissionTacticalCallsComponent } from './sections/mission-tactical-calls
 import { MissionEntryLayoutComponent } from './sections/mission-entry-layout/mission-entry-layout.component'
 import { EntryLayout, entryLayoutOf } from '../domain/entry-layout'
 import { MissionEocCallsComponent } from './sections/mission-eoc-calls/mission-eoc-calls.component'
+import { MissionBandsComponent } from './sections/mission-bands/mission-bands.component'
 import { MissionCallsignListComponent } from './sections/mission-callsign-list/mission-callsign-list.component'
 import { MissionCommandPostComponent } from './sections/mission-command-post/mission-command-post.component'
 import { MasonryDirective } from '../shared/layout/masonry.directive'
@@ -92,6 +93,7 @@ const blankMission: MissionType = {
   autoPrint213: false,
   tacticalCalls: [],
   eocCalls: [],
+  bands: [],
   entryLayout: 'full',
   extraCopies213: 1,
   attachmentBudgetMB: 512,
@@ -120,6 +122,7 @@ const blankMission: MissionType = {
     MissionRecipients213Component,
     MissionTacticalCallsComponent,
     MissionEocCallsComponent,
+    MissionBandsComponent,
     MissionEntryLayoutComponent,
     MissionCallsignListComponent,
     MissionCommandPostComponent,
@@ -221,6 +224,9 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
 
   /** E-324: the working EOC call sign list behind MissionEocCallsComponent, re-seeded like tacticalCalls. */
   eocCalls = signal<string[]>([])
+
+  /** E-327: the working band list behind MissionBandsComponent, re-seeded like eocCalls. */
+  bands = signal<string[]>([])
 
   /** E-332: the working Entry layout behind MissionEntryLayoutComponent. */
   entryLayout = signal<EntryLayout>('full')
@@ -359,6 +365,7 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
     this.recipientOptions213.set(newMission.recipientOptions213)
     this.tacticalCalls.set(newMission.tacticalCalls ?? [])
     this.eocCalls.set(newMission.eocCalls ?? [])
+    this.bands.set(newMission.bands ?? [])
     this.entryLayout.set(entryLayoutOf(newMission))
     this.opPeriodStart.set(newMission.opPeriodStart)
     this.opPeriodEnd.set(newMission.opPeriodEnd)
@@ -532,6 +539,12 @@ export class MissionComponent implements OnInit, OnDestroy, HasUnsavedChanges {
   onEocCallsChange(newList: string[]) {
     this.eocCalls.set(newList)
     this.missionModel.update(m => ({ ...m, eocCalls: newList }))
+  }
+
+  /** E-327: same child-emits, parent-writes-both pattern. */
+  onBandsChange(newList: string[]) {
+    this.bands.set(newList)
+    this.missionModel.update(m => ({ ...m, bands: newList }))
   }
 
   /**

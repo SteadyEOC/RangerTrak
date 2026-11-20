@@ -506,6 +506,12 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         headerName: "Source", field: "source", maxWidth: 110, editable: false,
         headerTooltip: 'How the message reached you: Voice, Phone, Packet, APRS or Email. It cannot be edited.'
       },
+      // E-327: the band or mode picked on Entry (the mission's list); blank when none was picked. Read-only like Source;
+      // it is in the CSV export because the column is.
+      {
+        headerName: 'Band', field: 'band', maxWidth: 110, editable: false,
+        headerTooltip: 'The band or mode the call came in on (VHF, UHF, D-STAR ...), from the list on the Mission page. Blank if none was picked. It cannot be edited here.'
+      },
       // F29-48 (2026-08-29, D-44): same "captured but never surfaced" shape as Source above -
       // whoever was filing the report when Submit was pressed. Blank on any report that
       // predates this field, or where the scribe left it blank - both legitimate, never
@@ -1678,6 +1684,7 @@ export class RadioLogComponent implements OnInit, OnDestroy {
           roster: this.rangerService.rangers,
           tacticalCalls: this.settings?.tacticalCalls ?? [],
           rosterUids: new Set(this.rangerService.rangers.map(r => r.uid).filter((u): u is string => !!u)),
+          bands: this.settings?.bands ?? [],
         },
         head: { mission: this.settings?.mission, opPeriod: this.settings?.opPeriod },
         letters: ics309StationLetters(rows),

@@ -1,6 +1,6 @@
 /**
  * E-326: a net summary for the Radio Log: how many entries, from how many stations, how they came in
- * (Voice, Packet ...), and who they were (EOC, roster, other, unknown). Pure; no stored data. The text form is
+ * (Voice, Packet ...), on which band (E-327, when any entry has one), and who they were (EOC, roster, other, unknown). Pure; no stored data. The text form is
  * plain US-ASCII, 72 columns at most, so it pastes into a Winlink message, FLDIGI or a radio script as it is.
  */
 import { callerKind, type CallerContext } from './caller-kind'
@@ -15,6 +15,7 @@ type SummaryEntry = {
   tacticalCall?: string
   rangerUid?: string
   source?: string
+  band?: string
   msgNo?: { station?: string }
 }
 
@@ -25,6 +26,8 @@ export type NetSummary = {
   /** In the order of RADIO_LOG_ENTRY_SOURCES; a blank source counts as Voice. Zero counts are left out. */
   bySource: { source: string; count: number }[]
   byKind: { eoc: number; roster: number; other: number; unknown: number }
+  /** E-327: entries per band, in first-seen order of the mission's list then the rest; empty when no entry has one. */
+  byBand: { band: string; count: number }[]
   /** Only when 2 or more station letters are on the entries. */
   byStation: { station: string; count: number }[]
   first: Date | null
@@ -34,11 +37,14 @@ export type NetSummary = {
 export type NetSummaryContext = Pick<CallerContext, 'eocCalls' | 'roster' | 'tacticalCalls'> & {
   /** Roster uids, so an entry linked to a roster member counts as Roster even when the call is blank. */
   rosterUids?: ReadonlySet<string>
+  /** E-327: the mission's band list, the order bands are counted in (bands not on it follow). */
+  bands?: readonly string[]
 }
 
 export function netSummary(entries: readonly SummaryEntry[], ctx: NetSummaryContext, stationLetter?: string): NetSummary {
   const picked = stationLetter ? entries.filter(e => e.msgNo?.station === stationLetter) : [...entries]
   const sources = new Map<string, number>()
+  const bands = new Map<string, number>()
   const byKind = { eoc: 0, roster: 0, other: 0, unknown: 0 }
   const callers = new Set<string>()
   const letters = new Map<string, number>()
@@ -48,6 +54,8 @@ export function netSummary(entries: readonly SummaryEntry[], ctx: NetSummaryCont
   for (const e of picked) {
     const src = e.source || 'Voice'
     sources.set(src, (sources.get(src) ?? 0) + 1)
+    const band = (e.band ?? '').trim()
+    if (band) bands.set(band, (bands.get(band) ?? 0) + 1)
 
     const call = (e.callsign ?? '').trim() || (e.tacticalCall ?? '').trim()
     const kind = callerKind(call, ctx).kind
@@ -74,11 +82,20 @@ export function netSummary(entries: readonly SummaryEntry[], ctx: NetSummaryCont
     ...known.filter(s => sources.has(s)).map(s => ({ source: s, count: sources.get(s)! })),
     ...[...sources].filter(([s]) => !known.includes(s)).map(([s, count]) => ({ source: s, count })),
   ]
+  const listed = (ctx.bands ?? []).filter(b => bands.has(b))
+  const byBand = [
+    ...listed.map(band => ({ band, count: bands.get(band)! })),
+    ...[...bands].filter(([b]) => !listed.includes(b)).map(([band, count]) => ({ band, count })),
+  ]
+  // With any banded entry, the rest are counted too, so the band counts add up to the entries.
+  const noBand = byBand.length ? picked.length - byBand.reduce((n, b) => n + b.count, 0) : 0
+  if (noBand > 0) byBand.push({ band: 'No band', count: noBand })
   return {
     entries: picked.length,
     stations: callers.size,
     bySource,
     byKind,
+    byBand,
     byStation: letters.size >= 2 ? [...letters].sort((a, b) => a[0].localeCompare(b[0])).map(([station, count]) => ({ station, count })) : [],
     first: first === null ? null : new Date(first),
     last: last === null ? null : new Date(last),
@@ -115,6 +132,7 @@ export function netSummaryText(s: NetSummary, head: { mission?: string; opPeriod
   const count = `${s.entries} ${s.entries === 1 ? 'entry' : 'entries'} from ${s.stations} ${s.stations === 1 ? 'station' : 'stations'}`
   const lines = [title, span + count]
   if (s.bySource.length) lines.push(s.bySource.map(x => `${x.source} ${x.count}`).join('  '))
+  if (s.byBand.length) lines.push('Band: ' + s.byBand.map(x => `${x.band} ${x.count}`).join('  '))
   const k = s.byKind
   const kinds = ([['EOC', k.eoc], ['Roster', k.roster], ['Other', k.other], ['Unknown', k.unknown]] as const)
     .filter(([, n]) => n > 0).map(([label, n]) => `${label} ${n}`)

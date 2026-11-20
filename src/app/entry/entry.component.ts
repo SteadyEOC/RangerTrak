@@ -84,6 +84,8 @@ import type { ViewContext } from '../domain/view'
 import { devDiagnostics } from '../shared/dev-diagnostics'
 import { clock } from '../domain/field-report-view'
 import { stationFields } from '../domain/entry-build'
+import { bandChoices, bandField } from '../domain/band'
+import { EntryQuickSaveService } from './layouts/entry-quick-save.service'
 
 // TODO: IDEA: use https://material.angular.io/components/badge/ ???
 
@@ -217,7 +219,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // hidden/unrendered control is simply skipped in tab order by the browser - same reasoning
   // Location/TimePicker's own TAB_SLOT_COUNT already relies on for a variable field count).
   sourceTabIndex = this.statusTabIndex + 1
-  notesTabIndex = this.sourceTabIndex + 1
+  // E-327: the optional Band picker, right after Source.
+  bandTabIndex = this.sourceTabIndex + 1
+  notesTabIndex = this.bandTabIndex + 1
   // E-194: the Attach button is one stop, right after Notes. The touch-only Take photo / video
   // button beside it is left in natural order (a touch device has no tab key to plan for).
   attachTabIndex = this.notesTabIndex + 1
@@ -273,6 +277,19 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // already the labels wanted (RADIO_LOG_ENTRY_SOURCES), a plain readonly re-export so the
   // template doesn't need to import the const directly.
   readonly sourceOptions = RADIO_LOG_ENTRY_SOURCES
+
+  // E-327: the optional band. Outside entryModel, like the operator, so resetAll() keeps it for the next entry: a new
+  // report reads and writes the band shared with the net layout (EntryQuickSaveService.band, memory only). While a
+  // report is being edited, its own band is used instead, so an edit never changes what the next new report carries.
+  private readonly quickSave = inject(EntryQuickSaveService)
+  private readonly editBand = signal('')
+  readonly band = computed(() => this.editing() ? this.editBand() : this.quickSave.band())
+  readonly bandOptions = computed(() => bandChoices(this.quickSave.mission()?.bands, this.band()))
+  setBand(value: unknown): void {
+    const band = typeof value === 'string' ? value : ''
+    if (this.editing()) this.editBand.set(band)
+    else this.quickSave.band.set(band)
+  }
   /** Legacy roster icon names resolve to the badge set (shared/ranger-image.ts). */
   readonly bundledRangerImage = bundledRangerImage
 
@@ -578,7 +595,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** E-207: the advanced controls on this page (Easy menus hides them while unused); also what shows the header Full menus switch. The coordinate
    *  format picker lives in LocationComponent. */
-  protected readonly advancedIds = ['stations', 'source', 'attachments', 'evidence-location', 'resource-request', 'coord-format'] as const
+  protected readonly advancedIds = ['stations', 'source', 'band', 'attachments', 'evidence-location', 'resource-request', 'coord-format'] as const
 
   /**
    * E-207 / D-62 item 3: what THIS form already holds, so Easy menus never hides a control the
@@ -589,6 +606,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     return {
       toStationCount: this.toCtrl.value?.trim() ? 1 : 0,
       nonDefaultSourceCount: f.source().value() === 'Voice' ? 0 : 1,
+      bandInUseCount: this.band() ? 1 : 0,
       attachmentCount: this.pendingFiles().length,
       evidenceLocationCount: this.showEvidenceLocation() ? 1 : 0,
       resourceRequestCount: this.rrOn() ? 1 : 0,
@@ -1007,6 +1025,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.callsignCtrl.setValue(entry.tacticalCall || this.stationText(entry.callsign, entry.rangerUid))
     this.toCtrl.setValue(entry.toTactical || this.stationText(entry.toCallsign, entry.toRangerUid))
     this.entryControlsForm.setValue({ status: entry.status })
+    this.editBand.set(entry.band ?? '')
     this.editing.set(entry)
     // Scroll to the "Editing report from" line, which sits just above the form.
     setTimeout(() => this.document.querySelector('[data-testid="entry-editing"]')?.scrollIntoView?.({ block: 'start' }))
@@ -1323,6 +1342,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       // D-44: stamped from whatever operatorModel holds AT SUBMIT - see its own declaration.
       // Trimmed so "typed then deleted" reads as blank, not whitespace.
       operator: this.operatorModel().operator.trim(),
+      // E-327: the band picked (left off when none).
+      ...bandField(this.band()),
       // Only when the section is actually open - collapsing it after entering a range/
       // bearing is how a scribe retracts "never mind, not a real clue," and a submitted
       // report shouldn't carry a marker its own scribe just told the form to forget.

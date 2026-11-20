@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core'
 
 import { liveRefs } from '../../domain/attachments'
+import { DEFAULT_BANDS } from '../../domain/band'
 import { DEFAULT_LOCATION_TYPES, DEFAULT_RADIO_LOG_STATUSES, DEFAULT_RECIPIENT_OPTIONS_213 } from '../../domain/mission-migration'
 import {
   AppView, ViewContext, ViewSource, applySuggestedView, initialView, isAdvanced as domainIsAdvanced, isShown as domainIsShown,
@@ -79,6 +80,8 @@ export class ViewService {
       fieldMode: this.fieldMode.enabled(),
       nonDefaultSourceCount: entries.filter(e => !!e.source && e.source !== 'Voice').length,
       toStationCount: entries.filter(e => !!(e.toTactical || e.toCallsign || e.toRangerUid)).length,
+      // E-327: in use once an entry has a band or the mission has edited its band list.
+      bandInUseCount: entries.filter(e => !!e.band).length + (s && !sameStrings(s.bands ?? [], DEFAULT_BANDS) ? 1 : 0),
       evidenceLocationCount: entries.filter(e => !!e.evidenceLocation).length,
       resourceRequestCount: entries.filter(e => !!e.rr213).length,
       // Pages that know better (Rangers & Teams holds the layers) pass this in; see isShown().

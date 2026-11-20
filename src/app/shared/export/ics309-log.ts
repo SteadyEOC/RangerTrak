@@ -198,7 +198,9 @@ function formatMessage(report: RadioLogEntryType): string {
   const heading = formatHeading(report.evidenceDirection)
   // E-283: a resource request rides in the message text too (the 309 has no column for it).
   const request = report.rr213 ? rr213Summary(report.rr213) : ''
-  const notes = [report.notes?.trim() ?? '', heading ? `Heading ${heading}` : '', request].filter(Boolean).join(' - ')
+  // E-327: the band too (no column for it either).
+  const band = report.band?.trim()
+  const notes = [report.notes?.trim() ?? '', heading ? `Heading ${heading}` : '', request, band ? `Band ${band}` : ''].filter(Boolean).join(' - ')
   return status ? `[${status}] ${notes}`.trim() : notes
 }
 

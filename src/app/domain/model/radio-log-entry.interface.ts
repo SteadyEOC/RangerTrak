@@ -167,6 +167,11 @@ export type RadioLogEntryType = {
   status: string,
   notes: string,
   source?: RadioLogEntrySource,
+  /**
+   * E-327: the band or mode the traffic came in on (VHF, UHF, D-STAR ...), picked from the mission's `bands` list.
+   * Optional and never required; absent when none was picked and on older entries. Additive, no schema bump.
+   */
+  band?: string,
   generates213?: boolean,
   replyRequested213?: boolean,
   message213?: string,

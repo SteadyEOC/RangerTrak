@@ -232,6 +232,11 @@
       </rangertrak-mission-eoc-calls>
       }
 
+      <!-- E-327: the bands Entry offers for an entry's optional Band. -->
+      @if (view.isShown('band')) {
+      <rangertrak-mission-bands [items]="bands()" (itemsChange)="onBandsChange($event)"></rangertrak-mission-bands>
+      }
+
       <!-- E-325: this device's offline call sign list (not mission data). -->
       @if (view.isShown('callsign-list')) {
       <rangertrak-mission-callsign-list></rangertrak-mission-callsign-list>

@@ -68,14 +68,16 @@ export class EntryNetComponent implements OnDestroy {
     if (!this.call().trim() && !this.message().trim()) return
     const { from, to } = this.parties()
     const loc = this.locationToSave()
-    const e = this.quick.save({ from, to, message: netMessage(this.message()), ...(loc ? { location: loc } : {}) })
+    const e = this.quick.save({
+      from, to, message: netMessage(this.message()), band: this.quick.band(), ...(loc ? { location: loc } : {}),
+    })
     this.savedNote.set(`Entry id # ${e.id} saved`)
     this.call.set('')
     this.message.set('')
     this.hint.set(null)
     this.showLocation.set(false)
     this.location.set(null)
-    // Direction and Sending as stay as they were, like the operator, for the next call.
+    // Direction, Sending as and Band (E-327) stay as they were, like the operator, for the next call.
     document.getElementById('entry-net-call')?.focus()
   }
 

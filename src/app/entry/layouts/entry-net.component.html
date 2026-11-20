@@ -9,6 +9,15 @@
         @for (o of sendingOptions(); track o) { <option [value]="o"></option> }
       </datalist>
     </label>
+    @if (quick.bandChoices().length) {
+    <label class="net__band">Band
+      <select class="net__plain" [value]="quick.band()" (change)="quick.band.set($any($event.target).value)"
+        data-testid="net-band">
+        <option value="" [selected]="!quick.band()">None</option>
+        @for (b of quick.bandChoices(); track b) { <option [value]="b" [selected]="b === quick.band()">{{ b }}</option> }
+      </select>
+    </label>
+    }
     <label class="net__operator">Operator
       <input class="net__plain" type="text" autocomplete="off" [value]="quick.operator()"
         (input)="quick.operator.set($any($event.target).value)" data-testid="net-operator" />

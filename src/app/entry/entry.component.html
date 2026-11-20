@@ -497,6 +497,20 @@
       </fieldset>
       }
 
+      <!-- E-327: the optional band, from the mission's list (Mission > Bands). Click the picked band again for none.
+           It stays picked for the next entry, like the operator. Same chip-listbox shape and manual binding as Source. -->
+      @if (bandOptions().length && view.isShown('band', entryHere())) {
+      <fieldset class="enter__field-fieldset" [rtAdvanced]="'band'">
+        <legend class="enter__field-label">Band</legend>
+        <mat-chip-listbox class="enter__Band" aria-label="Band" [tabIndex]="bandTabIndex"
+          [value]="band()" (change)="setBand($event.value)" data-testid="entry-band">
+          @for (b of bandOptions(); track b) {
+          <mat-chip-option [value]="b" class="enter__source-option">{{ b }}</mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </fieldset>
+      }
+
       <!-- Material-M3 pass, 2026-08-26: matInput decorates a REAL native <textarea>
            (mat-form-field wraps it, it does not replace it), so [formField] here is the
            safe nativeControlCreate path - no CVA involved, no 32072 risk. cols="80" is gone:

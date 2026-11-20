@@ -420,7 +420,8 @@ input[type=number] {
 // breathing room - the segmented-row layout itself (previously this class's job) is now
 // MDC's, not ours.
 .enter__Status,
-.enter__Source {
+.enter__Source,
+.enter__Band {
   margin-bottom: 0.25rem;
 }
 

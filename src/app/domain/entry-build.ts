@@ -7,6 +7,7 @@
  */
 import type { LocationType } from './model/location.interface'
 import type { RangerType } from './model/ranger.interface'
+import { bandField } from './band'
 import { teamAtSave } from './entry-team'
 import { resolveStationText } from './ranger-match'
 
@@ -71,6 +72,8 @@ export type QuickEntryInput = {
   date?: Date
   location?: LocationType
   status?: string
+  /** E-327: the band picked on the layout; blank or absent leaves the entry without one. */
+  band?: string
 }
 
 export type QuickEntryContext = {
@@ -91,6 +94,7 @@ export function buildRadioLogEntry(input: QuickEntryInput, ctx: QuickEntryContex
     date: input.date ?? (ctx.now ? ctx.now() : new Date()),
     notes: input.message,
     source: 'Voice' as const,
+    ...bandField(input.band),
     generates213: false, replyRequested213: false, message213: '', recipients213: [] as string[], subject213: '',
     ...stationFields(input.from, input.to, { tacticalCalls: ctx.mission?.tacticalCalls ?? [], rangers: ctx.rangers }),
     status: input.status ?? defaultStatus(ctx.mission),

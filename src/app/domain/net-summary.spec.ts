@@ -42,6 +42,27 @@ describe('netSummary', () => {
     expect(s.byStation).toEqual([])
   })
 
+  it('E-327: has no band counts when no entry has a band', () => {
+    const s = netSummary(entries, ctx)
+    expect(s.byBand).toEqual([])
+    expect(netSummaryText(s, {})).not.toContain('Band')
+  })
+
+  it('E-327: counts by band in the mission list order, then others, then the entries without one', () => {
+    const banded = [
+      entry('K7AAA', 'Voice', at(9, 0), 'A', { band: 'UHF' }),
+      entry('K7BBB', 'Voice', at(9, 1), 'A', { band: 'GMRS' }),
+      entry('W7EOC', 'Voice', at(9, 2), 'A', { band: 'VHF' }),
+      entry('W7EOC', 'Voice', at(9, 3), 'A', { band: 'VHF' }),
+      entry('K7AAA', 'Voice', at(9, 4)),
+    ]
+    const s = netSummary(banded, { ...ctx, bands: ['VHF', 'UHF', 'HF'] })
+    expect(s.byBand).toEqual([
+      { band: 'VHF', count: 2 }, { band: 'UHF', count: 1 }, { band: 'GMRS', count: 1 }, { band: 'No band', count: 1 },
+    ])
+    expect(netSummaryText(s, {}).split('\n')).toContain('Band: VHF 2  UHF 1  GMRS 1  No band 1')
+  })
+
   it('an empty log is zeros without dates', () => {
     const s = netSummary([], ctx)
     expect(s.entries).toBe(0)

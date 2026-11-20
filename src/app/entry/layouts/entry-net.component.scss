@@ -2,7 +2,7 @@
 .net { display: flex; flex-direction: column; gap: 8px; }
 .net__header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: end; }
 .net__mission { font-weight: 600; font-size: 1.1rem; margin-right: auto; }
-.net__sending, .net__operator, .net__field { display: flex; flex-direction: column; font-size: 0.8125rem; color: var(--rt-ink-2); gap: 2px; }
+.net__sending, .net__band, .net__operator, .net__field { display: flex; flex-direction: column; font-size: 0.8125rem; color: var(--rt-ink-2); gap: 2px; }
 .net__plain {
   font: inherit; font-size: 1rem; padding: 8px 10px; min-width: 0;
   color: var(--rt-ink); background: var(--rt-surface); border: 1px solid var(--rt-line-strong); border-radius: 6px;
