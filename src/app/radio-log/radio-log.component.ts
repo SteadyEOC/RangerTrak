@@ -86,6 +86,7 @@ import {
 import { DevicePrefsService, LOG_ROWS_PER_PAGE_OPTIONS, type LogRowsPerPage } from '../shared/services/device-prefs.service'
 import { showFirstPrintTip } from '../shared/export/print-tip'
 import { armPrintTitle } from '../shared/export/print-title'
+import { entryTeam, teamIsFromRoster } from '../domain/entry-team'
 
 @Pipe({ name: 'myUnusedPipe' })
 export class myUnusedPipe implements PipeTransform {
@@ -417,7 +418,16 @@ export class RadioLogComponent implements OnInit, OnDestroy {
         valueGetter: (params: { data: RadioLogEntryType }) => formatStation(params.data?.toTactical, params.data?.toCallsign),
         tooltipValueGetter: (params: { data: RadioLogEntryType }) => this.operatorNameFor(params.data?.toRangerUid),
       },
-      // { headerName: "Team", field: "team" },
+      // E-337 (2026-11-19): the From ranger's team, sortable and filterable like the Roster's Team column, so
+      // the log can be filtered by team (the filter shows as a chip above). Recorded when the entry was
+      // logged (Q128 a); an older entry falls back to the roster now, and the tooltip says which.
+      {
+        headerName: 'Team', colId: 'team', maxWidth: 160, editable: false,
+        headerTooltip: "The reporting ranger's team when the entry was logged, from the roster. Entries logged before teams were recorded show the ranger's team now. Filter this column to see one team's traffic. It cannot be edited here.",
+        valueGetter: (params: { data: RadioLogEntryType }) => params.data ? entryTeam(params.data, this.rangerService.rangers) : '',
+        tooltipValueGetter: (params: { data: RadioLogEntryType }) =>
+          params.data && teamIsFromRoster(params.data, this.rangerService.rangers) ? 'From the roster now (this entry did not record a team)' : undefined,
+      },
       // Dot path, not "address": the address lives on the nested location object, exactly
       // as lat/lng do below. Bound to the wrong field, this column rendered blank for
       // every report - the addresses were in the data all along.

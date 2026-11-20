@@ -156,7 +156,12 @@ export type RadioLogEntryType = {
   toCallsign?: string,
   /** To station's roster link, if it resolved to one. Same meaning as `rangerUid`. */
   toRangerUid?: string,
-  //team: string,
+  /**
+   * E-337 (2026-11-19, Q128 a): the From ranger's team AS IT WAS when the entry was saved, from the roster.
+   * Recorded at save time like `tacticalCall`; absent on older entries (the Radio Log then falls back to
+   * the roster) and when the caller is not on the roster or has no team. Additive, no schema bump.
+   */
+  team?: string,
   location: LocationType,
   date: Date,
   status: string,

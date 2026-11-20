@@ -80,6 +80,7 @@ import { parseReceipt, receiptOpenMessage } from '../domain/report-receipt'
 import type { ViewContext } from '../domain/view'
 import { devDiagnostics } from '../shared/dev-diagnostics'
 import { clock } from '../domain/field-report-view'
+import { teamAtSave } from '../domain/entry-team'
 
 // TODO: IDEA: use https://material.angular.io/components/badge/ ???
 
@@ -1314,12 +1315,15 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // tacticalCall and the to* fields are left off entirely when empty, like every other optional field.
     const from = this.resolveStation(this.callsignCtrl.value ?? '')
     const to = this.resolveStation(this.toCtrl.value ?? '')
+    const team = teamAtSave(from.rangerUid, this.rangers)
 
     return {
       ...this.entryModel(),
       rangerUid: from.rangerUid,
       callsign: from.callsign,
       ...(from.tactical ? { tacticalCall: from.tactical } : {}),
+      // E-337: the From ranger's team as it is right now, recorded on the entry (left off when none).
+      ...(team ? { team } : {}),
       ...(to.tactical ? { toTactical: to.tactical } : {}),
       ...(to.callsign ? { toCallsign: to.callsign } : {}),
       ...(to.rangerUid ? { toRangerUid: to.rangerUid } : {}),

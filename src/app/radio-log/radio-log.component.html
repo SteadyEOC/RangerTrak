@@ -48,6 +48,17 @@
           <mat-icon>fit_screen</mat-icon>
           Fit to screen
         </button>
+        <!-- Q125 (2026-11-19): Rows per page moved here from the Export card, beside Fit to screen,
+             because it changes the grid above, not the export. -->
+        <mat-form-field class="reports__control reports__control--rows" subscriptSizing="dynamic">
+          <mat-label>Rows per page</mat-label>
+          <mat-select [value]="rowsPerPage()" data-testid="radiolog-rows-per-page"
+            (selectionChange)="rowsPerPage.set($event.value); onRowsPerPage($event.value)">
+            @for (opt of rowsPerPageOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
       <!-- ══ 5. ACTION BAR ══ Material-M3 pass, 2026-08-26. Was three separate rows below
            the grid - a selection/paging line, then a bare <br>, then an export line mixing a
@@ -95,16 +106,6 @@
           </mat-card-header>
           <mat-card-content>
             <div class="rt-action-bar__buttons">
-              <mat-form-field class="reports__control reports__control--rows">
-                <mat-label>Rows per page</mat-label>
-                <mat-select [value]="rowsPerPage()"
-                  (selectionChange)="rowsPerPage.set($event.value); onRowsPerPage($event.value)">
-                  @for (opt of rowsPerPageOptions; track opt) {
-                    <mat-option [value]="opt">{{ opt }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
               <mat-form-field class="reports__control reports__control--sep">
                 <mat-label>CSV separator</mat-label>
                 <mat-select [value]="columnSeparator()"

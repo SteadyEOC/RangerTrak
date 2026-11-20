@@ -398,6 +398,11 @@ can be ticked by hand.
 Both pages work the same way:
 
 - **Fit to screen** sizes the columns to the window.
+- **Rows per page** (Radio Log, beside Fit to screen) splits the log into pages; **All**, the
+  start, is one scrolling list. This device remembers the choice.
+- The Radio Log's **Team** column shows the reporting ranger's team as it was when the entry
+  was logged, so moving someone to another team later does not rewrite earlier entries. Filter
+  it to see one team's traffic; filter **Callsign** to see one ranger's.
 - When a column filter is on, a strip above the table names it, so nobody forgets rows are
   hidden. The x on a filter removes it; **Show everything** clears them all. On the Radio Log,
   entries from the current op period carry a coloured edge, and **Current op period** above the
