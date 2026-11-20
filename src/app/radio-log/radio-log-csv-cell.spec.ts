@@ -1,5 +1,5 @@
 import { radioLogCsvCell } from './radio-log-csv-cell'
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../domain/model/radio-log-entry.interface'
 
 describe('radioLogCsvCell (Q112)', () => {
   const entry = (address: string, derivedFromAddress: boolean) =>

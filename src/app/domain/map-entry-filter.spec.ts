@@ -1,4 +1,4 @@
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType } from './model/radio-log-entry.interface'
 import {
   flaggedStatuses,
   isStatusFlagged,

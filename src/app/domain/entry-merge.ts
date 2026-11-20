@@ -5,7 +5,7 @@ import type { MsgNoContext } from './msg-no'
 import { mergeAttachmentRefs } from './attachments'
 import { newUid } from './uid'
 import { withSanitizedHeading } from './heading'
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType } from './model/radio-log-entry.interface'
 
 /**
  * Merges radio log entries that came from another device into this device's own list

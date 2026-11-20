@@ -5,8 +5,8 @@
  *
  * Framework-free (D-57): the one value that lives outside domain/ (`undefinedLocation`) is passed in.
  */
-import type { LocationType } from '../shared/services/location.interface'
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { LocationType } from './model/location.interface'
+import type { RangerType } from './model/ranger.interface'
 import { teamAtSave } from './entry-team'
 import { resolveStationText } from './ranger-match'
 

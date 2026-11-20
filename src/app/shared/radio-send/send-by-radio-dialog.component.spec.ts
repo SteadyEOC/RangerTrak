@@ -6,8 +6,8 @@ import { provideRouter } from '@angular/router'
 import { ics213Payload } from '../export/radio-send/mapping'
 import { recordStore } from '../storage/record-store'
 import { DevicePrefsService } from '../services/device-prefs.service'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
-import type { MissionType } from '../services/mission.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
+import type { MissionType } from '../../domain/model/mission.interface'
 import { addressHints, SendByRadioDialogComponent, splitAddresses } from './send-by-radio-dialog.component'
 
 const report = (message: string): RadioLogEntryType => ({

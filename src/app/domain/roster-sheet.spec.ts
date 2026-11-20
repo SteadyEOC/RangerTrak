@@ -1,4 +1,4 @@
-import { RangerType } from '../shared/services/ranger.interface'
+import { RangerType } from './model/ranger.interface'
 import { mergeRangers } from './ranger-migration'
 import {
   applyMapping,

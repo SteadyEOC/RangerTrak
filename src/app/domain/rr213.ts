@@ -1,4 +1,4 @@
-import type { Rr213LineType, Rr213Type } from '../shared/services/radio-log-entry.interface'
+import type { Rr213LineType, Rr213Type } from './model/radio-log-entry.interface'
 
 /**
  * E-283 (ICS-213RR Resource Request): small pure helpers, no pdf-lib, so Entry, Messages and the

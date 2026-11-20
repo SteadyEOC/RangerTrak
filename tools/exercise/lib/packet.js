@@ -8,7 +8,7 @@ import { opPeriodAt } from './package.js'
  * Report Packet writer. The shape is the app's own `ReportPacket`
  * (src/app/shared/export/report-packet.ts, schemaVersion 1): plain JSON with
  *   { schemaVersion, notice, exportedAt, appVersion, mission, event, opPeriod, operator, entries }
- * and entries shaped like `RadioLogEntryType` (src/app/shared/services/radio-log-entry.interface.ts).
+ * and entries shaped like `RadioLogEntryType` (src/app/domain/model/radio-log-entry.interface.ts).
  * `entry-merge.ts` rejects an entry unless: `id` is a finite number, `callsign` and `status` are
  * strings, `uid` (if present) is non-blank text, `date` parses, and `location` has lat in
  * [-90, 90] and lng in [-180, 180]. Everything below satisfies that. tools/exercise/app-accepts.test.js

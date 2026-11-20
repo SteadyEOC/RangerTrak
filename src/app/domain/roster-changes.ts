@@ -1,4 +1,4 @@
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { RangerType } from './model/ranger.interface'
 
 /**
  * "Export changes since import" (2026-10-05, John, from the regional-data session): which

@@ -25,8 +25,8 @@ import { MissionJournalService } from './mission-journal.service'
 import { MissionService } from './mission.service'
 import { OperatorNameService } from './operator-name.service'
 import { RadioLogService } from './radio-log.service'
-import { MissionType } from './mission.interface'
-import { RadioLogType } from './radio-log-entry.interface'
+import { MissionType } from '../../domain/model/mission.interface'
+import { RadioLogType } from '../../domain/model/radio-log-entry.interface'
 
 /**
  * E-87 Stage 1 (2026-08-31) - the PWA-side half of "Command Post Server: serving the mission

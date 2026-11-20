@@ -1,4 +1,4 @@
-import { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 
 import {
   buildReportPacket,

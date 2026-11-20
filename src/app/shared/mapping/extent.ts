@@ -1,4 +1,4 @@
-import { BoundsType } from '../services/radio-log-entry.interface'
+import { BoundsType } from '../../domain/model/radio-log-entry.interface'
 
 /**
  * "Zoom to Extent" (maintainer ask, 2026-09-22): unlike the init-time fit in

@@ -7,7 +7,7 @@ import {
   buildActivityRows,
   chunkActivityRows,
 } from '../../domain/activity-log'
-import type { AarNoteType } from '../services/aar-note.interface'
+import type { AarNoteType } from '../../domain/model/aar-note.interface'
 import { fillIcs214Pdf, Ics214Mission, ics214SheetFields } from './ics214-pdf'
 
 /**

@@ -1,7 +1,7 @@
 import { printAttachments } from '../../domain/attachments'
 import type { Ics213Attachment } from '../export/ics213-pdf'
 import type { AttachmentStoreService } from '../services/attachment-store.service'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 
 /**
  * E-194 / ADR D-60: what a printed ICS-213 lists for an entry's attachments - name and short

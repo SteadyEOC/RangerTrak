@@ -2,9 +2,9 @@ import { decryptBytes, encryptBytes } from '../crypto/encrypted-file'
 import { HANDOVER_KIND, readEnvelope } from './handover-kind'
 export * from './handover-kind'
 import type { AttachmentFile } from './attachments-zip'
-import { RadioLogEntryType } from '../services/radio-log-entry.interface'
-import { MissionLocationType } from '../services/mission-location.interface'
-import { RangerType } from '../services/ranger.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
+import { MissionLocationType } from '../../domain/model/mission-location.interface'
+import { RangerType } from '../../domain/model/ranger.interface'
 import {
   buildMissionZipBytes, extractMissionZip, handoverFilename, layerFor, MISSION_ZIP_SCHEMA_VERSION,
   MissionZipAttachment, MissionZipManifest, MissionZipPhoto,

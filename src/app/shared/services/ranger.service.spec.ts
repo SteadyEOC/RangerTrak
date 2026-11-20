@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http'
 import { TestBed } from '@angular/core/testing'
 
 import { RANGER_SCHEMA_VERSION } from '../../domain/ranger-migration'
-import { RangerType } from './ranger.interface'
+import { RangerType } from '../../domain/model/ranger.interface'
 import { RangerService } from './ranger.service'
 // E-122 Phase 2a: the roster now lives behind RecordStore, not localStorage directly - see
 // that module's own doc comment. resetForTests() is this suite's equivalent of the

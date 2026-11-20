@@ -18,8 +18,8 @@ import { ICS213RR_FIELD, rr213FieldsFromReport, rrDescField, rrKindField, rrNeed
 import { formDate, formTime, ics214SheetFields } from '../ics214-pdf'
 import { buildIcs309Log, type Ics309MissionInfo } from '../ics309-log'
 import { rr213PriorityLabel } from '../../../domain/rr213'
-import type { RadioLogEntryType } from '../../services/radio-log-entry.interface'
-import type { MissionType } from '../../services/mission.interface'
+import type { RadioLogEntryType } from '../../../domain/model/radio-log-entry.interface'
+import type { MissionType } from '../../../domain/model/mission.interface'
 
 export type RadioForm = 'ics213' | 'ics213rr' | 'ics214' | 'ics309'
 export type SaveDataFormId = 'ICS-213' | 'ICS-213RR' | 'ICS-214'

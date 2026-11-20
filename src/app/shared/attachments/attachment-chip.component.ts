@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
 
 import { liveRefs } from '../../domain/attachments'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 import { AttachmentViewerService } from './attachment-viewer.service'
 
 /**

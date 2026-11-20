@@ -39,11 +39,30 @@ export default tseslint.config(
   },
 
   // ── Boundary rule 1 (D-57): domain/ is framework-free. ──────────────────────────────────
-  // Plain TypeScript only: no Angular, map engines, DOM storage, or app services. Type-only
-  // imports of *.interface files are allowed (the open question in D-57 about settings
-  // interfaces; usage-state.ts already uses one).
+  // Plain TypeScript only: no Angular, map engines, DOM storage, or app services. domain/ imports
+  // only domain/. The model interfaces now live in domain/model (P3, 2026-11-20), so the old
+  // allowance for type-only *.interface imports from outside domain/ is gone.
   {
     files: ['src/app/domain/**/*.ts'],
+    ignores: ['src/app/domain/**/*.spec.ts', 'src/app/domain/model/**'],
+    rules: {
+      'no-restricted-imports': 'off',
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['@angular/*', 'rxjs', 'rxjs/*', 'leaflet', 'leaflet.*', 'maplibre-gl', 'pmtiles', 'ag-grid-*'], message: 'domain/ is framework-free (ADR D-57).' },
+            { group: ['../**'], message: 'domain/ may import only domain/ (ADR D-57). Models live in domain/model.' },
+          ],
+        },
+      ],
+      'no-restricted-globals': ['error', { name: 'localStorage', message: 'Persistence lives in services, not domain/ (ADR D-57).' }, { name: 'sessionStorage', message: 'Persistence lives in services, not domain/ (ADR D-57).' }, { name: 'indexedDB', message: 'Persistence lives in services, not domain/ (ADR D-57).' }],
+    },
+  },
+
+  // domain/model/ sits one level down: ../ is still domain/, so only ../../ leaves it.
+  {
+    files: ['src/app/domain/model/**/*.ts'],
     ignores: ['src/app/domain/**/*.spec.ts'],
     rules: {
       'no-restricted-imports': 'off',
@@ -52,8 +71,7 @@ export default tseslint.config(
         {
           patterns: [
             { group: ['@angular/*', 'rxjs', 'rxjs/*', 'leaflet', 'leaflet.*', 'maplibre-gl', 'pmtiles', 'ag-grid-*'], message: 'domain/ is framework-free (ADR D-57).' },
-            { group: ['../**', '!../**/*.interface'], message: 'domain/ may import only domain/ (and type-only *.interface files) — ADR D-57.' },
-            { group: ['../**/*.interface'], allowTypeImports: true, message: 'domain/ may use *.interface files as types only — ADR D-57.' },
+            { group: ['../../**'], message: 'domain/ may import only domain/ (ADR D-57). Models live in domain/model.' },
           ],
         },
       ],

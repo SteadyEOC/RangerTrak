@@ -1,4 +1,4 @@
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { RangerType } from './model/ranger.interface'
 import { buildRosterPrint, NO_TEAM_LABEL } from './roster-print'
 
 const r = (over: Partial<RangerType>): RangerType => ({

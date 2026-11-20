@@ -1,7 +1,7 @@
 import { PDFDocument, PDFCheckBox } from 'pdf-lib'
 
 import { cleanRr213, rr213Brief, rr213DefaultNeededBy, rr213NeededByFromInput, rr213NeededByInputValue, rr213Summary } from '../../domain/rr213'
-import type { RadioLogEntryType, Rr213Type } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType, Rr213Type } from '../../domain/model/radio-log-entry.interface'
 import { buildIcs309Log } from './ics309-log'
 import {
   fillIcs213RrPdf, ICS213RR_FIELD, ICS213RR_PRIORITY_BOX, rr213DeliverText, rr213FieldsFromReport, rr213MarginFontSize, rr213MsgNoLabel, rrDescField, rrQtyField,

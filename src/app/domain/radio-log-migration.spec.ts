@@ -1,4 +1,4 @@
-import { RadioLogType } from '../shared/services/radio-log-entry.interface'
+import { RadioLogType } from './model/radio-log-entry.interface'
 import { RADIO_LOG_SCHEMA_VERSION, migrateRadioLog } from './radio-log-migration'
 
 /**

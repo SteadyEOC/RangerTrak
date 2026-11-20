@@ -4,7 +4,7 @@
  * plain US-ASCII, 72 columns at most, so it pastes into a Winlink message, FLDIGI or a radio script as it is.
  */
 import { callerKind, type CallerContext } from './caller-kind'
-import type { RadioLogEntrySource } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntrySource } from './model/radio-log-entry.interface'
 
 /** Display order, the same as RADIO_LOG_ENTRY_SOURCES (domain may import types only; `satisfies` keeps the names honest). */
 const SOURCE_ORDER = ['Voice', 'Phone', 'Packet', 'APRS', 'Email'] as const satisfies readonly RadioLogEntrySource[]

@@ -3,10 +3,10 @@ import { unzipSync, zipSync, Zippable } from 'fflate'
 import { CALLSIGN_ENTRY } from '../../domain/callsign-setup'
 import { AttachmentFile, attachmentsFromUnzipped, attachmentZipEntries, isAttachmentPath } from './attachments-zip'
 
-import { MissionType } from '../services/mission.interface'
-import { MissionLocationType } from '../services/mission-location.interface'
-import { RadioLogEntryType } from '../services/radio-log-entry.interface'
-import { RangerType } from '../services/ranger.interface'
+import { MissionType } from '../../domain/model/mission.interface'
+import { MissionLocationType } from '../../domain/model/mission-location.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
+import { RangerType } from '../../domain/model/ranger.interface'
 import { localDateTimeStamp } from './local-date'
 
 /**

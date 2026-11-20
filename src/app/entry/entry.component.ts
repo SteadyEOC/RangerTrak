@@ -31,7 +31,7 @@ import { ViewService } from '../shared/services/view.service'
 import { AdvancedDirective } from '../shared/view/advanced.directive'
 import { RR213_PRIORITIES, RR213_DEFAULT_PRIORITY, RR213_MAX_LINES, RR213_LINE_SLOTS, RR213_SLOT, rr213LineTabIndex, rr213SpareTabIndexes, blankRr213Line, cleanRr213, rr213DefaultNeededBy, rr213NeededByFromInput, rr213NeededByInputValue } from '../domain/rr213'
 import type { Rr213Priority } from '../domain/rr213'
-import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
+import type { Rr213LineType } from '../domain/model/radio-log-entry.interface'
 // Direct path, not the shared/services barrel - see the note in rangers.component.ts.
 import { RangerPhotoService } from '../shared/services/ranger-photo.service'
 import { AttachmentStoreService } from '../shared/services/attachment-store.service'

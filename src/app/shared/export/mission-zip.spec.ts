@@ -1,5 +1,5 @@
-import { MissionType } from '../services/mission.interface'
-import { RangerType, UnknownRanger } from '../services/ranger.interface'
+import { MissionType } from '../../domain/model/mission.interface'
+import { RangerType, UnknownRanger } from '../../domain/model/ranger.interface'
 
 import {
   buildMissionZipBytes,

@@ -1,6 +1,6 @@
-import type { MissionType } from '../services/mission.interface'
-import type { MissionLocationType } from '../services/mission-location.interface'
-import { UnknownRanger } from '../services/ranger.interface'
+import type { MissionType } from '../../domain/model/mission.interface'
+import type { MissionLocationType } from '../../domain/model/mission-location.interface'
+import { UnknownRanger } from '../../domain/model/ranger.interface'
 
 import { buildCallsignFile } from '../../domain/callsign-setup'
 import { buildMissionZipBytes, extractMissionZip } from './mission-zip'

@@ -1,7 +1,7 @@
-import type { EntryLayout } from '../../domain/entry-layout'
+import type { EntryLayout } from '../entry-layout'
 import { RadioLogStatusType } from './radio-log-entry.interface'
 import { LocationCategoryType } from './mission-location.interface'
-import type { ScenarioClock } from '../../domain/scenario'
+import type { ScenarioClock } from '../scenario'
 
 /**
  * E-165 (2026-09-30): one mission-scoped tactical call - a position or team name ("Vashon EOC",

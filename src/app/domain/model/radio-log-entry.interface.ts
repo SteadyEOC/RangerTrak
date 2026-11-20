@@ -1,6 +1,6 @@
-import type { AttachmentRef } from '../../domain/attachments'
+import type { AttachmentRef } from '../attachments'
 import { LocationType } from './location.interface'
-import type { HandledMark, MsgNo } from '../../domain/msg-no'
+import type { HandledMark, MsgNo } from '../msg-no'
 
 // 2026-08-31: renamed from field-report.interface.ts / FieldReportType / FieldReportsType /
 // FieldReportStatusType / FieldReportSource / fieldReportArray, a naming holdover from before

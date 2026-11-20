@@ -1,4 +1,4 @@
-import type { AarNoteType } from '../shared/services/aar-note.interface'
+import type { AarNoteType } from './model/aar-note.interface'
 import { noteTime } from './aar-note-migration'
 import { SUGGEST_FOR_214 } from './mission-journal'
 import type { JournalEntry } from './mission-journal'

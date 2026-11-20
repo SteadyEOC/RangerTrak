@@ -1,4 +1,4 @@
-import type { AarCapability, AarNoteAbout, AarNoteKind, AarNoteType } from '../shared/services/aar-note.interface'
+import type { AarCapability, AarNoteAbout, AarNoteKind, AarNoteType } from './model/aar-note.interface'
 import { newLocationUid } from './mission-location-migration'
 
 /**

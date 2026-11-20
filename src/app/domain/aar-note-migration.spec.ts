@@ -1,4 +1,4 @@
-import { AarNoteType } from '../shared/services/aar-note.interface'
+import { AarNoteType } from './model/aar-note.interface'
 import {
   AAR_NOTE_SCHEMA_VERSION,
   migrateAarNotes,

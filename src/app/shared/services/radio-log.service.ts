@@ -5,11 +5,11 @@ import {
   inject, Injectable, OnDestroy, OnInit, Optional, Pipe, PipeTransform, signal, SkipSelf, WritableSignal
 } from '@angular/core'
 
-import { NewRadioLogEntry, RadioLogStatusType, RadioLogType, RadioLogEntryType } from './radio-log-entry.interface'
+import { NewRadioLogEntry, RadioLogStatusType, RadioLogType, RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 import { LogService } from './log.service'
-import { RangerType } from './ranger.interface'
+import { RangerType } from '../../domain/model/ranger.interface'
 import { MissionService } from './mission.service'
-import { MissionType } from './mission.interface'
+import { MissionType } from '../../domain/model/mission.interface'
 // ADR D-42: versioned storage seam for radio log entries. Direct import, not via the barrel,
 // to avoid a cycle - the barrel re-exports this service.
 import { migrateRadioLog, RADIO_LOG_ENTRY_DATE_FIELDS } from '../../domain/radio-log-migration'
@@ -43,7 +43,7 @@ import { normalizeRangerId } from '../../domain/ranger-migration'
 import { buildReportPacket, reportPacketFilename } from '../export/report-packet'
 import * as packageJson from '../../../../package.json'
 
-//import {  } from './ranger.interface'
+//import {  } from '../../domain/model/ranger.interface'
 
 
 

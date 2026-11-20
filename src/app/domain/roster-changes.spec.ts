@@ -1,4 +1,4 @@
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { RangerType } from './model/ranger.interface'
 import {
   baselineAfterImport,
   parseRosterImportBaseline,

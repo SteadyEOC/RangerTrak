@@ -4,7 +4,7 @@
  *
  * Framework-free (D-57): only type-only imports from the shared interfaces.
  */
-import type { RadioLogEntryType, RadioLogStatusType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType, RadioLogStatusType } from './model/radio-log-entry.interface'
 import type { FilterChip } from './grid-filter-chips'
 
 /**

@@ -1,5 +1,5 @@
 import { formatLatLng, type CoordinateFormat } from './coordinate'
-import type { MissionLocationType } from '../shared/services/mission-location.interface'
+import type { MissionLocationType } from './model/mission-location.interface'
 
 /**
  * The Print card's places list on the Map page (E-187 Layers phase D, ADR D-58): the places

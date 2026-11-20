@@ -3,8 +3,8 @@ import {
   DecryptionFailedError,
   encryptBytes,
 } from '../crypto/encrypted-file'
-import { RadioLogEntryType } from '../services/radio-log-entry.interface'
-import { RangerType, UnknownRanger } from '../services/ranger.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
+import { RangerType, UnknownRanger } from '../../domain/model/ranger.interface'
 import {
   buildHandoverFile,
   classifyOpenedBytes,

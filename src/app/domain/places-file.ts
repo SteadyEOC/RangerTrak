@@ -1,4 +1,4 @@
-import type { LocationCategoryType, MissionLocationType } from '../shared/services/mission-location.interface'
+import type { LocationCategoryType, MissionLocationType } from './model/mission-location.interface'
 import { LocationMergeResult, mergeLocations } from './location-merge'
 import { normalizeHeader, PLACE_TARGET_WORDS } from './roster-sheet'
 

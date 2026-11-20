@@ -15,7 +15,7 @@ import { LogService } from '../services/log.service'
 import { MissionJournalService } from '../services/mission-journal.service'
 import { MissionService } from '../services/mission.service'
 import { RadioLogService } from '../services/radio-log.service'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 
 export interface SendByRadioData {
   payload: RadioPayload

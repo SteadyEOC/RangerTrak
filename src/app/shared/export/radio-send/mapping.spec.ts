@@ -1,8 +1,8 @@
 import { check } from 'emcomm-forms'
 import * as EmcommForms from 'emcomm-forms'
 
-import type { RadioLogEntryType } from '../../services/radio-log-entry.interface'
-import type { MissionType } from '../../services/mission.interface'
+import type { RadioLogEntryType } from '../../../domain/model/radio-log-entry.interface'
+import type { MissionType } from '../../../domain/model/mission.interface'
 import { buildB2f, buildFlmsg, buildSaveData, buildText, transferEstimate } from './outputs'
 import {
   FLMSG_309_MAX_ROWS, ics213Payload, ics213rrPayload, ics214Payload, ics309Payload, radioAddress, type RadioPayload,

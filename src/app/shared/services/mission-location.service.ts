@@ -3,7 +3,7 @@ import { Observable, ReplaySubject } from 'rxjs'
 import { Injectable, Optional, SkipSelf, signal } from '@angular/core'
 
 import { LogService } from './log.service'
-import { MissionLocationType } from './mission-location.interface'
+import { MissionLocationType } from '../../domain/model/mission-location.interface'
 import { LOCATION_SCHEMA_VERSION, migrateLocations, normalizeLocationUids } from '../../domain/mission-location-migration'
 // E-122 Phase 2a: locations now live behind RecordStore (in-memory + IndexedDB) rather than
 // directly in localStorage. Locations themselves aren't PII, but they share RecordStore with

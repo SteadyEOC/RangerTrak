@@ -2,7 +2,7 @@ import type { MissionSummary } from '../../domain/mission-summary'
 import { formatStation } from '../../domain/station-label'
 import { printAttachments } from '../../domain/attachments'
 import { csvRow } from './csv'
-import { AAR_CAPABILITY_LABELS } from '../services/aar-note.interface'
+import { AAR_CAPABILITY_LABELS } from '../../domain/model/aar-note.interface'
 
 /**
  * E-189: the Mission summary as one CSV file - the snapshot to keep, stamped with when it was

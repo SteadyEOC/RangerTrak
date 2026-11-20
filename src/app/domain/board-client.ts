@@ -1,7 +1,7 @@
 import { liveRefs, smallerCopyLabelIn } from './attachments'
 import type { AttachmentRef } from './attachments'
 import { rr213Summary } from './rr213'
-import type { Rr213Type } from '../shared/services/radio-log-entry.interface'
+import type { Rr213Type } from './model/radio-log-entry.interface'
 
 /**
  * The scribe's side of RangerView (ADR D-61, D-60 item 6): the pure parts of

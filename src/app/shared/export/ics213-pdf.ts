@@ -10,8 +10,8 @@ import { formatStation } from '../../domain/station-label'
 // which fields the mapping actually reads.
 import { formatMsgNoFull } from '../../domain/msg-no'
 import type { MsgNo } from '../../domain/msg-no'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
-import type { MissionType } from '../services/mission.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
+import type { MissionType } from '../../domain/model/mission.interface'
 
 /**
  * Fills the real, official ICS-213 (General Message) AcroForm PDF - not a layout we drew

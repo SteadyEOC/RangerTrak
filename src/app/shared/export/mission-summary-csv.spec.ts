@@ -1,5 +1,5 @@
 import { summarizeMission } from '../../domain/mission-summary'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 import { buildSummaryCsv, localStamp, summaryCsvFilename } from './mission-summary-csv'
 
 const e = (id: number, when: Date, over: Partial<RadioLogEntryType> = {}) =>

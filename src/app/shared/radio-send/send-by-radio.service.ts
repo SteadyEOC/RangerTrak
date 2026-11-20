@@ -4,7 +4,7 @@ import { MatDialog } from '@angular/material/dialog'
 import type { ActivityLogHeader, ActivityRow } from '../../domain/activity-log'
 import type { Ics309MissionInfo } from '../export/ics309-log'
 import type { RadioPayload } from '../export/radio-send/mapping'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 import { MissionService } from '../services/mission.service'
 import type { SendByRadioData } from './send-by-radio-dialog.component'
 

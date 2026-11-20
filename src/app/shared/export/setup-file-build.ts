@@ -1,7 +1,7 @@
 import { layerFor, MISSION_ZIP_SCHEMA_VERSION, buildMissionZipBytes, type MissionZipManifest } from './mission-zip'
-import type { MissionType } from '../services/mission.interface'
-import type { MissionLocationType } from '../services/mission-location.interface'
-import type { RangerType } from '../services/ranger.interface'
+import type { MissionType } from '../../domain/model/mission.interface'
+import type { MissionLocationType } from '../../domain/model/mission-location.interface'
+import type { RangerType } from '../../domain/model/ranger.interface'
 
 /**
  * The manifest of a Setup file, built from whichever parts the caller passes. Shared by Mission's Setup file

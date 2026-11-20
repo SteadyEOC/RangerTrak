@@ -1,4 +1,4 @@
-import type { AarNoteType } from '../shared/services/aar-note.interface'
+import type { AarNoteType } from './model/aar-note.interface'
 import {
   ACTIVITY_CELL_MAX_WIDTH,
   buildActivityRows,

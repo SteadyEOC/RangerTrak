@@ -1,4 +1,4 @@
-import type { MissionLocationType } from '../shared/services/mission-location.interface'
+import type { MissionLocationType } from './model/mission-location.interface'
 import { buildPlacesPrint, NO_CATEGORY_LABEL } from './places-print'
 
 const p = (

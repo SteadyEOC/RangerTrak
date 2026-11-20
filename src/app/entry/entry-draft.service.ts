@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import type { LocationType } from '../shared/services'
-import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
+import type { Rr213LineType } from '../domain/model/radio-log-entry.interface'
 import type { Rr213Priority } from '../domain/rr213'
 import { rr213LineHasContent } from '../domain/rr213'
 import type { PendingAttachment } from '../shared/attachments/attachment-intake.service'

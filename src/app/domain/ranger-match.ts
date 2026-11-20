@@ -6,8 +6,8 @@
  * `matchRanger`, so a call typed on Entry and the same call typed into the grid land on the
  * same ranger.
  */
-import type { RangerType } from '../shared/services/ranger.interface'
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
+import type { RangerType } from './model/ranger.interface'
+import type { RadioLogEntryType } from './model/radio-log-entry.interface'
 
 /**
  * Resolves what the scribe typed (or picked) to one ranger, or null.

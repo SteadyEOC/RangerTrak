@@ -1,5 +1,5 @@
 import { newUid } from './uid'
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { RangerType } from './model/ranger.interface'
 
 /**
  * Versioned, forward-only migration for the persisted ranger roster, plus the ID assignment

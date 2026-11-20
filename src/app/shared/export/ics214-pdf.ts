@@ -4,7 +4,7 @@ import { drawPrintBrand } from './ics213-pdf'
 import {
   ICS214_MAX_RESOURCES, ActivityLogHeader, ActivityRow, chunkActivityRows, toWinAnsi,
 } from '../../domain/activity-log'
-import type { MissionType } from '../services/mission.interface'
+import type { MissionType } from '../../domain/model/mission.interface'
 
 /**
  * E-04 / ADR D-63 item 5: fills the real, official FEMA ICS-214 (Activity Log, v3.1) AcroForm PDF

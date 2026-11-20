@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button'
 
 import { clock, reportFirstLine, reportFullText, stateChip } from '../../domain/field-report-view'
 import { FieldModeService } from '../../shared/services/field-mode.service'
-import { RadioLogEntryType } from '../../shared/services/radio-log-entry.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 import { RadioLogService } from '../../shared/services/radio-log.service'
 import { MissionJournalService } from '../../shared/services/mission-journal.service'
 

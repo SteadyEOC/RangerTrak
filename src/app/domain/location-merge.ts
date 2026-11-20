@@ -1,4 +1,4 @@
-import type { MissionLocationType } from '../shared/services/mission-location.interface'
+import type { MissionLocationType } from './model/mission-location.interface'
 import { normalizeLocationUids } from './mission-location-migration'
 
 /**

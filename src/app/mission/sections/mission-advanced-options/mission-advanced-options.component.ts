@@ -27,7 +27,7 @@ import { ImportSafetyService } from '../../../shared/services/import-safety.serv
 import { compareForRestore } from '../../../domain/restore-preview'
 import type { RestoreSide } from '../../../domain/restore-preview'
 import type { RestorePreviewDialogData } from '../restore-preview-dialog/restore-preview-dialog.component'
-import type { RadioLogEntryType } from '../../../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../../domain/model/radio-log-entry.interface'
 import { RecordStore } from '../../../shared/storage/record-store'
 import { ViewService } from '../../../shared/services/view.service'
 import { AdvancedDirective } from '../../../shared/view/advanced.directive'

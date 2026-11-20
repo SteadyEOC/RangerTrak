@@ -1,4 +1,4 @@
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { RangerType } from './model/ranger.interface'
 
 /**
  * The Print card's roster contact sheet (E-187 Layers phase D, ADR D-58): one row per person,

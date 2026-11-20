@@ -26,15 +26,15 @@ export { OfflineBasemapService } from "./offline-basemap.service"
 export {
   RadioLogEntryType, RadioLogType, RadioLogStatusType, RadioLogEntrySource,
   RADIO_LOG_ENTRY_SOURCES, BoundsType
-} from "./radio-log-entry.interface"
-export { LocationType, undefinedAddressFlag, undefinedLocation } from "./location.interface"
-export { LogLevel, LogLevelNames, LogType, LogHeadings } from "./log.interface"
-export { RangerType, UnknownRanger } from "./ranger.interface"
-export { MissionType, MissionModeType, TacticalCallType } from "./mission.interface"
-export { AarNoteType, AarNoteAbout, AarNoteKind, AAR_NOTE_ABOUT_LABELS } from "./aar-note.interface"
+} from "../../domain/model/radio-log-entry.interface"
+export { LocationType, undefinedAddressFlag, undefinedLocation } from "../../domain/model/location.interface"
+export { LogLevel, LogLevelNames, LogType, LogHeadings } from "../../domain/model/log.interface"
+export { RangerType, UnknownRanger } from "../../domain/model/ranger.interface"
+export { MissionType, MissionModeType, TacticalCallType } from "../../domain/model/mission.interface"
+export { AarNoteType, AarNoteAbout, AarNoteKind, AAR_NOTE_ABOUT_LABELS } from "../../domain/model/aar-note.interface"
 export {
   LocationCategoryType, MissionLocationType, LocationIconId, LOCATION_ICON_OPTIONS
-} from "./mission-location.interface"
+} from "../../domain/model/mission-location.interface"
 export {
   MISSION_SCHEMA_VERSION, DEFAULT_RADIO_LOG_STATUSES, DEFAULT_RECIPIENT_OPTIONS_213,
   DEFAULT_LOCATION_TYPES, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, migrateMission

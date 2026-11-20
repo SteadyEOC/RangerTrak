@@ -5,7 +5,7 @@ import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 
 //import { debounceTime, map, startWith } from 'rxjs/operators'
 import { LogService } from './log.service'
-import { RangerType, UnknownRanger } from './ranger.interface'
+import { RangerType, UnknownRanger } from '../../domain/model/ranger.interface'
 // ADR D-42/D-43: identity + versioned storage for the roster. Kept as a direct import (not
 // via the barrel) to avoid a cycle - the barrel re-exports this service.
 import { idColumnLabel } from '../../domain/roster-sheet'

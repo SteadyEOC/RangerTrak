@@ -1,5 +1,5 @@
 import { sniffDelimiter } from '../shared/import/sheet-reader'
-import type { MissionLocationType } from '../shared/services/mission-location.interface'
+import type { MissionLocationType } from './model/mission-location.interface'
 import { describeLocationMerge, mergeLocations } from './location-merge'
 import {
   applyPlaceMapping,

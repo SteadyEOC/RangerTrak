@@ -1,4 +1,4 @@
-import { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 import { formatStation } from '../../domain/station-label'
 import { formatHeading } from '../../domain/heading'
 import { rr213Summary } from '../../domain/rr213'

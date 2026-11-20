@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing'
 
 import { DevicePrefsService } from './device-prefs.service'
 import { MissionService } from './mission.service'
-import { NewRadioLogEntry, RadioLogEntryType, RadioLogType } from './radio-log-entry.interface'
+import { NewRadioLogEntry, RadioLogEntryType, RadioLogType } from '../../domain/model/radio-log-entry.interface'
 import { RadioLogService } from './radio-log.service'
 import { RangerService } from './ranger.service'
 import { AttachmentStoreService } from './attachment-store.service'

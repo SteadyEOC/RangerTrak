@@ -1,5 +1,5 @@
-import type { LocationType } from '../shared/services/location.interface'
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { LocationType } from './model/location.interface'
+import type { RangerType } from './model/ranger.interface'
 import { buildRadioLogEntry, defaultStatus, missionDefaultLocation, stationFields } from './entry-build'
 
 const ranger = (o: Partial<RangerType>): RangerType =>

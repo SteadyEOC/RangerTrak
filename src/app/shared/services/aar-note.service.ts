@@ -3,7 +3,7 @@ import { Observable, ReplaySubject } from 'rxjs'
 import { Injectable, Optional, SkipSelf, signal } from '@angular/core'
 
 import { LogService } from './log.service'
-import { AarNoteAbout, AarNoteKind, AarNoteType } from './aar-note.interface'
+import { AarNoteAbout, AarNoteKind, AarNoteType } from '../../domain/model/aar-note.interface'
 import { AAR_NOTE_SCHEMA_VERSION, migrateAarNotes, normalizeAarNotes } from '../../domain/aar-note-migration'
 import { newLocationUid } from '../../domain/mission-location-migration'
 import { recordStore } from '../storage/record-store'

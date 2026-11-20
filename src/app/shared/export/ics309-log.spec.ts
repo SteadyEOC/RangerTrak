@@ -1,4 +1,4 @@
-import { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 
 import { rehydrateDateFields } from '../../domain/json-dates'
 import { buildIcs309Log, Ics309MissionInfo } from './ics309-log'

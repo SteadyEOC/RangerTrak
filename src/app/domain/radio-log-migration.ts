@@ -2,7 +2,7 @@ import { rehydrateDateFields } from './json-dates'
 import { newUid } from './uid'
 import { numberEntries } from './msg-no'
 import { withSanitizedHeading } from './heading'
-import type { RadioLogType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogType } from './model/radio-log-entry.interface'
 
 /**
  * Versioned, forward-only migration for the persisted radio log store.

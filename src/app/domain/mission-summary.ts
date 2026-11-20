@@ -8,9 +8,9 @@
  * Everything time-based uses the entry's `date` (when the traffic happened), never `loggedAt`
  * (when it was typed in) - `loggedAt` is used only to say whether an entry was logged late.
  */
-import type { AarNoteType } from '../shared/services/aar-note.interface'
-import type { RadioLogEntryType, RadioLogStatusType } from '../shared/services/radio-log-entry.interface'
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { AarNoteType } from './model/aar-note.interface'
+import type { RadioLogEntryType, RadioLogStatusType } from './model/radio-log-entry.interface'
+import type { RangerType } from './model/ranger.interface'
 import { flaggedStatuses } from './map-entry-filter'
 import { formatStation } from './station-label'
 

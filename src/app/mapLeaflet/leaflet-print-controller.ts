@@ -8,7 +8,7 @@ import {
 } from '../domain/map-print-layout'
 import { printMapSheet } from '../map/map-print/map-print-sheet'
 import type { MissionType } from '../shared/services'
-import type { MissionLocationType } from '../shared/services/mission-location.interface'
+import type { MissionLocationType } from '../domain/model/mission-location.interface'
 import type { LeafletOverlays } from './leaflet-overlays'
 
 /** What LeafletPrintController needs from the map component (a narrow view, not the component itself). */

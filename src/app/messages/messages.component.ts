@@ -33,7 +33,7 @@ import { AttachmentViewerService } from '../shared/attachments/attachment-viewer
 import {
   RadioLogService, RadioLogEntryType, LogService, MissionService, MissionType
 } from '../shared/services'
-import type { Rr213LineType } from '../shared/services/radio-log-entry.interface'
+import type { Rr213LineType } from '../domain/model/radio-log-entry.interface'
 
 export type MessageFilter = 'all' | '213' | 'rr'
 export type MessageForm = '213' | 'rr'

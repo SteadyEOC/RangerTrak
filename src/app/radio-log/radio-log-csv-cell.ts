@@ -1,5 +1,5 @@
 import { markedAddress } from '../domain/address-mark'
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../domain/model/radio-log-entry.interface'
 
 /**
  * Q112 (John 11-17): the Radio Log CSV marks an address RangerTrak looked up with a leading "~", as the radio text

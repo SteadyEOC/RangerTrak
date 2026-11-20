@@ -1,9 +1,9 @@
-import type { AarNoteType } from '../shared/services/aar-note.interface'
+import type { AarNoteType } from './model/aar-note.interface'
 import type {
   RadioLogEntryType,
   RadioLogStatusType,
-} from '../shared/services/radio-log-entry.interface'
-import type { RangerType } from '../shared/services/ranger.interface'
+} from './model/radio-log-entry.interface'
+import type { RangerType } from './model/ranger.interface'
 import {
   NO_AREA_LABEL,
   NO_STATION_LABEL,

@@ -6,9 +6,9 @@ import { Injectable, OnInit, Optional, signal, SkipSelf } from '@angular/core'
 import { recordStore } from '../storage/record-store'
 import { isReadOnlyWindow } from '../storage/read-only-window'
 import * as packageJson from '../../../../package.json'
-import { RadioLogStatusType } from './radio-log-entry.interface'
+import { RadioLogStatusType } from '../../domain/model/radio-log-entry.interface'
 import { LogService } from './log.service'
-import { MissionType } from './mission.interface'
+import { MissionType } from '../../domain/model/mission.interface'
 import {
   DEFAULT_RADIO_LOG_STATUSES, DEFAULT_LOCATION_TYPES, DEFAULT_RECIPIENT_OPTIONS_213,
   MISSION_SCHEMA_VERSION, DEFAULT_OP_PERIOD_HOURS, BUNDLED_IMAGE_DIRECTORY, migrateMission

@@ -1,5 +1,5 @@
-import { MissionType } from '../services/mission.interface'
-import { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import { MissionType } from '../../domain/model/mission.interface'
+import { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 import { stripBom } from '../../domain/import-diagnosis'
 import { readScenarioClock, type ScenarioClock } from '../../domain/scenario'
 import { localDateStamp, localDateTimeStamp } from './local-date'

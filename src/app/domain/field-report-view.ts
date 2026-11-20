@@ -1,5 +1,5 @@
 import type { FieldReportRecord } from './field-report-state'
-import type { Rr213Type } from '../shared/services/radio-log-entry.interface'
+import type { Rr213Type } from './model/radio-log-entry.interface'
 import { rr213Brief } from './rr213'
 
 /**

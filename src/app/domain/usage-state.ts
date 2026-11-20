@@ -1,4 +1,4 @@
-import type { MissionModeType } from '../shared/services/mission.interface'
+import type { MissionModeType } from './model/mission.interface'
 
 /**
  * E-168 (2026-10-01, John): "is this device being used for something real?" decided in ONE

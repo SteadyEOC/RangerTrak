@@ -1,6 +1,6 @@
 import { liveRefs } from '../../domain/attachments'
 import { escapeHtml } from '../escape-html'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 
 /** Hook class the grid's click handler looks for; the entry's uid rides in `data-entry-uid`. */
 export const ATTACH_CHIP_CLASS = 'rt-attach-chip'

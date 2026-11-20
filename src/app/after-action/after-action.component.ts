@@ -20,7 +20,7 @@ import { noteTime } from '../domain/aar-note-migration'
 import {
   AAR_NOTE_ABOUT_LABELS, AarNoteAbout, AarNoteService, AarNoteType, FieldModeService, LogService, MissionService
 } from '../shared/services'
-import { AAR_CAPABILITIES, AAR_CAPABILITY_LABELS } from '../shared/services/aar-note.interface'
+import { AAR_CAPABILITIES, AAR_CAPABILITY_LABELS } from '../domain/model/aar-note.interface'
 import { showFirstPrintTip } from '../shared/export/print-tip'
 import { armPrintTitle } from '../shared/export/print-title'
 import { csvCell, downloadCsv } from '../shared/export/csv'

@@ -1,4 +1,4 @@
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType } from './model/radio-log-entry.interface'
 
 /**
  * E-196 phase 1 (ADR D-66): training mode. Pure rules (D-57) - no Angular, DOM or storage.

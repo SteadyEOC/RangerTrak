@@ -5,7 +5,7 @@ import type { BudgetLevel } from '../../domain/attachments'
 import { AttachmentStoreService } from '../services/attachment-store.service'
 import { MissionService } from '../services/mission.service'
 import { RadioLogService } from '../services/radio-log.service'
-import type { RadioLogEntryType } from '../services/radio-log-entry.interface'
+import type { RadioLogEntryType } from '../../domain/model/radio-log-entry.interface'
 
 /**
  * How full the mission's attachment budget is (ADR D-60 item 7), live. The rules are in

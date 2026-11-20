@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing'
 
-import { MissionType } from './mission.interface'
+import { MissionType } from '../../domain/model/mission.interface'
 import { MissionService } from './mission.service'
 
 /**

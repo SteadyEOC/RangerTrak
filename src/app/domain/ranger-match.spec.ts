@@ -1,5 +1,5 @@
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
-import type { RangerType } from '../shared/services/ranger.interface'
+import type { RadioLogEntryType } from './model/radio-log-entry.interface'
+import type { RangerType } from './model/ranger.interface'
 import { applyCallsignEdit, callsignEditNotice, matchRanger } from './ranger-match'
 
 const rangers = [

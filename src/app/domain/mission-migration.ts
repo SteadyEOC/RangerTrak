@@ -1,7 +1,7 @@
 import { rehydrateDateFields } from './json-dates'
-import type { RadioLogStatusType } from '../shared/services/radio-log-entry.interface'
-import type { LocationCategoryType } from '../shared/services/mission-location.interface'
-import type { MissionType } from '../shared/services/mission.interface'
+import type { RadioLogStatusType } from './model/radio-log-entry.interface'
+import type { LocationCategoryType } from './model/mission-location.interface'
+import type { MissionType } from './model/mission.interface'
 import { StatusKey } from './status-color'
 
 /**

@@ -5,7 +5,7 @@ import {
   normalizeAarNotes,
 } from '../../domain/aar-note-migration'
 import { recordStore } from '../storage/record-store'
-import { AAR_CAPABILITIES } from './aar-note.interface'
+import { AAR_CAPABILITIES } from '../../domain/model/aar-note.interface'
 import { AarNoteService } from './aar-note.service'
 
 describe('AarNoteService (E-116)', () => {

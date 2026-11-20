@@ -321,6 +321,8 @@ places. Services gather the inputs and call the rule. Since 2026-10-05 (ADR D-57
 (components reach storage only through services) are errors and gate CI, proven red with probe
 files, in `eslint.config.mjs`. The recommended rule sets still only warn.
 
+2026-11-20 (P3): the model interfaces (`aar-note`, `location`, `log`, `mission-location`, `mission`, `radio-log-entry`, `ranger`; the stored shapes and the constants beside them) live in `src/app/domain/model/`. They are framework-free, so `domain/` can import its own types. The D-57 lint rule now lets `domain/` import only `domain/` (the old allowance for `*.interface` files from outside is gone). The `shared/services` barrel still re-exports them.
+
 2026-10-12: the rules that were already pure moved in, one commit each, tests unchanged:
 `overdue.ts` (check-in bands), `station-label.ts` (how a station prints), `map-print-layout.ts`
 (print sheet geometry), `coordinate.ts` (MGRS/UTM/Maidenhead formats and parsing), the stored-data

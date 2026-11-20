@@ -1,4 +1,4 @@
-import { MissionType } from '../shared/services/mission.interface'
+import { MissionType } from './model/mission.interface'
 import {
   DEFAULT_RADIO_LOG_STATUSES,
   MISSION_SCHEMA_VERSION,

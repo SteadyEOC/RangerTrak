@@ -1,4 +1,4 @@
-import type { RadioLogEntryType } from '../shared/services/radio-log-entry.interface'
+import type { RadioLogEntryType } from './model/radio-log-entry.interface'
 
 /**
  * Attachments on radio log entries (ADR D-60, E-194): the reference an entry carries.

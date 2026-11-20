@@ -1,4 +1,4 @@
-import type { AarNoteType } from '../shared/services/aar-note.interface'
+import type { AarNoteType } from './model/aar-note.interface'
 
 /**
  * E-221: what a "this replaces the mission" or "clear the radio log" action may clear. The
