@@ -78,7 +78,7 @@
     "idb": "^8.0.4",
     "leaflet": "^2.0.0-beta.5",
     "leaflet.heat": "^1.0.1",
-    "leaflet.markercluster": "2.0.0-beta.1",
+    "leaflet.markercluster": "2.0.0-beta.2",
     "leaflet.offline": "^3.2.0",
     "maplibre-gl": "^6.16.0",
     "mediabunny": "^1.65.1",
