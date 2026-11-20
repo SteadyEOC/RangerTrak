@@ -153,7 +153,14 @@
   @if (editing()) {
   <p class="entry-editing" role="status" data-testid="entry-editing">{{ editingLabel() }}. Nothing has been sent, so the saved report replaces it.</p>
   }
-  <form [formGroup]="entryControlsForm" (ngSubmit)="onFormSubmit()" (keydown)="onFormKeydown($event)" (focusout)="recordUndo()" class="enter__form">
+  <!-- E-332: the mission's Entry layout. basic and net are separate screens; field and full are this form
+       (field fits it to a laptop screen). All of them save through the same RadioLogService call. -->
+  @if (layout() === 'basic') {
+  <rangertrak-entry-log-grid></rangertrak-entry-log-grid>
+  } @else if (layout() === 'net') {
+  <rangertrak-entry-net></rangertrak-entry-net>
+  } @else {
+  <form [formGroup]="entryControlsForm" (ngSubmit)="onFormSubmit()" (keydown)="onFormKeydown($event)" (focusout)="recordUndo()" class="enter__form" [class.enter__form--field]="layout() === 'field'">
     <!-- Groups the mini-map with Who/Where so a breakpoint can reorder them together
          without touching desktop layout at all: default (undeclared) `display` here does
          nothing, so at tablet-up widths this is a no-op wrapper and the float below behaves
@@ -319,7 +326,8 @@
       <div class="enter__section">
 
         <rangertrak-location [(location)]="locationParent" (locationChange)="onNewLocationEvent($event)"
-          [tabIndexStart]="locationTabIndexStart" [formGeneration]="formGeneration">
+          [tabIndexStart]="locationTabIndexStart" [formGeneration]="formGeneration"
+          [foldOtherFormats]="layout() === 'field'">
           <!--
             https://www.appsloveworld.com/angular/100/13/angular-two-way-data-binding-and-watching-for-changes-in-parent-component
 
@@ -879,5 +887,6 @@
       <pre><strong>EntryForm value:</strong> {{mergedFormValue() | json}}</pre>
     </div>
   </form>
+  }
 
 </rangertrak-page>

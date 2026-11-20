@@ -46,7 +46,10 @@ import { TimePickerComponent } from '../shared/time-picker/time-picker.component
 import { DDToDDM } from '../domain/coordinate'
 import { farLocation, farLocationText } from '../domain/far-location'
 import { UndoHistory } from '../domain/undo-history'
-import { matchRanger } from '../domain/ranger-match'
+import { EntryLayout, entryLayoutOf } from '../domain/entry-layout'
+import { EntryLogGridComponent } from './layouts/entry-log-grid.component'
+import { EntryNetComponent } from './layouts/entry-net.component'
+import { matchRanger, resolveStationText } from '../domain/ranger-match'
 import { callerKind, normalizeCall, type CallerResult } from '../domain/caller-kind'
 import { CallsignDirectoryService } from '../shared/services/callsign-directory.service'
 import {
@@ -94,6 +97,8 @@ import { teamAtSave } from '../domain/entry-team'
     FormField,
     RouterLink,
     ImportSafetyCardComponent,
+    EntryLogGridComponent,
+    EntryNetComponent,
     MyReportsComponent,
     MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatButtonToggleModule, MatCheckboxModule, MatChipsModule, MatSelectModule, MatAutocompleteModule,
     PageComponent,
@@ -459,6 +464,8 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   toCtrl = new FormControl<string>('', { nonNullable: true })
 
   // E-324: the one-line "who is this caller" chips under the From and To boxes. Informs only; Submit never reads them.
+  /** E-332: which Entry screen this mission uses; `full` until the mission says otherwise. */
+  readonly layout = signal<EntryLayout>('full')
   readonly fromHint = signal<CallerResult | null>(null)
   readonly toHint = signal<CallerResult | null>(null)
   private hintSubscriptions: Subscription[] = []
@@ -623,6 +630,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.missionSubscription = this.missionService.getMissionObserver().subscribe({
       next: (newMission) => {
         this.settings = newMission
+        this.layout.set(entryLayoutOf(newMission))   // E-332
         // Decided by the maintainer 2026-09-26: Mission is its own screen, so a changed
         // default location shows up the next time Entry opens - which this already does,
         // since Entry is rebuilt on every visit (no route reuse) and starts from
@@ -1237,15 +1245,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
    * text resolves as a roster row, or stays raw text exactly as before.
    */
   private resolveStation(text: string): { tactical?: string, rangerUid: string, callsign: string } {
-    const typed = text.trim()
-    const needle = typed.toLowerCase()
-    const tc = needle ? (this.settings?.tacticalCalls ?? []).find(t => t.name.trim().toLowerCase() === needle) : undefined
-    if (tc) {
-      const operator = tc.rangerUid ? this.rangers.find(r => r.uid === tc.rangerUid) : undefined
-      return { tactical: tc.name.trim(), rangerUid: operator?.uid ?? '', callsign: operator?.callsign ?? '' }
-    }
-    const match = this.matchRanger(typed)
-    return { rangerUid: match?.uid ?? '', callsign: match ? match.callsign : typed }
+    return resolveStationText(text, this.settings?.tacticalCalls ?? [], this.rangers)
   }
 
   /** E-165: tactical calls whose name contains what has been typed (all of them when blank). */

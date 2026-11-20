@@ -262,7 +262,12 @@
            "must not show the PREVIOUS report's values" requirement via showDerived().
        Gating the coordinate rows on showDerived() too would hide ready, correct data behind
        an unrelated network wait. -->
-  <div class="enter__Where-derived">
+  <div class="enter__Where-derived" [class.enter__Where-derived--folded]="foldOtherFormats && !otherFormatsOpen()">
+    @if (foldOtherFormats) {
+    <button type="button" class="rt-other-formats__toggle" tabindex="-1" data-testid="other-formats-toggle"
+      [attr.aria-expanded]="otherFormatsOpen()" (click)="otherFormatsOpen.set(!otherFormatsOpen())">
+      Other formats and address {{ otherFormatsOpen() ? '(hide)' : '(show)' }}</button>
+    }
     <div class="enter__Where-derived-divider"><span>Derived</span></div>
 
     <!-- E-104: replaces the old ~20-field simultaneous grid - the position in every format

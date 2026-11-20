@@ -341,6 +341,8 @@ console.log(decrypted.toString(CryptoJS.enc.Utf8));
       tacticalCalls: [],
       // E-324: no EOC call signs until the mission lists some - see MissionType.eocCalls.
       eocCalls: [],
+      // E-332: the full Entry screen until the mission picks another.
+      entryLayout: 'full',
       // E-150: see MissionType.extraCopies213 - one extra paper copy by default.
       extraCopies213: 1,
       // E-194 / D-60: half a gigabyte of attachments before the app starts asking.

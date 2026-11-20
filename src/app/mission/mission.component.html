@@ -189,6 +189,9 @@
           </dl>
         </mat-card-content>
       </mat-card>
+      <!-- E-332: which Entry screen this mission uses. -->
+      <rangertrak-mission-entry-layout [layout]="entryLayout()" (layoutChange)="onEntryLayoutChange($event)">
+      </rangertrak-mission-entry-layout>
       <rangertrak-mission-details-section [form]="settingsForm" [opPeriodStart]="opPeriodStart()"
         [opPeriodEnd]="opPeriodEnd()" [timePickerLabelStart]="timePickerLabelStart"
         [timePickerLabelEnd]="timePickerLabelEnd" (timeEventStart)="onNewTimeEventStart($event)"

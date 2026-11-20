@@ -378,3 +378,14 @@ input[type=number] {
 .small {
   @include type.type-body-sm;
 }
+
+// E-332 (Field team layout): folded, the derived panel is one line; the toggle opens it.
+.rt-other-formats__toggle {
+  display: block; width: 100%; margin: 0 0 2px; padding: 1px 4px; border: none; background: transparent;
+  text-align: left; font: inherit; cursor: pointer; color: var(--rt-ink-2);
+  @include type.type-body-sm;
+}
+
+.enter__Where-derived--folded > :not(.rt-other-formats__toggle) {
+  display: none;
+}

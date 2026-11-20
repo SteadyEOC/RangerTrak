@@ -932,3 +932,39 @@ mat-chip-option.enter__status-selected {
   margin     : 0 0 var(--rt-space-sm);
   font-size  : var(--rt-type-body-sm-size);
 }
+
+// E-332 (Field team layout): on a laptop-width screen the map sits on the right of the form instead of floating
+// beside the first sections, and the derived coordinate list is folded (LocationComponent [foldOtherFormats]).
+// Below 1200px nothing changes. `display: contents` on the top group lets the map, Who and Where take part in
+// the form's own grid, so no markup moves and the tab order stays as it is.
+@media (min-width: 1200px) {
+  .enter__form--field {
+    display              : grid;
+    grid-template-columns: minmax(0, 1fr) min(35vw, 500px);
+    column-gap           : 16px;
+    align-items          : start;
+
+    > * {
+      grid-column: 1 / -1;
+    }
+
+    .enter__top-group {
+      display: contents;
+    }
+
+    .enter__top-group > mini-mapLeaflet,
+    .enter__top-group > .minimap-placeholder {
+      grid-column: 2;
+      grid-row   : 1 / span 5;
+      float      : none;
+      margin     : 0;
+      width      : 100%;
+    }
+
+    .enter__top-group > .enter__section,
+    > h2.elegant,
+    > .timepicker {
+      grid-column: 1;
+    }
+  }
+}

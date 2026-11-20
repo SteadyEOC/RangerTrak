@@ -77,3 +77,25 @@ export function callsignEditNotice(edit: CallsignEdit, tacticalCall: string | un
   }
   return parts.length ? parts.join(' ') : null
 }
+
+/**
+ * E-165 / E-332: resolves what the scribe typed or picked in a station box to the fields recorded on an entry.
+ * A tactical call (exact name, case-insensitive) wins over a roster row of the same text; a staffed one records its
+ * operator's uid and call sign right now. Otherwise the text resolves as a roster row, or stays raw text.
+ * Shared by the Entry form and the simpler Entry layouts so they cannot disagree.
+ */
+export function resolveStationText(
+  text: string,
+  tacticalCalls: ReadonlyArray<{ name: string; rangerUid?: string }>,
+  rangers: readonly RangerType[],
+): { tactical?: string, rangerUid: string, callsign: string } {
+  const typed = text.trim()
+  const needle = typed.toLowerCase()
+  const tc = needle ? tacticalCalls.find(t => t.name.trim().toLowerCase() === needle) : undefined
+  if (tc) {
+    const operator = tc.rangerUid ? rangers.find(r => r.uid === tc.rangerUid) : undefined
+    return { tactical: tc.name.trim(), rangerUid: operator?.uid ?? '', callsign: operator?.callsign ?? '' }
+  }
+  const match = matchRanger(rangers, typed)
+  return { rangerUid: match?.uid ?? '', callsign: match ? match.callsign : typed }
+}

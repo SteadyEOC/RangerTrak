@@ -79,6 +79,10 @@ export class LocationComponent implements OnInit, AfterViewInit, OnChanges, OnDe
   // Address/+Codes text as if it belonged to the new one.
   @Input() formGeneration = 0
 
+  /** E-332: the Field team layout folds the derived panel to one line that opens on click. */
+  @Input() foldOtherFormats = false
+  otherFormatsOpen = signal(false)
+
   // E-48(1): starts false so the block stays hidden until a derivation has actually
   // completed for the current report - set true at the end of updateDerivedLocations()
   // below, reset to false in ngOnChanges whenever formGeneration bumps (submit/reset). This

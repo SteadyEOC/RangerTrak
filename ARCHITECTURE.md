@@ -444,7 +444,7 @@ whose key has left the source fails. Add the row in the same commit as the key.
 
 | # | Store | Key | Owner | Backup | Encrypted | Migration |
 |---|-------|-----|-------|--------|-----------|-----------|
-| 1 | localStorage | `appSettings` | `mission.service.ts` | yes (`settings`; the geocoding key only in passphrase-protected backups) | no | `mission-migration.ts`, schema 5, plus backfill on every load |
+| 1 | localStorage | `appSettings` | `mission.service.ts` | yes (`settings`; the geocoding key only in passphrase-protected backups) | no | `mission-migration.ts`, schema 5, plus backfill on every load; `entryLayout` (E-332: basic, net, field or full Entry screen) is optional and read as `entryLayoutOf(mission)`, so a mission without it is `full` |
 | 2 | localStorage | `appSettings-BAD` | `mission.service.ts` | no | no | none; quarantine copy of unreadable settings |
 | 3 | localStorage | `rangertrak-demo-scenario` | `shared/mapping/demo-map.ts` | no | no | JSON record since E-168a; the old bare scenario id still reads |
 | 4 | localStorage | `fieldMode` | `field-mode.service.ts` | no | no | none |

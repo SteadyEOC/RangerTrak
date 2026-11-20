@@ -1,0 +1,57 @@
+<section class="net" data-testid="entry-net">
+  <header class="net__header">
+    <span class="net__mission" data-testid="net-mission">{{ missionName() || 'Mission' }}</span>
+    <label class="net__sending">Sending as
+      <input class="net__plain" type="text" list="net-sending-options" autocomplete="off" spellcheck="false"
+        [value]="effectiveSendingAs()" (input)="quick.sendingAs.set($any($event.target).value)"
+        data-testid="net-sending-as" />
+      <datalist id="net-sending-options">
+        @for (o of sendingOptions(); track o) { <option [value]="o"></option> }
+      </datalist>
+    </label>
+    <label class="net__operator">Operator
+      <input class="net__plain" type="text" autocomplete="off" [value]="quick.operator()"
+        (input)="quick.operator.set($any($event.target).value)" data-testid="net-operator" />
+    </label>
+  </header>
+
+  <form class="net__line" (submit)="$event.preventDefault(); save()">
+    <label class="net__field net__field--call">Call sign
+      <input class="net__plain" id="entry-net-call" type="text" list="net-call-options" autocomplete="off" spellcheck="false"
+        [value]="call()" (input)="onCall($any($event.target).value)" data-testid="net-call" />
+      <datalist id="net-call-options">
+        @for (o of quick.callOptions(); track o) { <option [value]="o"></option> }
+      </datalist>
+    </label>
+    <mat-button-toggle-group class="net__direction" aria-label="Direction" [value]="direction()"
+      (change)="direction.set($event.value)" data-testid="net-direction">
+      <mat-button-toggle value="in" data-testid="net-direction-in">In</mat-button-toggle>
+      <mat-button-toggle value="out" data-testid="net-direction-out">Out</mat-button-toggle>
+    </mat-button-toggle-group>
+    <label class="net__field net__field--message">Message
+      <input class="net__plain" type="text" placeholder="Check-in" autocomplete="off"
+        [value]="message()" (input)="message.set($any($event.target).value)" data-testid="net-message" />
+    </label>
+    <button matButton="filled" type="submit" data-testid="net-save">Save</button>
+  </form>
+
+  <p class="net__parties" role="status" data-testid="net-parties">{{ partiesLine() }}</p>
+  @if (hint(); as h) {
+  <p class="net__hint" role="status" data-testid="net-caller-hint">
+    <span [class]="'rt-caller rt-caller--' + h.kind">{{ h.tag }}</span>
+    @if (h.detail) { <span>{{ h.detail }}</span> }
+  </p>
+  }
+  <p class="net__saved" role="status" data-testid="net-saved">{{ savedNote() }}</p>
+
+  @if (showLocation()) {
+  <div class="net__location" data-testid="net-location">
+    <rangertrak-location [location]="location() ?? noLocation" (locationChange)="location.set($event)"></rangertrak-location>
+    <button matButton type="button" (click)="showLocation.set(false); location.set(null)" data-testid="net-location-remove">Remove location</button>
+  </div>
+  } @else {
+  <button matButton type="button" (click)="showLocation.set(true)" data-testid="net-add-location">Add location</button>
+  }
+
+  <rangertrak-entry-recent-list [entries]="quick.recent()"></rangertrak-entry-recent-list>
+</section>

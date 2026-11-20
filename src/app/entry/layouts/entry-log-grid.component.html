@@ -1,0 +1,26 @@
+<section class="basic" data-testid="entry-basic">
+  <form class="basic__row" (submit)="$event.preventDefault(); save()">
+    <label class="basic__field basic__field--time">Time
+      <input class="basic__plain" type="text" inputmode="numeric" placeholder="now" autocomplete="off"
+        [value]="time()" (input)="time.set($any($event.target).value)" data-testid="basic-time" />
+    </label>
+    <label class="basic__field">From
+      <input #fromBox class="basic__plain" type="text" list="basic-call-options" autocomplete="off" spellcheck="false"
+        [value]="from()" (input)="from.set($any($event.target).value)" data-testid="basic-from" />
+    </label>
+    <label class="basic__field">To
+      <input class="basic__plain" type="text" list="basic-call-options" autocomplete="off" spellcheck="false"
+        [value]="to()" (input)="to.set($any($event.target).value)" data-testid="basic-to" />
+    </label>
+    <label class="basic__field basic__field--message">Message
+      <input class="basic__plain" type="text" autocomplete="off"
+        [value]="message()" (input)="message.set($any($event.target).value)" data-testid="basic-message" />
+    </label>
+    <button matButton="filled" type="submit" data-testid="basic-save">Save</button>
+    <datalist id="basic-call-options">
+      @for (o of quick.callOptions(); track o) { <option [value]="o"></option> }
+    </datalist>
+  </form>
+  <p class="basic__saved" role="status" data-testid="basic-saved">{{ savedNote() }}</p>
+  <rangertrak-entry-recent-list [entries]="quick.recent()"></rangertrak-entry-recent-list>
+</section>

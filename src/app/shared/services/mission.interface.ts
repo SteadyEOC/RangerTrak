@@ -1,3 +1,4 @@
+import type { EntryLayout } from '../../domain/entry-layout'
 import { RadioLogStatusType } from './radio-log-entry.interface'
 import { LocationCategoryType } from './mission-location.interface'
 import type { ScenarioClock } from '../../domain/scenario'
@@ -161,6 +162,10 @@ export type MissionType = {
   // tag on Entry and in the Radio Log. Informs only, never blocks a save. Additive-only field, same reasoning as
   // tacticalCalls above - no MISSION_SCHEMA_VERSION bump, backfillMissingFields supplies `[]` (see initMission()).
   eocCalls: string[],
+
+  // E-332: which Entry screen this mission uses (basic / net / field / full). Optional and read everywhere as
+  // `entryLayoutOf(mission)`, so a mission without it is `full`. Additive-only: no MISSION_SCHEMA_VERSION bump.
+  entryLayout?: EntryLayout,
 
   // E-150 (2026-09-30): extra paper copies printed along with each ICS-213 for the paper log
   // (the Mission page's "Extra copies for the paper log"; Entry's auto-print and Messages'
