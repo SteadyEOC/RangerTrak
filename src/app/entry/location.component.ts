@@ -33,6 +33,7 @@ import {
 import { DevicePrefsService } from '../shared/services/device-prefs.service'
 import { ViewService } from '../shared/services/view.service'
 import { AdvancedDirective } from '../shared/view/advanced.directive'
+import { RouterLink } from '@angular/router'
 
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
@@ -57,7 +58,7 @@ https://stackblitz.com/edit/angular-azzmhu?file=src/app/hello.component.ts
   //moduleId: module.id,
   selector: 'rangertrak-location',
   standalone: true,
-  imports: [CommonModule, FormField, MatFormFieldModule, MatInputModule, MatButtonModule, MatButtonToggleModule, MatChipsModule, MatIconModule, AdvancedDirective],
+  imports: [CommonModule, FormField, MatFormFieldModule, MatInputModule, MatButtonModule, MatButtonToggleModule, MatChipsModule, MatIconModule, AdvancedDirective, RouterLink],
   templateUrl: './location.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./location.component.scss']

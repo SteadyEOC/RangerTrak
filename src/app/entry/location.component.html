@@ -32,6 +32,13 @@
       <mat-button-toggle [value]="f.id" [title]="f.title">{{ f.label }}</mat-button-toggle>
       }
     </mat-button-toggle-group>
+    } @else {
+    <!-- Q124 (2026-11-19, Don W7DMR via E-329): Easy menus has no picker, so a UTM team had no way to
+         learn where the format is set. One quiet line, text plus a link, not a control. -->
+    <p class="enter__Where-format-note" data-testid="entry-format-note">
+      {{ systemLabel(activeSystem()) }} &middot;
+      <a routerLink="/mission" fragment="location-defaults">change under Mission</a>
+    </p>
     }
 
     <!------------------------------------------------------------>

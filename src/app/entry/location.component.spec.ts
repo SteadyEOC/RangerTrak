@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { provideRouter } from '@angular/router'
 
 import { GEOCODING_PROVIDER, NominatimGeocoder } from '../shared'
 import { LocationComponent } from './location.component'
@@ -10,7 +11,8 @@ describe('LocationComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LocationComponent],
-      providers: [{ provide: GEOCODING_PROVIDER, useValue: new NominatimGeocoder() }],
+      // provideRouter: Q124's "change under Mission" link (RouterLink) in Easy menus.
+      providers: [{ provide: GEOCODING_PROVIDER, useValue: new NominatimGeocoder() }, provideRouter([])],
     }).compileComponents()
   })
 

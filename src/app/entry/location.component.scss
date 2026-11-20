@@ -308,6 +308,13 @@ $filledColor: var(--rt-surface-2);
   flex-wrap    : wrap;
 }
 
+// Q124: Easy menus' stand-in for the picker - quiet, one line.
+.enter__Where-format-note {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 // E-48(5): was a fixed 600px, which overflowed once MGRS/UTM's own fields pushed content
 // past it - unlikely to bite the same way now that only one system's fields render at
 // once, but max-width costs nothing and still protects a phone-width Address field/switcher
