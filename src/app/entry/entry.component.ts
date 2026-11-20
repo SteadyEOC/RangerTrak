@@ -83,7 +83,7 @@ import { parseReceipt, receiptOpenMessage } from '../domain/report-receipt'
 import type { ViewContext } from '../domain/view'
 import { devDiagnostics } from '../shared/dev-diagnostics'
 import { clock } from '../domain/field-report-view'
-import { teamAtSave } from '../domain/entry-team'
+import { stationFields } from '../domain/entry-build'
 
 // TODO: IDEA: use https://material.angular.io/components/badge/ ???
 
@@ -1313,20 +1313,12 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     // E-165: From may now be a tactical call - resolveStation() records its operator's uid and
     // call sign at this moment (never looked up later), and To is resolved the same way.
     // tacticalCall and the to* fields are left off entirely when empty, like every other optional field.
-    const from = this.resolveStation(this.callsignCtrl.value ?? '')
-    const to = this.resolveStation(this.toCtrl.value ?? '')
-    const team = teamAtSave(from.rangerUid, this.rangers)
-
+    // E-337: the From ranger's team as it is right now is recorded on the entry (left off when none).
     return {
       ...this.entryModel(),
-      rangerUid: from.rangerUid,
-      callsign: from.callsign,
-      ...(from.tactical ? { tacticalCall: from.tactical } : {}),
-      // E-337: the From ranger's team as it is right now, recorded on the entry (left off when none).
-      ...(team ? { team } : {}),
-      ...(to.tactical ? { toTactical: to.tactical } : {}),
-      ...(to.callsign ? { toCallsign: to.callsign } : {}),
-      ...(to.rangerUid ? { toRangerUid: to.rangerUid } : {}),
+      ...stationFields(this.callsignCtrl.value ?? '', this.toCtrl.value ?? '', {
+        tacticalCalls: this.settings?.tacticalCalls ?? [], rangers: this.rangers,
+      }),
       status: this.entryControlsForm.value.status,
       // D-44: stamped from whatever operatorModel holds AT SUBMIT - see its own declaration.
       // Trimmed so "typed then deleted" reads as blank, not whitespace.

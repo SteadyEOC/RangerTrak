@@ -2,9 +2,8 @@ import { Injectable, computed, inject, signal } from '@angular/core'
 import { toSignal } from '@angular/core/rxjs-interop'
 import { map } from 'rxjs'
 import { callerKind, type CallerResult } from '../../domain/caller-kind'
-import { teamAtSave } from '../../domain/entry-team'
+import { buildRadioLogEntry, missionDefaultLocation } from '../../domain/entry-build'
 import { missionStationCall, newestFirst } from '../../domain/entry-layout'
-import { resolveStationText } from '../../domain/ranger-match'
 import { CallsignDirectoryService } from '../../shared/services/callsign-directory.service'
 import {
   MissionService, OperatorNameService, RadioLogEntryType, RadioLogService, RangerService, undefinedLocation,
@@ -14,9 +13,9 @@ import type { LocationType } from '../../shared/services/'
 export type QuickEntry = { from: string; to: string; message: string; date?: Date; location?: LocationType }
 
 /**
- * E-332: the shared save step for the simpler Entry layouts (basic log and net). It builds the same entry the full
- * form builds (mergedFormValue() in EntryComponent: station resolution, From ranger's team, operator, source)
- * and hands it to the same RadioLogService.addRadioLogEntry(), which stamps id, uid, loggedAt and message number.
+ * E-332: the shared save step for the simpler Entry layouts (basic log and net). The entry is assembled by
+ * domain/entry-build.ts (P1), whose stationFields() is the same station / team / operator block the full form's
+ * mergedFormValue() in EntryComponent spreads, so the two cannot drift. The result goes to the same RadioLogService.addRadioLogEntry(), which stamps id, uid, loggedAt and message number.
  */
 @Injectable({ providedIn: 'root' })
 export class EntryQuickSaveService {
@@ -47,8 +46,7 @@ export class EntryQuickSaveService {
   readonly recent = computed<RadioLogEntryType[]>(() => newestFirst((this.log()?.logEntries ?? []).slice(-200)))
   /** The mission's default position: where "Add location" starts, as on the full form. */
   readonly defaultLocation = computed<LocationType>(() => {
-    const m = this.mission()
-    return { ...undefinedLocation, lat: m?.defLat ?? undefinedLocation.lat, lng: m?.defLng ?? undefinedLocation.lng }
+    return missionDefaultLocation(this.mission(), undefinedLocation)
   })
 
   /** The names the Entry boxes can offer: roster calls and tactical names. */
@@ -74,31 +72,9 @@ export class EntryQuickSaveService {
 
   /** Saves one entry; returns it. */
   save(e: QuickEntry): RadioLogEntryType {
-    const m = this.mission()
-    const rangers = this.rangers()
-    const from = resolveStationText(e.from, m?.tacticalCalls ?? [], rangers)
-    const to = resolveStationText(e.to, m?.tacticalCalls ?? [], rangers)
-    const team = teamAtSave(from.rangerUid, rangers)
-    const statuses = m?.radioLogStatuses ?? []
-    const entry = {
-      id: -1,
-      location: e.location ?? undefinedLocation,
-      date: e.date ?? new Date(),
-      notes: e.message,
-      source: 'Voice',
-      generates213: false, replyRequested213: false, message213: '', recipients213: [], subject213: '',
-      rangerUid: from.rangerUid,
-      callsign: from.callsign,
-      ...(from.tactical ? { tacticalCall: from.tactical } : {}),
-      ...(team ? { team } : {}),
-      ...(to.tactical ? { toTactical: to.tactical } : {}),
-      ...(to.callsign ? { toCallsign: to.callsign } : {}),
-      ...(to.rangerUid ? { toRangerUid: to.rangerUid } : {}),
-      status: statuses[m?.defRadioLogStatus ?? 0]?.status ?? '',
-      operator: this.operator().trim(),
-      evidenceLocation: null,
-      evidenceDirection: null,
-    }
+    const entry = buildRadioLogEntry(e, {
+      mission: this.mission(), rangers: this.rangers(), operator: this.operator(), noLocation: undefinedLocation,
+    })
     return this.radioLog.addRadioLogEntry(JSON.stringify(entry))
   }
 }
