@@ -55,7 +55,7 @@ import {
 import { MissionJournalService } from '../shared/services/mission-journal.service'
 import { FullscreenService } from '../shared/services/fullscreen.service'
 import { LocationDialogComponent } from '../map-core/location-dialog/location-dialog.component'
-import { MapEngineService } from '../map-core/map-engine.service'
+import { MapEngineService } from '../shared/services/map-engine.service'
 import { liveRefs } from '../domain/attachments'
 import { formatMsgNoShort } from '../domain/msg-no'
 import { formatHeading, sanitizeHeading } from '../domain/heading'

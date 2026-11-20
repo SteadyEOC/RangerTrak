@@ -53,6 +53,11 @@ jobs:
       - name: No import cycles
         run: npm run check:cycles
 
+      # ADR D-73: imports point down the layers (pages > ui > services > infra > domain); a new
+      # wrong-way edge, a folder with no layer, or a stale known exception fails.
+      - name: Imports point down the layers
+        run: npm run check:layers
+
       - name: Storage inventory is complete
         run: npm run check:storage
 

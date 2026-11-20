@@ -51,6 +51,8 @@ npm test           # unit tests: Vitest in headless Chrome, runs once (about 30 
 npm test -- --include=src/app/domain/heading.spec.ts   # one spec file (or a folder)
 npm test -- --filter="RangerView retry"                     # tests whose name matches
 npm run test:watch # re-runs on save; Ctrl+C stops it
+npm run test:coverage   # every spec once, with coverage per layer and area (report only; HTML in coverage/)
+npm run check:layers    # imports point down the layers (ADR D-73); CI runs it
 npm run lint       # ESLint + typecheck
 npm run lint:ts    # ESLint only (eslint.config.mjs)
 npm run lint:tsc   # typecheck only (app and spec projects separately)

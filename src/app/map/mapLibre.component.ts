@@ -47,7 +47,7 @@ import { locationMarkerSvg, resolveLocationIcon } from '../shared/mapping/locati
 // Imported directly, not via the '../shared' barrel - same reasoning as the other
 // shared/mapping/* imports above, this file must not risk pulling Leaflet in.
 import { computeExtent, ExtentPoint } from '../shared/mapping/extent'
-import { MapEngineService } from '../map-core/map-engine.service'
+import { MapEngineService } from '../shared/services/map-engine.service'
 import {
   RadioLogType, RadioLogService, RadioLogEntryType, LogService, MissionLocationService,
   MissionLocationType, MissionService, MissionType, CustomPmtilesService, OfflineBasemapService

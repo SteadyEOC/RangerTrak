@@ -1,9 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core'
 
-import { defaultCoordinateFormat, type CoordinateFormat } from '../domain/coordinate'
-import { MissionService } from '../shared/services/mission.service'
-import type { MissionLocationType } from '../domain/model/mission-location.interface'
-import type { PlaceBounds } from '../domain/places-file'
+import { defaultCoordinateFormat, type CoordinateFormat } from '../../domain/coordinate'
+import { MissionService } from './mission.service'
+import type { MissionLocationType } from '../../domain/model/mission-location.interface'
+import type { PlaceBounds } from '../../domain/places-file'
 
 export type MapEngine = 'leaflet' | 'maplibre'
 
