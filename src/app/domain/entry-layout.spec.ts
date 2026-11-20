@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   ENTRY_LAYOUTS, entryFromTo, basicEntryTime, entryLayoutOf, missionStationCall, netEntryParties, netMessage, netPartiesLine,
-  sendingAsOptions,
+  newestFirst, sendingAsOptions,
 } from './entry-layout'
 
 describe('entry-layout', () => {
@@ -47,5 +47,29 @@ describe('entry-layout', () => {
   it('shows From and To as separate values, tactical first', () => {
     expect(entryFromTo({ tacticalCall: 'Net Control', callsign: 'W7A', toCallsign: 'W7B' })).toEqual({ from: 'Net Control', to: 'W7B' })
     expect(entryFromTo({ callsign: 'W7A' })).toEqual({ from: 'W7A', to: '' })
+  })
+})
+
+describe('newestFirst (E-332 list under basic and net)', () => {
+  it('orders by time, not by the order saved', () => {
+    const list = [
+      { id: 1, date: '2026-11-19T19:17:00' },
+      { id: 2, date: '2026-11-19T20:07:00' },
+      { id: 3, date: new Date('2026-11-19T18:09:00') },
+    ]
+    expect(newestFirst(list).map(e => e.id)).toEqual([2, 1, 3])
+  })
+  it('keeps the later-saved entry first on equal times, and puts unreadable times last', () => {
+    const list = [
+      { id: 1, date: '2026-11-19T19:00:00' },
+      { id: 2, date: 'not a time' },
+      { id: 3, date: '2026-11-19T19:00:00' },
+    ]
+    expect(newestFirst(list).map(e => e.id)).toEqual([3, 1, 2])
+  })
+  it('does not change the list it was given', () => {
+    const list = [{ id: 1, date: '2026-11-19T18:00:00' }, { id: 2, date: '2026-11-19T19:00:00' }]
+    newestFirst(list)
+    expect(list.map(e => e.id)).toEqual([1, 2])
   })
 })

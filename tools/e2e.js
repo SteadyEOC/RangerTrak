@@ -3934,6 +3934,13 @@ async function checkEntryLayouts() {
     check('a blank net message saves as Check-in', net?.notes, 'Check-in')
     check('the net entry is To our station', net?.toCallsign, 'E2ENET')
     check('the recent list under the line shows it', /E2ECALLER/.test(await text('entry-recent-list') || ''), true)
+    // Add location starts at the mission's default position, never the -1, -1 "no location" marker.
+    await click('net-add-location'); await sleep(500)
+    const defLat = await evaluate(`JSON.parse(localStorage.getItem('appSettings') || '{}').defLat`)
+    const locText = await text('net-location') || ''
+    check('net Add location starts at the mission position',
+      typeof defLat === 'number' && locText.includes(`${Math.trunc(Math.abs(defLat))}°`) && (defLat === -1 || !/1° 0\.00' S, 1° 0\.00' W/.test(locText)), true)
+    await click('net-location-remove'); await sleep(200)
 
     // Basic.
     await setLayout('basic')
@@ -3943,6 +3950,14 @@ async function checkEntryLayouts() {
     await click('basic-save')
     const basic = await pollUntil(lastEntry, e => e?.notes === 'E2E basic row', 20, 300)
     check('basic saves From, To and Message', basic ? `${basic.callsign}>${basic.toCallsign}` : null, 'E2EFROM>E2ETO')
+    // A backfilled row (Time 00:01) lands at its own time in the list, below the row saved just before it.
+    await type('basic-time', '00:01'); await type('basic-from', 'E2EFROM'); await type('basic-message', 'E2E backfilled row')
+    await click('basic-save')
+    await pollUntil(lastEntry, e => e?.notes === 'E2E backfilled row', 20, 300)
+    await sleep(300)
+    const order = await evaluate(`[...document.querySelectorAll('[data-testid="entry-recent-row"]')].map(r => r.textContent)`)
+    const iNow = order.findIndex(t => t.includes('E2E basic row')), iBack = order.findIndex(t => t.includes('E2E backfilled row'))
+    check('the list is newest by time first (a backfilled row sits below)', iNow >= 0 && iBack > iNow, true)
 
     // Field.
     await setLayout('field')

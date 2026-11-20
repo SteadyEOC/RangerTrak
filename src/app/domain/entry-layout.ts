@@ -90,3 +90,15 @@ export function entryFromTo(e: { tacticalCall?: string; callsign?: string; toTac
     to: e.toTactical?.trim() || e.toCallsign?.trim() || '',
   }
 }
+
+/**
+ * The entries under the basic and net layouts: newest by time first, like a paper ICS-309 read from the top. A
+ * backfilled entry lands at its own time, not where it was typed in; equal times keep the later-saved one first.
+ * An entry whose time can't be read goes last.
+ */
+export function newestFirst<T extends { date?: Date | string | null; id?: number }>(entries: readonly T[]): T[] {
+  const at = (e: T) => { const t = e.date ? new Date(e.date).getTime() : NaN; return Number.isFinite(t) ? t : -Infinity }
+  return entries.map((e, i) => ({ e, i, t: at(e) }))
+    .sort((a, b) => (b.t - a.t) || (b.i - a.i))
+    .map(x => x.e)
+}

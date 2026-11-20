@@ -1,15 +1,20 @@
 :host { display: block; }
 .basic { display: flex; flex-direction: column; gap: 8px; }
-.basic__row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
-.basic__field { display: flex; flex-direction: column; flex: 1 1 10rem; font-size: 0.8125rem; color: var(--rt-ink-2); gap: 2px; }
-.basic__field--time { flex: 0 1 6rem; }
-.basic__field--message { flex: 3 1 16rem; }
+// The entry row uses the same column widths as the list under it (EntryRecentListComponent), so Time, From, To
+// and Message sit over their own columns, as on a paper ICS-309.
+.basic__row {
+  display: grid; gap: 8px; align-items: end;
+  grid-template-columns: 5.5rem 11rem 11rem minmax(0, 1fr) auto;
+}
+.basic__field { display: flex; flex-direction: column; font-size: 0.8125rem; color: var(--rt-ink-2); gap: 2px; min-width: 0; }
 .basic__plain {
   font: inherit; font-size: 1rem; padding: 8px 10px; min-width: 0;
   color: var(--rt-ink); background: var(--rt-surface); border: 1px solid var(--rt-line-strong); border-radius: 6px;
 }
 .basic__saved { margin: 0; min-height: 1.2em; color: var(--rt-ink-2); }
+// Phone: Time on its own, From and To side by side, then Message and Save across the width.
 @media (max-width: 600px) {
-  .basic__row { flex-direction: column; align-items: stretch; }
-  .basic__field, .basic__field--time, .basic__field--message { flex: 1 1 auto; }
+  .basic__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .basic__field--time { grid-column: 1 / -1; max-width: 8rem; }
+  .basic__field--message, .basic__row > button { grid-column: 1 / -1; }
 }

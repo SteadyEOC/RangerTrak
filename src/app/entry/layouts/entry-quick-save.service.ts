@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop'
 import { map } from 'rxjs'
 import { callerKind, type CallerResult } from '../../domain/caller-kind'
 import { teamAtSave } from '../../domain/entry-team'
-import { missionStationCall } from '../../domain/entry-layout'
+import { missionStationCall, newestFirst } from '../../domain/entry-layout'
 import { resolveStationText } from '../../domain/ranger-match'
 import { CallsignDirectoryService } from '../../shared/services/callsign-directory.service'
 import {
@@ -43,8 +43,13 @@ export class EntryQuickSaveService {
     if (!name) return ''
     return this.rangers().find(r => r.fullName?.trim().toLowerCase() === name)?.callsign?.trim() ?? ''
   })
-  /** The mission's entries, newest first, at most the last 200. */
-  readonly recent = computed<RadioLogEntryType[]>(() => (this.log()?.logEntries ?? []).slice(-200).reverse())
+  /** The mission's last 200 saved entries, newest by time first (a backfilled entry sits at its own time). */
+  readonly recent = computed<RadioLogEntryType[]>(() => newestFirst((this.log()?.logEntries ?? []).slice(-200)))
+  /** The mission's default position: where "Add location" starts, as on the full form. */
+  readonly defaultLocation = computed<LocationType>(() => {
+    const m = this.mission()
+    return { ...undefinedLocation, lat: m?.defLat ?? undefinedLocation.lat, lng: m?.defLng ?? undefinedLocation.lng }
+  })
 
   /** The names the Entry boxes can offer: roster calls and tactical names. */
   readonly callOptions = computed(() => {

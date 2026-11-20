@@ -35,7 +35,7 @@
     <button matButton="filled" type="submit" data-testid="net-save">Save</button>
   </form>
 
-  <p class="net__parties" role="status" data-testid="net-parties">{{ partiesLine() }}</p>
+  <p class="net__parties" role="status" data-testid="net-parties">{{ call().trim() ? partiesLine() : '' }}</p>
   @if (hint(); as h) {
   <p class="net__hint" role="status" data-testid="net-caller-hint">
     <span [class]="'rt-caller rt-caller--' + h.kind">{{ h.tag }}</span>
@@ -46,11 +46,11 @@
 
   @if (showLocation()) {
   <div class="net__location" data-testid="net-location">
-    <rangertrak-location [location]="location() ?? noLocation" (locationChange)="location.set($event)"></rangertrak-location>
-    <button matButton type="button" (click)="showLocation.set(false); location.set(null)" data-testid="net-location-remove">Remove location</button>
+    <rangertrak-location [location]="location() ?? quick.defaultLocation()" (locationChange)="location.set($event)"></rangertrak-location>
+    <button matButton type="button" class="net__add-location" (click)="showLocation.set(false); location.set(null)" data-testid="net-location-remove">Remove location</button>
   </div>
   } @else {
-  <button matButton type="button" (click)="showLocation.set(true)" data-testid="net-add-location">Add location</button>
+  <button matButton type="button" class="net__add-location" (click)="addLocation()" data-testid="net-add-location">Add location</button>
   }
 
   <rangertrak-entry-recent-list [entries]="quick.recent()"></rangertrak-entry-recent-list>

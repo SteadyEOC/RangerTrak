@@ -10,11 +10,17 @@
 .net__line { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
 .net__field--call { flex: 0 1 12rem; }
 .net__field--message { flex: 1 1 14rem; }
-.net__parties { margin: 0; font-weight: 500; }
+.net__parties { margin: 0; min-height: 1.5em; font-weight: 500; }
 .net__hint, .net__saved { margin: 0; min-height: 1.2em; color: var(--rt-ink-2); }
 .net__location { display: flex; flex-direction: column; gap: 8px; }
+.net__add-location { align-self: flex-start; }
+// Phone: Sending as and Operator share one row under the mission name, so the call line stays near the top;
+// the call line stacks, and In / Out split the width evenly.
 @media (max-width: 600px) {
+  .net__header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: end; }
+  .net__mission { grid-column: 1 / -1; margin-right: 0; }
   .net__line { flex-direction: column; align-items: stretch; }
   .net__field--call, .net__field--message { flex: 1 1 auto; }
-  .net__header { flex-direction: column; align-items: stretch; }
+  .net__direction { display: flex; }
+  .net__direction mat-button-toggle { flex: 1 1 0; }
 }

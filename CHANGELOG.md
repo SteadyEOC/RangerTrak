@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+* **entry:** E-332 follow-ups from the first on-screen look. Net: **Add location** now starts at the mission's position (it opened at -1, -1), and an untouched one isn't saved, as on the full form; the From → To line stays empty until a call is typed. Basic and net: the list under the row is **newest by time**, so a backfilled entry sits at its own time, not where it was typed; the basic row's boxes line up over the list's columns. Phones: Sending as and Operator share a row, In and Out split the width, From and To sit side by side on the basic row, and the list no longer breaks "Command Post" mid-word
 * **radio-log:** E-331 Rows per page never worked on the current grid; it does now, defaults to **All** (one scrolling list), is remembered on the device, and sits beside Fit to screen under the table (Q125)
 * **entry:** E-329 picking a coordinate format under Mission → Location Defaults now also changes the device's remembered Entry format, which used to win, so a device that once chose decimal degrees stayed on it. In Easy menus one line under the coordinates names the format, with a link to change it under Mission (Q124). The FAQ's "format disappeared" answer is now "How do I enter UTM, MGRS...?"
 * **entry:** E-330 the Entry form is wider on laptops (up to 1240 px), so Status fits on one row and the page is shorter at 1366 × 768
