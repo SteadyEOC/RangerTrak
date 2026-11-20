@@ -90,7 +90,7 @@ export function buildRadioLogEntry(input: QuickEntryInput, ctx: QuickEntryContex
     location: input.location ?? ctx.noLocation,
     date: input.date ?? (ctx.now ? ctx.now() : new Date()),
     notes: input.message,
-    source: 'Voice',
+    source: 'Voice' as const,
     generates213: false, replyRequested213: false, message213: '', recipients213: [] as string[], subject213: '',
     ...stationFields(input.from, input.to, { tacticalCalls: ctx.mission?.tacticalCalls ?? [], rangers: ctx.rangers }),
     status: input.status ?? defaultStatus(ctx.mission),

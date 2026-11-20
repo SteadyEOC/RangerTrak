@@ -121,7 +121,7 @@ describe('EntryComponent', () => {
 
   // E-251/E-253 (2026-11-11, ADR D-69): send only new reports, and edit a not-sent one in this form.
   describe('field phone: send only new, edit before sending', () => {
-    const report = (notes: string) => JSON.stringify({
+    const report = (notes: string) => ({
       id: 0, callsign: 'W7ABC', location: { lat: 47.4, lng: -122.4, address: '', derivedFromAddress: false },
       date: new Date(), status: 'Normal', notes,
     })

@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing'
 
 import { DevicePrefsService } from './device-prefs.service'
 import { MissionService } from './mission.service'
-import { RadioLogEntryType, RadioLogType } from './radio-log-entry.interface'
+import { NewRadioLogEntry, RadioLogEntryType, RadioLogType } from './radio-log-entry.interface'
 import { RadioLogService } from './radio-log.service'
 import { RangerService } from './ranger.service'
 import { AttachmentStoreService } from './attachment-store.service'
@@ -26,8 +26,8 @@ import { recordStore } from '../storage/record-store'
 describe('RadioLogService', () => {
   const STORAGE_KEY = 'radioLog'
 
-  function makeReport(overrides: Partial<RadioLogEntryType> = {}): string {
-    return JSON.stringify({
+  function makeReport(overrides: Partial<RadioLogEntryType> = {}): NewRadioLogEntry {
+    return {
       id: 0,
       callsign: 'TEST1',
       location: { lat: 47.4472, lng: -122.4627, address: '', derivedFromAddress: false },
@@ -35,7 +35,7 @@ describe('RadioLogService', () => {
       status: 'Normal',
       notes: '',
       ...overrides,
-    })
+    }
   }
 
   beforeEach(async () => {
@@ -603,16 +603,12 @@ describe('RadioLogService', () => {
     it("gives a phone entry this device's next number when it merges in, and a hand-over entry keeps its own", () => {
       const service = TestBed.inject(RadioLogService)
       service.addRadioLogEntry(makeReport()) // A001 here
-      const phone = JSON.parse(
-        makeReport({ callsign: 'PHONE', uid: 'phone-1' })
-      ) as RadioLogEntryType
-      const handed = JSON.parse(
-        makeReport({
+      const phone = makeReport({ callsign: 'PHONE', uid: 'phone-1' }) as RadioLogEntryType
+      const handed = makeReport({
           callsign: 'HAND',
           uid: 'hand-1',
           msgNo: { mission: '', opPeriod: '', station: 'B', seq: 4 },
-        })
-      ) as RadioLogEntryType
+        }) as RadioLogEntryType
 
       service.mergeIncomingEntries([phone], 'REW-9')
       service.mergeHandoverEntries([handed], {})
@@ -625,9 +621,7 @@ describe('RadioLogService', () => {
     it('reports a clash when another device also logged A001, and renumbers nothing', () => {
       const service = TestBed.inject(RadioLogService)
       const mine = service.addRadioLogEntry(makeReport())
-      const theirs = JSON.parse(
-        makeReport({ uid: 'other-1', msgNo: mine.msgNo })
-      ) as RadioLogEntryType
+      const theirs = makeReport({ uid: 'other-1', msgNo: mine.msgNo }) as RadioLogEntryType
 
       const result = service.mergeHandoverEntries([theirs], {})
 

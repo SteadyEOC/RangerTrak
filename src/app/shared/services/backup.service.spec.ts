@@ -78,13 +78,13 @@ describe('BackupService', () => {
         })
       )
       radioLogService.addRadioLogEntry(
-        JSON.stringify({
+        {
           callsign: 'EXP1',
-          location: { lat: 47.4, lng: -122.4, derivedFromAddress: false },
+          location: { lat: 47.4, lng: -122.4, address: '', derivedFromAddress: false },
           date: new Date(),
           status: 'Normal',
           notes: 'export test report',
-        })
+        }
       )
 
       const payload = await backup.buildExportPayload()
@@ -154,13 +154,13 @@ describe('BackupService', () => {
       )
       radioLogService.deleteAllRadioLogEntries()
       radioLogService.addRadioLogEntry(
-        JSON.stringify({
+        {
           callsign: 'RT1',
-          location: { lat: 47.41, lng: -122.41, derivedFromAddress: false },
+          location: { lat: 47.41, lng: -122.41, address: '', derivedFromAddress: false },
           date: new Date(),
           status: 'Urgent',
           notes: 'roundtrip report',
-        })
+        }
       )
 
       // 2. Export.
@@ -241,13 +241,13 @@ describe('BackupService', () => {
       const backup = TestBed.inject(BackupService)
 
       radioLogService.addRadioLogEntry(
-        JSON.stringify({
+        {
           callsign: 'B1',
-          location: { lat: 48.0, lng: -121.0, derivedFromAddress: false },
+          location: { lat: 48.0, lng: -121.0, address: '', derivedFromAddress: false },
           date: new Date(),
           status: 'Normal',
           notes: '',
-        })
+        }
       )
       const exported = await backup.buildExportPayload()
 

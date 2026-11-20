@@ -22,13 +22,13 @@ describe('ImportSafetyCardComponent (E-198)', () => {
 
   function addEntry(notes: string) {
     radioLog.addRadioLogEntry(
-      JSON.stringify({
+      {
         callsign: 'FERN-1',
-        location: { lat: 47.41, lng: -122.41, derivedFromAddress: false },
+        location: { lat: 47.41, lng: -122.41, address: '', derivedFromAddress: false },
         date: new Date(),
         status: 'Normal',
         notes,
-      })
+      }
     )
   }
 

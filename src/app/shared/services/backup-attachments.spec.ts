@@ -29,14 +29,14 @@ describe('BackupService attachments companion (E-194)', () => {
   async function addEntryWithAttachment(): Promise<AttachmentRef> {
     const ref = await store.add(wav(), 'K7ABC')
     radioLog.addRadioLogEntry(
-      JSON.stringify({
+      {
         callsign: 'RT1',
-        location: { lat: 47.41, lng: -122.41, derivedFromAddress: false },
+        location: { lat: 47.41, lng: -122.41, address: '', derivedFromAddress: false },
         date: new Date(),
         status: 'Normal',
         notes: 'with a memo',
         attachments: [ref],
-      })
+      }
     )
     return ref
   }
@@ -189,14 +189,14 @@ describe('BackupService attachments companion (E-194)', () => {
       'K7ABC'
     )
     radioLog.addRadioLogEntry(
-      JSON.stringify({
+      {
         callsign: 'RT1',
-        location: { lat: 47.41, lng: -122.41, derivedFromAddress: false },
+        location: { lat: 47.41, lng: -122.41, address: '', derivedFromAddress: false },
         date: new Date(),
         status: 'Normal',
         notes: 'big',
         attachments: [ref],
-      })
+      }
     )
 
     await backup.exportMission('big passphrase')

@@ -21,14 +21,14 @@ describe('Report Packet with files (E-194)', () => {
 
   function addEntry(refs: AttachmentRef[]) {
     radioLog.addRadioLogEntry(
-      JSON.stringify({
+      {
         callsign: 'RT1',
-        location: { lat: 47.41, lng: -122.41, derivedFromAddress: false },
+        location: { lat: 47.41, lng: -122.41, address: '', derivedFromAddress: false },
         date: new Date(),
         status: 'Normal',
         notes: 'with photos',
         attachments: refs,
-      })
+      }
     )
   }
 

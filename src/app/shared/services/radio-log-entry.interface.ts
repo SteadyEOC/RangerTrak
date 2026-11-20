@@ -279,6 +279,13 @@ export type RadioLogEntryType = {
 }
 
 /**
+ * What RadioLogService.addRadioLogEntry() and replaceEntry() take: an entry as the form or a quick layout built it.
+ * The service stamps `uid`, `loggedAt` and (when absent) `msgNo`, and numbers `id`, so `id` may be omitted; `date`
+ * may still be an ISO string (specs, imports), which the service revives to a Date.
+ */
+export type NewRadioLogEntry = Omit<RadioLogEntryType, 'id' | 'date'> & { id?: number, date: Date | string }
+
+/**
  * Radio Log entries can be tagged with a status. These can have color & associated icons & can be edited by the user.
  * ? FUTURE: Consider replacing "Color" with "CSS_Style" to allow more options?
  */

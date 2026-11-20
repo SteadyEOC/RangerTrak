@@ -75,6 +75,6 @@ export class EntryQuickSaveService {
     const entry = buildRadioLogEntry(e, {
       mission: this.mission(), rangers: this.rangers(), operator: this.operator(), noLocation: undefinedLocation,
     })
-    return this.radioLog.addRadioLogEntry(JSON.stringify(entry))
+    return this.radioLog.addRadioLogEntry(entry)
   }
 }

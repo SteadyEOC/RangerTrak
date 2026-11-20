@@ -53,7 +53,7 @@ import { matchRanger, resolveStationText } from '../domain/ranger-match'
 import { callerKind, normalizeCall, type CallerResult } from '../domain/caller-kind'
 import { CallsignDirectoryService } from '../shared/services/callsign-directory.service'
 import {
-  RADIO_LOG_ENTRY_SOURCES, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
+  RADIO_LOG_ENTRY_SOURCES, RadioLogEntrySource, RadioLogService, RadioLogStatusType, RadioLogEntryType, LocationType,
   LogService, RangerService, RangerType, MissionService, MissionType, TacticalCallType, UsageStateService,
   statusColorValue, undefinedAddressFlag, undefinedLocation, WelcomePanelService, FieldModeService
 } from '../shared/services/'
@@ -324,7 +324,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // use this).
   private entryModel = signal({
     id: -1, location: undefinedLocation, date: new Date(), notes: '',
-    source: 'Voice',
+    source: 'Voice' as RadioLogEntrySource,
     generates213: false, replyRequested213: false, message213: '', recipients213: '',
     subject213: '',
   })
@@ -1034,7 +1034,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       this.endEdit()
       return
     }
-    const updated = this.radioLogService.replaceEntry(target.uid, JSON.stringify(this.mergedFormValue()))
+    const updated = this.radioLogService.replaceEntry(target.uid, this.mergedFormValue())
     if (!updated) {
       alert('This report is no longer on this device, so there is nothing to change.')
       this.endEdit()
@@ -1614,9 +1614,9 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
       return
     }
 
-    let formDataJSON = JSON.stringify(this.mergedFormValue())
-
-    let newReport = this.radioLogService.addRadioLogEntry(formDataJSON)
+    const form = this.mergedFormValue()
+    const formDataJSON = JSON.stringify(form)
+    let newReport = this.radioLogService.addRadioLogEntry(form)
     this.log.info(`Added report ${newReport.id}.`, this.id)
     // E-194: the entry is saved first, then its files are stored and attached, so a slow or failed
     // file can never cost the log entry. Not awaited: the form resets at once, like the 213 print.
@@ -1725,7 +1725,7 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   private applyDraft(d: EntryDraft): void {
     if (d.location) this.onNewLocationEvent(d.location)
     this.entryModel.update(m => ({
-      ...m, notes: d.notes, date: d.date, source: d.source,
+      ...m, notes: d.notes, date: d.date, source: d.source as RadioLogEntrySource,
       generates213: d.generates213, replyRequested213: d.replyRequested213,
       message213: d.message213, recipients213: d.recipients213, subject213: d.subject213,
     }))

@@ -5,7 +5,7 @@ import {
   inject, Injectable, OnDestroy, OnInit, Optional, Pipe, PipeTransform, signal, SkipSelf, WritableSignal
 } from '@angular/core'
 
-import { RadioLogStatusType, RadioLogType, RadioLogEntryType } from './radio-log-entry.interface'
+import { NewRadioLogEntry, RadioLogStatusType, RadioLogType, RadioLogEntryType } from './radio-log-entry.interface'
 import { LogService } from './log.service'
 import { RangerType } from './ranger.interface'
 import { MissionService } from './mission.service'
@@ -300,14 +300,15 @@ export class RadioLogService {
   /**
    * User has submitted a new radio log entry: store it into localstorage and publish to any subscribers
    *
-   * @param formData
-   * @returns
+   * @param entry the report as typed (EntryComponent's mergedFormValue(), or the quick layouts' entry). Copied
+   *   here, so the caller keeps its own object and cannot reach the stored one.
+   * @returns the stored entry
    */
-  public addRadioLogEntry(formData: string) {
+  public addRadioLogEntry(entry: NewRadioLogEntry) {
     // Not the entry itself: it can name people and addresses, and the Log page exports to CSV.
     this.log.verbose(`Got new radio log entry.`, this.id)
 
-    let newReport = this.entryFromFormData(formData)
+    let newReport = this.entryFromForm(entry)
     newReport.id = this.radioLog.maxId++
     // D-59: permanent identity, so a hand-over can match this entry on another device.
     newReport.uid = newUid()
@@ -338,17 +339,16 @@ export class RadioLogService {
   }
 
   /**
-   * EntryComponent hands a report over as JSON.stringify(mergedFormValue()) - a deliberate
-   * deep clone - so `date` arrives here as an ISO STRING even though RadioLogEntryType
-   * declares it Date, and even though nothing has touched localStorage yet. Restoring it
-   * at this boundary is what makes a locally-typed report indistinguishable from a
-   * loaded one; without it, two reports typed in a single fresh session were enough to
-   * make buildIcs309Log() throw. See json-dates.ts. Shared by addRadioLogEntry() and
+   * EntryComponent hands a report over as an object. It is deep-copied here (structuredClone), so a caller that
+   * keeps its form value cannot mutate the stored entry. `date` may still arrive as an ISO STRING (a spec, an
+   * import) even though RadioLogEntryType declares it Date; restoring it at this boundary is what makes a
+   * locally-typed report indistinguishable from a loaded one; without it, two reports typed in a single fresh
+   * session were enough to make buildIcs309Log() throw. See json-dates.ts. Shared by addRadioLogEntry() and
    * replaceEntry() (E-251, D-69).
    */
-  private entryFromFormData(formData: string): RadioLogEntryType {
+  private entryFromForm(entry: NewRadioLogEntry): RadioLogEntryType {
     return rehydrateDateFields(
-      JSON.parse(formData) as RadioLogEntryType, //"[object Object]" is not valid JSON
+      structuredClone(entry) as RadioLogEntryType,
       [...RADIO_LOG_ENTRY_DATE_FIELDS])
   }
 
@@ -359,12 +359,12 @@ export class RadioLogService {
    * supersede. Saves and publishes as addRadioLogEntry() does. Returns the new entry, or undefined
    * when no entry has this uid.
    */
-  public replaceEntry(uid: string, formData: string): RadioLogEntryType | undefined {
+  public replaceEntry(uid: string, entry: NewRadioLogEntry): RadioLogEntryType | undefined {
     const index = this.radioLog.logEntries.findIndex(e => e.uid === uid)
     if (index < 0) return undefined
     const old = this.radioLog.logEntries[index]
     const replaced: RadioLogEntryType = {
-      ...this.entryFromFormData(formData),
+      ...this.entryFromForm(entry),
       uid: old.uid,
       id: old.id,
       loggedAt: old.loggedAt,
