@@ -1,5 +1,6 @@
 import { unzipSync, zipSync, Zippable } from 'fflate'
 
+import { CALLSIGN_ENTRY } from '../../domain/callsign-setup'
 import { AttachmentFile, attachmentsFromUnzipped, attachmentZipEntries, isAttachmentPath } from './attachments-zip'
 
 import { MissionType } from '../services/mission.interface'
@@ -172,11 +173,15 @@ export async function buildMissionZipBytes(
   manifest: MissionZipManifest,
   photos: readonly { stem: string; blob: Blob }[],
   attachments: readonly AttachmentFile[] = [],
+  /** E-328: the call sign list as its own entry (`callsigns.json`); only the Setup file card passes it. */
+  callsigns?: unknown,
 ): Promise<Uint8Array> {
   const files: Zippable = {
     [MANIFEST_ENTRY]: new TextEncoder().encode(JSON.stringify(manifest, null, 2)),
     'README.txt': new TextEncoder().encode(readmeText(manifest, photos.length)),
   }
+
+  if (callsigns) files[CALLSIGN_ENTRY] = new TextEncoder().encode(JSON.stringify(callsigns))
 
   for (const { stem, blob } of photos) {
     files[`${PHOTOS_DIR}/${stem}${extensionFor(blob.type)}`] = new Uint8Array(await blob.arrayBuffer())
@@ -197,7 +202,7 @@ export async function buildMissionZipBytes(
  * trusting them, since a Setup file built by an older app version needs exactly the same
  * upgrade path a Mission Export does.
  */
-export function extractMissionZip(bytes: Uint8Array): { manifest: MissionZipManifest; photos: MissionZipPhoto[]; attachments: MissionZipAttachment[] } {
+export function extractMissionZip(bytes: Uint8Array): { manifest: MissionZipManifest; photos: MissionZipPhoto[]; attachments: MissionZipAttachment[]; callsigns?: unknown } {
   let entries: Record<string, Uint8Array>
   try {
     entries = unzipSync(bytes)
@@ -241,7 +246,14 @@ export function extractMissionZip(bytes: Uint8Array): { manifest: MissionZipMani
     .filter(k => !/[/\\]$/.test(k) && !isAttachmentPath(k) && /\.(jpe?g|png|gif|webp)$/i.test(basename(k)))
     .map(k => ({ filename: basename(k), bytes: entries[k] }))
 
-  return { manifest, photos, attachments: attachmentsFromUnzipped(entries) }
+  // E-328: an optional call sign list; unreadable JSON is ignored (the caller says so), never fatal.
+  let callsigns: unknown
+  const csKey = Object.keys(entries).find(k => basename(k) === CALLSIGN_ENTRY)
+  if (csKey) {
+    try { callsigns = JSON.parse(new TextDecoder().decode(entries[csKey])) } catch { callsigns = null }
+  }
+
+  return { manifest, photos, attachments: attachmentsFromUnzipped(entries), ...(csKey ? { callsigns } : {}) }
 }
 
 /**

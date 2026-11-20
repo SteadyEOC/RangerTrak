@@ -100,17 +100,54 @@ export class CallsignDirectoryService {
         source: result.source, importedAt: new Date().toISOString(), fileName: file.name,
         ...(result.fileDate ? { fileDate: result.fileDate } : {}), region: result.region, count: result.count,
       }
-      // One transaction: the old list is replaced by the new one, or not at all.
-      const tx = db.transaction([CALLS, INCOMING, META], 'readwrite')
-      await tx.objectStore(CALLS).clear()
-      let cursor = await tx.objectStore(INCOMING).openCursor()
-      while (cursor) {
-        await tx.objectStore(CALLS).put(cursor.value, cursor.key)
-        cursor = await cursor.continue()
+      await this.swapIn(db, meta)
+      this.metaCache = meta
+      this.metaSignal.set(meta)
+      return meta
+    } catch (e) {
+      await db.clear(INCOMING).catch(() => undefined)
+      throw e
+    }
+  }
+
+  /** One transaction: the staged rows replace the list, or nothing changes. */
+  private async swapIn(db: IDBPDatabase, meta: DirectoryMeta): Promise<void> {
+    const tx = db.transaction([CALLS, INCOMING, META], 'readwrite')
+    await tx.objectStore(CALLS).clear()
+    let cursor = await tx.objectStore(INCOMING).openCursor()
+    while (cursor) {
+      await tx.objectStore(CALLS).put(cursor.value, cursor.key)
+      cursor = await cursor.continue()
+    }
+    await tx.objectStore(INCOMING).clear()
+    await tx.objectStore(META).put(meta, META_KEY)
+    await tx.done
+  }
+
+  /** E-328: every row, for a Setup file that carries the list. Empty when there is none. */
+  async allRows(): Promise<DirectoryRow[]> {
+    if (!(await this.meta())) return []
+    const db = await this.open()
+    return (await db.getAll(CALLS)) as DirectoryRow[]
+  }
+
+  /**
+   * E-328: replaces the list with one that arrived in a Setup file (staging store, then the same one-transaction
+   * swap as importFile), so a failure leaves the old list intact. Only call sign, name, city and region are kept.
+   */
+  async replaceAll(incoming: DirectoryMeta, rows: readonly DirectoryRow[]): Promise<DirectoryMeta> {
+    const db = await this.open()
+    await db.clear(INCOMING)
+    try {
+      for (let i = 0; i < rows.length; i += 5000) {
+        const tx = db.transaction(INCOMING, 'readwrite')
+        for (const r of rows.slice(i, i + 5000)) {
+          void tx.store.put({ call: r.call, name: r.name, city: r.city, region: r.region }, r.call)
+        }
+        await tx.done
       }
-      await tx.objectStore(INCOMING).clear()
-      await tx.objectStore(META).put(meta, META_KEY)
-      await tx.done
+      const meta: DirectoryMeta = { ...incoming, count: rows.length }
+      await this.swapIn(db, meta)
       this.metaCache = meta
       this.metaSignal.set(meta)
       return meta

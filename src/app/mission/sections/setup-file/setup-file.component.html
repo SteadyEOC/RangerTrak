@@ -16,7 +16,15 @@
   <mat-checkbox [checked]="exportPlaces()" (change)="exportPlaces.set($event.checked)">
     Places
   </mat-checkbox>
+  @if (callsignMeta(); as cs) {
+  <mat-checkbox [checked]="exportCallsigns()" (change)="exportCallsigns.set($event.checked)" data-testid="setup-file-callsigns">
+    {{ callsignLabel(cs) }}
+  </mat-checkbox>
+  }
 </div>
+@if (!callsignMeta()) {
+<p class="setup-file__note">No call sign list on this device (Mission &gt; Call sign list), so there is none to include.</p>
+}
 
 <!-- E-207 / D-62 item 6: an EC preparing volunteers' phones can have them start in Easy menus. -->
 <div class="setup-file__view">
@@ -73,7 +81,7 @@
     press Add to this device.
   </p>
   } @else {
-  <p class="setup-file__note">This file carries no settings, rangers or places, so there is nothing to apply.</p>
+  <p class="setup-file__note">This file carries no settings, rangers, places or call sign list, so there is nothing to apply.</p>
   }
   @if (file.entriesNote) {
   <p class="setup-file__note setup-file__note--warn">{{ file.entriesNote }}</p>

@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common'
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, inject, signal, type OnInit } from '@angular/core'
 
 import * as packageJson from '../../../../../package.json'
 import { MatButtonModule } from '@angular/material/button'
@@ -8,12 +8,15 @@ import { MatCheckboxModule } from '@angular/material/checkbox'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatIconModule } from '@angular/material/icon'
 import { MatInputModule } from '@angular/material/input'
+import { buildCallsignFile, callsignCheckboxLabel, describeCallsignReplace, parseCallsignFile } from '../../../domain/callsign-setup'
+import type { DirectoryMeta, DirectoryRow } from '../../../domain/callsign-directory'
 import { describeLocationMerge, mergeLocations } from '../../../domain/location-merge'
 import { migrateMission } from '../../../domain/mission-migration'
 import { describeRangerMerge, mergeRangers } from '../../../domain/ranger-migration'
 import { diagnoseBytes, SETUP_FILE_DAMAGED_MESSAGE } from '../../../shared/export/import-file'
 import type { MissionZipManifest, MissionZipPhoto } from '../../../shared/export/mission-zip'
 import { LogService, MissionLocationService, MissionService, RangerService, RangerType } from '../../../shared/services'
+import { CallsignDirectoryService } from '../../../shared/services/callsign-directory.service'
 import { MissionJournalService } from '../../../shared/services/mission-journal.service'
 import { ImportSafetyService } from '../../../shared/services/import-safety.service'
 import { RangerPhotoService } from '../../../shared/services/ranger-photo.service'
@@ -48,7 +51,7 @@ import { localDateStamp } from '../../../shared/export/local-date'
   styleUrls: ['./setup-file.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
 })
-export class SetupFileComponent {
+export class SetupFileComponent implements OnInit {
   private readonly id = 'Setup file card'
   private readonly rangerService = inject(RangerService)
   private readonly missionService = inject(MissionService)
@@ -59,6 +62,7 @@ export class SetupFileComponent {
   private readonly recordStore = inject(RecordStore)
   private readonly importSafety = inject(ImportSafetyService)
   private readonly view = inject(ViewService)
+  private readonly callsignDirectory = inject(CallsignDirectoryService)
   private readonly document = inject(DOCUMENT)
 
   readonly building = signal(false)
@@ -70,6 +74,11 @@ export class SetupFileComponent {
   readonly exportSettings = signal(true)
   /** E-187 (ADR D-58): an optional name for the file ("Fernhollow shelters, Oct 2026"). Blank = no layer block. */
   readonly exportLayerName = signal('')
+  /** E-328: carry the device's call sign list (public licence data). Off by default; only offered when the device has one. */
+  readonly exportCallsigns = signal(false)
+  /** The list this device holds, for the checkbox; null = none. */
+  readonly callsignMeta = this.callsignDirectory.metaSignal
+  callsignLabel(meta: DirectoryMeta): string { return callsignCheckboxLabel(meta) }
   /** E-207 (D-62 item 6): the view this file suggests to devices that load it. '' = none (the default). */
   readonly exportSuggestedView = signal<'' | 'simple' | 'full'>('')
 
@@ -78,12 +87,15 @@ export class SetupFileComponent {
   /** What the last apply did, until another file is picked. */
   readonly applied = signal<string | null>(null)
 
+  ngOnInit(): void { void this.callsignDirectory.meta() }
+
   // ── Export ──────────────────────────────────────────────────────────────────────────────────
 
   async onBtnExport(): Promise<void> {
     const includeRangers = this.exportRangers()
     const includePlaces = this.exportPlaces()
     const includeSettings = this.exportSettings()
+    const callsignMeta = this.exportCallsigns() ? this.callsignMeta() : null
 
     if (!includeRangers && !includePlaces && !includeSettings) {
       alert('Choose at least one thing to include: settings, rangers or places.')
@@ -115,7 +127,8 @@ export class SetupFileComponent {
         appVersion, exportedAt,
       })
 
-      const bytes = await buildMissionZipBytes(manifest, photoBlobs)
+      const callsignFile = callsignMeta ? buildCallsignFile(callsignMeta, await this.callsignDirectory.allRows()) : undefined
+      const bytes = await buildMissionZipBytes(manifest, photoBlobs, [], callsignFile)
       const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/zip' }))
       // What the file holds rides along in its name, so files built from one device don't collide.
       const tag = [includeRangers && 'rangers', includePlaces && 'places', includeSettings && 'settings']
@@ -133,6 +146,7 @@ export class SetupFileComponent {
       if (includeRangers) parts.push(`${rangers.length} rangers`)
       if (includePlaces) parts.push(`${locations?.length ?? 0} places`)
       if (includeSettings) parts.push('settings')
+      if (callsignFile) parts.push(`${callsignFile.count} call signs`)
       parts.push(`${photoBlobs.length} photos`)
       this.journal.record('setup-file-built', `Built the Setup file ${filename} (${parts.join(', ')}).`)
     } catch (e: any) {
@@ -174,6 +188,7 @@ export class SetupFileComponent {
         return
       }
       const { manifest, photos } = read
+      const callsignList = read.callsigns === undefined ? undefined : parseCallsignFile(read.callsigns)
 
       const lines: string[] = []
       if (manifest.settings) {
@@ -185,6 +200,11 @@ export class SetupFileComponent {
       if (manifest.locations) {
         lines.push(`${describeLocationMerge(mergeLocations(this.locationService.getCurrentLocations(), manifest.locations)).replace(/^places/, 'Places')}.`)
       }
+      if (callsignList) {
+        lines.push(`${describeCallsignReplace(callsignList.meta)}. This replaces the call sign list on this device.`)
+      } else if (read.callsigns !== undefined) {
+        lines.push('The call sign list in this file could not be read, so it is skipped and the list on this device is kept.')
+      }
       if (photos.length) {
         lines.push(`Photos: ${photos.length} will be stored on this device, matched to rangers by ID or call sign.`)
       }
@@ -193,7 +213,7 @@ export class SetupFileComponent {
       }
       const entries = entryCountOf(manifest)
       this.pending.set({
-        fileName: file.name, manifest, photos, layer: layerName(manifest), lines,
+        fileName: file.name, manifest, photos, callsignList: callsignList ?? null, layer: layerName(manifest), lines,
         // E-188: a hand-over file also holds radio log entries, which this card never applies.
         entriesNote: entries
           ? `This file also holds ${entries} radio log entr${entries === 1 ? 'y' : 'ies'}; merge them from Radio Log → Hand over to another scribe.`
@@ -236,6 +256,7 @@ export class SetupFileComponent {
         file.manifest.settings ? 'settings' : '',
         file.manifest.rangers ? `${file.manifest.rangers.length} people` : '',
         file.manifest.locations ? `${file.manifest.locations.length} places` : '',
+        file.callsignList ? `${file.callsignList.rows.length} call signs` : '',
         file.photos.length ? `${file.photos.length} photos` : '',
       ].filter(Boolean).join(', ') || 'nothing to apply'}).`)
     } catch (e: any) {
@@ -280,6 +301,13 @@ export class SetupFileComponent {
       parts.push(describeLocationMerge(merge))
     }
 
+    // E-328: a list in the file REPLACES this device's (staging swap: a failure leaves the old one). A file
+    // without one never touches it.
+    if (file.callsignList) {
+      const meta = await this.callsignDirectory.replaceAll(file.callsignList.meta, file.callsignList.rows)
+      parts.push(describeCallsignReplace(meta))
+    }
+
     if (photos.length) {
       const files = photos.map(p => new File([p.bytes as BlobPart], p.filename, { type: mimeFor(p.filename) }))
       const { stored, unmatched } = await this.photos.importFiles(files, rosterForPhotoMatch)
@@ -308,6 +336,8 @@ export type PendingSetupFile = {
   fileName: string
   manifest: MissionZipManifest
   photos: MissionZipPhoto[]
+  /** E-328: the call sign list the file carries, read and cleaned; null = none. */
+  callsignList: { meta: DirectoryMeta; rows: DirectoryRow[] } | null
   layer: string
   /** What applying it would do, one line per category. */
   lines: string[]

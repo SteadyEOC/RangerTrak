@@ -5,6 +5,9 @@
 const zlib = require('node:zlib');
 
 const MANIFEST = 'mission-zip.json';
+// E-328: the call sign list (public licence data) may ride in a Setup file as its own entry, four fields per row only.
+const CALLSIGNS = 'callsigns.json';
+const CALLSIGN_FIELDS = new Set(['call', 'name', 'city', 'region']);
 const PHOTO_RE = /\.(jpe?g|png|gif|webp|heic|bmp)$/i;
 
 // Returns [{ name, method, compressedSize, localOffset }] or null when this is not a readable zip.
@@ -65,6 +68,18 @@ function checkSetupZip(buf) {
   if (!parsed || typeof parsed !== 'object') return { ok: false, reason: 'The Setup file\'s mission-zip.json could not be read.' };
   if ('rangers' in parsed) return { ok: false, reason: 'RangerView never holds the roster, and a Setup file for phones must not carry rangers.' };
   if ('entries' in parsed) return { ok: false, reason: 'A Setup file for phones must not carry radio log entries.' };
+  const cs = entries.find((e) => base(e.name) === CALLSIGNS);
+  if (cs) {
+    let list;
+    try {
+      const bytes = readEntry(buf, cs);
+      list = bytes && JSON.parse(bytes.toString('utf8'));
+    } catch { list = null; }
+    const rows = list && Array.isArray(list.rows) ? list.rows : null;
+    if (!rows || rows.some((r) => !r || typeof r !== 'object' || Object.keys(r).some((k) => !CALLSIGN_FIELDS.has(k)))) {
+      return { ok: false, reason: 'This Setup file call sign list could not be read, or holds more than call sign, name and town.' };
+    }
+  }
   return { ok: true };
 }
 

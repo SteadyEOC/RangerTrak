@@ -8,6 +8,7 @@ import { verifyJournal } from '../../domain/mission-journal'
 import { AarNoteService } from './aar-note.service'
 import { ActivityLogHeaderService } from './activity-log-header.service'
 import { BackupService, MissionExport } from './backup.service'
+import { CallsignDirectoryService } from './callsign-directory.service'
 import { DevicePrefsService } from './device-prefs.service'
 import { MissionJournalService } from './mission-journal.service'
 import { MissionService } from './mission.service'
@@ -42,6 +43,21 @@ describe('BackupService', () => {
   })
 
   describe('buildExportPayload', () => {
+    it('never carries the device call sign list (E-328: only a Setup file may, and only when opted in)', async () => {
+      const directory = new CallsignDirectoryService()
+      await directory.replaceAll({ source: 'ised', importedAt: '2026-11-18T00:00:00.000Z', fileName: 'amateur_delim.txt', region: '', count: 1 },
+        [{ call: 'VE7BACKUPZZ', name: 'Pat Example', city: 'Victoria', region: 'BC' }])
+      try {
+        const backup = TestBed.inject(BackupService)
+        const json = JSON.stringify(await backup.buildExportPayload(true))
+        expect(json).not.toContain('VE7BACKUPZZ')
+        expect(json).not.toContain('Pat Example')
+        expect(json).not.toContain('callsigns')
+      } finally {
+        await directory.remove()
+      }
+    })
+
     it('bundles current settings, rangers, and radio log entries with a schema version', async () => {
       const settings = TestBed.inject(MissionService)
       const rangers = TestBed.inject(RangerService)

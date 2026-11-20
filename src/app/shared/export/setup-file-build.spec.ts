@@ -2,7 +2,8 @@ import type { MissionType } from '../services/mission.interface'
 import type { MissionLocationType } from '../services/mission-location.interface'
 import { UnknownRanger } from '../services/ranger.interface'
 
-import { extractMissionZip } from './mission-zip'
+import { buildCallsignFile } from '../../domain/callsign-setup'
+import { buildMissionZipBytes, extractMissionZip } from './mission-zip'
 import { buildRangerViewSetupFile, buildSetupManifest, rangerViewSetupSettings, settingsForImport } from './setup-file-build'
 
 describe('setup file build (E-287)', () => {
@@ -80,5 +81,16 @@ describe('settingsForImport (Q118)', () => {
     const out = settingsForImport(incoming, undefined)
     expect(out.googleGeocodingApiKey).toBe('')
     expect(out).not.toBe(incoming)
+  })
+
+  it('E-328: a Setup file carries the call sign list as its own entry, and one without it has none', async () => {
+    const when = '2026-11-18T10:00:00.000Z'
+    const manifest = buildSetupManifest({ settings: { mission: 'Fern Hollow' } as unknown as MissionType, appVersion: '0.95.5', exportedAt: when })
+    const list = buildCallsignFile({ source: 'fcc', importedAt: when, fileName: 'l_amat.zip', region: 'WA', count: 1 },
+      [{ call: 'W7ABC', name: 'Pat Example', city: 'Vashon', region: 'WA' }])
+    const withList = extractMissionZip(await buildMissionZipBytes(manifest, [], [], list))
+    expect((withList.callsigns as { rows: unknown[] }).rows).toEqual([{ call: 'W7ABC', name: 'Pat Example', city: 'Vashon', region: 'WA' }])
+    expect('callsigns' in extractMissionZip(await buildMissionZipBytes(manifest, []))).toBe(false)
+    expect(JSON.stringify(withList.manifest)).not.toContain('W7ABC')
   })
 })
