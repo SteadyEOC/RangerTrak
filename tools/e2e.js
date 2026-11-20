@@ -3890,6 +3890,81 @@ async function checkEntryUsesNewMissionDefault() {
 }
 
 /**
+ * E-332: Entry layouts per mission. The Mission picker stores the choice; net saves a blank message as a
+ * Check-in with From/To from the direction and "Sending as"; basic saves a From/To/Message row; field is
+ * today's form with the field class; net and basic fit a 360 px phone. Restores settings and the log.
+ */
+async function checkEntryLayouts() {
+  console.log('\nE-332: Entry layouts - Mission picker, net check-in, basic 309 row, field form, phone width')
+  await send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false })
+  await goto('/')
+  const savedSettings = await evaluate(`localStorage.getItem('appSettings')`)
+  const savedLog = await idbGetRaw('radioLog')
+  const setLayout = layout => evaluate(`(() => { const s = JSON.parse(localStorage.getItem('appSettings') || '{}');
+    s.entryLayout = ${JSON.stringify(layout)}; s.winlinkCall = 'E2ENET'; localStorage.setItem('appSettings', JSON.stringify(s)); })()`)
+  const type = (testid, v) => evaluate(`(() => { const el = document.querySelector('[data-testid="${testid}"]'); if (!el) return false;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, ${JSON.stringify(v)});
+    el.dispatchEvent(new Event('input', { bubbles: true })); return true })()`)
+  const click = testid => evaluate(`(() => { const el = document.querySelector('[data-testid="${testid}"]'); const b = el?.querySelector('button') || el; b?.click(); return !!b })()`)
+  const text = testid => evaluate(`document.querySelector('[data-testid="${testid}"]')?.textContent.trim() ?? null`)
+  const lastEntry = async () => (JSON.parse((await idbGetRaw('radioLog')) || '{}').logEntries || []).at(-1) || null
+  const fits = () => evaluate(`document.documentElement.scrollWidth <= document.documentElement.clientWidth`)
+
+  try {
+    // Mission picker writes the choice.
+    await goto('/mission')
+    check('Mission offers the four Entry layouts', await evaluate(`['basic','net','field','full'].every(id => !!document.querySelector('[data-testid="entryLayout-' + id + '"]'))`), true)
+    await evaluate(`document.querySelector('[data-testid="entryLayout-net"] input')?.click()`)
+    const stored = await pollUntil(() => evaluate(`JSON.parse(localStorage.getItem('appSettings') || '{}').entryLayout || ''`), v => v === 'net', 20, 300)
+    check('picking Net on Mission saves entryLayout = net', stored, 'net')
+
+    // Net.
+    await setLayout('net')
+    await goto('/')
+    check('net layout shows its one-line screen', await evaluate(`!!document.querySelector('[data-testid="entry-net"]')`), true)
+    check('Sending as defaults to the mission station call', await evaluate(`document.querySelector('[data-testid="net-sending-as"]')?.value`), 'E2ENET')
+    await type('net-call', 'E2ECALLER')
+    await sleep(300)
+    check('In: the caller is From, our station is To', await text('net-parties'), 'From E2ECALLER → To E2ENET')
+    await click('net-direction-out'); await sleep(300)
+    check('Out: our station is From, the caller is To', await text('net-parties'), 'From E2ENET → To E2ECALLER')
+    await click('net-direction-in'); await sleep(300)
+    await click('net-save')
+    const net = await pollUntil(lastEntry, e => e?.callsign === 'E2ECALLER', 20, 300)
+    check('a blank net message saves as Check-in', net?.notes, 'Check-in')
+    check('the net entry is To our station', net?.toCallsign, 'E2ENET')
+    check('the recent list under the line shows it', /E2ECALLER/.test(await text('entry-recent-list') || ''), true)
+
+    // Basic.
+    await setLayout('basic')
+    await goto('/')
+    check('basic layout shows the 309 row', await evaluate(`!!document.querySelector('[data-testid="entry-basic"]')`), true)
+    await type('basic-from', 'E2EFROM'); await type('basic-to', 'E2ETO'); await type('basic-message', 'E2E basic row')
+    await click('basic-save')
+    const basic = await pollUntil(lastEntry, e => e?.notes === 'E2E basic row', 20, 300)
+    check('basic saves From, To and Message', basic ? `${basic.callsign}>${basic.toCallsign}` : null, 'E2EFROM>E2ETO')
+
+    // Field.
+    await setLayout('field')
+    await goto('/')
+    check('field layout is the report form with the field class', await evaluate(`!!document.querySelector('form.enter__form.enter__form--field')`), true)
+
+    // Phone width.
+    await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 780, deviceScaleFactor: 3, mobile: true })
+    for (const layout of ['net', 'basic']) {
+      await setLayout(layout)
+      await goto('/')
+      check(`${layout} layout fits a 360 px phone (no sideways scroll)`, await fits(), true)
+    }
+  } finally {
+    await send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false })
+    await evaluate(`localStorage.setItem('appSettings', ${JSON.stringify(savedSettings)})`)
+    if (savedLog != null) await idbSetRaw('radioLog', savedLog)
+    await goto('/')
+  }
+}
+
+/**
  * E-188 (ADR D-59): scribe hand-over. Device A (a walk-up and a known ranger, three entries, one
  * corrected) builds a hand-over; device B (its own copy of the walk-up with a different uid, two
  * entries of its own, a different mission name) merges it in. Asserts the preview counts, the
@@ -6802,6 +6877,7 @@ async function main() {
       if (want('mission')) await checkActivityLog()
       // (attachments, smaller copies and board moved to the end: they wipe storage - see there)
       if (want('entry')) await checkEntryUsesNewMissionDefault()
+      if (want('entry')) await checkEntryLayouts() // E-332; restores settings and the log
       if (want('mission')) await checkStatusColorMigration()
       if (want('mission')) await checkStatusColorsBothSchemes()
 
