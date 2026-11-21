@@ -6430,8 +6430,9 @@ async function checkPopOut() {
     // Where every marker sits, so a report that moves one (or adds one) changes the string.
     const markers = sid => evaluate(`[...document.querySelectorAll('.leaflet-marker-icon, .maplibregl-marker')].map(m => { const r = m.getBoundingClientRect(); return Math.round(r.left) + ',' + Math.round(r.top) + ':' + m.textContent.trim() }).sort().join(' ')`, sid)
     const markersBefore = await markers(map.sessionId)
-    // The grid pages 13 rows at a time, so count entries from its own "1 to 13 of N" line.
-    const total = sid => evaluate(`Number((document.body.innerText.match(/of (\\d+)/) || [])[1] ?? -1)`, sid)
+    // Count the grid's rows from its aria-rowcount (rows plus header rows; only changes are compared). It used to
+    // read the pager's "1 to 13 of N", but E-331 made Rows per page default to All, which has no pager line.
+    const total = sid => evaluate(`Number(document.querySelector('[role=grid][aria-rowcount], [role=treegrid][aria-rowcount]')?.getAttribute('aria-rowcount') ?? -1)`, sid)
     const rowsBefore = await total(radio.sessionId)
     await shot(rangers.sessionId, 'popout-rangers')
     await shot(map.sessionId, 'popout-map')

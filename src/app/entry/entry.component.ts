@@ -557,7 +557,11 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
   // "a fresh report started" apart from "the position changed" - see its own comment.
   formGeneration = 0
 
-  submitInfo: HTMLElement | null = null
+  /** E-332 put the full form inside the layout @if, so the span doesn't exist at ngOnInit and comes and goes
+   *  with the layout: look it up each time instead of caching it. */
+  get submitInfo(): HTMLElement | null {
+    return this.document.getElementById("enter__Submit-info")
+  }
   callImg: HTMLElement | null = null
   callInfo: HTMLElement | null = null
 
@@ -1101,11 +1105,6 @@ export class EntryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.restoreDraft()
     // E-301: the starting point to undo back to (after a restored draft, if any).
     queueMicrotask(() => this.resetUndo())
-
-    this.submitInfo = this.document.getElementById("enter__Submit-info")
-    if (!this.submitInfo) {
-      this.log.error(`Could not find enter__Submit-info field`, this.id)
-    }
 
     if (devDiagnostics()) {
       Utility.displayShow(this.document.getElementById("enter__frm-reguritation")!)
