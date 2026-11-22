@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use or write about RangerTrak, please cite it as below."
+type: software
+title: "RangerTrak"
+abstract: >-
+  Offline-first PWA that maps who is where, when, and in what condition, for
+  CERT, ACS/ARES, SAR and wildland-fire teams reachable only by voice radio.
+  No server, no account, no Internet once loaded. Prints ICS-309 and ICS-213.
+authors:
+  - given-names: John
+    family-names: Cornelison
+    orcid: "https://orcid.org/0009-0000-5516-3956"
+repository-code: "https://github.com/SteadyEOC/RangerTrak"
+url: "https://rangertrak.org"
+license: AGPL-3.0-or-later
+version: 1.0.0-beta.3
+date-released: "2026-11-13"
+keywords:
+  - emergency management
+  - CERT
+  - ARES
+  - search and rescue
+  - ICS-309
+  - offline-first
+  - PWA
