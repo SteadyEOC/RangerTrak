@@ -380,6 +380,25 @@ async function handleRegionDownload(request, pathname, env) {
   return new Response(object.body, { status: 200, headers })
 }
 
+/**
+ * Serve the SPA page for this request with its canonical link and og:url pointed at `canonical`.
+ * A plain string replace, not HTMLRewriter: index.html is small, and the Node test runner has
+ * no HTMLRewriter. Anything that is not the HTML page (an error, a redirect) passes through.
+ */
+async function serveWithCanonical(env, request, canonical) {
+  const asset = await env.ASSETS.fetch(request)
+  if (!asset.ok || !(asset.headers.get('Content-Type') ?? '').startsWith('text/html')) {
+    return asset
+  }
+  const html = (await asset.text())
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${canonical}$2`)
+    .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${canonical}$2`)
+  const headers = new Headers(asset.headers)
+  headers.delete('Content-Length')
+  headers.delete('ETag') // the body no longer matches index.html's hash
+  return new Response(html, { status: asset.status, headers })
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
@@ -446,6 +465,13 @@ export default {
     }
     if (url.pathname === '/view/') {
       return env.ASSETS.fetch(new Request(new URL('/view/index.html', url), request))
+    }
+
+    // 2026-11-27: /help is the one app page besides the home page that crawlers may read
+    // (robots.txt). The SPA fallback serves it index.html, whose canonical and og:url name the
+    // home page, which would tell Google /help is a copy of /. This answers it with its own.
+    if (url.pathname === '/help') {
+      return serveWithCanonical(env, request, 'https://rangertrak.org/help')
     }
 
     if (!url.pathname.endsWith('.pmtiles')) {

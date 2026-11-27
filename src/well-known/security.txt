@@ -1,0 +1,8 @@
+# Security contact for the RangerTrak app (rangertrak.org) and rangertrak.com.
+# Reports go to GitHub private vulnerability reporting, so no email address is published
+# (rangertrak.org sends and receives no mail). Same Contact and Expires as
+# https://rangertrak.com/.well-known/security.txt; renew both together before 2027-11-27.
+Contact: https://github.com/SteadyEOC/RangerTrak/security/advisories/new
+Expires: 2027-11-27T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://rangertrak.org/.well-known/security.txt

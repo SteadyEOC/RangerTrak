@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core'
+import { Component, ChangeDetectionStrategy, DestroyRef, inject } from '@angular/core'
+import { Meta } from '@angular/platform-browser'
 import { Router, RouterLink } from '@angular/router'
 import { MatButtonModule } from '@angular/material/button'
 
@@ -32,5 +33,14 @@ export class X404Component {
     this.path = inject(Router).url.split('?')[0].split('#')[0]
     this.guesses = guessRoutes(this.path)
     this.searchFor = pathWords(this.path).join(' ')
+
+    // 2026-11-27: the SPA fallback answers every unknown path with a 200, so a crawler would
+    // index made-up addresses as real pages (a "soft 404"). Google's fix for client-rendered
+    // apps is a robots noindex added by script; it goes again when the reader navigates on,
+    // so no real page inherits it. A true 404 status would need the Worker to run for every
+    // navigation and know the route table.
+    const meta = inject(Meta)
+    meta.updateTag({ name: 'robots', content: 'noindex' })
+    inject(DestroyRef).onDestroy(() => meta.removeTag('name="robots"'))
   }
 }

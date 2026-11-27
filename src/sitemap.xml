@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 2026-10-05: the two readable pages; see robots.txt. -->
+<!-- The pages a visitor can read; see robots.txt. 2026-11-27: /tour/ rather than
+     /tour/index.html, which redirects to it (a sitemap should list final addresses). -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://rangertrak.org/</loc></url>
   <url><loc>https://rangertrak.org/help</loc></url>
-  <url><loc>https://rangertrak.org/tour/index.html</loc></url>
+  <url><loc>https://rangertrak.org/tour/</loc></url>
   <url><loc>https://rangertrak.org/self-hosting/</loc></url>
 </urlset>

@@ -474,3 +474,25 @@ test('/board, /board/, /board/index.html, /rangerview and /rangerview/ all redir
     assert.equal(res.headers.get('Location'), '/view/', path)
   }
 })
+
+test('/help is served the app page with its own canonical and og:url, not the home page\'s', async () => {
+  const page = '<head><link rel="canonical" href="https://rangertrak.org/">'
+    + '<meta property="og:url" content="https://rangertrak.org/"></head>'
+  const env = { ASSETS: { fetch: async () => new Response(page, {
+    status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', ETag: '"abc"', 'X-Frame-Options': 'DENY' },
+  }) } }
+  const res = await worker.fetch(new Request('https://rangertrak.org/help'), env)
+  assert.equal(res.status, 200)
+  const html = await res.text()
+  assert.match(html, /<link rel="canonical" href="https:\/\/rangertrak\.org\/help">/)
+  assert.match(html, /<meta property="og:url" content="https:\/\/rangertrak\.org\/help">/)
+  assert.equal(res.headers.get('ETag'), null)
+  assert.equal(res.headers.get('X-Frame-Options'), 'DENY') // the _headers set rides along
+})
+
+test('/help passes a non-HTML answer from the asset store through untouched', async () => {
+  const env = { ASSETS: { fetch: async () => new Response('gone', { status: 404, headers: { 'Content-Type': 'text/plain' } }) } }
+  const res = await worker.fetch(new Request('https://rangertrak.org/help'), env)
+  assert.equal(res.status, 404)
+  assert.equal(await res.text(), 'gone')
+})

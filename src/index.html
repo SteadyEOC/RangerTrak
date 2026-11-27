@@ -7,8 +7,44 @@
   <base href="/">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 2026-11-27 (howsmy.site check): kept under 160 characters so search results show it whole. -->
   <meta name="description"
-    content="RangerTrak is a free, open-source radio log and ranger tracker for CERT, SAR, ACS and ham radio teams. It runs in the browser, works offline, and keeps your data on your own device.">
+    content="Free, open-source radio log and ranger tracker for CERT, SAR, ACS and ham radio teams. Runs in the browser, works offline, keeps data on your device.">
+  <!-- 2026-11-27, search and sharing. Every SPA path is served this same file, so the canonical
+       here names the home page; worker/index.js rewrites it (and og:url) to /help for /help, the
+       only other app page robots.txt lets crawlers read. The app-only paths are disallowed, and
+       the not-found page adds its own noindex (x404.component.ts). -->
+  <link rel="canonical" href="https://rangertrak.org/">
+  <link rel="privacy-policy" href="https://rangertrak.com/privacy.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RangerTrak">
+  <meta property="og:title" content="RangerTrak - radio log and ranger tracking, offline">
+  <meta property="og:description" content="Free, open-source radio log and map for CERT, SAR, ACS and ham radio teams. Runs in the browser, works offline, keeps data on your device.">
+  <meta property="og:url" content="https://rangertrak.org/">
+  <meta property="og:image" content="https://rangertrak.org/assets/imgs/rangertrak-og-1200x630.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="RangerTrak: who is where, when, and in what condition, mapped from the radio.">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- Structured data. A data block, not a script: browsers never run it, so the CSP's
+       script-src does not apply and check:csp-hash skips it. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "RangerTrak",
+    "url": "https://rangertrak.org/",
+    "description": "Free, open-source radio log and ranger tracker for CERT, SAR, ACS and ham radio teams. Runs in the browser, works offline, keeps data on your device.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any (runs in a web browser)",
+    "browserRequirements": "Requires JavaScript. Works offline once loaded.",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+    "image": "https://rangertrak.org/assets/imgs/rangertrak-og-1200x630.png",
+    "sameAs": ["https://rangertrak.com/", "https://github.com/SteadyEOC/RangerTrak"]
+  }
+  </script>
   <!-- SVG first: browsers that support it get a crisp mark at any DPI and the
        file's own prefers-color-scheme rule lightens the pin on a dark tab bar.
        favicon.ico stays for Safari and older browsers, which ignore the SVG. -->
@@ -112,7 +148,17 @@
 <body class="mat-typography mat-app-background">
 
   <rangertrak-root></rangertrak-root>
-  <noscript>Please enable JavaScript to continue using this application.</noscript>
+  <!-- 2026-11-27: more than one line, for visitors (and simple crawlers) without JavaScript.
+       The app's own <h1> lives in its header, which only exists once Angular runs. -->
+  <noscript>
+    <h1>RangerTrak</h1>
+    <p>A free, open-source radio log and ranger tracker for CERT, SAR, ACS and ham radio teams.
+      It runs in the browser and needs JavaScript: please turn it on to use the app.</p>
+    <p><a href="https://rangertrak.com/">About RangerTrak</a> ·
+      <a href="/self-hosting/">Hosting it yourself</a> ·
+      <a href="https://github.com/SteadyEOC/RangerTrak">Source code</a> ·
+      <a href="https://rangertrak.com/privacy.html">Privacy</a></p>
+  </noscript>
 
 
 </body>

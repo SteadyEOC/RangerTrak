@@ -27,4 +27,11 @@ describe('X404Component', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('tells crawlers not to index the page, and stops when it goes', () => {
+    const tag = () => document.head.querySelector('meta[name="robots"]');
+    expect(tag()?.getAttribute('content')).toBe('noindex');
+    fixture.destroy();
+    expect(tag()).toBeNull();
+  });
 });

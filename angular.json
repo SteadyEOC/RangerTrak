@@ -59,7 +59,7 @@
                 "output": "./"
               },
               {
-                "glob": "ard.json",
+                "glob": "{ard.json,security.txt}",
                 "input": "./src/well-known",
                 "output": "./.well-known"
               },

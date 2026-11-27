@@ -137,10 +137,30 @@
   # only would break the numbered fallback. Revisit with E-312's join code.
   Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-cW2kCtjYkRrNoYXOsDzLJeuZcUIdUydAjbQRT3Gb8kM=' https://static.cloudflareinsights.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com https://tile.waymarkedtrails.org https://basemap.nationalmap.gov; connect-src 'self' https: https://nominatim.openstreetmap.org https://maps.googleapis.com https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
 
+# 2026-11-27 (howsmy.site check): the hash-named bundles are cached for a year, unchecked.
+# A new build gives changed files new names, so a cached copy can never be stale; until now
+# every visit re-asked for each one (ETag revalidation, a round trip per file). ONLY these
+# name patterns: ngsw-worker.js, rt-sw.js, safety-worker.js and worker-basic.min.js are also
+# .js at the root but keep their names across builds, so a "/*.js" rule would pin old service
+# workers on users for a year. No broader rule sets Cache-Control on these paths, so nothing
+# gets joined to this value. Fonts and other assets/ files keep their names: not listed.
+/main-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/chunk-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/polyfills-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/styles-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/media/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # Only the files that MUST NOT be cached are listed below. Everything else keeps
-# Cloudflare's default ETag revalidation, which is already correct for the
-# hash-named bundles (main-XXXX.js, chunk-XXXX.js, styles-XXXX.css) since a
-# new build produces a new filename.
+# Cloudflare's default ETag revalidation.
 #
 # These four are the service-worker control plane. If any of them is served
 # stale, browsers keep running the previous release forever — the exact
