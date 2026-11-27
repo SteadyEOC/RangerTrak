@@ -2,7 +2,6 @@
   "recommendations": [
     "angular.ng-template",
     "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
     "editorconfig.editorconfig",
     "ms-playwright.playwright",
     "github.vscode-github-actions",

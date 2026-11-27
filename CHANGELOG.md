@@ -50,6 +50,7 @@ All notable changes to this project will be documented in this file. See [standa
 ### Build
 
 * **deps:** toolchain refresh (`npm update`): vitest and @vitest/* 5.1.2, typescript-eslint 8.74.0, wrangler 4.168.0, mediabunny 1.66.5, @types/node 26.6.11; `leaflet.markercluster` 2.0.0 final (range `^2.0.0`). Still held: TypeScript 7 (Angular 22.3 wants `>=6.0 <6.1`), leaflet on 2.0.0-beta.5
+* **deps:** Prettier removed (`prettier`, `prettier-plugin-organize-imports`, `.prettierrc`, `.prettierignore`, the `style` and `style:fix` scripts, the VS Code "Format Code" task and extension recommendation). It was never applied to the code base: `npm run style` failed on 463 of 584 files, and nothing ran it in CI or a hook. VS Code format-on-save is now off, so saving a file no longer reformats it whole. ESLint and `.editorconfig` remain the style checks
 
 ## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-13)
 

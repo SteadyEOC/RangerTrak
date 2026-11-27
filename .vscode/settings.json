@@ -12,13 +12,12 @@
     "editor.cursorBlinking": "solid",
     "editor.formatOnType": false,
     "editor.formatOnPaste": false,
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "editor.minimap.enabled": false,
     "editor.codeActionsOnSave": {
         "source.organizeImports": "never",
         "source.fixAll.tslint": "explicit"
     },
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "[html]": {
         "editor.defaultFormatter": "vscode.html-language-features"
     },

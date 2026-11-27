@@ -79,17 +79,6 @@
       "problemMatcher": []
     },
     {
-      "label": "Format Code",
-      "type": "shell",
-      "command": "npm run style:fix",
-      "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Generate Documentation",
       "type": "shell",
       "command": "npm run compodoc",
