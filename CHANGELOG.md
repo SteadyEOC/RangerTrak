@@ -47,6 +47,10 @@ All notable changes to this project will be documented in this file. See [standa
 * **rangers:** E-295 Import photos also takes a zip of pictures, and a new Import a photo folder button takes a whole folder; the confirmation lists every file it left out and why (not a picture, too large, a zip that would not open, a repeated name)
 * **board:** E-290 RangerView's log is off by default again (it was on for the 2026-11-14 exercise); `node rangerview.js --log` turns it on, `--no-log` is still accepted
 
+### Build
+
+* **deps:** toolchain refresh (`npm update`): vitest and @vitest/* 5.1.2, typescript-eslint 8.74.0, wrangler 4.168.0, mediabunny 1.66.5, @types/node 26.6.11; `leaflet.markercluster` 2.0.0 final (range `^2.0.0`). Still held: TypeScript 7 (Angular 22.3 wants `>=6.0 <6.1`), leaflet on 2.0.0-beta.5
+
 ## [1.0.0-beta.3](https://github.com/SteadyEOC/RangerTrak/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-11-13)
 
 The tag moved on 2026-11-13 to take in the work below, so the drill build and beta.3 are the same.
